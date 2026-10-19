@@ -2,7 +2,8 @@
 -- Siehe docs/PLANUNG.md, Abschnitt 4.
 --
 -- Konventionen:
--- * Zeitstempel als Text in UTC, RFC 3339 (z. B. 2026-10-19T18:30:00Z).
+-- * Zeitstempel als Text in UTC mit Millisekunden und fester Länge
+--   (z. B. 2026-10-19T18:30:00.000Z), damit Textvergleich = Zeitvergleich.
 -- * Wahrheitswerte als INTEGER 0/1.
 -- * Optionale Texte sind leer (''), nicht NULL. NULL gibt es nur bei
 --   optionalen Zahlen, wo "leer" etwas anderes bedeutet als 0.

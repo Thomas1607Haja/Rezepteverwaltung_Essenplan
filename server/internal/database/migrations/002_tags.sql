@@ -3,7 +3,7 @@
 
 INSERT INTO tags (tag_group, position, name, updated_at)
 -- SQLite benennt die Spalten einer VALUES-Liste fest column1, column2, ...
-SELECT column1, column2, column3, strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+SELECT column1, column2, column3, strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
 FROM (
     VALUES
     ('Hauptzutat', 1, 'Vegetarisch'),

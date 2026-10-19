@@ -58,6 +58,28 @@ func TestMigrateTwiceChangesNothing(t *testing.T) {
 	}
 }
 
+// Zeitstempel, die SQL selbst erzeugt (strftime), müssen dasselbe Format
+// haben wie die aus Go (FormatTime) – sonst stimmt der Textvergleich nicht.
+func TestSQLTimestampsMatchTimeLayout(t *testing.T) {
+	ctx := context.Background()
+	db := openTestDB(t)
+	if _, err := Migrate(ctx, db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+
+	var updatedAt string
+	if err := db.QueryRowContext(ctx, "SELECT updated_at FROM tags LIMIT 1").Scan(&updatedAt); err != nil {
+		t.Fatalf("tag lesen: %v", err)
+	}
+	parsed, err := ParseTime(updatedAt)
+	if err != nil {
+		t.Fatalf("ParseTime(%q): %v", updatedAt, err)
+	}
+	if FormatTime(parsed) != updatedAt {
+		t.Errorf("FormatTime = %q, aus SQL %q", FormatTime(parsed), updatedAt)
+	}
+}
+
 func TestForeignKeysAreEnforced(t *testing.T) {
 	ctx := context.Background()
 	db := openTestDB(t)
