@@ -11,8 +11,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
 // config enthält alle Einstellungen, die beim Start gelesen werden.
@@ -58,6 +61,23 @@ func run() error {
 	// SIGTERM schickt Home Assistant beim Stoppen des Add-ons.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	if err := os.MkdirAll(cfg.DataDir, 0o755); err != nil {
+		return fmt.Errorf("datenordner anlegen: %w", err)
+	}
+	db, err := database.Open(ctx, filepath.Join(cfg.DataDir, "rezeptplaner.db"))
+	if err != nil {
+		return err
+	}
+	// Wird erst ausgeführt, wenn run() endet – also nach dem Herunterfahren
+	// des Servers, wenn keine Anfrage mehr die Datenbank braucht.
+	defer db.Close()
+
+	version, err := database.Migrate(ctx, db)
+	if err != nil {
+		return err
+	}
+	slog.Info("Datenbank bereit", "schemaversion", version)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/health", handleHealth)
