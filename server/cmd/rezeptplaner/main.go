@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 )
 
 // config enthält alle Einstellungen, die beim Start gelesen werden.
@@ -81,10 +83,11 @@ func run() error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/health", handleHealth)
+	recipes.NewHandler(recipes.NewStore(db)).Register(mux)
 
 	srv := &http.Server{
 		Addr:    cfg.ListenAddr,
-		Handler: mux,
+		Handler: httpx.LogRequests(mux),
 		// Schutz gegen Verbindungen, die ihre Anfrage nie zu Ende senden.
 		ReadHeaderTimeout: 10 * time.Second,
 	}
@@ -130,8 +133,5 @@ func run() error {
 // handleHealth ist das Lebenszeichen: antwortet immer mit "ok", solange der
 // Server läuft.
 func handleHealth(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	if _, err := w.Write([]byte(`{"status":"ok"}`)); err != nil {
-		slog.Warn("Antwort konnte nicht gesendet werden", "error", err)
-	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
