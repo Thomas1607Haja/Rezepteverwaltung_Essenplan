@@ -1,0 +1,76 @@
+# Öffentliches Repository: keine Daten, Zugangsdaten oder Build-Ergebnisse einchecken.
+# Siehe docs/PLANUNG.md, Abschnitt 9 „Öffentliches Repository – Regeln“.
+
+# --- Datenbanken (SQLite inkl. WAL-/Journal-Dateien) ---
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+
+# --- Laufzeitdaten (Datenbank und hochgeladene Bilder bei lokaler Entwicklung) ---
+# Bilder liegen zur Laufzeit im Datenordner, nicht im Repo.
+# Icons/Logos des Add-ons bleiben erlaubt, daher keine globale *.jpg/*.png-Regel.
+data/
+uploads/
+images/
+
+# --- Lokale Konfiguration und Zugangsdaten ---
+.env
+.env.*
+!.env.example
+*.local.yaml
+*.local.yml
+*.local.json
+secrets.yaml
+*.pem
+*.key
+*.keystore
+*.jks
+
+# --- Go (server/) ---
+/server/rezeptplaner
+/server/rezeptplaner.exe
+/server/bin/
+*.exe
+*.test
+*.out
+coverage.*
+
+# --- Weboberfläche und Dashboard-Karte (Node-Builds) ---
+node_modules/
+/web/dist/
+/ha-card/dist/
+.vite/
+.svelte-kit/
+
+# --- Android ---
+/android/build/
+/android/app/build/
+/android/.gradle/
+/android/local.properties
+/android/captures/
+/android/.externalNativeBuild/
+/android/.cxx/
+*.apk
+*.aab
+
+# --- Python (HA-Integration) ---
+__pycache__/
+*.pyc
+.venv/
+
+# --- Editoren und Betriebssystem ---
+.idea/
+.vscode/
+*.iml
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Claude Code: persönliche lokale Einstellungen ---
+.claude/settings.local.json
