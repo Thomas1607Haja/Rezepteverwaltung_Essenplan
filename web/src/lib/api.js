@@ -40,6 +40,27 @@ export async function request(method, path, body) {
   return data;
 }
 
+/**
+ * Baut die Parameter für die Rezeptliste. Leere Werte werden weggelassen.
+ * filter: { query, tagIds, favoritesOnly, sort }
+ */
+function listParams(filter) {
+  const params = new URLSearchParams();
+  if (filter.query?.trim()) params.set('q', filter.query.trim());
+  for (const id of filter.tagIds ?? []) params.append('tag', id);
+  if (filter.favoritesOnly) params.set('favorite', 'true');
+  if (filter.sort) params.set('sort', filter.sort);
+  const text = params.toString();
+  return text ? '?' + text : '';
+}
+
 export const api = {
   health: () => request('GET', '/health'),
+
+  /** Liste von Kurzfassungen (id, title, Zeiten, thumbnail, is_favorite). */
+  listRecipes: async (filter = {}) =>
+    (await request('GET', '/recipes' + listParams(filter))).recipes,
+
+  /** Kategorien nach Gruppen: [{ name, tags: [{ id, name, ... }] }]. */
+  listTagGroups: async () => (await request('GET', '/tags')).groups,
 };

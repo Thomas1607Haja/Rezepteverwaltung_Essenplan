@@ -1,29 +1,43 @@
 <script>
-  import { currentPath } from './lib/router.svelte.js';
+  import { currentPath, match } from './lib/router.svelte.js';
   import Icon from './components/Icon.svelte';
   import MealPlanPage from './pages/MealPlanPage.svelte';
   import RecipesPage from './pages/RecipesPage.svelte';
+  import RecipePage from './pages/RecipePage.svelte';
   import ShoppingPage from './pages/ShoppingPage.svelte';
   import SettingsPage from './pages/SettingsPage.svelte';
   import NotFoundPage from './pages/NotFoundPage.svelte';
 
   // Die vier Hauptbereiche (docs/PLANUNG.md, Abschnitt 5).
   const sections = [
-    { path: '/', label: 'Essensplan', icon: 'calendar', page: MealPlanPage },
-    { path: '/recipes', label: 'Rezepte', icon: 'book', page: RecipesPage },
-    { path: '/shopping', label: 'Einkauf', icon: 'cart', page: ShoppingPage },
-    { path: '/settings', label: 'Einstellungen', icon: 'gear', page: SettingsPage },
+    { path: '/', label: 'Essensplan', icon: 'calendar' },
+    { path: '/recipes', label: 'Rezepte', icon: 'book' },
+    { path: '/shopping', label: 'Einkauf', icon: 'cart' },
+    { path: '/settings', label: 'Einstellungen', icon: 'gear' },
   ];
 
-  /** Gehört path zum Bereich section? "/recipes/12" gehört zu "/recipes". */
-  function inSection(section, path) {
-    if (section.path === '/') return path === '/';
-    return path === section.path || path.startsWith(section.path + '/');
+  // Alle Seiten. section gibt an, welcher Bereich in der Navigation
+  // hervorgehoben wird.
+  const routes = [
+    { pattern: '/', section: '/', page: MealPlanPage },
+    { pattern: '/recipes', section: '/recipes', page: RecipesPage },
+    { pattern: '/recipes/:id', section: '/recipes', page: RecipePage },
+    { pattern: '/shopping', section: '/shopping', page: ShoppingPage },
+    { pattern: '/settings', section: '/settings', page: SettingsPage },
+  ];
+
+  /** Sucht die Seite zu path samt Platzhalterwerten. */
+  function resolve(path) {
+    for (const route of routes) {
+      const params = match(route.pattern, path);
+      if (params) return { route, params };
+    }
+    return { route: { section: null, page: NotFoundPage }, params: {} };
   }
 
   // $derived berechnet den Wert neu, sobald sich currentPath() ändert.
-  const active = $derived(sections.find((s) => inSection(s, currentPath())));
-  const Page = $derived(active?.page ?? NotFoundPage);
+  const current = $derived(resolve(currentPath()));
+  const Page = $derived(current.route.page);
 </script>
 
 <div class="layout">
@@ -32,7 +46,7 @@
       <a
         href={'#' + section.path}
         class="nav-item"
-        aria-current={section === active ? 'page' : undefined}
+        aria-current={section.path === current.route.section ? 'page' : undefined}
       >
         <Icon name={section.icon} />
         <span>{section.label}</span>
@@ -41,7 +55,11 @@
   </nav>
 
   <main class="content">
-    <Page />
+    <!-- {#key} baut die Seite neu auf, wenn sich die Adresse ändert, z. B.
+         beim Wechsel von Rezept 3 zu Rezept 7. -->
+    {#key currentPath()}
+      <Page {...current.params} />
+    {/key}
   </main>
 </div>
 

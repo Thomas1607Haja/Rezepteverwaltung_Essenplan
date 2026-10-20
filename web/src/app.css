@@ -9,6 +9,7 @@
   --text-muted: #6b665e;
   --accent: #c2552d;
   --accent-soft: #f6e3da;
+  --on-accent: #ffffff;
   --danger: #b3261e;
 
   --radius: 0.6rem;
@@ -30,6 +31,7 @@
     --text-muted: #a39d93;
     --accent: #e8825a;
     --accent-soft: #3d2a21;
+    --on-accent: #1f1d1a;
     --danger: #f2b8b5;
   }
 }
