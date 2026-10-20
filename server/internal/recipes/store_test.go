@@ -123,8 +123,8 @@ func TestCreateAndGet(t *testing.T) {
 	if len(got.Tags) != 2 {
 		t.Fatalf("%d Kategorien, erwartet 2 (doppelte ID zusammengefasst)", len(got.Tags))
 	}
-	// Sortiert nach Gruppe: "Art" kommt vor "Hauptzutat".
-	if got.Tags[0].Name != "Auflauf/Ofen" || got.Tags[1].Name != "Hackfleisch" {
+	// Gruppen in Anlege-Reihenfolge: "Hauptzutat" kommt vor "Art".
+	if got.Tags[0].Name != "Hackfleisch" || got.Tags[1].Name != "Auflauf/Ofen" {
 		t.Errorf("Kategorien = %+v", got.Tags)
 	}
 }

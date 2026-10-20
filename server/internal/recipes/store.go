@@ -311,7 +311,7 @@ func (s *Store) loadTags(ctx context.Context, recipeID int64) ([]Tag, error) {
 		SELECT t.id, t.name, t.tag_group, t.position
 		FROM recipe_tags rt JOIN tags t ON t.id = rt.tag_id
 		WHERE rt.recipe_id = ?
-		ORDER BY t.tag_group, t.position`, recipeID)
+		ORDER BY `+tagOrder, recipeID)
 	if err != nil {
 		return nil, fmt.Errorf("kategorien laden: %w", err)
 	}

@@ -9,7 +9,8 @@ import (
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 )
 
-// Handler stellt die Rezept-Endpunkte unter /api/v1/recipes bereit.
+// Handler stellt die Rezept-Endpunkte unter /api/v1/recipes und die
+// Kategorieliste unter /api/v1/tags bereit.
 type Handler struct {
 	store *Store
 }
@@ -27,6 +28,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /api/v1/recipes/{id}", h.update)
 	mux.HandleFunc("DELETE /api/v1/recipes/{id}", h.delete)
 	mux.HandleFunc("PUT /api/v1/recipes/{id}/favorite", h.setFavorite)
+	mux.HandleFunc("GET /api/v1/tags", h.listTags)
 }
 
 // listResponse ist die Antwort der Rezeptliste. Das umschließende Objekt
@@ -170,6 +172,18 @@ func (h *Handler) setFavorite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// listTags liefert alle Kategorien als {"groups": [{"name": ..., "tags": [...]}]}.
+func (h *Handler) listTags(w http.ResponseWriter, r *http.Request) {
+	groups, err := h.store.ListTags(r.Context())
+	if err != nil {
+		httpx.WriteInternalError(w, r, err)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, struct {
+		Groups []TagGroup `json:"groups"`
+	}{groups})
 }
 
 // parseID liest den Platzhalter {id} aus dem Pfad. Ist er keine positive
