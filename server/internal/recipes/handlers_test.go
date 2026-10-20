@@ -7,7 +7,9 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 )
@@ -21,7 +23,8 @@ func newTestMux(t *testing.T) *http.ServeMux {
 	if err != nil {
 		t.Fatal(err)
 	}
-	NewHandler(newTestStore(t), imgs).Register(mux)
+	// Testserver laufen auf 127.0.0.1, daher Heimnetz-Sperre aus.
+	NewHandler(newTestStore(t), imgs, fetch.New(5*time.Second, true)).Register(mux)
 	return mux
 }
 

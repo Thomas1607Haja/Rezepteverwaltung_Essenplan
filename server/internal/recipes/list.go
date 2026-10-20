@@ -172,3 +172,31 @@ var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 func escapeLike(s string) string {
 	return likeEscaper.Replace(s)
 }
+
+// FindBySourceURL liefert die Rezepte mit genau dieser Quell-URL – für den
+// Dublettenhinweis beim Import. Eine leere Adresse findet nichts.
+func (s *Store) FindBySourceURL(ctx context.Context, sourceURL string) ([]Summary, error) {
+	found := []Summary{}
+	if sourceURL == "" {
+		return found, nil
+	}
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, title, prep_minutes, total_minutes, thumbnail, is_favorite
+		FROM recipes WHERE source_url = ? ORDER BY id`, sourceURL)
+	if err != nil {
+		return nil, fmt.Errorf("dubletten suchen: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var sum Summary
+		if err := rows.Scan(&sum.ID, &sum.Title, &sum.PrepMinutes, &sum.TotalMinutes,
+			&sum.Thumbnail, &sum.IsFavorite); err != nil {
+			return nil, fmt.Errorf("dubletten suchen: %w", err)
+		}
+		found = append(found, sum)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("dubletten suchen: %w", err)
+	}
+	return found, nil
+}

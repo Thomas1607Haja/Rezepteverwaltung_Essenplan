@@ -16,8 +16,10 @@ import (
 	"time"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/importer"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/web"
 )
@@ -89,7 +91,11 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	recipes.NewHandler(recipes.NewStore(db), imgs).Register(mux)
+	// Lädt fremde Seiten und Bilder für den URL-Import; Heimnetz gesperrt.
+	fetcher := fetch.New(20*time.Second, false)
+	recipeStore := recipes.NewStore(db)
+	recipes.NewHandler(recipeStore, imgs, fetcher).Register(mux)
+	importer.NewHandler(recipeStore, fetcher).Register(mux)
 	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist
 	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
 	mux.Handle("GET /", web.Handler())

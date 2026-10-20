@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 )
@@ -13,13 +14,15 @@ import (
 // Handler stellt die Rezept-Endpunkte unter /api/v1/recipes, die Bilder
 // unter /api/v1/images und die Kategorieliste unter /api/v1/tags bereit.
 type Handler struct {
-	store  *Store
-	images *images.Store
+	store   *Store
+	images  *images.Store
+	fetcher *fetch.Client // lädt Bilder von fremden Seiten (URL-Import)
 }
 
-// NewHandler erzeugt die Endpunkte für store; Rezeptbilder liegen in imgs.
-func NewHandler(store *Store, imgs *images.Store) *Handler {
-	return &Handler{store: store, images: imgs}
+// NewHandler erzeugt die Endpunkte für store; Rezeptbilder liegen in imgs,
+// fetcher lädt Bilder von fremden Seiten.
+func NewHandler(store *Store, imgs *images.Store, fetcher *fetch.Client) *Handler {
+	return &Handler{store: store, images: imgs, fetcher: fetcher}
 }
 
 // Register meldet alle Rezept-Endpunkte beim Router mux an.
@@ -32,6 +35,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /api/v1/recipes/{id}/favorite", h.setFavorite)
 	mux.HandleFunc("PUT /api/v1/recipes/{id}/image", h.setImage)
 	mux.HandleFunc("DELETE /api/v1/recipes/{id}/image", h.deleteImage)
+	mux.HandleFunc("POST /api/v1/recipes/{id}/image/fetch", h.fetchImage)
 	mux.Handle("GET /api/v1/images/{name}", h.images)
 	mux.HandleFunc("GET /api/v1/tags", h.listTags)
 }

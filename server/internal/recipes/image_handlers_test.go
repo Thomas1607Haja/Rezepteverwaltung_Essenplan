@@ -67,3 +67,51 @@ func TestImageUploadOverHTTP(t *testing.T) {
 		t.Errorf("unbekanntes Rezept: Status %d, erwartet 404", rec.Code)
 	}
 }
+
+func TestFetchImageOverHTTP(t *testing.T) {
+	var jpg bytes.Buffer
+	jpeg.Encode(&jpg, image.NewRGBA(image.Rect(0, 0, 800, 600)), nil)
+	src := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/bild.jpg":
+			w.Header().Set("Content-Type", "image/jpeg")
+			w.Write(jpg.Bytes())
+		case "/seite.html":
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte("<html></html>"))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer src.Close()
+
+	mux := newTestMux(t)
+	do(mux, "POST", "/api/v1/recipes", `{"title": "Gulasch", "base_servings": 4}`)
+
+	rec := do(mux, "POST", "/api/v1/recipes/1/image/fetch", `{"url": "`+src.URL+`/bild.jpg"}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("Status = %d; Antwort: %s", rec.Code, rec.Body)
+	}
+	var r Recipe
+	json.Unmarshal(rec.Body.Bytes(), &r)
+	if r.Image == "" || r.Thumbnail == "" {
+		t.Errorf("Bildfelder leer: %+v", r)
+	}
+
+	tests := []struct {
+		name, body string
+		want       int
+	}{
+		{"keine Bilddatei", `{"url": "` + src.URL + `/seite.html"}`, http.StatusUnsupportedMediaType},
+		{"nicht gefunden", `{"url": "` + src.URL + `/fehlt.jpg"}`, http.StatusBadGateway},
+		{"ungültige Adresse", `{"url": "ftp://x"}`, http.StatusBadGateway},
+	}
+	for _, tt := range tests {
+		if rec := do(mux, "POST", "/api/v1/recipes/1/image/fetch", tt.body); rec.Code != tt.want {
+			t.Errorf("%s: Status %d, erwartet %d; %s", tt.name, rec.Code, tt.want, rec.Body)
+		}
+	}
+	if rec := do(mux, "POST", "/api/v1/recipes/42/image/fetch", `{"url": "`+src.URL+`/bild.jpg"}`); rec.Code != http.StatusNotFound {
+		t.Errorf("unbekanntes Rezept: Status %d, erwartet 404", rec.Code)
+	}
+}

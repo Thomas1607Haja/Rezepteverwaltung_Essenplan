@@ -160,3 +160,29 @@ func TestListRejectsInvalidFilter(t *testing.T) {
 		})
 	}
 }
+
+func TestFindBySourceURL(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+	const u = "https://www.chefkoch.de/rezepte/1/gulasch.html"
+	for _, r := range []Recipe{
+		{Title: "Gulasch", BaseServings: 4, SourceURL: u},
+		{Title: "Gulasch (meine Version)", BaseServings: 4, SourceURL: u},
+		{Title: "Ohne Quelle", BaseServings: 2},
+	} {
+		if _, err := s.Create(ctx, r); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	found, err := s.FindBySourceURL(ctx, u)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := titles(found); !slices.Equal(got, []string{"Gulasch", "Gulasch (meine Version)"}) {
+		t.Errorf("gefunden = %q", got)
+	}
+	if found, _ := s.FindBySourceURL(ctx, ""); len(found) != 0 {
+		t.Errorf("leere Adresse findet %d Rezepte, erwartet 0", len(found))
+	}
+}

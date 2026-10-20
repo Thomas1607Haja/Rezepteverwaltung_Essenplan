@@ -60,6 +60,7 @@ Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wo
 - **Weboberfläche:** über Ingress in der HA-Seitenleiste; Anmeldung erfolgt über Home Assistant.
 - **App:** über einen zusätzlichen Hostnamen im bestehenden Cloudflare-Tunnel (z. B. `rezepte.eure-domain.de`), der direkt auf den Port des Add-ons zeigt.
 - **API-Schlüssel:** einer pro Gerät, nur als Hash gespeichert, einzeln sperrbar. Einrichtung der App per QR-Code (enthält Serveradresse und Schlüssel).
+- **Import fremder Seiten:** Der Server ruft Rezeptseiten und Bilder nur per http/https und **nur über IPv4** ab; private, lokale und Tailscale-Adressen (100.64.0.0/10) sind gesperrt. So lässt sich der Import nicht nutzen, um Home Assistant oder andere Geräte im Heimnetz anzusprechen (Geräte haben dort oft zusätzlich eine weltweit gültige IPv6-Adresse). Zeitlimit 20 s, Seiten höchstens 5 MB.
 - Optional später: Cloudflare Access mit Service Token.
 
 ### Ressourcen auf dem Green
@@ -402,7 +403,7 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App) bzw. 
 | Bereich | Funktionen |
 |---|---|
 | Rezepte | Liste mit Suche/Filtern, Einzelabruf, Anlegen, Ändern, Löschen, Favorit setzen, Bild hochladen |
-| Import | URL einlesen (liefert Entwurf), Zutatenzeilen zerlegen |
+| Import | URL einlesen (liefert Entwurf, Bildadresse und Dubletten), Zutatenzeilen zerlegen; Bild der Quellseite beim Speichern übernehmen |
 | Essensplan | Einträge eines Zeitraums, Anlegen, Ändern, Löschen, Verschieben/Tauschen mit Warnprüfung (erst prüfen, dann bestätigen) |
 | Einkauf | Vorschau der Einkaufsliste, An Bring senden, Differenz nachsenden |
 | Stammdaten | Kategorien, Vorratsliste, Einstellungen |
