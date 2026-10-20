@@ -1,5 +1,5 @@
 // Rezeptplaner-Server: stellt die REST-API für Rezepte, Essensplan und
-// Einkaufsliste bereit.
+// Einkaufsliste sowie die eingebettete Weboberfläche bereit.
 package main
 
 import (
@@ -18,6 +18,7 @@ import (
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/web"
 )
 
 // config enthält alle Einstellungen, die beim Start gelesen werden.
@@ -84,6 +85,9 @@ func run() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/health", handleHealth)
 	recipes.NewHandler(recipes.NewStore(db)).Register(mux)
+	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist
+	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
+	mux.Handle("GET /", web.Handler())
 
 	srv := &http.Server{
 		Addr:    cfg.ListenAddr,

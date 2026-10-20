@@ -13,7 +13,7 @@ export default defineConfig({
   build: {
     // go:embed kann nur Dateien innerhalb des Go-Moduls einbetten, daher
     // landet der Build direkt im Server.
-    outDir: '../server/internal/web/dist',
+    outDir: '../server/internal/web/dist/app',
     emptyOutDir: true,
   },
 
