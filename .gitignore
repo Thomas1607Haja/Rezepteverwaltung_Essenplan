@@ -43,6 +43,7 @@ coverage.*
 # --- Weboberfläche und Dashboard-Karte (Node-Builds) ---
 node_modules/
 /web/dist/
+/server/internal/web/dist/
 /ha-card/dist/
 .vite/
 .svelte-kit/

@@ -49,7 +49,7 @@ Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wo
 | Baustein | Technik | Bemerkung |
 |---|---|---|
 | Server | Go, SQLite (reine Go-Variante, ohne cgo) | Eine kompilierte Datei, sehr geringer RAM-Bedarf, ARM64 |
-| Weboberfläche | Vue oder Svelte, Drag-and-Drop-Bibliothek | Wird statisch gebaut und in die Go-Datei eingebettet; kein Node.js auf dem Green |
+| Weboberfläche | Svelte 5 (JavaScript) mit Vite, Drag-and-Drop-Bibliothek | Wird statisch gebaut und in die Go-Datei eingebettet; kein Node.js auf dem Green |
 | Add-on | Docker-Image für Home Assistant | Ingress für die Seitenleiste, eigener Port für die App, Zugriff auf HA-API über Supervisor |
 | Android-App | Kotlin, Jetpack Compose, Room, ML Kit | Offline-Lesen, Teilen-Funktion, Foto-Import |
 | HA-Integration | Python (von Home Assistant vorgegeben) | Installierbar über HACS |
@@ -462,9 +462,7 @@ Rezepteverwaltung_Essenplan/
 
 ## 11. Offene Punkte
 
-- **Frontend-Framework:** Vue oder Svelte – Entscheidung zu Beginn von Phase 2.
 - **Bring-Mengenangabe:** Prüfen, wie die HA-To-do-Schnittstelle Artikelname und Spezifikation an Bring übergibt.
-- **Git-Identität:** Name/E-Mail pro Repository und eigener SSH-Schlüssel für das private GitHub-Konto einrichten.
 
 ## 12. Mögliche spätere Erweiterungen
 
