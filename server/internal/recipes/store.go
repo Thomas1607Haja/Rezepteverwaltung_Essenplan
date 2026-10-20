@@ -61,6 +61,115 @@ func (s *Store) Create(ctx context.Context, r Recipe) (Recipe, error) {
 	return s.Get(ctx, id)
 }
 
+// Update ersetzt das Rezept id vollständig durch r und gibt es neu geladen
+// zurück. Zutaten, Schritte und Kategorien werden komplett neu geschrieben;
+// ihre IDs ändern sich dabei. Bildfelder und created_at bleiben erhalten.
+// Gibt es das Rezept nicht, ist der Fehler ErrNotFound.
+func (s *Store) Update(ctx context.Context, id int64, r Recipe) (Recipe, error) {
+	r.normalize()
+	if err := r.validate(); err != nil {
+		return Recipe{}, err
+	}
+	now := database.FormatTime(time.Now())
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return Recipe{}, fmt.Errorf("rezept %d ändern: %w", id, err)
+	}
+	defer tx.Rollback()
+
+	res, err := tx.ExecContext(ctx, `
+		UPDATE recipes
+		SET title = ?, description = ?, base_servings = ?, prep_minutes = ?, total_minutes = ?,
+		    source_url = ?, is_favorite = ?, notes = ?, updated_at = ?
+		WHERE id = ?`,
+		r.Title, r.Description, r.BaseServings, r.PrepMinutes, r.TotalMinutes,
+		r.SourceURL, r.IsFavorite, r.Notes, now, id)
+	if err != nil {
+		return Recipe{}, fmt.Errorf("rezept %d ändern: %w", id, err)
+	}
+	if err := requireRow(res); err != nil {
+		return Recipe{}, err
+	}
+
+	// Alte Bestandteile entfernen und die neuen wie beim Anlegen einfügen.
+	// Die App gleicht Rezepte als Ganzes ab (über recipes.updated_at), daher
+	// braucht es für die Bestandteile keine Einträge in deletions.
+	for _, query := range []string{
+		"DELETE FROM recipe_ingredients WHERE recipe_id = ?",
+		"DELETE FROM recipe_steps WHERE recipe_id = ?",
+		"DELETE FROM recipe_tags WHERE recipe_id = ?",
+	} {
+		if _, err := tx.ExecContext(ctx, query, id); err != nil {
+			return Recipe{}, fmt.Errorf("rezept %d ändern: %w", id, err)
+		}
+	}
+	if err := insertParts(ctx, tx, id, r, now); err != nil {
+		return Recipe{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return Recipe{}, fmt.Errorf("rezept %d ändern: %w", id, err)
+	}
+	return s.Get(ctx, id)
+}
+
+// Delete löscht das Rezept id. Zutaten, Schritte und Kategorie-Verknüpfungen
+// entfernt die Datenbank selbst (ON DELETE CASCADE). Für den Abgleich mit
+// der App wird die Löschung in deletions vermerkt.
+// Gibt es das Rezept nicht, ist der Fehler ErrNotFound.
+func (s *Store) Delete(ctx context.Context, id int64) error {
+	now := database.FormatTime(time.Now())
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("rezept %d löschen: %w", id, err)
+	}
+	defer tx.Rollback()
+
+	res, err := tx.ExecContext(ctx, "DELETE FROM recipes WHERE id = ?", id)
+	if err != nil {
+		return fmt.Errorf("rezept %d löschen: %w", id, err)
+	}
+	if err := requireRow(res); err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO deletions (table_name, record_id, deleted_at)
+		VALUES ('recipes', ?, ?)`, id, now)
+	if err != nil {
+		return fmt.Errorf("rezept %d löschen: %w", id, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("rezept %d löschen: %w", id, err)
+	}
+	return nil
+}
+
+// SetFavorite setzt oder entfernt die Favoriten-Markierung des Rezepts id.
+// Gibt es das Rezept nicht, ist der Fehler ErrNotFound.
+func (s *Store) SetFavorite(ctx context.Context, id int64, favorite bool) error {
+	res, err := s.db.ExecContext(ctx, `
+		UPDATE recipes SET is_favorite = ?, updated_at = ? WHERE id = ?`,
+		favorite, database.FormatTime(time.Now()), id)
+	if err != nil {
+		return fmt.Errorf("favorit für rezept %d setzen: %w", id, err)
+	}
+	return requireRow(res)
+}
+
+// requireRow liefert ErrNotFound, wenn eine UPDATE- oder DELETE-Anweisung
+// keine Zeile getroffen hat – dann gab es das Rezept nicht.
+func requireRow(res sql.Result) error {
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("betroffene zeilen ermitteln: %w", err)
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // insertParts speichert Zutaten, Schritte und Kategorien eines Rezepts.
 // Die Reihenfolge in den Slices wird zur Position (beginnend bei 1).
 func insertParts(ctx context.Context, tx *sql.Tx, recipeID int64, r Recipe, now string) error {

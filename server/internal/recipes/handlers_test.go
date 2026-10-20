@@ -81,6 +81,11 @@ func TestHTTPErrors(t *testing.T) {
 		{"ID negativ", "GET", "/api/v1/recipes/-1", "", 400, ""},
 		{"Rezept fehlt", "GET", "/api/v1/recipes/42", "", 404, ""},
 		{"falsche Methode", "PATCH", "/api/v1/recipes/1", "", 405, ""},
+		{"Ändern: Rezept fehlt", "PUT", "/api/v1/recipes/42", `{"title": "X", "base_servings": 2}`, 404, ""},
+		{"Ändern: Prüfregel verletzt", "PUT", "/api/v1/recipes/42", `{"title": "X", "base_servings": 0}`, 400, "base_servings"},
+		{"Löschen: Rezept fehlt", "DELETE", "/api/v1/recipes/42", "", 404, ""},
+		{"Favorit: Feld fehlt", "PUT", "/api/v1/recipes/42/favorite", `{}`, 400, "is_favorite"},
+		{"Favorit: Rezept fehlt", "PUT", "/api/v1/recipes/42/favorite", `{"is_favorite": true}`, 404, ""},
 	}
 
 	for _, tt := range tests {
@@ -100,5 +105,41 @@ func TestHTTPErrors(t *testing.T) {
 				t.Errorf("field = %q, erwartet %q", resp.Field, tt.wantField)
 			}
 		})
+	}
+}
+
+func TestUpdateFavoriteDeleteOverHTTP(t *testing.T) {
+	mux := newTestMux(t)
+	if rec := do(mux, "POST", "/api/v1/recipes", `{"title": "Pfannkuchen", "base_servings": 2}`); rec.Code != http.StatusCreated {
+		t.Fatalf("POST Status = %d; Antwort: %s", rec.Code, rec.Body)
+	}
+
+	rec := do(mux, "PUT", "/api/v1/recipes/1", `{"title": "Crêpes", "base_servings": 4}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("PUT Status = %d, erwartet 200; Antwort: %s", rec.Code, rec.Body)
+	}
+	var updated Recipe
+	if err := json.Unmarshal(rec.Body.Bytes(), &updated); err != nil {
+		t.Fatalf("Antwort ist kein Rezept: %v", err)
+	}
+	if updated.Title != "Crêpes" || updated.BaseServings != 4 {
+		t.Errorf("Rezept = %+v", updated)
+	}
+
+	rec = do(mux, "PUT", "/api/v1/recipes/1/favorite", `{"is_favorite": true}`)
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("Favorit Status = %d, erwartet 204; Antwort: %s", rec.Code, rec.Body)
+	}
+	var got Recipe
+	json.Unmarshal(do(mux, "GET", "/api/v1/recipes/1", "").Body.Bytes(), &got)
+	if !got.IsFavorite {
+		t.Error("IsFavorite = false nach PUT .../favorite")
+	}
+
+	if rec := do(mux, "DELETE", "/api/v1/recipes/1", ""); rec.Code != http.StatusNoContent {
+		t.Fatalf("DELETE Status = %d, erwartet 204; Antwort: %s", rec.Code, rec.Body)
+	}
+	if rec := do(mux, "GET", "/api/v1/recipes/1", ""); rec.Code != http.StatusNotFound {
+		t.Errorf("GET nach DELETE Status = %d, erwartet 404", rec.Code)
 	}
 }

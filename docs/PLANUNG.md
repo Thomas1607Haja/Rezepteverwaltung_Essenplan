@@ -382,7 +382,7 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App) bzw. 
 
 | Bereich | Funktionen |
 |---|---|
-| Rezepte | Liste mit Suche/Filtern, Einzelabruf, Anlegen, Ändern, Löschen, Favorit umschalten, Bild hochladen |
+| Rezepte | Liste mit Suche/Filtern, Einzelabruf, Anlegen, Ändern, Löschen, Favorit setzen, Bild hochladen |
 | Import | URL einlesen (liefert Entwurf), Zutatenzeilen zerlegen |
 | Essensplan | Einträge eines Zeitraums, Anlegen, Ändern, Löschen, Verschieben/Tauschen mit Warnprüfung (erst prüfen, dann bestätigen) |
 | Einkauf | Vorschau der Einkaufsliste, An Bring senden, Differenz nachsenden |

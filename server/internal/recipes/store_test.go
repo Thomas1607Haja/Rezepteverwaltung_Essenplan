@@ -196,3 +196,158 @@ func TestGetUnknownRecipe(t *testing.T) {
 		t.Errorf("Fehler = %v, erwartet ErrNotFound", err)
 	}
 }
+
+// countRows zählt die Zeilen von table, die zu recipeID gehören.
+func countRows(t *testing.T, s *Store, table string, recipeID int64) int {
+	t.Helper()
+	var n int
+	if err := s.db.QueryRow("SELECT count(*) FROM "+table+" WHERE recipe_id = ?", recipeID).Scan(&n); err != nil {
+		t.Fatalf("%s zählen: %v", table, err)
+	}
+	return n
+}
+
+func TestUpdate(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+	created, err := s.Create(ctx, lasagne(t, s))
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	// Ein Bild gibt es erst mit dem Upload in Phase 2; hier direkt setzen.
+	if _, err := s.db.Exec("UPDATE recipes SET image = 'lasagne.jpg' WHERE id = ?", created.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	changed := Recipe{
+		Title:        "Gemüselasagne",
+		BaseServings: 6,
+		IsFavorite:   false,
+		Image:        "anders.jpg", // darf nicht übernommen werden
+		Ingredients:  []Ingredient{{Name: "Zucchini"}, {Name: "Tomaten"}},
+		Steps:        []Step{{Text: "Gemüse schneiden."}},
+		Tags:         []Tag{{ID: tagID(t, s, "Vegetarisch")}},
+	}
+	got, err := s.Update(ctx, created.ID, changed)
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	if got.Title != "Gemüselasagne" || got.BaseServings != 6 || got.IsFavorite {
+		t.Errorf("Felder nicht übernommen: %+v", got)
+	}
+	if got.PrepMinutes != nil || got.SourceURL != "" {
+		t.Errorf("weggelassene Felder müssen leer sein: prep %v, url %q", got.PrepMinutes, got.SourceURL)
+	}
+	if got.Image != "lasagne.jpg" {
+		t.Errorf("Image = %q, muss erhalten bleiben", got.Image)
+	}
+	if !got.CreatedAt.Equal(created.CreatedAt) {
+		t.Errorf("CreatedAt geändert: %v -> %v", created.CreatedAt, got.CreatedAt)
+	}
+	if got.UpdatedAt.Before(created.UpdatedAt) {
+		t.Errorf("UpdatedAt %v liegt vor %v", got.UpdatedAt, created.UpdatedAt)
+	}
+	if len(got.Ingredients) != 2 || got.Ingredients[0].Name != "Zucchini" {
+		t.Errorf("Zutaten = %+v", got.Ingredients)
+	}
+	if len(got.Steps) != 1 || len(got.Tags) != 1 || got.Tags[0].Name != "Vegetarisch" {
+		t.Errorf("Schritte = %+v, Kategorien = %+v", got.Steps, got.Tags)
+	}
+	// Die alten Bestandteile dürfen nicht übrig bleiben.
+	if n := countRows(t, s, "recipe_ingredients", created.ID); n != 2 {
+		t.Errorf("%d Zutatenzeilen, erwartet 2", n)
+	}
+}
+
+func TestUpdateErrors(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+	created, err := s.Create(ctx, lasagne(t, s))
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	_, err = s.Update(ctx, 42, Recipe{Title: "X", BaseServings: 2})
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("unbekanntes Rezept: Fehler = %v, erwartet ErrNotFound", err)
+	}
+
+	// Unbekannte Kategorie fällt erst nach dem Löschen der alten Teile auf.
+	// Die Transaktion muss dann alles zurückrollen.
+	_, err = s.Update(ctx, created.ID, Recipe{Title: "X", BaseServings: 2, Tags: []Tag{{ID: 9999}}})
+	var verr *ValidationError
+	if !errors.As(err, &verr) || verr.Field != "tags[0].id" {
+		t.Fatalf("Fehler = %v, erwartet ValidationError für tags[0].id", err)
+	}
+	got, err := s.Get(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Title != "Lasagne" || len(got.Ingredients) != 3 || len(got.Tags) != 2 {
+		t.Errorf("Rezept wurde trotz Fehler verändert: %+v", got)
+	}
+}
+
+func TestDelete(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+	created, err := s.Create(ctx, lasagne(t, s))
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if err := s.Delete(ctx, created.ID); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if _, err := s.Get(ctx, created.ID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("Get nach Delete: Fehler = %v, erwartet ErrNotFound", err)
+	}
+	for _, table := range []string{"recipe_ingredients", "recipe_steps", "recipe_tags"} {
+		if n := countRows(t, s, table, created.ID); n != 0 {
+			t.Errorf("%s: %d Zeilen übrig, erwartet 0", table, n)
+		}
+	}
+
+	var n int
+	err = s.db.QueryRow("SELECT count(*) FROM deletions WHERE table_name = 'recipes' AND record_id = ?",
+		created.ID).Scan(&n)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != 1 {
+		t.Errorf("%d Einträge in deletions, erwartet 1", n)
+	}
+
+	// Zweites Löschen: Rezept gibt es nicht mehr.
+	if err := s.Delete(ctx, created.ID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("zweites Delete: Fehler = %v, erwartet ErrNotFound", err)
+	}
+}
+
+func TestSetFavorite(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+	created, err := s.Create(ctx, Recipe{Title: "Rührei", BaseServings: 2})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// Zweimal true hintereinander: Setzen ist kein Umschalten.
+	for _, want := range []bool{true, true, false} {
+		if err := s.SetFavorite(ctx, created.ID, want); err != nil {
+			t.Fatalf("SetFavorite(%v): %v", want, err)
+		}
+		got, err := s.Get(ctx, created.ID)
+		if err != nil {
+			t.Fatalf("Get: %v", err)
+		}
+		if got.IsFavorite != want {
+			t.Errorf("IsFavorite = %v, erwartet %v", got.IsFavorite, want)
+		}
+	}
+
+	if err := s.SetFavorite(ctx, 42, true); !errors.Is(err, ErrNotFound) {
+		t.Errorf("unbekanntes Rezept: Fehler = %v, erwartet ErrNotFound", err)
+	}
+}
