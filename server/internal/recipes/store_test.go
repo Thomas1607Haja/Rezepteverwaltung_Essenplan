@@ -3,6 +3,7 @@ package recipes
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
@@ -297,7 +298,7 @@ func TestDelete(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	if err := s.Delete(ctx, created.ID); err != nil {
+	if _, err := s.Delete(ctx, created.ID); err != nil {
 		t.Fatalf("Delete: %v", err)
 	}
 	if _, err := s.Get(ctx, created.ID); !errors.Is(err, ErrNotFound) {
@@ -320,7 +321,7 @@ func TestDelete(t *testing.T) {
 	}
 
 	// Zweites Löschen: Rezept gibt es nicht mehr.
-	if err := s.Delete(ctx, created.ID); !errors.Is(err, ErrNotFound) {
+	if _, err := s.Delete(ctx, created.ID); !errors.Is(err, ErrNotFound) {
 		t.Errorf("zweites Delete: Fehler = %v, erwartet ErrNotFound", err)
 	}
 }
@@ -348,6 +349,49 @@ func TestSetFavorite(t *testing.T) {
 	}
 
 	if err := s.SetFavorite(ctx, 42, true); !errors.Is(err, ErrNotFound) {
+		t.Errorf("unbekanntes Rezept: Fehler = %v, erwartet ErrNotFound", err)
+	}
+}
+
+func TestSetImageAndDeleteReturnFiles(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+	created, err := s.Create(ctx, Recipe{Title: "Rührei", BaseServings: 2})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	old, err := s.SetImage(ctx, created.ID, "a.jpg", "a_thumb.jpg")
+	if err != nil {
+		t.Fatalf("SetImage: %v", err)
+	}
+	if !slices.Equal(old, []string{"", ""}) {
+		t.Errorf("alte Dateien = %q, erwartet leer", old)
+	}
+	got, _ := s.Get(ctx, created.ID)
+	if got.Image != "a.jpg" || got.Thumbnail != "a_thumb.jpg" {
+		t.Errorf("Bild = %q / %q", got.Image, got.Thumbnail)
+	}
+
+	old, err = s.SetImage(ctx, created.ID, "b.jpg", "b_thumb.jpg")
+	if err != nil || !slices.Equal(old, []string{"a.jpg", "a_thumb.jpg"}) {
+		t.Errorf("Ersetzen: alte Dateien = %q, Fehler %v", old, err)
+	}
+
+	// Update ändert das Bild nicht.
+	if _, err := s.Update(ctx, created.ID, Recipe{Title: "Rührei", BaseServings: 3}); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.Get(ctx, created.ID); got.Image != "b.jpg" {
+		t.Errorf("Image nach Update = %q, erwartet b.jpg", got.Image)
+	}
+
+	files, err := s.Delete(ctx, created.ID)
+	if err != nil || !slices.Equal(files, []string{"b.jpg", "b_thumb.jpg"}) {
+		t.Errorf("Delete: Dateien = %q, Fehler %v", files, err)
+	}
+
+	if _, err := s.SetImage(ctx, 42, "x.jpg", ""); !errors.Is(err, ErrNotFound) {
 		t.Errorf("unbekanntes Rezept: Fehler = %v, erwartet ErrNotFound", err)
 	}
 }

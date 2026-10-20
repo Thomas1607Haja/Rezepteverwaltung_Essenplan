@@ -7,17 +7,19 @@ import (
 	"strconv"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 )
 
-// Handler stellt die Rezept-Endpunkte unter /api/v1/recipes und die
-// Kategorieliste unter /api/v1/tags bereit.
+// Handler stellt die Rezept-Endpunkte unter /api/v1/recipes, die Bilder
+// unter /api/v1/images und die Kategorieliste unter /api/v1/tags bereit.
 type Handler struct {
-	store *Store
+	store  *Store
+	images *images.Store
 }
 
-// NewHandler erzeugt die Endpunkte für store.
-func NewHandler(store *Store) *Handler {
-	return &Handler{store: store}
+// NewHandler erzeugt die Endpunkte für store; Rezeptbilder liegen in imgs.
+func NewHandler(store *Store, imgs *images.Store) *Handler {
+	return &Handler{store: store, images: imgs}
 }
 
 // Register meldet alle Rezept-Endpunkte beim Router mux an.
@@ -28,6 +30,9 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /api/v1/recipes/{id}", h.update)
 	mux.HandleFunc("DELETE /api/v1/recipes/{id}", h.delete)
 	mux.HandleFunc("PUT /api/v1/recipes/{id}/favorite", h.setFavorite)
+	mux.HandleFunc("PUT /api/v1/recipes/{id}/image", h.setImage)
+	mux.HandleFunc("DELETE /api/v1/recipes/{id}/image", h.deleteImage)
+	mux.Handle("GET /api/v1/images/{name}", h.images)
 	mux.HandleFunc("GET /api/v1/tags", h.listTags)
 }
 
@@ -138,10 +143,12 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if err := h.store.Delete(r.Context(), id); err != nil {
+	files, err := h.store.Delete(r.Context(), id)
+	if err != nil {
 		writeStoreError(w, r, err)
 		return
 	}
+	h.removeImageFiles(files)
 	w.WriteHeader(http.StatusNoContent)
 }
 

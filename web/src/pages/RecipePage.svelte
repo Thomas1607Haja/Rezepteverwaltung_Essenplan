@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { api } from '../lib/api.js';
+  import { api, imageUrl } from '../lib/api.js';
   import { navigate } from '../lib/router.svelte.js';
   import { filterByTag } from '../lib/recipeFilter.svelte.js';
   import { formatMinutes, formatQuantity } from '../lib/format.js';
@@ -104,10 +104,13 @@
   <p class="muted">Lädt …</p>
 {:else}
   <article>
-    <div class="hero">
-      <!-- Bilder folgen in Schritt 7. -->
-      <Icon name="dish" size={64} />
-    </div>
+    {#if recipe.image}
+      <img class="photo" src={imageUrl(recipe.image)} alt={recipe.title} />
+    {:else}
+      <div class="hero">
+        <Icon name="dish" size={64} />
+      </div>
+    {/if}
 
     <header class="head">
       <div class="title-row">
@@ -244,6 +247,17 @@
 
   .error {
     color: var(--danger);
+  }
+
+  .photo {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 26rem;
+    margin-bottom: 1rem;
+    border-radius: var(--radius);
+    object-fit: cover;
+    background: var(--accent-soft);
   }
 
   /* Platzhalter ohne Bild: flach, damit er nicht unnötig Platz einnimmt. */

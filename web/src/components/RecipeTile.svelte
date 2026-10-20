@@ -1,6 +1,7 @@
 <script>
   import Icon from './Icon.svelte';
   import { formatMinutes } from '../lib/format.js';
+  import { imageUrl } from '../lib/api.js';
 
   // recipe ist eine Kurzfassung aus der Rezeptliste.
   let { recipe } = $props();
@@ -10,8 +11,12 @@
 
 <a class="tile" href={'#/recipes/' + recipe.id}>
   <div class="image">
-    <!-- Bilder folgen in Schritt 7; bis dahin ein Platzhalter. -->
-    <Icon name="dish" size={40} />
+    {#if recipe.thumbnail}
+      <!-- loading="lazy": Bilder weiter unten lädt der Browser erst beim Scrollen. -->
+      <img src={imageUrl(recipe.thumbnail)} alt="" loading="lazy" />
+    {:else}
+      <Icon name="dish" size={40} />
+    {/if}
   </div>
   <div class="body">
     <h2 class="title">{recipe.title}</h2>
@@ -48,8 +53,16 @@
     display: grid;
     place-items: center;
     aspect-ratio: 4 / 3;
+    overflow: hidden;
     background: var(--accent-soft);
     color: var(--accent);
+  }
+
+  /* object-fit: cover füllt die Fläche und schneidet überstehende Ränder ab. */
+  .image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .body {

@@ -17,6 +17,8 @@
 data/
 uploads/
 images/
+# Ausnahme: Go-Paket für die Bildverarbeitung (Quellcode, keine Bilder)
+!/server/internal/images/
 
 # --- Lokale Konfiguration und Zugangsdaten ---
 .env

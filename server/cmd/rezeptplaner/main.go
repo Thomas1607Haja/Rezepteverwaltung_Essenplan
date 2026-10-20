@@ -17,6 +17,7 @@ import (
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/web"
 )
@@ -84,7 +85,11 @@ func run() error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/health", handleHealth)
-	recipes.NewHandler(recipes.NewStore(db)).Register(mux)
+	imgs, err := images.NewStore(filepath.Join(cfg.DataDir, "images"))
+	if err != nil {
+		return err
+	}
+	recipes.NewHandler(recipes.NewStore(db), imgs).Register(mux)
 	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist
 	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
 	mux.Handle("GET /", web.Handler())

@@ -19,7 +19,11 @@ export class ApiError extends Error {
  */
 export async function request(method, path, body) {
   const options = { method, headers: {} };
-  if (body !== undefined) {
+  if (body instanceof Blob) {
+    // Dateien (z. B. ein Bild) gehen unverändert als Anfragekörper raus.
+    options.headers['Content-Type'] = body.type || 'application/octet-stream';
+    options.body = body;
+  } else if (body !== undefined) {
     options.headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(body);
   }
@@ -39,6 +43,14 @@ export async function request(method, path, body) {
   }
   return data;
 }
+
+/** Adresse einer Bilddatei, z. B. aus recipe.thumbnail. */
+export function imageUrl(name) {
+  return `api/v1/images/${name}`;
+}
+
+// Gleiche Grenze wie auf dem Server (images.MaxUploadBytes).
+export const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
 /**
  * Baut die Parameter für die Rezeptliste. Leere Werte werden weggelassen.
@@ -74,6 +86,11 @@ export const api = {
     request('PUT', `/recipes/${id}/favorite`, { is_favorite: isFavorite }),
 
   deleteRecipe: (id) => request('DELETE', `/recipes/${id}`),
+
+  /** Lädt file als Rezeptbild hoch; der Server verkleinert es. */
+  setImage: (id, file) => request('PUT', `/recipes/${id}/image`, file),
+
+  deleteImage: (id) => request('DELETE', `/recipes/${id}/image`),
 
   /** Kategorien nach Gruppen: [{ name, tags: [{ id, name, ... }] }]. */
   listTagGroups: async () => (await request('GET', '/tags')).groups,

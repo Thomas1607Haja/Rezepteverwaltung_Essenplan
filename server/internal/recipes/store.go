@@ -115,34 +115,71 @@ func (s *Store) Update(ctx context.Context, id int64, r Recipe) (Recipe, error) 
 
 // Delete löscht das Rezept id. Zutaten, Schritte und Kategorie-Verknüpfungen
 // entfernt die Datenbank selbst (ON DELETE CASCADE). Für den Abgleich mit
-// der App wird die Löschung in deletions vermerkt.
+// der App wird die Löschung in deletions vermerkt. Zurück kommen die
+// Dateinamen der Bilder, damit der Aufrufer sie entfernen kann.
 // Gibt es das Rezept nicht, ist der Fehler ErrNotFound.
-func (s *Store) Delete(ctx context.Context, id int64) error {
+func (s *Store) Delete(ctx context.Context, id int64) (imageFiles []string, err error) {
 	now := database.FormatTime(time.Now())
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("rezept %d löschen: %w", id, err)
+		return nil, fmt.Errorf("rezept %d löschen: %w", id, err)
 	}
 	defer tx.Rollback()
 
-	res, err := tx.ExecContext(ctx, "DELETE FROM recipes WHERE id = ?", id)
-	if err != nil {
-		return fmt.Errorf("rezept %d löschen: %w", id, err)
+	var image, thumbnail string
+	err = tx.QueryRowContext(ctx, "SELECT image, thumbnail FROM recipes WHERE id = ?", id).Scan(&image, &thumbnail)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotFound
 	}
-	if err := requireRow(res); err != nil {
-		return err
+	if err != nil {
+		return nil, fmt.Errorf("rezept %d löschen: %w", id, err)
+	}
+
+	if _, err := tx.ExecContext(ctx, "DELETE FROM recipes WHERE id = ?", id); err != nil {
+		return nil, fmt.Errorf("rezept %d löschen: %w", id, err)
 	}
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO deletions (table_name, record_id, deleted_at)
 		VALUES ('recipes', ?, ?)`, id, now)
 	if err != nil {
-		return fmt.Errorf("rezept %d löschen: %w", id, err)
+		return nil, fmt.Errorf("rezept %d löschen: %w", id, err)
 	}
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("rezept %d löschen: %w", id, err)
+		return nil, fmt.Errorf("rezept %d löschen: %w", id, err)
 	}
-	return nil
+	return []string{image, thumbnail}, nil
+}
+
+// SetImage trägt neue Bilddateien beim Rezept id ein (leere Namen = kein
+// Bild) und liefert die bisherigen zurück, damit der Aufrufer sie löschen
+// kann. Gibt es das Rezept nicht, ist der Fehler ErrNotFound.
+func (s *Store) SetImage(ctx context.Context, id int64, image, thumbnail string) (oldFiles []string, err error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("bild für rezept %d setzen: %w", id, err)
+	}
+	defer tx.Rollback()
+
+	var oldImage, oldThumbnail string
+	err = tx.QueryRowContext(ctx, "SELECT image, thumbnail FROM recipes WHERE id = ?", id).Scan(&oldImage, &oldThumbnail)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("bild für rezept %d setzen: %w", id, err)
+	}
+
+	_, err = tx.ExecContext(ctx, `
+		UPDATE recipes SET image = ?, thumbnail = ?, updated_at = ? WHERE id = ?`,
+		image, thumbnail, database.FormatTime(time.Now()), id)
+	if err != nil {
+		return nil, fmt.Errorf("bild für rezept %d setzen: %w", id, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("bild für rezept %d setzen: %w", id, err)
+	}
+	return []string{oldImage, oldThumbnail}, nil
 }
 
 // SetFavorite setzt oder entfernt die Favoriten-Markierung des Rezepts id.

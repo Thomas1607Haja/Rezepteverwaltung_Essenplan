@@ -6,6 +6,7 @@
   import TagFilter from '../components/TagFilter.svelte';
   import IngredientEditor from '../components/IngredientEditor.svelte';
   import StepEditor from '../components/StepEditor.svelte';
+  import ImagePicker from '../components/ImagePicker.svelte';
 
   // id fehlt bei #/recipes/new, sonst kommt es aus #/recipes/:id/edit.
   let { id = null } = $props();
@@ -22,6 +23,13 @@
   let saveError = $state('');
   let saving = $state(false);
 
+  // Bild: gespeicherter Dateiname, neu gewählte Datei, Entfernen-Wunsch.
+  // Hochgeladen wird erst beim Speichern (ein neues Rezept hat vorher
+  // noch keine ID).
+  let currentImage = $state('');
+  let imageFile = $state(null);
+  let removeImage = $state(false);
+
   // Stand beim Laden, um ungespeicherte Änderungen zu erkennen.
   let initial = '';
 
@@ -32,7 +40,10 @@
   } else {
     api
       .getRecipe(recipeId)
-      .then((recipe) => start(toForm(recipe)))
+      .then((recipe) => {
+        currentImage = recipe.image;
+        start(toForm(recipe));
+      })
       .catch((e) => (loadError = e.status === 404 ? 'Dieses Rezept gibt es nicht (mehr).' : e.message));
   }
 
@@ -65,6 +76,13 @@
     try {
       const saved = isNew ? await api.createRecipe(result.payload) : await api.updateRecipe(recipeId, result.payload);
       initial = JSON.stringify(form);
+      try {
+        if (imageFile) await api.setImage(saved.id, imageFile);
+        else if (removeImage) await api.deleteImage(saved.id);
+      } catch (e) {
+        // Das Rezept selbst ist gespeichert; nur das Bild hat nicht geklappt.
+        alert(`Rezept gespeichert, aber das Bild konnte nicht übernommen werden: ${e.message}`);
+      }
       navigate(`/recipes/${saved.id}`);
     } catch (e) {
       // Prüfregeln des Servers melden das betroffene Feld mit.
@@ -75,7 +93,8 @@
   }
 
   function cancel() {
-    if (JSON.stringify(form) !== initial && !confirm('Änderungen verwerfen?')) return;
+    const changed = JSON.stringify(form) !== initial || imageFile !== null || removeImage;
+    if (changed && !confirm('Änderungen verwerfen?')) return;
     navigate(isNew ? '/recipes' : `/recipes/${recipeId}`);
   }
 </script>
@@ -125,6 +144,11 @@
         <span>Quelle (URL)</span>
         <input type="url" placeholder="https://…" bind:value={form.source_url} />
       </label>
+    </section>
+
+    <section>
+      <h2>Bild</h2>
+      <ImagePicker current={currentImage} bind:file={imageFile} bind:remove={removeImage} />
     </section>
 
     <section>

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 )
 
 // newTestMux liefert einen Router mit den Rezept-Endpunkten auf einer
@@ -16,7 +17,11 @@ import (
 func newTestMux(t *testing.T) *http.ServeMux {
 	t.Helper()
 	mux := http.NewServeMux()
-	NewHandler(newTestStore(t)).Register(mux)
+	imgs, err := images.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	NewHandler(newTestStore(t), imgs).Register(mux)
 	return mux
 }
 

@@ -65,7 +65,7 @@ Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wo
 ### Ressourcen auf dem Green
 
 - Server läuft im Leerlauf praktisch ohne CPU-Last.
-- Bilder werden einmalig beim Hochladen verkleinert (großes Bild + Vorschaubild).
+- Bilder werden einmalig beim Hochladen verkleinert: großes Bild (längste Seite 1600 px) und Vorschaubild (480 px), beide JPEG. Handyfotos werden nach ihrer EXIF-Ausrichtung gedreht. Verkleinert wird durch schrittweises Halbieren, damit ein 12-Megapixel-Foto nur kurz rund 60 MB belegt; es wird immer nur ein Bild gleichzeitig verarbeitet. Bibliothek: `golang.org/x/image` (vom Go-Team, reines Go; Skalieren und WebP).
 - Statistik und Statushinweise werden bei Bedarf per Datenbankabfrage berechnet, nicht gespeichert.
 - Daten liegen im Datenordner des Add-ons und sind damit Teil der Home-Assistant-Backups.
 
