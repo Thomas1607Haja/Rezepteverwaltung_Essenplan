@@ -16,6 +16,12 @@ export function toggleTag(id) {
   else recipeFilter.tagIds.splice(i, 1);
 }
 
+/** Filtert nur noch nach der Kategorie id (z. B. aus der Kochansicht). */
+export function filterByTag(id) {
+  resetFilter();
+  recipeFilter.tagIds = [id];
+}
+
 /** Setzt Suche und Filter zurück (die Sortierung bleibt). */
 export function resetFilter() {
   recipeFilter.query = '';

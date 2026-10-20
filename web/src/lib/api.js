@@ -61,6 +61,14 @@ export const api = {
   listRecipes: async (filter = {}) =>
     (await request('GET', '/recipes' + listParams(filter))).recipes,
 
+  /** Vollständiges Rezept mit Zutaten, Schritten und Kategorien. */
+  getRecipe: (id) => request('GET', `/recipes/${id}`),
+
+  setFavorite: (id, isFavorite) =>
+    request('PUT', `/recipes/${id}/favorite`, { is_favorite: isFavorite }),
+
+  deleteRecipe: (id) => request('DELETE', `/recipes/${id}`),
+
   /** Kategorien nach Gruppen: [{ name, tags: [{ id, name, ... }] }]. */
   listTagGroups: async () => (await request('GET', '/tags')).groups,
 };
