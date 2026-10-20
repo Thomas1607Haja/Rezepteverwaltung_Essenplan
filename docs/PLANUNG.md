@@ -69,6 +69,25 @@ Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wo
 - Statistik und Statushinweise werden bei Bedarf per Datenbankabfrage berechnet, nicht gespeichert.
 - Daten liegen im Datenordner des Add-ons und sind damit Teil der Home-Assistant-Backups.
 
+**Messung nach Phase 1 (2026-10-20, Go-Server ohne Weboberfläche):**
+
+| Messgröße | Wert |
+|---|---|
+| Programmdatei Linux/ARM64 (`-trimpath -ldflags="-s -w"`) | 10,2 MB (gzip: 4,2 MB) |
+| Arbeitsspeicher nach dem Start | 12 MB |
+| Arbeitsspeicher mit 500 Rezepten, nach 4000 Abfragen | 24 MB (Spitze 25 MB) |
+| CPU im Leerlauf (20 s beobachtet) | 0 |
+| Rezeptliste mit 500 Einträgen / Suche mit 3 Kategorien / Einzelrezept | ca. 8 ms / 10 ms / 1,5 ms |
+| Datenbank mit 500 Rezepten (je 10 Zutaten, 6 Schritte) | ca. 1 MB |
+
+Die ARM64-Datei wurde nur gebaut; Speicher und Zeiten stammen vom Windows-Build auf dem Entwicklungsrechner. In Phase 3 auf dem Green nachmessen.
+
+Build-Befehl (später in der GitHub Action):
+
+```bash
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" ./cmd/rezeptplaner
+```
+
 ---
 
 ## 3. Fachliche Regeln
