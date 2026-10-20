@@ -5,23 +5,24 @@
 // group_name an jeder Zutat. Beim Laden werden daraus Überschriften, beim
 // Speichern bekommt jede Zutat den Namen der Überschrift darüber.
 
-let nextKey = 1;
+let nextId = 1;
 
-/** Eindeutiger Schlüssel für {#each}, damit Svelte Zeilen auseinanderhält. */
-function key() {
-  return nextKey++;
+/** Eindeutige ID je Zeile für {#each} und Drag and Drop (die Bibliothek
+ * erwartet das Feld "id"). Hat nichts mit den IDs der Datenbank zu tun. */
+function newId() {
+  return nextId++;
 }
 
 export function newIngredient() {
-  return { key: key(), kind: 'ingredient', quantity: '', unit: '', name: '', note: '', shopping_relevant: true };
+  return { id: newId(), kind: 'ingredient', quantity: '', unit: '', name: '', note: '', shopping_relevant: true };
 }
 
 export function newHeading() {
-  return { key: key(), kind: 'heading', name: '' };
+  return { id: newId(), kind: 'heading', name: '' };
 }
 
 export function newStep() {
-  return { key: key(), text: '' };
+  return { id: newId(), text: '' };
 }
 
 /** Formularzustand für ein neues bzw. ein vorhandenes Rezept. */
@@ -122,7 +123,7 @@ function parseMinutes(value) {
 /**
  * Prüft das Formular und baut daraus die Daten für die API.
  * Ergebnis: { payload } oder { errors } mit Fehlertexten je Feld bzw. je
- * Zeilenschlüssel.
+ * Zeilen-ID.
  */
 export function toPayload(form) {
   const errors = {};
@@ -150,9 +151,9 @@ export function toPayload(form) {
 
     const quantity = parseQuantity(item.quantity);
     if (quantity === undefined) {
-      errors[item.key] = 'Menge nicht lesbar, z. B. 1,5 oder 1/2.';
+      errors[item.id] = 'Menge nicht lesbar, z. B. 1,5 oder 1/2.';
     } else if (item.name.trim() === '') {
-      errors[item.key] = 'Bitte einen Namen eingeben.';
+      errors[item.id] = 'Bitte einen Namen eingeben.';
     }
     ingredients.push({
       group_name: group,

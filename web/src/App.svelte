@@ -4,7 +4,6 @@
   import MealPlanPage from './pages/MealPlanPage.svelte';
   import RecipesPage from './pages/RecipesPage.svelte';
   import RecipePage from './pages/RecipePage.svelte';
-  import RecipeEditPage from './pages/RecipeEditPage.svelte';
   import ShoppingPage from './pages/ShoppingPage.svelte';
   import SettingsPage from './pages/SettingsPage.svelte';
   import NotFoundPage from './pages/NotFoundPage.svelte';
@@ -17,15 +16,21 @@
     { path: '/settings', label: 'Einstellungen', icon: 'gear' },
   ];
 
+  // Die Bearbeiten-Seite samt Drag-and-Drop-Bibliothek wird erst geladen,
+  // wenn sie gebraucht wird: import(...) als Funktion veranlasst Vite, sie in
+  // eine eigene Datei zu legen. Übersicht und Kochansicht bleiben so schlank.
+  const loadRecipeEditPage = () => import('./pages/RecipeEditPage.svelte');
+
   // Alle Seiten. section gibt an, welcher Bereich in der Navigation
-  // hervorgehoben wird.
+  // hervorgehoben wird. page ist eine Komponente, load eine Funktion, die
+  // sie nachlädt.
   const routes = [
     { pattern: '/', section: '/', page: MealPlanPage },
     { pattern: '/recipes', section: '/recipes', page: RecipesPage },
     // "/recipes/new" vor "/recipes/:id", sonst gälte "new" als ID.
-    { pattern: '/recipes/new', section: '/recipes', page: RecipeEditPage },
+    { pattern: '/recipes/new', section: '/recipes', load: loadRecipeEditPage },
     { pattern: '/recipes/:id', section: '/recipes', page: RecipePage },
-    { pattern: '/recipes/:id/edit', section: '/recipes', page: RecipeEditPage },
+    { pattern: '/recipes/:id/edit', section: '/recipes', load: loadRecipeEditPage },
     { pattern: '/shopping', section: '/shopping', page: ShoppingPage },
     { pattern: '/settings', section: '/settings', page: SettingsPage },
   ];
@@ -62,7 +67,15 @@
     <!-- {#key} baut die Seite neu auf, wenn sich die Adresse ändert, z. B.
          beim Wechsel von Rezept 3 zu Rezept 7. -->
     {#key currentPath()}
-      <Page {...current.params} />
+      {#if current.route.load}
+        {#await current.route.load() then module}
+          <module.default {...current.params} />
+        {:catch}
+          <p>Seite konnte nicht geladen werden. Bitte neu laden.</p>
+        {/await}
+      {:else}
+        <Page {...current.params} />
+      {/if}
     {/key}
   </main>
 </div>

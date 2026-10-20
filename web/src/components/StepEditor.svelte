@@ -1,12 +1,28 @@
 <script>
+  import { flip } from 'svelte/animate';
+  import { dragHandleZone } from 'svelte-dnd-action';
   import { newStep } from '../lib/recipeForm.js';
+  import { flipDurationMs, dropTargetStyle, isShadow } from '../lib/dnd.js';
+  import DragHandle from './DragHandle.svelte';
 
   let { steps = $bindable() } = $props();
+
+  // Wie bei den Zutaten: neue Reihenfolge übernehmen (siehe IngredientEditor).
+  function sort(event) {
+    steps = event.detail.items;
+  }
 </script>
 
-<ol class="list">
-  {#each steps as step, i (step.key)}
-    <li class="card">
+<ol
+  class="list"
+  aria-label="Zubereitung"
+  use:dragHandleZone={{ items: steps, flipDurationMs, dropTargetStyle, type: 'steps' }}
+  onconsider={sort}
+  onfinalize={sort}
+>
+  {#each steps as step, i (step.id)}
+    <li class="card" class:shadow={isShadow(step)} aria-label="Schritt {i + 1}" animate:flip={{ duration: flipDurationMs }}>
+      <DragHandle label="Schritt {i + 1} verschieben" />
       <span class="number">{i + 1}</span>
       <textarea rows="2" placeholder="Was ist zu tun?" aria-label="Schritt {i + 1}" bind:value={step.text}></textarea>
       <button type="button" class="remove" aria-label="Schritt {i + 1} entfernen" onclick={() => steps.splice(i, 1)}>×</button>
@@ -26,17 +42,22 @@
     margin: 0;
     padding: 0;
     list-style: none;
+    border-radius: var(--radius);
   }
 
   .card {
     display: grid;
-    grid-template-columns: 1.75rem 1fr auto;
+    grid-template-columns: auto 1.25rem 1fr auto;
     align-items: start;
     gap: 0.4rem;
     padding: 0.5rem;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--bg);
+  }
+
+  .card.shadow {
+    opacity: 0.35;
   }
 
   .number {
