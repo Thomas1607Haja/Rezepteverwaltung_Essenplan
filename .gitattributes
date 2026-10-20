@@ -1,0 +1,17 @@
+# Zeilenenden einheitlich als LF – im Repository und im Arbeitsverzeichnis,
+# unabhängig von core.autocrlf auf dem jeweiligen Rechner. Der Server läuft
+# unter Linux, Shell-Skripte und Dockerfiles brauchen dort LF.
+* text=auto eol=lf
+
+# Windows-Skripte (z. B. gradlew.bat der Android-App) brauchen CRLF.
+*.bat eol=crlf
+*.cmd eol=crlf
+
+# Binärdateien nie verändern.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.jar binary
+*.db binary
