@@ -4,6 +4,7 @@
   import MealPlanPage from './pages/MealPlanPage.svelte';
   import RecipesPage from './pages/RecipesPage.svelte';
   import RecipePage from './pages/RecipePage.svelte';
+  import RecipeEditPage from './pages/RecipeEditPage.svelte';
   import ShoppingPage from './pages/ShoppingPage.svelte';
   import SettingsPage from './pages/SettingsPage.svelte';
   import NotFoundPage from './pages/NotFoundPage.svelte';
@@ -21,7 +22,10 @@
   const routes = [
     { pattern: '/', section: '/', page: MealPlanPage },
     { pattern: '/recipes', section: '/recipes', page: RecipesPage },
+    // "/recipes/new" vor "/recipes/:id", sonst gälte "new" als ID.
+    { pattern: '/recipes/new', section: '/recipes', page: RecipeEditPage },
     { pattern: '/recipes/:id', section: '/recipes', page: RecipePage },
+    { pattern: '/recipes/:id/edit', section: '/recipes', page: RecipeEditPage },
     { pattern: '/shopping', section: '/shopping', page: ShoppingPage },
     { pattern: '/settings', section: '/settings', page: SettingsPage },
   ];

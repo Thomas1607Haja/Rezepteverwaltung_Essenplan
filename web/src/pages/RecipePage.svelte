@@ -9,6 +9,11 @@
 
   // id kommt aus der Adresse #/recipes/:id.
   let { id } = $props();
+  // App.svelte baut die Seite bei jeder neuen Adresse neu auf ({#key}),
+  // id ändert sich also nie. Svelte warnt sonst, dass nur der Anfangswert
+  // gelesen wird – genau das ist hier gewollt.
+  // svelte-ignore state_referenced_locally
+  const recipeId = id;
 
   let recipe = $state(null);
   let error = $state('');
@@ -16,7 +21,7 @@
   let servings = $state(1);
 
   api
-    .getRecipe(id)
+    .getRecipe(recipeId)
     .then((r) => {
       recipe = r;
       servings = r.base_servings;
@@ -219,6 +224,7 @@
 
     <footer class="actions">
       <button type="button" class="danger" onclick={remove}>Rezept löschen</button>
+      <a class="edit" href={`#/recipes/${recipe.id}/edit`}>Bearbeiten</a>
     </footer>
   </article>
 {/if}
@@ -460,8 +466,19 @@
   }
 
   .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
     margin-top: 2rem;
-    text-align: right;
+  }
+
+  .edit {
+    padding: 0.5rem 1.2rem;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
+    text-decoration: none;
   }
 
   .danger {

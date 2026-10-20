@@ -53,7 +53,10 @@
   const activeTagCount = $derived(recipeFilter.tagIds.length);
 </script>
 
-<h1>Rezepte</h1>
+<div class="page-head">
+  <h1>Rezepte</h1>
+  <a class="new" href="#/recipes/new">+ Neues Rezept</a>
+</div>
 
 <div class="toolbar">
   <label class="search">
@@ -124,6 +127,28 @@
 {/if}
 
 <style>
+  .page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .page-head h1 {
+    margin: 0;
+  }
+
+  .new {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
   .toolbar {
     display: flex;
     flex-wrap: wrap;

@@ -64,6 +64,12 @@ export const api = {
   /** Vollständiges Rezept mit Zutaten, Schritten und Kategorien. */
   getRecipe: (id) => request('GET', `/recipes/${id}`),
 
+  /** Legt ein Rezept an und liefert es mit ID zurück. */
+  createRecipe: (recipe) => request('POST', '/recipes', recipe),
+
+  /** Ersetzt ein Rezept vollständig und liefert den neuen Stand. */
+  updateRecipe: (id, recipe) => request('PUT', `/recipes/${id}`, recipe),
+
   setFavorite: (id, isFavorite) =>
     request('PUT', `/recipes/${id}/favorite`, { is_favorite: isFavorite }),
 
