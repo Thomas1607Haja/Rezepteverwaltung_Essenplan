@@ -94,3 +94,32 @@ func TestForeignKeysAreEnforced(t *testing.T) {
 		t.Error("Zutat ohne Rezept wurde gespeichert, Fremdschlüssel sind nicht aktiv")
 	}
 }
+
+func TestFoldInSQL(t *testing.T) {
+	db := openTestDB(t)
+
+	tests := []struct{ in, want string }{
+		{"Äpfel", "apfel"},
+		{"GRÜNKOHL", "grunkohl"},
+		{"Weißwurst", "weisswurst"},
+		{"Crème fraîche", "crème fraîche"}, // nur deutsche Sonderzeichen werden ersetzt
+	}
+	for _, tt := range tests {
+		var got string
+		if err := db.QueryRow("SELECT fold(?)", tt.in).Scan(&got); err != nil {
+			t.Fatalf("fold(%q): %v", tt.in, err)
+		}
+		if got != tt.want {
+			t.Errorf("fold(%q) = %q, erwartet %q", tt.in, got, tt.want)
+		}
+	}
+
+	// NULL bleibt NULL.
+	var null sql.NullString
+	if err := db.QueryRow("SELECT fold(NULL)").Scan(&null); err != nil {
+		t.Fatal(err)
+	}
+	if null.Valid {
+		t.Errorf("fold(NULL) = %q, erwartet NULL", null.String)
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -86,6 +87,10 @@ func TestHTTPErrors(t *testing.T) {
 		{"Löschen: Rezept fehlt", "DELETE", "/api/v1/recipes/42", "", 404, ""},
 		{"Favorit: Feld fehlt", "PUT", "/api/v1/recipes/42/favorite", `{}`, 400, "is_favorite"},
 		{"Favorit: Rezept fehlt", "PUT", "/api/v1/recipes/42/favorite", `{"is_favorite": true}`, 404, ""},
+		{"Liste: Kategorie keine Zahl", "GET", "/api/v1/recipes?tag=pasta", "", 400, "tag"},
+		{"Liste: Kategorie unbekannt", "GET", "/api/v1/recipes?tag=9999", "", 400, "tag"},
+		{"Liste: Favorit kein Wahrheitswert", "GET", "/api/v1/recipes?favorite=vielleicht", "", 400, "favorite"},
+		{"Liste: Sortierung unbekannt", "GET", "/api/v1/recipes?sort=rating", "", 400, "sort"},
 	}
 
 	for _, tt := range tests {
@@ -141,5 +146,48 @@ func TestUpdateFavoriteDeleteOverHTTP(t *testing.T) {
 	}
 	if rec := do(mux, "GET", "/api/v1/recipes/1", ""); rec.Code != http.StatusNotFound {
 		t.Errorf("GET nach DELETE Status = %d, erwartet 404", rec.Code)
+	}
+}
+
+func TestListOverHTTP(t *testing.T) {
+	mux := newTestMux(t)
+	for _, body := range []string{
+		`{"title": "Pfannkuchen", "base_servings": 2, "is_favorite": true}`,
+		`{"title": "Grünkohl", "base_servings": 4}`,
+	} {
+		if rec := do(mux, "POST", "/api/v1/recipes", body); rec.Code != http.StatusCreated {
+			t.Fatalf("POST Status = %d; Antwort: %s", rec.Code, rec.Body)
+		}
+	}
+
+	tests := []struct {
+		name string
+		path string
+		want []string
+	}{
+		{"alle", "/api/v1/recipes", []string{"Grünkohl", "Pfannkuchen"}},
+		// %C3%BC ist das ü in der Adresse (URL-kodiert).
+		{"Suche", "/api/v1/recipes?q=gr%C3%BCnkohl", []string{"Grünkohl"}},
+		{"Favoriten", "/api/v1/recipes?favorite=true", []string{"Pfannkuchen"}},
+		{"neueste", "/api/v1/recipes?sort=newest", []string{"Grünkohl", "Pfannkuchen"}},
+		{"nichts gefunden", "/api/v1/recipes?q=pizza", []string{}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rec := do(mux, "GET", tt.path, "")
+			if rec.Code != http.StatusOK {
+				t.Fatalf("Status = %d, erwartet 200; Antwort: %s", rec.Code, rec.Body)
+			}
+			var resp listResponse
+			if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+				t.Fatalf("Antwort ist keine Liste: %v", err)
+			}
+			if resp.Recipes == nil {
+				t.Fatalf("recipes fehlt oder ist null: %s", rec.Body)
+			}
+			if got := titles(resp.Recipes); !slices.Equal(got, tt.want) {
+				t.Errorf("Titel = %q, erwartet %q", got, tt.want)
+			}
+		})
 	}
 }

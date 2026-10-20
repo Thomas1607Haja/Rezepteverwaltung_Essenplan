@@ -21,11 +21,60 @@ func NewHandler(store *Store) *Handler {
 
 // Register meldet alle Rezept-Endpunkte beim Router mux an.
 func (h *Handler) Register(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/v1/recipes", h.list)
 	mux.HandleFunc("POST /api/v1/recipes", h.create)
 	mux.HandleFunc("GET /api/v1/recipes/{id}", h.get)
 	mux.HandleFunc("PUT /api/v1/recipes/{id}", h.update)
 	mux.HandleFunc("DELETE /api/v1/recipes/{id}", h.delete)
 	mux.HandleFunc("PUT /api/v1/recipes/{id}/favorite", h.setFavorite)
+}
+
+// listResponse ist die Antwort der Rezeptliste. Das umschließende Objekt
+// lässt Platz für spätere Angaben (z. B. Gesamtzahl) neben der Liste.
+type listResponse struct {
+	Recipes []Summary `json:"recipes"`
+}
+
+// list liefert die Rezeptliste. Parameter in der Adresse, alle optional:
+//
+//	q=Nudeln%20Tomate   Suchtext
+//	tag=3&tag=11        Kategorie-IDs (mehrfach möglich)
+//	favorite=true       nur Favoriten
+//	sort=name|newest    Sortierung (Standard: name)
+func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	filter := ListFilter{
+		Query: params.Get("q"),
+		Sort:  params.Get("sort"),
+	}
+
+	// params["tag"] enthält alle Werte des mehrfach angegebenen Parameters.
+	for _, value := range params["tag"] {
+		id, err := strconv.ParseInt(value, 10, 64)
+		if err != nil || id <= 0 {
+			httpx.WriteJSON(w, http.StatusBadRequest,
+				httpx.ErrorResponse{Error: fmt.Sprintf("ungültige kategorie-id %q", value), Field: "tag"})
+			return
+		}
+		filter.TagIDs = append(filter.TagIDs, id)
+	}
+
+	if value := params.Get("favorite"); value != "" {
+		favorite, err := strconv.ParseBool(value)
+		if err != nil {
+			httpx.WriteJSON(w, http.StatusBadRequest,
+				httpx.ErrorResponse{Error: "erwartet true oder false", Field: "favorite"})
+			return
+		}
+		filter.FavoritesOnly = favorite
+	}
+
+	recipes, err := h.store.List(r.Context(), filter)
+	if err != nil {
+		writeStoreError(w, r, err)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, listResponse{Recipes: recipes})
 }
 
 // create legt ein Rezept an. Antwort: 201 mit dem gespeicherten Rezept.
