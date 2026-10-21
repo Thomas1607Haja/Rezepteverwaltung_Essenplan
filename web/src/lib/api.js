@@ -69,6 +69,16 @@ function listParams(filter) {
 export const api = {
   health: () => request('GET', '/health'),
 
+  /** Familiengröße und Einkaufstag: { family_size, shopping_day }. */
+  getSettings: () => request('GET', '/settings'),
+  updateSettings: (settings) => request('PUT', '/settings', settings),
+
+  /**
+   * Essensplan von from bis to (beide "2026-10-21", eingeschlossen).
+   * Ergebnis: { entries, today, shopping_period: { from, to } }.
+   */
+  mealPlan: (from, to) => request('GET', `/meal-plan?from=${from}&to=${to}`),
+
   /** Version, Arbeitsspeicher und Platzbedarf der Daten. */
   system: () => request('GET', '/system'),
 

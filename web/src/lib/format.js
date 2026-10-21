@@ -107,3 +107,17 @@ export function planStatus(recipe, today = todayString()) {
   }
   return 'noch nie eingeplant';
 }
+
+/** Tag date ("2026-10-21") plus n Tage, wieder als "2026-10-21". */
+export function addDays(date, n) {
+  const d = new Date(Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10)) + n));
+  return d.toISOString().slice(0, 10);
+}
+
+const weekdayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
+/** Kopf einer Tagesspalte: { weekday: "Mi", date: "21.10." }. */
+export function dayLabel(date) {
+  const d = new Date(Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10))));
+  return { weekday: weekdayNames[d.getUTCDay()], date: `${date.slice(8, 10)}.${date.slice(5, 7)}.` };
+}
