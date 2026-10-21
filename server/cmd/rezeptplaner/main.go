@@ -21,6 +21,7 @@ import (
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/importer"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/settings"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/system"
@@ -109,7 +110,9 @@ func run() error {
 	recipeStore := recipes.NewStore(db)
 	recipes.NewHandler(recipeStore, imgs, fetcher).Register(mux)
 	importer.NewHandler(recipeStore, fetcher).Register(mux)
-	settings.NewHandler(settings.NewStore(db)).Register(mux)
+	settingsStore := settings.NewStore(db)
+	settings.NewHandler(settingsStore).Register(mux)
+	mealplan.NewHandler(mealplan.NewStore(db, settingsStore)).Register(mux)
 	system.NewHandler(buildVersion, cfg.DataDir).Register(mux)
 	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist
 	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
