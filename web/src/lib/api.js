@@ -122,11 +122,12 @@ export const api = {
 
   /**
    * Sendet die Einkaufsliste an die gewählte Bring-Liste; deselected sind
-   * die keys abgewählter Artikel. Ergebnis { list, sent: [{ name, spec,
-   * merged }], failed: [{ name, spec, error }], entries }.
+   * die keys abgewählter Artikel. options: { missing: true } sendet nur die
+   * Differenz, { entries: [id] } nur diese Gerichte. Ergebnis { list,
+   * sent: [{ name, spec, merged }], failed: [{ name, spec, error }], entries }.
    */
-  sendShopping: (next, deselected) =>
-    request('POST', '/shopping/send', { period: next ? 'next' : 'current', deselected }),
+  sendShopping: (next, deselected, options = {}) =>
+    request('POST', '/shopping/send', { period: next ? 'next' : 'current', deselected, ...options }),
 
   /**
    * Verbindung zu Home Assistant: { mode: "supervisor" | "direct" | "test",

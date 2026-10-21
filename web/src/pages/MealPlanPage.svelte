@@ -189,11 +189,22 @@
     const { entry, move, warnings } = pendingMove;
     pendingMove = null;
     if (choice === 'cancel') return;
-    const haveIngredients =
-      choice === 'have_ingredients'
-        ? warnings.filter((w) => w.type === 'planned_into_period').map((w) => w.entry_id)
-        : [];
+    const intoPeriod = warnings.filter((w) => w.type === 'planned_into_period').map((w) => w.entry_id);
+    const haveIngredients = choice === 'have_ingredients' ? intoPeriod : [];
     await runMove(entry, { ...move, confirm: true, have_ingredients: haveIngredients });
+    if (choice === 'send') await sendToBring(intoPeriod);
+  }
+
+  /** Sendet die Zutaten der Gerichte ids an Bring (nach dem Verschieben). */
+  async function sendToBring(ids) {
+    try {
+      const result = await api.sendShopping(false, [], { entries: ids });
+      const failed = result.failed.length > 0 ? ` ${result.failed.length} Artikel kamen nicht an (siehe Einkauf).` : '';
+      alert(`${result.sent.length} Artikel an Bring gesendet.${failed}`);
+    } catch (e) {
+      alert(`Senden an Bring fehlgeschlagen: ${e.message}`);
+    }
+    await reloadDates(ids.map((id) => findEntry(id)?.date).filter(Boolean));
   }
 
   /** Lädt die geladenen unter den Tagen dates neu (z. B. nach einem Tausch). */

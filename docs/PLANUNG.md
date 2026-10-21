@@ -447,6 +447,11 @@ Siehe Warnregeln in Abschnitt 3. Ringtausche über mehrere Tage erfolgen als auf
 
 Vergleich mit den übertragenen Artikeln; Angebot, nur die Differenz nachzusenden.
 
+- Verglichen wird je Artikel und Einheit der Bedarf aller übertragenen Gerichte des Einkaufszeitraums (auch vergangener Tage) mit dem Protokoll in `transferred_items`. Stück-Einheiten werden dabei gerundet verglichen, so wie sie gesendet wurden.
+- **Fehlt noch:** z. B. nach mehr Portionen, einem ersetzten Rezept oder einem Artikel, der beim Senden nicht ankam. Einzelne Artikel lassen sich abwählen (gelten dann als erledigt); „Differenz nachsenden“ ergänzt offene Bring-Einträge bzw. legt neue an.
+- **Zu viel gesendet:** nur Anzeige, nichts wird aus Bring gelöscht. Abgewählte Artikel zählen nicht als zu viel, sie wurden ja nicht gekauft.
+- Der Dialog beim Verschieben bietet „Zutaten an Bring senden“: Das Gericht wird verschoben und seine Zutaten werden sofort übertragen.
+
 ---
 
 ## 7. Android-App: Offline-Verhalten

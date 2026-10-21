@@ -30,6 +30,10 @@ type Preview struct {
 	// in die Liste eingehen (siehe Entry.Included).
 	Entries []Entry `json:"entries"`
 	Items   []Item  `json:"items"` // alphabetisch
+	// Missing und Surplus vergleichen die schon übertragenen Gerichte mit
+	// dem Protokoll: Was fehlt noch auf der Bring-Liste, was ist zu viel?
+	Missing []Item `json:"missing"`
+	Surplus []Item `json:"surplus"`
 }
 
 // Entry ist ein Planeintrag, wie ihn die Einkaufsseite anzeigt.
@@ -101,7 +105,11 @@ func (s *Store) Preview(ctx context.Context, next bool) (Preview, error) {
 	if err != nil {
 		return Preview{}, err
 	}
-	return Preview{Period: period, Today: today, Entries: entries, Items: summarize(needs)}, nil
+	missing, surplus, err := s.differences(ctx, period)
+	if err != nil {
+		return Preview{}, err
+	}
+	return Preview{Period: period, Today: today, Entries: entries, Items: summarize(needs), Missing: missing, Surplus: surplus}, nil
 }
 
 // period liefert den gewünschten Einkaufszeitraum und heute.

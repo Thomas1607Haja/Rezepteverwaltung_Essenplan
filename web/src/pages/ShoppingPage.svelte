@@ -10,12 +10,15 @@
   // Änderungen Svelte bemerkt – ein normales Set würde die Anzeige nicht
   // aktualisieren.
   const deselected = new SvelteSet();
+  // Abgewählte Artikel beim Nachsenden der Differenz
+  const deselectedMissing = new SvelteSet();
 
   async function load() {
     error = '';
     try {
       preview = await api.shoppingPreview(next);
       deselected.clear();
+      deselectedMissing.clear();
     } catch (e) {
       error = `Einkaufsliste nicht geladen: ${e.message}`;
     }
@@ -36,12 +39,15 @@
   let sendError = $state('');
   let needsList = $state(false); // keine Bring-Liste gewählt
 
-  async function send() {
+  /** Sendet die Liste bzw. mit missing = true die Differenz. */
+  async function send(missing = false) {
     sending = true;
     sendError = '';
     needsList = false;
     try {
-      sendResult = await api.sendShopping(next, [...deselected]);
+      sendResult = missing
+        ? await api.sendShopping(next, [...deselectedMissing], { missing: true })
+        : await api.sendShopping(next, [...deselected]);
       await load();
     } catch (e) {
       sendError = e.message;
@@ -64,9 +70,9 @@
 
   const selectedCount = $derived(preview ? preview.items.length - deselected.size : 0);
 
-  function toggle(key) {
-    if (deselected.has(key)) deselected.delete(key);
-    else deselected.add(key);
+  function toggle(key, set = deselected) {
+    if (set.has(key)) set.delete(key);
+    else set.add(key);
   }
 
   function selectAll(all) {
@@ -174,7 +180,7 @@
       </ul>
 
       <div class="send">
-        <button type="button" class="primary" onclick={send} disabled={sending}>
+        <button type="button" class="primary" onclick={() => send()} disabled={sending}>
           {sending ? 'Sendet …' : `An Bring senden (${selectedCount})`}
         </button>
         {#if sendError}
@@ -187,6 +193,48 @@
       </div>
     {/if}
   </section>
+
+  {#if preview.missing.length > 0 || preview.surplus.length > 0}
+    <section class="card">
+      <h2>Nach dem Senden geändert</h2>
+      <p class="muted hint">Gerichte wurden nach dem Senden geändert, verschoben oder entfernt.</p>
+
+      {#if preview.missing.length > 0}
+        <h3>Fehlt noch auf der Bring-Liste</h3>
+        <ul class="items">
+          {#each preview.missing as item (item.key)}
+            <li>
+              <label class:off={deselectedMissing.has(item.key)}>
+                <input
+                  type="checkbox"
+                  checked={!deselectedMissing.has(item.key)}
+                  onchange={() => toggle(item.key, deselectedMissing)}
+                />
+                <span class="name">{item.name}</span>
+                <span class="spec">{item.spec}</span>
+                <small class="from">{item.recipes.join(', ')}</small>
+              </label>
+            </li>
+          {/each}
+        </ul>
+        <div class="send">
+          <button type="button" class="primary" onclick={() => send(true)} disabled={sending}>
+            {sending ? 'Sendet …' : `Differenz nachsenden (${preview.missing.length - deselectedMissing.size})`}
+          </button>
+        </div>
+      {/if}
+
+      {#if preview.surplus.length > 0}
+        <h3>Zu viel gesendet</h3>
+        <p class="muted hint">Wird nicht aus Bring gelöscht – vielleicht schon gekauft. Am besten für ein anderes Gericht einplanen.</p>
+        <ul class="surplus">
+          {#each preview.surplus as item (item.key)}
+            <li><span class="name">{item.name}</span> <span class="spec">{item.spec}</span></li>
+          {/each}
+        </ul>
+      {/if}
+    </section>
+  {/if}
 {/if}
 
 <style>
@@ -369,6 +417,31 @@
   .off .spec {
     color: var(--text-muted);
     text-decoration: line-through;
+  }
+
+  h3 {
+    margin: 1rem 0 0.25rem;
+    font-size: 1rem;
+  }
+
+  .hint {
+    font-size: 0.85rem;
+  }
+
+  .surplus li {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .surplus li:first-child {
+    border-top: none;
+  }
+
+  .surplus .name {
+    font-weight: 400;
   }
 
   .result {

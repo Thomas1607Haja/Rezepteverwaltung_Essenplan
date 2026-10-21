@@ -52,11 +52,14 @@ func (h *Handler) preview(w http.ResponseWriter, r *http.Request) {
 }
 
 // send überträgt die Einkaufsliste an Bring, Anfrage z. B.
-// {"period": "current", "deselected": ["mehl", "zwiebel"]}.
+// {"period": "current", "deselected": ["mehl", "zwiebel"]}. Mit
+// "missing": true nur die Differenz, mit "entries": [12] nur diese Gerichte.
 func (h *Handler) send(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Period     string   `json:"period"`
 		Deselected []string `json:"deselected"`
+		Missing    bool     `json:"missing"`
+		Entries    []int64  `json:"entries"`
 	}
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, err.Error())
@@ -67,7 +70,7 @@ func (h *Handler) send(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: "period muss current oder next sein", Field: "period"})
 		return
 	}
-	result, err := h.store.Send(r.Context(), next, in.Deselected)
+	result, err := h.store.Send(r.Context(), SendOptions{Next: next, Deselected: in.Deselected, Missing: in.Missing, Entries: in.Entries})
 	var verr *ValidationError
 	switch {
 	case errors.As(err, &verr):

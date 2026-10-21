@@ -3,7 +3,8 @@
 
   // warnings: Hinweise des Servers zum Verschieben. onchoice wird mit
   // 'move' (trotzdem verschieben), 'have_ingredients' (verschieben und
-  // Zutaten als vorhanden markieren) oder 'cancel' aufgerufen.
+  // Zutaten als vorhanden markieren), 'send' (verschieben und die Zutaten
+  // gleich an Bring senden) oder 'cancel' aufgerufen.
   let { warnings, onchoice } = $props();
 
   // „Zutaten sind vorhanden“ passt nur, wenn ein geplantes Gericht in den
@@ -20,11 +21,11 @@
     {#each warnings as w (w.entry_id + w.type)}
       <p>{w.message}</p>
     {/each}
-    <!-- Phase 5: „Fehlende Zutaten jetzt an Bring senden“ -->
     <footer>
       <button type="button" class="secondary" onclick={() => onchoice('cancel')}>Abbrechen</button>
       {#if canMarkAvailable}
         <button type="button" class="secondary" onclick={() => onchoice('have_ingredients')}>Zutaten sind vorhanden</button>
+        <button type="button" class="secondary" onclick={() => onchoice('send')}>Zutaten an Bring senden</button>
       {/if}
       <button type="button" class="primary" onclick={() => onchoice('move')}>Trotzdem verschieben</button>
     </footer>

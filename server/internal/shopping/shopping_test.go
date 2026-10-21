@@ -220,14 +220,14 @@ func TestSend(t *testing.T) {
 	ha := store.ha.(*homeassistant.TestClient) // Typzusicherung: der Testmodus von setup
 
 	var verr *ValidationError
-	if _, err := store.Send(ctx, false, nil); !errors.As(err, &verr) || verr.Field != "bring_entity" {
+	if _, err := store.Send(ctx, SendOptions{}); !errors.As(err, &verr) || verr.Field != "bring_entity" {
 		t.Fatalf("ohne Bring-Liste: err = %v", err)
 	}
 	chooseList(t, store)
 	// Milch steht schon offen auf der Liste: Die Menge wird ergänzt.
 	ha.AddItem(ctx, homeassistant.TestListID, "Milch", "1 l")
 
-	result, err := store.Send(ctx, false, []string{"rindfleisch"})
+	result, err := store.Send(ctx, SendOptions{Deselected: []string{"rindfleisch"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -263,7 +263,7 @@ func TestSend(t *testing.T) {
 			t.Errorf("%s %s: Status %s", e.Date, e.Title, e.Status)
 		}
 	}
-	if _, err := store.Send(ctx, false, nil); !errors.As(err, &verr) || verr.Field != "period" {
+	if _, err := store.Send(ctx, SendOptions{}); !errors.As(err, &verr) || verr.Field != "period" {
 		t.Errorf("zweites Senden: err = %v", err)
 	}
 }
@@ -288,7 +288,7 @@ func TestSendPartialFailure(t *testing.T) {
 	store.ha = failingClient{homeassistant.NewTestClient(), "Eier"}
 	chooseList(t, store)
 
-	result, err := store.Send(ctx, false, nil)
+	result, err := store.Send(ctx, SendOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -317,5 +317,80 @@ func TestSendHomeAssistantDown(t *testing.T) {
 	p, _ := store.Preview(context.Background(), false)
 	if len(p.Items) != 7 {
 		t.Errorf("%d Artikel übrig", len(p.Items))
+	}
+}
+
+func TestDifferences(t *testing.T) {
+	ctx := context.Background()
+	store, _ := setup(t)
+	ha := store.ha.(*homeassistant.TestClient)
+	chooseList(t, store)
+	if _, err := store.Send(ctx, SendOptions{Deselected: []string{"rindfleisch"}}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Gerichte des Tests per Titel finden
+	p, _ := store.Preview(ctx, false)
+	if len(p.Missing) != 0 || len(p.Surplus) != 0 {
+		t.Fatalf("direkt nach dem Senden: fehlt %s / zu viel %s", summary(p.Missing), summary(p.Surplus))
+	}
+	entryID := func(date, title string) int64 {
+		for _, e := range p.Entries {
+			if e.Date == date && e.Title == title {
+				return e.ID
+			}
+		}
+		t.Fatalf("kein Eintrag %s %s", date, title)
+		return 0
+	}
+	gulasch, omelett := entryID("2026-10-21", "Gulasch"), entryID("2026-10-22", "Omelett")
+	setServings := func(id int64, servings int) {
+		e, err := store.plan.Get(ctx, id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.plan.Update(ctx, id, mealplan.Changes{RecipeID: e.RecipeID, Servings: servings, Status: e.Status}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Omelett für 4 statt 3, Gulasch für 4 statt 6
+	setServings(omelett, 4)
+	setServings(gulasch, 4)
+	p, _ = store.Preview(ctx, false)
+	// Eier: 6 statt 5 gesendet; Milch 200 statt 150 ml. Zwiebeln: 4 statt 5.
+	// Rindfleisch wurde abgewählt, ist also nicht "zu viel".
+	if got, want := summary(p.Missing), "Eier: 1\nMilch: 50 ml"; got != want {
+		t.Errorf("fehlt:\n%s\nerwartet:\n%s", got, want)
+	}
+	if got, want := summary(p.Surplus), "Knoblauch: 1 Zehen\nPaprikapulver: ½ EL\nZwiebeln: 1"; got != want {
+		t.Errorf("zu viel:\n%s\nerwartet:\n%s", got, want)
+	}
+
+	// Differenz nachsenden: Die offenen Einträge werden ergänzt.
+	result, err := store.Send(ctx, SendOptions{Missing: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Sent) != 2 || !result.Sent[0].Merged || result.Entries != 0 {
+		t.Errorf("Nachsenden = %+v", result)
+	}
+	items, _ := ha.OpenItems(ctx, homeassistant.TestListID)
+	for _, it := range items {
+		if it.Summary == "Eier" && it.Description != "5 + 1" || it.Summary == "Milch" && it.Description != "150 ml + 50 ml" {
+			t.Errorf("%s: %q", it.Summary, it.Description)
+		}
+	}
+	if p, _ = store.Preview(ctx, false); len(p.Missing) != 0 {
+		t.Errorf("nach dem Nachsenden fehlt noch: %s", summary(p.Missing))
+	}
+
+	// Omelett gelöscht: Alles dafür Gesendete ist jetzt zu viel.
+	if err := store.plan.Delete(ctx, omelett); err != nil {
+		t.Fatal(err)
+	}
+	p, _ = store.Preview(ctx, false)
+	if got, want := summary(p.Surplus), "Eier: 6\nKnoblauch: 1 Zehen\nMilch: 200 ml\nPaprikapulver: ½ EL\nPetersilie: \nZwiebeln: 3"; got != want {
+		t.Errorf("zu viel nach dem Löschen:\n%s\nerwartet:\n%s", got, want)
 	}
 }

@@ -45,15 +45,37 @@ type SendResult struct {
 	Entries int          `json:"entries"` // Gerichte, die jetzt "transferred" sind
 }
 
-// Send überträgt die Einkaufsliste des Zeitraums an die gewählte Bring-Liste.
-// Artikel, deren key in deselected steht, werden nicht gesendet, aber wie
-// gesendete protokolliert – sie gelten als erledigt (z. B. schon im Haus).
-// Danach haben alle eingerechneten Gerichte den Status "transferred".
+// SendOptions legen fest, was gesendet wird.
+type SendOptions struct {
+	Next bool // folgender statt aktueller Einkaufszeitraum
+	// Deselected sind die keys abgewählter Artikel: Sie werden nicht
+	// gesendet, aber wie gesendete protokolliert und gelten damit als
+	// erledigt (z. B. schon im Haus).
+	Deselected []string
+	// Missing: nur die Differenz der schon übertragenen Gerichte nachsenden.
+	Missing bool
+	// Entries: nur die Zutaten dieser Gerichte senden (z. B. direkt nach
+	// dem Verschieben in den Einkaufszeitraum). Leer = alle geplanten.
+	Entries []int64
+}
+
+// logRow ist eine künftige Zeile in transferred_items.
+type logRow struct {
+	EntryID  *int64 // nil bei nachgesendeten Differenzen
+	Key      string
+	Name     string
+	Quantity *float64
+	Unit     string
+}
+
+// Send überträgt Artikel an die gewählte Bring-Liste. Danach haben die
+// eingerechneten Gerichte den Status "transferred", und alles Gesendete
+// bzw. Abgewählte steht im Protokoll.
 //
 // Schlägt ein einzelner Artikel fehl, geht es mit den übrigen weiter. Der
-// fehlgeschlagene wird nicht protokolliert und taucht deshalb später unter
+// fehlgeschlagene wird nicht protokolliert und taucht deshalb danach unter
 // den nachzusendenden Artikeln auf.
-func (s *Store) Send(ctx context.Context, next bool, deselected []string) (SendResult, error) {
+func (s *Store) Send(ctx context.Context, opts SendOptions) (SendResult, error) {
 	// Zwei gleichzeitige Übertragungen (z. B. von zwei Handys) würden jeden
 	// Artikel doppelt senden; die Sperre lässt die zweite warten.
 	s.sendMu.Lock()
@@ -66,27 +88,50 @@ func (s *Store) Send(ctx context.Context, next bool, deselected []string) (SendR
 	if st.BringEntity == "" {
 		return SendResult{}, &ValidationError{"bring_entity", "bitte zuerst in den einstellungen eine bring-liste wählen"}
 	}
+	period, today, err := s.period(ctx, opts.Next)
+	if err != nil {
+		return SendResult{}, err
+	}
 
-	period, today, err := s.period(ctx, next)
-	if err != nil {
-		return SendResult{}, err
-	}
-	entries, err := s.loadEntries(ctx, period, today)
-	if err != nil {
-		return SendResult{}, err
-	}
+	var items []Item
+	var rows []logRow
 	var entryIDs []int64
-	for _, e := range entries {
-		if e.Included {
-			entryIDs = append(entryIDs, e.ID)
+	if opts.Missing {
+		if items, _, err = s.differences(ctx, period); err != nil {
+			return SendResult{}, err
+		}
+		for _, it := range items {
+			if len(it.Amounts) == 0 {
+				rows = append(rows, logRow{Key: it.Key, Name: it.Name})
+			}
+			for _, a := range it.Amounts {
+				rows = append(rows, logRow{Key: it.Key, Name: it.Name, Quantity: &a.Quantity, Unit: a.Unit})
+			}
+		}
+	} else {
+		entries, err := s.loadEntries(ctx, period, today)
+		if err != nil {
+			return SendResult{}, err
+		}
+		for _, e := range entries {
+			if e.Included && (len(opts.Entries) == 0 || slices.Contains(opts.Entries, e.ID)) {
+				entryIDs = append(entryIDs, e.ID)
+			}
+		}
+		needs, err := s.loadNeeds(ctx, max(today, period.From), period.To, mealplan.StatusPlanned)
+		if err != nil {
+			return SendResult{}, err
+		}
+		// Nur der Bedarf der ausgewählten Gerichte. slices.DeleteFunc
+		// entfernt alle Elemente, für die die Funktion true liefert.
+		needs = slices.DeleteFunc(needs, func(n need) bool { return !slices.Contains(entryIDs, n.EntryID) })
+		items = summarize(needs)
+		for _, n := range needs {
+			rows = append(rows, logRow{EntryID: &n.EntryID, Key: n.key(), Name: cleanName(n.Name), Quantity: n.Quantity, Unit: n.Unit})
 		}
 	}
-	if len(entryIDs) == 0 {
+	if len(items) == 0 && len(entryIDs) == 0 {
 		return SendResult{}, &ValidationError{"period", "in diesem zeitraum ist nichts zu senden"}
-	}
-	needs, err := s.loadNeeds(ctx, max(today, period.From), period.To, mealplan.StatusPlanned)
-	if err != nil {
-		return SendResult{}, err
 	}
 
 	// Ab hier wird nach außen gesendet. Bricht der Browser die Anfrage ab,
@@ -104,8 +149,8 @@ func (s *Store) Send(ctx context.Context, next bool, deselected []string) (SendR
 
 	result := SendResult{List: st.BringEntity, Sent: []SentItem{}, Failed: []FailedItem{}}
 	done := map[string]bool{} // gesendete oder abgewählte Artikel
-	for _, it := range summarize(needs) {
-		if slices.Contains(deselected, it.Key) {
+	for _, it := range items {
+		if slices.Contains(opts.Deselected, it.Key) {
 			done[it.Key] = true
 			continue
 		}
@@ -118,7 +163,7 @@ func (s *Store) Send(ctx context.Context, next bool, deselected []string) (SendR
 		result.Sent = append(result.Sent, SentItem{Name: it.Name, Spec: it.Spec, Merged: merged})
 	}
 
-	if err := s.record(ctx, period, entryIDs, needs, deselected, done); err != nil {
+	if err := s.record(ctx, period, entryIDs, rows, opts.Deselected, done); err != nil {
 		return SendResult{}, err
 	}
 	result.Entries = len(entryIDs)
@@ -148,9 +193,9 @@ func joinSpec(old, add string) string {
 	return old + " + " + add
 }
 
-// record setzt die Gerichte auf "transferred" und protokolliert je Gericht
-// und Zutat, was gesendet (sent = 1) oder abgewählt (sent = 0) wurde.
-func (s *Store) record(ctx context.Context, period mealplan.Period, entryIDs []int64, needs []need, deselected []string, done map[string]bool) error {
+// record setzt die Gerichte auf "transferred" und protokolliert, was
+// gesendet (sent = 1) oder abgewählt (sent = 0) wurde.
+func (s *Store) record(ctx context.Context, period mealplan.Period, entryIDs []int64, rows []logRow, deselected []string, done map[string]bool) error {
 	now := database.FormatTime(time.Now())
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -167,17 +212,16 @@ func (s *Store) record(ctx context.Context, period mealplan.Period, entryIDs []i
 			return fmt.Errorf("übertragung speichern: %w", err)
 		}
 	}
-	for _, n := range needs {
-		key := n.key()
-		if !done[key] {
+	for _, r := range rows {
+		if !done[r.Key] {
 			continue
 		}
-		sent := !slices.Contains(deselected, key)
+		sent := !slices.Contains(deselected, r.Key)
 		_, err := tx.ExecContext(ctx, `
 			INSERT INTO transferred_items (entry_id, period_from, item_key, ingredient_name,
 			                               quantity, unit, sent, transferred_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			n.EntryID, period.From, key, cleanName(n.Name), n.Quantity, n.Unit, sent, now)
+			r.EntryID, period.From, r.Key, r.Name, r.Quantity, r.Unit, sent, now)
 		if err != nil {
 			return fmt.Errorf("übertragung speichern: %w", err)
 		}
