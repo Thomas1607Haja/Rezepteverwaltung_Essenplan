@@ -94,6 +94,8 @@
     <select bind:value={recipeFilter.sort} aria-label="Sortierung">
       <option value="name">Name</option>
       <option value="newest">Neu hinzugefügt</option>
+      <option value="last_planned">Zuletzt eingeplant</option>
+      <option value="most_planned">Am häufigsten eingeplant</option>
     </select>
   </div>
 </div>

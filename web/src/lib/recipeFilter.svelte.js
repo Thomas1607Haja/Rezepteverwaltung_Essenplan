@@ -6,7 +6,7 @@ export const recipeFilter = $state({
   query: '',
   tagIds: [],
   favoritesOnly: false,
-  sort: 'name', // 'name' oder 'newest'
+  sort: 'name', // 'name', 'newest', 'last_planned' oder 'most_planned'
 });
 
 /** Schaltet eine Kategorie im Filter an oder aus. */

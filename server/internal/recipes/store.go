@@ -13,11 +13,19 @@ import (
 // Store liest und schreibt Rezepte in der Datenbank.
 type Store struct {
 	db *sql.DB
+	// now liefert die aktuelle Zeit; Tests setzen einen festen Zeitpunkt.
+	now func() time.Time
 }
 
 // NewStore erzeugt einen Store für die geöffnete Datenbank db.
 func NewStore(db *sql.DB) *Store {
-	return &Store{db: db}
+	return &Store{db: db, now: time.Now}
+}
+
+// today ist der heutige Kalendertag in der Zeitzone des Servers, z. B.
+// "2026-10-21" – im selben Format wie meal_plan_entries.date.
+func (s *Store) today() string {
+	return s.now().Format("2006-01-02")
 }
 
 // Create speichert ein neues Rezept und gibt es so zurück, wie es nun in der
@@ -266,10 +274,12 @@ func (s *Store) Get(ctx context.Context, id int64) (Recipe, error) {
 	var createdAt, updatedAt string
 	err := s.db.QueryRowContext(ctx, `
 		SELECT id, title, description, base_servings, prep_minutes, total_minutes,
-		       source_url, image, thumbnail, is_favorite, notes, created_at, updated_at
-		FROM recipes WHERE id = ?`, id).Scan(
+		       source_url, image, thumbnail, is_favorite, notes, created_at, updated_at,`+
+		planInfoColumns+`
+		FROM recipes r WHERE id = ?`, s.today(), s.today(), id).Scan(
 		&r.ID, &r.Title, &r.Description, &r.BaseServings, &r.PrepMinutes, &r.TotalMinutes,
-		&r.SourceURL, &r.Image, &r.Thumbnail, &r.IsFavorite, &r.Notes, &createdAt, &updatedAt)
+		&r.SourceURL, &r.Image, &r.Thumbnail, &r.IsFavorite, &r.Notes, &createdAt, &updatedAt,
+		&r.NextPlanned, &r.LastPlanned, &r.PlanCount)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Recipe{}, ErrNotFound
 	}

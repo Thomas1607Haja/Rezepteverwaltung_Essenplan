@@ -1,6 +1,6 @@
 <script>
   import Icon from './Icon.svelte';
-  import { formatMinutes } from '../lib/format.js';
+  import { formatMinutes, planStatus } from '../lib/format.js';
   import { imageUrl } from '../lib/api.js';
 
   // recipe ist eine Kurzfassung aus der Rezeptliste.
@@ -20,6 +20,7 @@
   </div>
   <div class="body">
     <h2 class="title">{recipe.title}</h2>
+    <p class="status" class:upcoming={recipe.next_planned}>{planStatus(recipe)}</p>
     <div class="meta">
       {#if minutes != null}
         <span class="time"><Icon name="clock" size={15} /> {formatMinutes(minutes)}</span>
@@ -84,6 +85,16 @@
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .status {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .status.upcoming {
+    color: var(--accent);
   }
 
   .meta {

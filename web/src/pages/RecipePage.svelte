@@ -3,7 +3,7 @@
   import { api, imageUrl } from '../lib/api.js';
   import { navigate } from '../lib/router.svelte.js';
   import { filterByTag } from '../lib/recipeFilter.svelte.js';
-  import { formatMinutes, formatQuantity } from '../lib/format.js';
+  import { formatMinutes, formatQuantity, planStatus } from '../lib/format.js';
   import { keepScreenOn } from '../lib/wakeLock.js';
   import Icon from '../components/Icon.svelte';
 
@@ -131,6 +131,7 @@
       {/if}
 
       <div class="facts">
+        <span class:upcoming={recipe.next_planned}><Icon name="calendar" size={16} /> {planStatus(recipe)}</span>
         {#if recipe.prep_minutes != null}
           <span><Icon name="clock" size={16} /> Vorbereitung {formatMinutes(recipe.prep_minutes)}</span>
         {/if}
@@ -300,6 +301,10 @@
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
+  }
+
+  .facts .upcoming {
+    color: var(--accent);
   }
 
   .tags {

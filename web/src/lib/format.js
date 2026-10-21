@@ -68,3 +68,42 @@ export function formatUptime(seconds) {
   if (hours > 0) return `${hours} Std. ${minutes} Min.`;
   return `${minutes} Min.`;
 }
+
+/** Heutiger Tag im Format "2026-10-21" (Zeitzone des Browsers). */
+export function todayString() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** Tage von a bis b, beide als "2026-10-21". Rechnet in UTC, damit die
+ * Zeitumstellung keinen Tag verschluckt. */
+export function daysBetween(a, b) {
+  const utc = (s) => Date.UTC(Number(s.slice(0, 4)), Number(s.slice(5, 7)) - 1, Number(s.slice(8, 10)));
+  return Math.round((utc(b) - utc(a)) / 86_400_000);
+}
+
+/**
+ * Statushinweis eines Rezepts aus next_planned und last_planned:
+ * „heute eingeplant“, „eingeplant in 5 Tagen“, „zuletzt vor 2 Wochen“,
+ * „noch nie eingeplant“. Ein künftiger Termin hat Vorrang.
+ */
+export function planStatus(recipe, today = todayString()) {
+  if (recipe.next_planned) {
+    const days = daysBetween(today, recipe.next_planned);
+    if (days <= 0) return 'heute eingeplant';
+    if (days === 1) return 'morgen eingeplant';
+    if (days < 14) return `eingeplant in ${days} Tagen`;
+    return `eingeplant in ${Math.round(days / 7)} Wochen`;
+  }
+  if (recipe.last_planned) {
+    const days = daysBetween(recipe.last_planned, today);
+    if (days <= 1) return 'zuletzt gestern';
+    if (days < 14) return `zuletzt vor ${days} Tagen`;
+    if (days < 60) return `zuletzt vor ${Math.round(days / 7)} Wochen`;
+    if (days < 365) return `zuletzt vor ${Math.round(days / 30)} Monaten`;
+    const years = Math.floor(days / 365);
+    return years === 1 ? 'zuletzt vor über einem Jahr' : `zuletzt vor über ${years} Jahren`;
+  }
+  return 'noch nie eingeplant';
+}

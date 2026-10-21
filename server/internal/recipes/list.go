@@ -9,11 +9,12 @@ import (
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
-// Sortierungen der Rezeptliste. "Zuletzt eingeplant" und "am häufigsten
-// eingeplant" folgen mit dem Essensplan in Phase 4.
+// Sortierungen der Rezeptliste.
 const (
-	SortName   = "name"   // alphabetisch nach Titel (Standard)
-	SortNewest = "newest" // zuletzt angelegte zuerst
+	SortName        = "name"         // alphabetisch nach Titel (Standard)
+	SortNewest      = "newest"       // zuletzt angelegte zuerst
+	SortLastPlanned = "last_planned" // zuletzt gegessene zuerst, nie eingeplante am Ende
+	SortMostPlanned = "most_planned" // am häufigsten eingeplante zuerst
 )
 
 // ListFilter beschreibt, welche Rezepte die Liste in welcher Reihenfolge
@@ -27,7 +28,7 @@ type ListFilter struct {
 	// passen (Vegetarisch und zugleich Pasta oder Reis).
 	TagIDs        []int64
 	FavoritesOnly bool
-	Sort          string // SortName, SortNewest oder leer (= SortName)
+	Sort          string // eine der Sort-Konstanten oder leer (= SortName)
 }
 
 // Summary ist die Kurzfassung eines Rezepts für Listen und Kacheln.
@@ -38,7 +39,27 @@ type Summary struct {
 	TotalMinutes *int   `json:"total_minutes"`
 	Thumbnail    string `json:"thumbnail"`
 	IsFavorite   bool   `json:"is_favorite"`
+	// Eingebettetes Struct: Seine Felder erscheinen im JSON direkt neben
+	// den anderen (next_planned, last_planned, plan_count).
+	PlanInfo
 }
+
+// PlanInfo sagt, wann ein Rezept im Essensplan steht. Daraus entsteht der
+// Statushinweis („eingeplant in 5 Tagen“, „zuletzt vor 2 Wochen“). Wird
+// bei jeder Abfrage berechnet, nicht gespeichert.
+type PlanInfo struct {
+	NextPlanned *string `json:"next_planned"` // nächster Termin ab heute, z. B. "2026-10-24"
+	LastPlanned *string `json:"last_planned"` // letzter Termin vor heute
+	PlanCount   int     `json:"plan_count"`   // wie oft insgesamt eingeplant
+}
+
+// planInfoColumns berechnet PlanInfo je Rezept r. Die beiden Platzhalter
+// sind jeweils der heutige Tag. Der Index meal_plan_entries_recipe
+// (recipe_id, date) macht die Unterabfragen schnell.
+const planInfoColumns = `
+	(SELECT MIN(date) FROM meal_plan_entries WHERE recipe_id = r.id AND date >= ?) AS next_planned,
+	(SELECT MAX(date) FROM meal_plan_entries WHERE recipe_id = r.id AND date < ?) AS last_planned,
+	(SELECT COUNT(*) FROM meal_plan_entries WHERE recipe_id = r.id) AS plan_count`
 
 // List liefert die Rezepte, die zum Filter f passen.
 func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
@@ -49,6 +70,10 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 		orderBy = "fold(r.title), r.title, r.id"
 	case SortNewest:
 		orderBy = "r.created_at DESC, r.id DESC"
+	case SortLastPlanned:
+		orderBy = "last_planned DESC NULLS LAST, fold(r.title), r.title, r.id"
+	case SortMostPlanned:
+		orderBy = "plan_count DESC, fold(r.title), r.title, r.id"
 	default:
 		return nil, &ValidationError{"sort", fmt.Sprintf("unbekannte sortierung %q", f.Sort)}
 	}
@@ -57,7 +82,8 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 	// verbunden; args enthält die Werte für die ?-Platzhalter in derselben
 	// Reihenfolge.
 	var where []string
-	var args []any
+	today := s.today()
+	args := []any{today, today} // für planInfoColumns, die im SELECT zuerst kommen
 
 	for _, word := range strings.Fields(database.Fold(f.Query)) {
 		pattern := "%" + escapeLike(word) + "%"
@@ -84,8 +110,8 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 		}
 	}
 
-	query := `SELECT r.id, r.title, r.prep_minutes, r.total_minutes, r.thumbnail, r.is_favorite
-		FROM recipes r`
+	query := `SELECT r.id, r.title, r.prep_minutes, r.total_minutes, r.thumbnail, r.is_favorite,` +
+		planInfoColumns + ` FROM recipes r`
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")
 	}
@@ -102,7 +128,8 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 	for rows.Next() {
 		var sum Summary
 		if err := rows.Scan(&sum.ID, &sum.Title, &sum.PrepMinutes, &sum.TotalMinutes,
-			&sum.Thumbnail, &sum.IsFavorite); err != nil {
+			&sum.Thumbnail, &sum.IsFavorite,
+			&sum.NextPlanned, &sum.LastPlanned, &sum.PlanCount); err != nil {
 			return nil, fmt.Errorf("rezeptliste laden: %w", err)
 		}
 		list = append(list, sum)

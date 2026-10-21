@@ -27,6 +27,7 @@ type Recipe struct {
 	Ingredients  []Ingredient `json:"ingredients"` // in Anzeigereihenfolge
 	Steps        []Step       `json:"steps"`       // in Anzeigereihenfolge
 	Tags         []Tag        `json:"tags"`        // beim Speichern zählt nur die ID
+	PlanInfo                  // nur lesbar, siehe list.go
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
 }
