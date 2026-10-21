@@ -20,6 +20,7 @@
   // wenn sie gebraucht wird: import(...) als Funktion veranlasst Vite, sie in
   // eine eigene Datei zu legen. Übersicht und Kochansicht bleiben so schlank.
   const loadRecipeEditPage = () => import('./pages/RecipeEditPage.svelte');
+  const loadRecipePickerPage = () => import('./pages/RecipePickerPage.svelte');
 
   // Alle Seiten. section gibt an, welcher Bereich in der Navigation
   // hervorgehoben wird. page ist eine Komponente, load eine Funktion, die
@@ -31,6 +32,11 @@
     { pattern: '/recipes/new', section: '/recipes', load: loadRecipeEditPage },
     { pattern: '/recipes/:id', section: '/recipes', page: RecipePage },
     { pattern: '/recipes/:id/edit', section: '/recipes', load: loadRecipeEditPage },
+    // Kochansicht aus dem Essensplan: Portionen kommen aus dem Eintrag.
+    { pattern: '/recipes/:id/entry/:entryId', section: '/', page: RecipePage },
+    // Rezeptauswahl beim Planen bzw. Ersetzen
+    { pattern: '/plan/add/:date', section: '/', load: loadRecipePickerPage },
+    { pattern: '/plan/replace/:entryId', section: '/', load: loadRecipePickerPage },
     { pattern: '/shopping', section: '/shopping', page: ShoppingPage },
     { pattern: '/settings', section: '/settings', page: SettingsPage },
   ];

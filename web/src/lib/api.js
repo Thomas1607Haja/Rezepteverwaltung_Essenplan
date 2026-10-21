@@ -79,6 +79,16 @@ export const api = {
    */
   mealPlan: (from, to) => request('GET', `/meal-plan?from=${from}&to=${to}`),
 
+  getEntry: (id) => request('GET', `/meal-plan/${id}`),
+
+  /** Neuer Eintrag: { date, slot?, recipe_id?, servings?, note? }. */
+  createEntry: (entry) => request('POST', '/meal-plan', entry),
+
+  /** Ändert { recipe_id, servings, note, status } eines Eintrags. */
+  updateEntry: (id, changes) => request('PUT', `/meal-plan/${id}`, changes),
+
+  deleteEntry: (id) => request('DELETE', `/meal-plan/${id}`),
+
   /** Version, Arbeitsspeicher und Platzbedarf der Daten. */
   system: () => request('GET', '/system'),
 

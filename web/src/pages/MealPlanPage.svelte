@@ -2,8 +2,10 @@
   import { tick } from 'svelte';
   import { api } from '../lib/api.js';
   import { addDays, dayLabel, todayString } from '../lib/format.js';
+  import { takePlanFocus } from '../lib/planFocus.svelte.js';
   import Icon from '../components/Icon.svelte';
   import PlanEntry from '../components/PlanEntry.svelte';
+  import EntryDialog from '../components/EntryDialog.svelte';
 
   // Wie viele Tage beim Start und bei jedem Nachladen am Rand.
   const INITIAL_BEFORE = 7;
@@ -22,6 +24,9 @@
 
   let strip; // der waagerecht scrollende Streifen (bind:this)
   let loading = false; // verhindert doppeltes Nachladen beim Scrollen
+  let menuEntry = $state(null); // Eintrag, dessen Menü offen ist
+  // Tag, den der Plan zeigen soll, z. B. nach dem Einplanen; sonst heute.
+  const focusDate = takePlanFocus();
 
   const days = $derived.by(() => {
     if (!from) return [];
@@ -41,13 +46,15 @@
 
   async function init() {
     try {
-      const start = addDays(today, -INITIAL_BEFORE);
-      const end = addDays(today, INITIAL_AFTER);
+      // Um den gewünschten Tag herum laden (mindestens bis heute).
+      const center = focusDate ?? today;
+      const start = addDays(center < today ? center : today, -INITIAL_BEFORE);
+      const end = addDays(center > today ? center : today, INITIAL_AFTER);
       await load(start, end);
       from = start;
       to = end;
       await tick(); // warten, bis die Spalten im DOM stehen
-      scrollToDay(today, 'instant');
+      scrollToDay(center, 'instant');
     } catch (e) {
       error = e.message;
     }
@@ -86,6 +93,7 @@
       await load(start, addDays(from, -1));
       // Neue Spalten links schieben den Inhalt nach rechts; die
       // Scrollposition um ihre Breite korrigieren, damit nichts springt.
+      if (!strip) return; // Seite inzwischen verlassen
       const before = strip.scrollWidth;
       from = start;
       await tick();
@@ -114,9 +122,24 @@
 
   // Nahe am Rand automatisch weitere Tage laden ("endlos" scrollen).
   function onScroll() {
+    if (!strip) return; // Seite wird gerade verlassen
     const margin = strip.clientWidth / 2;
     if (strip.scrollLeft < margin) loadEarlier();
     else if (strip.scrollLeft + strip.clientWidth > strip.scrollWidth - margin) loadLater();
+  }
+
+  // Änderungen aus dem Menü in die Anzeige übernehmen, ohne neu zu laden.
+  function entrySaved(saved) {
+    const list = entriesByDate[saved.date];
+    const i = list.findIndex((e) => e.id === saved.id);
+    if (i !== -1) list[i] = saved;
+    menuEntry = null;
+  }
+
+  function entryDeleted(id) {
+    const list = entriesByDate[menuEntry.date];
+    entriesByDate[menuEntry.date] = list.filter((e) => e.id !== id);
+    menuEntry = null;
   }
 
   const inPeriod = (date) => period && date >= period.from && date <= period.to;
@@ -158,17 +181,35 @@
         {#if lunchEntries.length > 0}
           <span class="slot">Mittag</span>
           {#each lunchEntries as entry (entry.id)}
-            <PlanEntry {entry} />
+            <PlanEntry {entry} onmenu={(e) => (menuEntry = e)} />
           {/each}
           <span class="slot">Abend</span>
         {/if}
         {#each dinner(date) as entry (entry.id)}
-          <PlanEntry {entry} />
+          <PlanEntry {entry} onmenu={(e) => (menuEntry = e)} />
         {/each}
+        <!-- Leerer Tag: großes Plus; belegter Tag: kleines Plus für ein
+             weiteres Gericht -->
+        <a
+          class="add"
+          class:small={entriesByDate[date]?.length > 0}
+          href="#/plan/add/{date}"
+          title="Gericht für {label.weekday} {label.date} planen"
+          aria-label="Gericht für {label.weekday} {label.date} planen"
+        >+</a>
       </div>
     </section>
   {/each}
 </div>
+
+{#if menuEntry}
+  <EntryDialog
+    entry={menuEntry}
+    onsaved={entrySaved}
+    ondeleted={entryDeleted}
+    onclose={() => (menuEntry = null)}
+  />
+{/if}
 
 <style>
   .head {
@@ -315,6 +356,27 @@
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+  }
+
+  .add {
+    display: grid;
+    place-items: center;
+    min-height: 4rem;
+    border: 1px dashed var(--border);
+    border-radius: calc(var(--radius) - 0.15rem);
+    color: var(--text-muted);
+    font-size: 1.6rem;
+    text-decoration: none;
+  }
+
+  .add.small {
+    min-height: 1.9rem;
+    font-size: 1.1rem;
+  }
+
+  .add:hover {
+    border-color: var(--accent);
+    color: var(--accent);
   }
 
   .slot {

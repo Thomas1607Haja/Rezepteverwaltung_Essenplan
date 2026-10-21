@@ -2,8 +2,9 @@
   import Icon from './Icon.svelte';
   import { imageUrl } from '../lib/api.js';
 
-  // entry ist ein Eintrag aus GET /meal-plan.
-  let { entry } = $props();
+  // entry ist ein Eintrag aus GET /meal-plan; onmenu(entry) öffnet das
+  // Menü (Portionen, Notiz, Ersetzen, Entfernen).
+  let { entry, onmenu } = $props();
 
   const title = $derived(entry.recipe ? entry.recipe.title : entry.note);
   // Bei einem Rezept ist die Notiz eine Zusatzangabe (z. B. „mit Salat“).
@@ -16,51 +17,91 @@
   const status = $derived(statusInfo[entry.status]);
 </script>
 
-<!-- Einträge mit Rezept öffnen das Rezept; ohne Rezept gibt es nichts zu öffnen. -->
-<svelte:element
-  this={entry.recipe_id ? 'a' : 'div'}
-  class="entry"
-  class:no-recipe={!entry.recipe_id}
-  href={entry.recipe_id ? `#/recipes/${entry.recipe_id}` : undefined}
->
-  {#if entry.recipe}
-    <div class="thumb">
-      {#if entry.recipe.thumbnail}
-        <img src={imageUrl(entry.recipe.thumbnail)} alt="" loading="lazy" />
-      {:else}
-        <Icon name="dish" size={22} />
-      {/if}
-    </div>
-  {/if}
-  <div class="body">
-    <span class="title">{title}</span>
-    {#if extra}<span class="extra">{extra}</span>{/if}
-    <span class="meta">
-      {#if entry.recipe}<span>{entry.servings} P.</span>{/if}
-      {#if entry.recipe?.is_favorite}
-        <span class="favorite" title="Favorit"><Icon name="heart" size={13} filled /></span>
-      {/if}
-      {#if status}
-        <span class="status" title={status.label}><Icon name={status.icon} size={14} /></span>
-      {/if}
+<!-- Einträge mit Rezept öffnen die Kochansicht (mit den Portionen des
+     Eintrags), Einträge ohne Rezept das Menü. Der Menüknopf liegt neben
+     dem Link, denn ein Knopf darf nicht in einem Link stecken. -->
+<div class="entry" class:no-recipe={!entry.recipe_id}>
+  {#snippet content()}
+    {#if entry.recipe}
+      <span class="thumb">
+        {#if entry.recipe.thumbnail}
+          <img src={imageUrl(entry.recipe.thumbnail)} alt="" loading="lazy" />
+        {:else}
+          <Icon name="dish" size={22} />
+        {/if}
+      </span>
+    {/if}
+    <span class="body">
+      <span class="title">{title}</span>
+      {#if extra}<span class="extra">{extra}</span>{/if}
+      <span class="meta">
+        {#if entry.recipe}<span>{entry.servings} P.</span>{/if}
+        {#if entry.recipe?.is_favorite}
+          <span class="favorite" title="Favorit"><Icon name="heart" size={13} filled /></span>
+        {/if}
+        {#if status}
+          <span class="status" title={status.label}><Icon name={status.icon} size={14} /></span>
+        {/if}
+      </span>
     </span>
-  </div>
-</svelte:element>
+  {/snippet}
+  {#if entry.recipe_id}
+    <a class="main" href="#/recipes/{entry.recipe_id}/entry/{entry.id}">{@render content()}</a>
+  {:else}
+    <button type="button" class="main" onclick={() => onmenu(entry)}>{@render content()}</button>
+  {/if}
+  <button type="button" class="menu" title="Menü" aria-label="Menü für {title}" onclick={() => onmenu(entry)}>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="5" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="12" cy="19" r="1.8" />
+    </svg>
+  </button>
+</div>
 
 <style>
   .entry {
-    display: flex;
-    flex-direction: column;
+    position: relative;
     overflow: hidden;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: calc(var(--radius) - 0.15rem);
-    color: inherit;
-    text-decoration: none;
   }
 
-  a.entry:hover {
+  .entry:hover {
     border-color: var(--accent);
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  /* Rechts oben, auf dem Bild bzw. neben dem Titel */
+  .menu {
+    position: absolute;
+    top: 0.2rem;
+    right: 0.2rem;
+    display: grid;
+    place-items: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    border: none;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .menu:hover {
+    background: var(--surface-hover);
   }
 
   .no-recipe {
@@ -90,6 +131,11 @@
     padding: 0.35rem 0.5rem 0.4rem;
   }
 
+  /* Ohne Bild steht der Menüknopf neben dem Titel */
+  .no-recipe .body {
+    padding-right: 2rem;
+  }
+
   .title {
     font-size: 0.85rem;
     font-weight: 600;
@@ -113,10 +159,6 @@
     gap: 0.4rem;
     font-size: 0.75rem;
     color: var(--text-muted);
-  }
-
-  .meta:empty {
-    display: none;
   }
 
   .favorite,

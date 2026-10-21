@@ -3,34 +3,60 @@
   import { api, imageUrl } from '../lib/api.js';
   import { navigate } from '../lib/router.svelte.js';
   import { filterByTag } from '../lib/recipeFilter.svelte.js';
-  import { formatMinutes, formatQuantity, planStatus } from '../lib/format.js';
+  import { dayLabel, formatMinutes, formatQuantity, planStatus } from '../lib/format.js';
   import { keepScreenOn } from '../lib/wakeLock.js';
+  import { focusPlanOn } from '../lib/planFocus.svelte.js';
   import Icon from '../components/Icon.svelte';
+  import AddToPlanDialog from '../components/AddToPlanDialog.svelte';
 
-  // id kommt aus der Adresse #/recipes/:id.
-  let { id } = $props();
+  // id kommt aus der Adresse #/recipes/:id. Aus dem Essensplan geöffnet
+  // (#/recipes/:id/entry/:entryId) kommt die ID des Planeintrags dazu.
+  let { id, entryId = null } = $props();
   // App.svelte baut die Seite bei jeder neuen Adresse neu auf ({#key}),
   // id ändert sich also nie. Svelte warnt sonst, dass nur der Anfangswert
   // gelesen wird – genau das ist hier gewollt.
   // svelte-ignore state_referenced_locally
   const recipeId = id;
+  // svelte-ignore state_referenced_locally
+  const planEntryId = entryId;
 
   let recipe = $state(null);
   let error = $state('');
   let notFound = $state(false);
   let servings = $state(1);
+  let planEntry = $state(null); // Planeintrag, aus dem die Seite geöffnet wurde
+  let showAddDialog = $state(false);
 
-  api
-    .getRecipe(recipeId)
-    .then((r) => {
+  // Rezept und ggf. Planeintrag gleichzeitig laden. Aus dem Plan gelten
+  // dessen Portionen, sonst die Grundportionen des Rezepts.
+  Promise.all([api.getRecipe(recipeId), planEntryId ? api.getEntry(planEntryId).catch(() => null) : null])
+    .then(([r, entry]) => {
       recipe = r;
-      servings = r.base_servings;
+      planEntry = entry?.recipe_id === r.id ? entry : null;
+      servings = planEntry ? planEntry.servings : r.base_servings;
       document.title = `${r.title} – Rezeptplaner`;
     })
     .catch((e) => {
       if (e.status === 404 || e.status === 400) notFound = true;
       else error = e.message;
     });
+
+  /** Nach dem Einplanen den Statushinweis auffrischen. */
+  async function refreshPlanInfo() {
+    try {
+      const r = await api.getRecipe(recipeId);
+      recipe.next_planned = r.next_planned;
+      recipe.last_planned = r.last_planned;
+      recipe.plan_count = r.plan_count;
+    } catch {
+      // nicht schlimm: Der Hinweis stimmt dann erst nach dem Neuladen
+    }
+  }
+
+  function backToPlan() {
+    focusPlanOn(planEntry.date);
+    navigate('/');
+  }
 
   // onMount läuft, sobald die Seite angezeigt wird. Die zurückgegebene
   // Funktion läuft beim Verlassen: Sperre freigeben, Titel zurücksetzen.
@@ -78,7 +104,11 @@
   }
 
   async function remove() {
-    if (!confirm(`„${recipe.title}“ wirklich löschen?`)) return;
+    let question = `„${recipe.title}“ wirklich löschen?`;
+    if (recipe.next_planned) {
+      question += '\n\nEs ist noch im Essensplan eingeplant. Dort bleibt der Titel als Notiz stehen.';
+    }
+    if (!confirm(question)) return;
     try {
       await api.deleteRecipe(recipe.id);
       navigate('/recipes');
@@ -93,7 +123,13 @@
   }
 </script>
 
-<p class="back"><a href="#/recipes">← Rezepte</a></p>
+<p class="back">
+  {#if planEntry}
+    <button type="button" class="link back-link" onclick={backToPlan}>← Essensplan</button>
+  {:else}
+    <a href="#/recipes">← Rezepte</a>
+  {/if}
+</p>
 
 {#if notFound}
   <h1>Rezept nicht gefunden</h1>
@@ -125,6 +161,15 @@
           <Icon name="heart" size={26} filled={recipe.is_favorite} />
         </button>
       </div>
+
+      {#if planEntry}
+        {@const l = dayLabel(planEntry.date)}
+        <p class="from-plan">
+          <Icon name="calendar" size={16} />
+          Im Essensplan: {l.weekday} {l.date}, {planEntry.servings}
+          {planEntry.servings === 1 ? 'Portion' : 'Portionen'}{planEntry.note ? ` · ${planEntry.note}` : ''}
+        </p>
+      {/if}
 
       {#if recipe.description}
         <p class="description">{recipe.description}</p>
@@ -228,9 +273,14 @@
 
     <footer class="actions">
       <button type="button" class="danger" onclick={remove}>Rezept löschen</button>
+      <button type="button" class="plan" onclick={() => (showAddDialog = true)}>Zum Essensplan hinzufügen</button>
       <a class="edit" href={`#/recipes/${recipe.id}/edit`}>Bearbeiten</a>
     </footer>
   </article>
+
+  {#if showAddDialog}
+    <AddToPlanDialog {recipe} onadded={refreshPlanInfo} onclose={() => (showAddDialog = false)} />
+  {/if}
 {/if}
 
 <style>
@@ -486,9 +536,36 @@
 
   .actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.5rem;
     margin-top: 2rem;
+  }
+
+  .plan {
+    padding: 0.5rem 1.2rem;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--accent);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .from-plan {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.5rem 0 0;
+    padding: 0.4rem 0.7rem;
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+    font-size: 0.9rem;
+  }
+
+  .back-link {
+    text-decoration: none;
   }
 
   .edit {
