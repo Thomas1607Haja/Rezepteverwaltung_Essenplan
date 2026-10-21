@@ -49,8 +49,9 @@ class PlanView(HomeAssistantView):
             data = await rt.client.meal_plan()
         except RezeptplanerError as err:
             return web.json_response({"error": str(err)}, status=502)
-        # Link zur Weboberfläche der App (Seitenleiste über Ingress)
-        data["app_url"] = f"/hassio/ingress/{rt.slug}"
+        # Link zur Weboberfläche der App: Home Assistant meldet ihre Seite in
+        # der Seitenleiste unter der App-ID an (hassio/addon_panel.py).
+        data["app_url"] = f"/{rt.slug}"
         return self.json(data)
 
 

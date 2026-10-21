@@ -28,7 +28,10 @@ Optional gibt es eine Integration für Home Assistant:
 1. In **HACS** → ⋮ → **Benutzerdefinierte Repositories** die Adresse dieses Repositorys mit Typ **Integration** hinzufügen.
 2. **Rezeptplaner** herunterladen und Home Assistant neu starten.
 3. Unter **Einstellungen → Geräte & Dienste** erscheint „Rezeptplaner“ als **Entdeckt** – auf **Hinzufügen** tippen und bestätigen. Adresse und Schlüssel liefert die App selbst.
-4. Im Dashboard eine Karte **Essensplan** hinzufügen.
+4. Die Seite einmal neu laden (am Rechner Strg + F5, in der Companion-App unter Einstellungen → Companion App → Debugging „Frontend-Cache leeren“), damit der Browser die Karte kennt.
+5. Im Dashboard eine Karte **Essensplan** hinzufügen.
+
+„Öffnen“ auf der Karte führt zur Weboberfläche der App; dafür muss bei der App **In Seitenleiste anzeigen** eingeschaltet sein.
 
 Danach gibt es den Kalender `calendar.rezeptplaner_essensplan` und den Sensor `sensor.rezeptplaner_heute` (z. B. für eine Ansage „Heute gibt es …“).
 

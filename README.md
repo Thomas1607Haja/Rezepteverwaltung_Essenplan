@@ -16,7 +16,7 @@ Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wo
 1. **App:** In Home Assistant unter Einstellungen → Apps → App-Store → ⋮ → Repositories diese Adresse hinzufügen und „Rezeptplaner“ installieren:
    `https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan`
 2. **Integration und Dashboard-Karte (optional):** In HACS → ⋮ → Benutzerdefinierte Repositories dieselbe Adresse mit Typ „Integration“ hinzufügen, „Rezeptplaner“ herunterladen und Home Assistant neu starten. Die Integration erscheint dann unter Einstellungen → Geräte & Dienste als „Entdeckt“ – nur noch bestätigen.
-3. Im Dashboard eine Karte „Essensplan“ hinzufügen (in der Kartenauswahl oder als `type: custom:rezeptplaner-card`).
+3. Seite einmal neu laden (Strg + F5), dann im Dashboard eine Karte „Essensplan“ hinzufügen (in der Kartenauswahl oder als `type: custom:rezeptplaner-card`).
 
 ## Bausteine
 
