@@ -8,7 +8,7 @@
 3. Im App-Store **Rezeptplaner** auswählen und **Installieren**.
 4. **Starten** und **In Seitenleiste anzeigen** einschalten.
 
-Die Weboberfläche erscheint dann als **Rezepte** in der Seitenleiste.
+Die Weboberfläche erscheint dann als **Essensplan** in der Seitenleiste.
 
 ## Einstellungen
 

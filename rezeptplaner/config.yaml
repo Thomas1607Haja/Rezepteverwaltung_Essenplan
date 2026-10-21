@@ -19,7 +19,7 @@ image: ghcr.io/thomas1607haja/rezeptplaner
 ingress: true
 ingress_port: 8099
 panel_icon: mdi:chef-hat
-panel_title: Rezepte
+panel_title: Essensplan
 
 # Kein offener Port: Die API ist nur über Ingress erreichbar. Ein Port für
 # die Android-App kommt zusammen mit den API-Schlüsseln.
