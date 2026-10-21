@@ -33,9 +33,11 @@ COPY --from=web /src/server/internal/web/dist/app ./internal/web/dist/app
 # TARGETOS/TARGETARCH setzt Docker passend zur gewünschten Plattform
 # (hier linux/arm64). timetzdata bettet die Zeitzonendaten ein (ca. 450 KB),
 # weil das leere Image keine mitbringt.
-ARG TARGETOS TARGETARCH
+# VERSION übergibt die GitHub Action (z. B. 0.1.0); sie erscheint in den
+# Einstellungen und im Protokoll.
+ARG TARGETOS TARGETARCH VERSION=dev
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
-    go build -trimpath -tags timetzdata -ldflags="-s -w" -o /out/rezeptplaner ./cmd/rezeptplaner
+    go build -trimpath -tags timetzdata -ldflags="-s -w -X main.buildVersion=$VERSION" -o /out/rezeptplaner ./cmd/rezeptplaner
 
 # --- 3. Fertiges Image: nur Programmdatei und Zertifikate ---
 FROM scratch

@@ -88,6 +88,7 @@ jobs:
           context: .
           platforms: linux/arm64
           push: ${{ steps.version.outputs.version != '' }}
+          build-args: VERSION=${{ steps.version.outputs.version || 'test' }}
           tags: ${{ env.IMAGE }}:${{ steps.version.outputs.version || 'test' }}
           # Zwischenstände im Cache von GitHub Actions: spätere Builds
           # übernehmen unveränderte Stufen (z. B. npm ci).

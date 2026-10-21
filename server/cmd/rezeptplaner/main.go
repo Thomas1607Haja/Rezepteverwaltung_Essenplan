@@ -22,8 +22,13 @@ import (
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/importer"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/system"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/web"
 )
+
+// buildVersion wird beim Bauen gesetzt: go build -ldflags="-X main.buildVersion=0.1.0".
+// Ohne diese Angabe (z. B. bei go run) bleibt es bei "dev".
+var buildVersion = "dev"
 
 // config enthält alle Einstellungen, die beim Start gelesen werden.
 type config struct {
@@ -103,6 +108,7 @@ func run() error {
 	recipeStore := recipes.NewStore(db)
 	recipes.NewHandler(recipeStore, imgs, fetcher).Register(mux)
 	importer.NewHandler(recipeStore, fetcher).Register(mux)
+	system.NewHandler(buildVersion, cfg.DataDir).Register(mux)
 	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist
 	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
 	mux.Handle("GET /", web.Handler())
@@ -133,7 +139,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("server starten: %w", err)
 	}
-	slog.Info("Server gestartet", "url", "http://"+cfg.ListenAddr, "data_dir", cfg.DataDir)
+	slog.Info("Server gestartet", "version", buildVersion, "url", "http://"+cfg.ListenAddr, "data_dir", cfg.DataDir)
 
 	// Der Server läuft in einer eigenen Goroutine, damit run() parallel auf
 	// das Stoppsignal warten kann. Sein Ergebnis kommt über den Kanal zurück.

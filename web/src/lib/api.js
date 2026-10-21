@@ -69,6 +69,9 @@ function listParams(filter) {
 export const api = {
   health: () => request('GET', '/health'),
 
+  /** Version, Arbeitsspeicher und Platzbedarf der Daten. */
+  system: () => request('GET', '/system'),
+
   /** Liste von Kurzfassungen (id, title, Zeiten, thumbnail, is_favorite). */
   listRecipes: async (filter = {}) =>
     (await request('GET', '/recipes' + listParams(filter))).recipes,
