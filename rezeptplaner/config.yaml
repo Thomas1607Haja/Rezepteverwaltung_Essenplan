@@ -1,0 +1,33 @@
+# Konfiguration der Home-Assistant-App „Rezeptplaner“.
+# Referenz: https://contributors.home-assistant.io/apps/reference/configuration/
+name: Rezeptplaner
+# Muss zum Tag der neuen Version passen (v0.1.0 -> "0.1.0"); die GitHub
+# Action prüft das. Home Assistant lädt das Image mit genau dieser Version.
+version: "0.1.0"
+slug: rezeptplaner
+description: Rezepte verwalten, Essensplan und Einkaufsliste
+url: https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan
+# Nur der Home Assistant Green (ARM64); weitere Plattformen bei Bedarf.
+arch:
+  - aarch64
+# Fertiges Image von der GitHub Action; der Green baut nichts selbst.
+image: ghcr.io/thomas1607haja/rezeptplaner
+
+# Weboberfläche in der Seitenleiste, Anmeldung über Home Assistant.
+# Der Server lauscht auf 8099 und nimmt nur Verbindungen vom
+# Ingress-Vermittler an (siehe Dockerfile).
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:chef-hat
+panel_title: Rezepte
+
+# Kein offener Port: Die API ist nur über Ingress erreichbar. Ein Port für
+# die Android-App kommt zusammen mit den API-Schlüsseln.
+
+# Während eines Backups wird die App kurz gestoppt. So ist die Datenbank
+# (SQLite mit WAL-Datei) garantiert in einem sauberen Zustand.
+backup: cold
+
+# Prüft, ob der Server noch Verbindungen annimmt, und startet ihn sonst neu.
+# tcp statt http, weil der Server nur Anfragen über Ingress beantwortet.
+watchdog: "tcp://[HOST]:[PORT:8099]"

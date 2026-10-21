@@ -1,0 +1,5 @@
+# Kennzeichnet dieses Repository als App-Repository für Home Assistant.
+# Die App selbst liegt im Ordner rezeptplaner/.
+name: Rezeptplaner
+url: https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan
+maintainer: Thomas1607Haja
