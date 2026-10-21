@@ -149,7 +149,8 @@ CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" ./cmd/
 ### Essensplan
 
 - Einträge mit Datum und Slot statt fester Wochen.
-- Slots: *Abendessen* (Standard) und optional *Mittagessen* (z. B. für Ferien). Pro Datum und Slot höchstens ein Eintrag.
+- Slots: *Abendessen* (Standard) und optional *Mittagessen* (z. B. für Ferien). Pro Datum und Slot sind mehrere Einträge möglich (z. B. Hauptgericht und Nachtisch); ihre Reihenfolge ist frei wählbar.
+- Wird ein Rezept gelöscht, bleiben seine Planeinträge erhalten; der Rezepttitel wird zur Notiz des Eintrags.
 - Einträge ohne Rezept sind möglich (z. B. „Essen gehen“, „Reste“).
 - Planung beliebig weit im Voraus.
 
@@ -170,7 +171,7 @@ Es wird nicht ausgelesen, was in Bring tatsächlich abgehakt wurde.
 
 ### Verschieben und Tauschen (Drag and Drop)
 
-- Ziehen auf einen belegten Tag/Slot tauscht die Gerichte.
+- Ziehen auf ein Gericht tauscht die beiden Gerichte; Ziehen auf die freie Fläche eines Tages hängt das Gericht dort an.
 - Die Prüfung der Warnregeln erfolgt auf dem Server; erst nach Bestätigung wird gespeichert.
 
 | Situation | Reaktion |
@@ -277,13 +278,14 @@ Alle Tabellen erhalten zusätzlich `updated_at` für den Abgleich mit der App.
 | id | Integer | |
 | date | Datum | |
 | slot | Text | `dinner` (Standard) oder `lunch` |
+| position | Integer | Reihenfolge innerhalb von Datum und Slot |
 | recipe_id | Integer | optional (Einträge ohne Rezept möglich) |
 | servings | Integer | |
 | status | Text | `planned`, `transferred`, `have_ingredients` |
 | transferred_at | Zeitstempel | optional |
 | note | Text | optional, z. B. „Essen gehen“ |
 
-Eindeutigkeit: (`date`, `slot`).
+Keine Eindeutigkeit über (`date`, `slot`): Mehrere Einträge pro Slot sind erlaubt. Ein Eintrag braucht ein Rezept oder eine Notiz.
 
 ### `transferred_items`
 
@@ -314,7 +316,7 @@ Schmale Tabelle für gelöschte Datensätze, damit die App beim Abgleich erfähr
 Schlüssel-Wert-Speicher, u. a.:
 
 - `family_size`
-- `shopping_day`
+- `shopping_day` (englischer Wochentag, z. B. `saturday`)
 - `bring_entity` (To-do-Entität der Bring-Liste in Home Assistant)
 
 ### Nicht gespeichert (wird berechnet)

@@ -26,8 +26,8 @@ func TestMigrateCreatesSchemaAndTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Migrate: %v", err)
 	}
-	if version != 2 {
-		t.Errorf("version = %d, erwartet 2", version)
+	if version != 3 {
+		t.Errorf("version = %d, erwartet 3", version)
 	}
 
 	// 8 Hauptzutat + 2 Geschmack + 8 Art + 5 Eigenschaften
@@ -53,8 +53,8 @@ func TestMigrateTwiceChangesNothing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("zweite Migration: %v", err)
 	}
-	if version != 2 {
-		t.Errorf("version = %d, erwartet 2", version)
+	if version != 3 {
+		t.Errorf("version = %d, erwartet 3", version)
 	}
 }
 
@@ -121,5 +121,56 @@ func TestFoldInSQL(t *testing.T) {
 	}
 	if null.Valid {
 		t.Errorf("fold(NULL) = %q, erwartet NULL", null.String)
+	}
+}
+
+// Wird ein Rezept gelöscht, bleiben seine Planeinträge mit dem Titel als
+// Notiz erhalten (Trigger meal_plan_keep_title in 003_meal_plan.sql).
+func TestDeletingRecipeKeepsPlanEntries(t *testing.T) {
+	ctx := context.Background()
+	db := openTestDB(t)
+	if _, err := Migrate(ctx, db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	mustExec := func(query string, args ...any) {
+		t.Helper()
+		if _, err := db.ExecContext(ctx, query, args...); err != nil {
+			t.Fatalf("%s: %v", query, err)
+		}
+	}
+	now := "2026-10-21T10:00:00.000Z"
+	mustExec(`INSERT INTO recipes (id, title, base_servings, created_at, updated_at) VALUES (1, 'Lasagne', 4, ?, ?)`, now, now)
+	mustExec(`INSERT INTO meal_plan_entries (id, date, recipe_id, servings, created_at, updated_at)
+	          VALUES (1, '2026-10-24', 1, 4, ?, ?)`, now, now)
+	mustExec(`INSERT INTO meal_plan_entries (id, date, recipe_id, servings, note, created_at, updated_at)
+	          VALUES (2, '2026-10-25', 1, 4, 'mit Salat', ?, ?)`, now, now)
+	mustExec(`DELETE FROM recipes WHERE id = 1`)
+
+	rows, err := db.QueryContext(ctx, "SELECT recipe_id, note, updated_at FROM meal_plan_entries ORDER BY id")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	wantNotes := []string{"Lasagne", "mit Salat"}
+	i := 0
+	for rows.Next() {
+		var recipeID sql.NullInt64
+		var note, updatedAt string
+		if err := rows.Scan(&recipeID, &note, &updatedAt); err != nil {
+			t.Fatal(err)
+		}
+		if recipeID.Valid || note != wantNotes[i] || updatedAt == now {
+			t.Errorf("Eintrag %d: recipe_id=%v note=%q updated_at=%s", i+1, recipeID, note, updatedAt)
+		}
+		i++
+	}
+	if i != 2 {
+		t.Errorf("%d Einträge übrig, erwartet 2", i)
+	}
+
+	// Ein Eintrag ganz ohne Rezept und Notiz ist nicht erlaubt.
+	if _, err := db.ExecContext(ctx, `INSERT INTO meal_plan_entries (date, servings, created_at, updated_at)
+	                                   VALUES ('2026-10-26', 4, ?, ?)`, now, now); err == nil {
+		t.Error("Eintrag ohne Rezept und Notiz wurde angenommen")
 	}
 }
