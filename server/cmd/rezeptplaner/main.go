@@ -22,6 +22,7 @@ import (
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/importer"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/pantry"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/settings"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/system"
@@ -109,7 +110,9 @@ func run() error {
 	fetcher := fetch.New(20*time.Second, false)
 	recipeStore := recipes.NewStore(db)
 	recipes.NewHandler(recipeStore, imgs, fetcher).Register(mux)
-	importer.NewHandler(recipeStore, fetcher).Register(mux)
+	pantryStore := pantry.NewStore(db)
+	pantry.NewHandler(pantryStore).Register(mux)
+	importer.NewHandler(recipeStore, pantryStore, fetcher).Register(mux)
 	settingsStore := settings.NewStore(db)
 	settings.NewHandler(settingsStore).Register(mux)
 	mealplan.NewHandler(mealplan.NewStore(db, settingsStore)).Register(mux)

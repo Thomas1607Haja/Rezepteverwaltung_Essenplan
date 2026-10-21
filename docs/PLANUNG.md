@@ -150,6 +150,10 @@ CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" ./cmd/
 - Optionale Gruppenüberschriften (z. B. „Für die Soße“).
 - Eine leere Menge bedeutet „nicht umrechnen“ (z. B. „1 Prise“, „nach Geschmack“).
 - **Globale Vorratsliste** (mit Synonymen): Zutaten darauf werden beim Import/Anlegen automatisch als nicht einkaufsrelevant markiert. Pro Rezept überschreibbar.
+  - Die Vorratsliste setzt nur den Vorschlag für neue Zutaten. Die Einkaufsliste richtet sich allein nach dem Häkchen „einkaufsrelevant“; eine Änderung der Vorratsliste ändert bestehende Rezepte nicht von selbst (entschieden 2026-10-21).
+  - Ein Knopf „Auf alle Rezepte übertragen“ gleicht bei Bedarf alle Zutaten mit der Vorratsliste ab: im Vorrat → abgehakt, sonst → einkaufsrelevant. Vorher zeigt eine Vorschau jede betroffene Zutat mit Rezept, denn von Hand gesetzte Abweichungen gehen dabei verloren.
+  - Verglichen wird der Zutatenname ohne Klammerzusätze und ohne alles nach dem ersten Komma, unabhängig von Groß-/Kleinschreibung und Umlauten („Olivenöl, nativ“ → Öl). Aufzählungen wie „Salz und Pfeffer“ passen, wenn alle Teile im Vorrat sind. Teilwörter zählen nicht („Salzbrezel“ ist kein Salz).
+  - Startbestand: Salz, Pfeffer, Öl, Zucker, Wasser.
 
 ### Portionen
 
@@ -195,7 +199,7 @@ Es wird nicht ausgelesen, was in Bring tatsächlich abgehakt wurde.
 ### Einkaufsliste und Bring
 
 - Grundlage: alle Einträge im Einkaufszeitraum mit Status `planned`.
-- Mengen werden nach Portionen skaliert, Vorratsartikel und nicht einkaufsrelevante Zutaten entfallen.
+- Mengen werden nach Portionen skaliert, nicht einkaufsrelevante Zutaten (darunter die vorgeschlagenen Vorratsartikel) entfallen.
 - Gleiche Zutaten werden zusammengefasst. Unterschiedliche Einheiten derselben Zutat werden zunächst nicht umgerechnet, sondern gemeinsam angegeben.
 - Vor dem Senden lassen sich einzelne Artikel abwählen.
 - Übertragung über die Bring-Integration von Home Assistant (To-do-Entität) per Supervisor-API; Artikelname und Mengenangabe getrennt, soweit möglich.
@@ -280,7 +284,8 @@ Alle Tabellen erhalten zusätzlich `updated_at` für den Abgleich mit der App.
 |---|---|---|
 | id | Integer | |
 | name | Text | z. B. „Öl“ |
-| synonyms | Text/Liste | z. B. „Olivenöl, Rapsöl, Sonnenblumenöl“ |
+| synonyms | Text | kommagetrennt, z. B. „Olivenöl, Rapsöl, Sonnenblumenöl“; in der API eine Liste |
+| updated_at | Zeitstempel | für den Abgleich mit der App |
 
 ### `meal_plan_entries`
 
@@ -451,7 +456,7 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App) bzw. 
 | Import | URL einlesen (liefert Entwurf, Bildadresse und Dubletten), Zutatenzeilen zerlegen; Bild der Quellseite beim Speichern übernehmen |
 | Essensplan | Einträge eines Zeitraums, Anlegen, Ändern, Löschen, Verschieben/Tauschen mit Warnprüfung (erst prüfen, dann bestätigen) |
 | Einkauf | Vorschau der Einkaufsliste, An Bring senden, Differenz nachsenden |
-| Stammdaten | Kategorien, Vorratsliste, Einstellungen |
+| Stammdaten | Kategorien, Vorratsliste (inkl. Prüfung, ob Zutatennamen im Vorrat sind), Einstellungen |
 | Statistik | Häufigkeiten nach Zeitraum |
 | Abgleich | Änderungen seit Zeitpunkt X |
 | Verwaltung | API-Schlüssel anlegen (mit QR-Code), sperren |

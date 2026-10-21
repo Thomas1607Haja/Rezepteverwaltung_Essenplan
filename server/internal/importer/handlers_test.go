@@ -11,6 +11,7 @@ import (
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/pantry"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 )
 
@@ -28,7 +29,7 @@ func newTestMux(t *testing.T) (*http.ServeMux, *recipes.Store) {
 	store := recipes.NewStore(db)
 	mux := http.NewServeMux()
 	// Testserver laufen auf 127.0.0.1, daher Heimnetz-Sperre aus.
-	NewHandler(store, fetch.New(5*time.Second, true)).Register(mux)
+	NewHandler(store, pantry.NewStore(db), fetch.New(5*time.Second, true)).Register(mux)
 	return mux, store
 }
 
@@ -97,7 +98,7 @@ func TestImportBlocksHomeNetwork(t *testing.T) {
 	defer db.Close()
 	database.Migrate(ctx, db)
 	mux := http.NewServeMux()
-	NewHandler(recipes.NewStore(db), fetch.New(5*time.Second, false)).Register(mux)
+	NewHandler(recipes.NewStore(db), pantry.NewStore(db), fetch.New(5*time.Second, false)).Register(mux)
 
 	rec := post(mux, "/api/v1/import/url", `{"url": "http://192.168.1.1/admin"}`)
 	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "heimnetz") {
@@ -107,13 +108,17 @@ func TestImportBlocksHomeNetwork(t *testing.T) {
 
 func TestParseIngredientsOverHTTP(t *testing.T) {
 	mux, _ := newTestMux(t)
-	rec := post(mux, "/api/v1/import/ingredients", `{"lines": ["500 g Mehl", "", "2 Eier"]}`)
+	rec := post(mux, "/api/v1/import/ingredients", `{"lines": ["500 g Mehl", "", "2 Eier", "1 Prise Salz"]}`)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("Status = %d; %s", rec.Code, rec.Body)
 	}
 	var resp struct{ Ingredients []recipes.Ingredient }
 	json.Unmarshal(rec.Body.Bytes(), &resp)
-	if len(resp.Ingredients) != 2 || resp.Ingredients[0].Name != "Mehl" || resp.Ingredients[1].Name != "Eier" {
-		t.Errorf("Zutaten = %+v", resp.Ingredients)
+	if len(resp.Ingredients) != 3 || resp.Ingredients[0].Name != "Mehl" || resp.Ingredients[1].Name != "Eier" {
+		t.Fatalf("Zutaten = %+v", resp.Ingredients)
+	}
+	// Salz steht im Startbestand der Vorratsliste.
+	if !resp.Ingredients[0].ShoppingRelevant || resp.Ingredients[2].ShoppingRelevant {
+		t.Errorf("einkaufsrelevant: Mehl %v, Salz %v", resp.Ingredients[0].ShoppingRelevant, resp.Ingredients[2].ShoppingRelevant)
 	}
 }

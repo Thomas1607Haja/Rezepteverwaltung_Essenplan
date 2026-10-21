@@ -6,6 +6,7 @@ import (
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/pantry"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 )
 
@@ -19,12 +20,29 @@ const maxLines = 200
 // Handler stellt die Import-Endpunkte unter /api/v1/import bereit.
 type Handler struct {
 	store   *recipes.Store
+	pantry  *pantry.Store
 	fetcher *fetch.Client
 }
 
-// NewHandler erzeugt die Endpunkte. store dient der Dublettenprüfung.
-func NewHandler(store *recipes.Store, fetcher *fetch.Client) *Handler {
-	return &Handler{store: store, fetcher: fetcher}
+// NewHandler erzeugt die Endpunkte. store dient der Dublettenprüfung,
+// pantryStore dem Abhaken von Vorratsartikeln.
+func NewHandler(store *recipes.Store, pantryStore *pantry.Store, fetcher *fetch.Client) *Handler {
+	return &Handler{store: store, pantry: pantryStore, fetcher: fetcher}
+}
+
+// markPantry setzt bei Zutaten aus dem Vorrat das Häkchen
+// "einkaufsrelevant" zurück. Der Nutzer kann es im Entwurf wieder setzen.
+func (h *Handler) markPantry(r *http.Request, ingredients []recipes.Ingredient) error {
+	m, err := h.pantry.Matcher(r.Context())
+	if err != nil {
+		return err
+	}
+	for i := range ingredients {
+		if m.Matches(ingredients[i].Name) {
+			ingredients[i].ShoppingRelevant = false
+		}
+	}
+	return nil
 }
 
 // Register meldet die Endpunkte beim Router an.
@@ -78,6 +96,10 @@ func (h *Handler) importURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := h.markPantry(r, recipe.Ingredients); err != nil {
+		httpx.WriteInternalError(w, r, err)
+		return
+	}
 	duplicates, err := h.store.FindBySourceURL(r.Context(), recipe.SourceURL)
 	if err != nil {
 		httpx.WriteInternalError(w, r, err)
@@ -105,6 +127,10 @@ func (h *Handler) parseIngredients(w http.ResponseWriter, r *http.Request) {
 		if ing := ParseIngredient(line); ing.Name != "" {
 			result = append(result, ing)
 		}
+	}
+	if err := h.markPantry(r, result); err != nil {
+		httpx.WriteInternalError(w, r, err)
+		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, struct {
 		Ingredients []recipes.Ingredient `json:"ingredients"`
