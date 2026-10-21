@@ -25,6 +25,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/meal-plan/{id}", h.get)
 	mux.HandleFunc("PUT /api/v1/meal-plan/{id}", h.update)
 	mux.HandleFunc("DELETE /api/v1/meal-plan/{id}", h.delete)
+	mux.HandleFunc("POST /api/v1/meal-plan/{id}/move", h.move)
 }
 
 // listResponse enthält neben den Einträgen den heutigen Tag und den
@@ -119,6 +120,29 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// move verschiebt oder tauscht einen Eintrag, Anfrage z. B.
+// {"date": "2026-10-24", "slot": "dinner", "swap_with": 7}. Gibt es
+// Warnungen, ist "applied" false und nichts gespeichert; mit
+// "confirm": true (und ggf. "have_ingredients": [3]) wird trotzdem
+// gespeichert.
+func (h *Handler) move(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(w, r)
+	if !ok {
+		return
+	}
+	var m Move
+	if err := httpx.ReadJSON(w, r, &m); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	result, err := h.store.Move(r.Context(), id, m)
+	if err != nil {
+		writeStoreError(w, r, err)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, result)
 }
 
 // parseID liest die ID aus dem Pfad. Ist sie ungültig, ist die
