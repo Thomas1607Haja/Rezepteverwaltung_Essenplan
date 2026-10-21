@@ -138,7 +138,7 @@ Zeiten und Speicher auf dem Entwicklungsrechner (Windows) gemessen. Die Statushi
 | CPU im Leerlauf (20 s beobachtet) | 0 |
 | Datenbank mit 500 Rezepten und 730 Planeinträgen | 4,8 MB |
 
-Gemessen auf dem Entwicklungsrechner (Windows, Arbeitsspeicher über den Task-Manager-Wert „Arbeitssatz“). Die Einkaufsliste wird bei jedem Abruf neu berechnet; das bleibt weit unter spürbaren Zeiten. Auf dem Green beim Test mit der echten Bring-Liste nachprüfen.
+Gemessen auf dem Entwicklungsrechner (Windows, Arbeitsspeicher über den Task-Manager-Wert „Arbeitssatz“). Die Einkaufsliste wird bei jedem Abruf neu berechnet; das bleibt weit unter spürbaren Zeiten. Auf dem Green (App 0.3.0) liefen Senden an Bring und Nachsenden ohne spürbare Wartezeit.
 
 Build-Befehl (so auch im Dockerfile, dort zusätzlich `-tags timetzdata` und die Version per `-X main.buildVersion`):
 
@@ -545,7 +545,7 @@ Rezepteverwaltung_Essenplan/
 
 ## 11. Offene Punkte
 
-- **Bring-Mengenangabe:** Laut Quelltext der Bring-Integration wird die Beschreibung (`description`) zur Spezifikation. Noch auf dem Green bestätigen, auch was Bring bei einem Artikel tut, der schon auf der Liste steht.
+- ~~**Bring-Mengenangabe**~~ – geklärt 2026-10-21: Die Beschreibung (`description`) eines To-do-Eintrags wird in Bring zur Spezifikation. Senden (18 Artikel in die gewählte Liste) und Nachsenden der Differenz auf dem Green mit App 0.3.0 getestet: ok.
 
 ## 12. Mögliche spätere Erweiterungen
 
