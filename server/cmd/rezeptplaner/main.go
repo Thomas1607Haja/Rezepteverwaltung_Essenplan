@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -28,6 +29,10 @@ import (
 type config struct {
 	ListenAddr string // Adresse, auf der der Server lauscht
 	DataDir    string // Ordner für Datenbank und Bilder
+	// TrustedProxy: Ist sie gesetzt, nimmt der Server nur Verbindungen von
+	// dieser Adresse an (in Home Assistant der Ingress-Vermittler
+	// 172.30.32.2). Leer = keine Einschränkung, z. B. beim lokalen Testen.
+	TrustedProxy string
 }
 
 // loadConfig liest die Einstellungen aus Umgebungsvariablen. Fehlt eine
@@ -37,6 +42,8 @@ func loadConfig() config {
 	return config{
 		ListenAddr: getEnv("REZEPTPLANER_LISTEN_ADDR", "127.0.0.1:8080"),
 		DataDir:    getEnv("REZEPTPLANER_DATA_DIR", "data"),
+		// Ohne Standardwert: getEnv liefert dann "", also keine Einschränkung.
+		TrustedProxy: getEnv("REZEPTPLANER_TRUSTED_PROXY", ""),
 	}
 }
 
@@ -100,9 +107,22 @@ func run() error {
 	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
 	mux.Handle("GET /", web.Handler())
 
+	// handler ist vom Typ http.Handler, einem Interface: Jeder Typ mit der
+	// Methode ServeHTTP passt hinein – der Router genauso wie eine
+	// Middleware, die ihn umhüllt.
+	var handler http.Handler = mux
+	if cfg.TrustedProxy != "" {
+		proxy, err := netip.ParseAddr(cfg.TrustedProxy)
+		if err != nil {
+			return fmt.Errorf("REZEPTPLANER_TRUSTED_PROXY: %w", err)
+		}
+		handler = httpx.AllowOnlyFrom(proxy, handler)
+		slog.Info("Nur Verbindungen über Ingress erlaubt", "proxy", proxy)
+	}
+
 	srv := &http.Server{
 		Addr:    cfg.ListenAddr,
-		Handler: httpx.LogRequests(mux),
+		Handler: httpx.LogRequests(handler),
 		// Schutz gegen Verbindungen, die ihre Anfrage nie zu Ende senden.
 		ReadHeaderTimeout: 10 * time.Second,
 	}
