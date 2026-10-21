@@ -1,9 +1,11 @@
 package httpx
 
 import (
+	"crypto/subtle"
 	"log/slog"
 	"net/http"
 	"net/netip"
+	"strings"
 )
 
 // AllowOnlyFrom ist eine Middleware: Sie lässt nur Anfragen durch, deren
@@ -14,7 +16,12 @@ import (
 // (172.30.32.2). Er prüft die Anmeldung, bevor er eine Anfrage weiterreicht.
 // Nimmt die App nur Verbindungen von ihm an, kann niemand im Heimnetz die
 // Anmeldung umgehen, indem er die App direkt anspricht.
-func AllowOnlyFrom(allowed netip.Addr, next http.Handler) http.Handler {
+//
+// Ausnahme: Ist token gesetzt, dürfen lesende Anfragen (GET) mit der
+// Kopfzeile "Authorization: Bearer <token>" auch von anderswo kommen. So
+// holt sich die Home-Assistant-Integration den Essensplan über das interne
+// Netz des Supervisors; einen offenen Port nach außen gibt es weiterhin nicht.
+func AllowOnlyFrom(allowed netip.Addr, token string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// RemoteAddr ist die Gegenstelle der TCP-Verbindung, z. B.
 		// "172.30.32.2:41234". Anders als Kopfzeilen wie X-Forwarded-For
@@ -22,11 +29,24 @@ func AllowOnlyFrom(allowed netip.Addr, next http.Handler) http.Handler {
 		remote, err := netip.ParseAddrPort(r.RemoteAddr)
 		// Unmap macht aus der IPv6-Schreibweise einer IPv4-Adresse
 		// ("::ffff:172.30.32.2") wieder die IPv4-Adresse.
-		if err != nil || remote.Addr().Unmap() != allowed {
-			slog.Warn("Anfrage abgelehnt: nicht über Ingress", "remote", r.RemoteAddr, "path", r.URL.Path)
-			WriteError(w, http.StatusForbidden, "zugriff nur über home assistant")
+		if err == nil && remote.Addr().Unmap() == allowed {
+			next.ServeHTTP(w, r)
 			return
 		}
-		next.ServeHTTP(w, r)
+		if token != "" && r.Method == http.MethodGet && validBearer(r, token) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		slog.Warn("Anfrage abgelehnt: nicht über Ingress", "remote", r.RemoteAddr, "path", r.URL.Path)
+		WriteError(w, http.StatusForbidden, "zugriff nur über home assistant")
 	})
+}
+
+// validBearer prüft die Kopfzeile "Authorization: Bearer <token>".
+// subtle.ConstantTimeCompare braucht für jeden Vergleich gleich lange, egal
+// wie viele Zeichen stimmen – sonst ließe sich der Schlüssel über die
+// Antwortzeit Zeichen für Zeichen erraten.
+func validBearer(r *http.Request, token string) bool {
+	got, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+	return ok && subtle.ConstantTimeCompare([]byte(got), []byte(token)) == 1
 }

@@ -137,3 +137,15 @@ func TestTestClientAndHandler(t *testing.T) {
 		t.Errorf("%d %s", rec.Code, rec.Body)
 	}
 }
+
+func TestLoadOrCreateToken(t *testing.T) {
+	dir := t.TempDir()
+	first, err := LoadOrCreateToken(dir)
+	if err != nil || len(first) != 64 {
+		t.Fatalf("Token = %q, %v", first, err)
+	}
+	second, err := LoadOrCreateToken(dir)
+	if err != nil || second != first {
+		t.Errorf("zweiter Aufruf: %q, %v – erwartet denselben Schlüssel", second, err)
+	}
+}

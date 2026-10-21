@@ -26,6 +26,12 @@ panel_title: Essensplan
 # Supervisor stellt dafür SUPERVISOR_TOKEN bereit.
 homeassistant_api: true
 
+# Meldet die App bei Home Assistant an (Supervisor-Discovery). Die
+# Integration "rezeptplaner" (HACS) erscheint dann unter "Entdeckt" und
+# bekommt Adresse und Schlüssel für lesenden Zugriff im internen Netz.
+discovery:
+  - rezeptplaner
+
 # Kein offener Port: Die API ist nur über Ingress erreichbar. Ein Port für
 # die Android-App kommt zusammen mit den API-Schlüsseln.
 

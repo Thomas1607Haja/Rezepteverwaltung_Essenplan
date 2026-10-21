@@ -136,13 +136,22 @@ func run() error {
 	// Methode ServeHTTP passt hinein – der Router genauso wie eine
 	// Middleware, die ihn umhüllt.
 	var handler http.Handler = mux
+	// In der App bekommt die Home-Assistant-Integration einen eigenen
+	// Schlüssel für lesenden Zugriff (siehe announce unten).
+	supervisorToken := os.Getenv("SUPERVISOR_TOKEN")
+	var integrationToken string
+	if supervisorToken != "" {
+		if integrationToken, err = homeassistant.LoadOrCreateToken(cfg.DataDir); err != nil {
+			return err
+		}
+	}
 	if cfg.TrustedProxy != "" {
 		proxy, err := netip.ParseAddr(cfg.TrustedProxy)
 		if err != nil {
 			return fmt.Errorf("REZEPTPLANER_TRUSTED_PROXY: %w", err)
 		}
-		handler = httpx.AllowOnlyFrom(proxy, handler)
-		slog.Info("Nur Verbindungen über Ingress erlaubt", "proxy", proxy)
+		handler = httpx.AllowOnlyFrom(proxy, integrationToken, handler)
+		slog.Info("Nur Verbindungen über Ingress erlaubt", "proxy", proxy, "integration", integrationToken != "")
 	}
 
 	srv := &http.Server{
@@ -166,6 +175,9 @@ func run() error {
 	go func() {
 		serverErr <- srv.Serve(listener)
 	}()
+	if supervisorToken != "" {
+		go announce(ctx, supervisorToken, listener.Addr(), integrationToken)
+	}
 
 	// Warten, was zuerst passiert: unerwarteter Serverfehler oder Stoppsignal.
 	select {
@@ -194,4 +206,37 @@ func run() error {
 // Server läuft.
 func handleHealth(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// announce meldet die App beim Supervisor, damit Home Assistant die
+// Integration anbietet. Die Adresse im internen Netz ist der Hostname des
+// Containers (die App-ID mit "-" statt "_"). Klappt es nicht sofort (z. B.
+// weil der Supervisor gerade beschäftigt ist), wird es einige Male erneut
+// versucht; ohne Erfolg fehlt nur die Integration, die App läuft trotzdem.
+func announce(ctx context.Context, supervisorToken string, addr net.Addr, token string) {
+	host, err := os.Hostname()
+	if err != nil {
+		slog.Warn("Discovery: Hostname unbekannt", "error", err)
+		return
+	}
+	// addr.(*net.TCPAddr) ist eine Typzusicherung: Ein TCP-Listener liefert
+	// immer eine *net.TCPAddr, aus der sich der Port lesen lässt.
+	tcp, ok := addr.(*net.TCPAddr)
+	if !ok {
+		return
+	}
+	cfg := homeassistant.DiscoveryConfig{Host: host, Port: tcp.Port, Token: token}
+	for attempt := 1; attempt <= 5; attempt++ {
+		err := homeassistant.Announce(ctx, supervisorToken, cfg)
+		if err == nil {
+			slog.Info("Bei Home Assistant angemeldet (Discovery)", "host", host, "port", tcp.Port)
+			return
+		}
+		slog.Warn("Discovery fehlgeschlagen", "versuch", attempt, "error", err)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Duration(attempt) * 10 * time.Second):
+		}
+	}
 }
