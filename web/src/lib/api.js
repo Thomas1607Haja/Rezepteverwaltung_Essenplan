@@ -96,6 +96,22 @@ export const api = {
    */
   moveEntry: (id, move) => request('POST', `/meal-plan/${id}/move`, move),
 
+  /** Vorratsliste: [{ id, name, synonyms: [...] }], alphabetisch. */
+  listPantry: () => request('GET', '/pantry'),
+  createPantryItem: (item) => request('POST', '/pantry', item),
+  updatePantryItem: (id, item) => request('PUT', `/pantry/${id}`, item),
+  deletePantryItem: (id) => request('DELETE', `/pantry/${id}`),
+
+  /** Prüft Zutatennamen gegen den Vorrat; Ergebnis [true, false, …]. */
+  matchPantry: async (names) => (await request('POST', '/pantry/match', { names })).in_pantry,
+
+  /**
+   * Gleicht alle Rezepte mit der Vorratsliste ab. Ohne confirm nur
+   * Vorschau. Ergebnis { applied, changes: [{ recipe_title,
+   * ingredient_name, shopping_relevant, … }], recipes }.
+   */
+  applyPantry: (confirm) => request('POST', '/pantry/apply', { confirm }),
+
   /** Version, Arbeitsspeicher und Platzbedarf der Daten. */
   system: () => request('GET', '/system'),
 

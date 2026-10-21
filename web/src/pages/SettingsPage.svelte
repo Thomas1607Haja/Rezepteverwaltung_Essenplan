@@ -1,6 +1,7 @@
 <script>
   import { api } from '../lib/api.js';
   import { formatBytes, formatUptime } from '../lib/format.js';
+  import PantryEditor from '../components/PantryEditor.svelte';
 
   // Ein Promise direkt im Markup: {#await} zeigt je nach Zustand
   // "lädt", das Ergebnis oder den Fehler an. Neu zuweisen lädt neu.
@@ -87,6 +88,8 @@
     <p>Lädt …</p>
   {/if}
 </section>
+
+<PantryEditor />
 
 <section class="card">
   <h2>System</h2>

@@ -1,6 +1,7 @@
 <script>
   import { flip } from 'svelte/animate';
   import { dragHandleZone } from 'svelte-dnd-action';
+  import { api } from '../lib/api.js';
   import { newIngredient, newHeading } from '../lib/recipeForm.js';
   import { flipDurationMs, dropTargetStyle, isShadow } from '../lib/dnd.js';
   import DragHandle from './DragHandle.svelte';
@@ -19,6 +20,24 @@
 
   function remove(index) {
     items.splice(index, 1);
+  }
+
+  /**
+   * Nach dem Ändern eines Zutatennamens: Steht die Zutat im Vorrat, wird
+   * sie nicht zum Einkaufen vorgemerkt, sonst schon. Danach lässt sich das
+   * Häkchen von Hand umstellen. Schlägt die Prüfung fehl, bleibt es, wie es
+   * ist – das Häkchen ist nur ein Vorschlag.
+   */
+  async function suggestShopping(item) {
+    const name = item.name.trim();
+    if (name === '') return;
+    try {
+      const [inPantry] = await api.matchPantry([name]);
+      // Inzwischen weitergetippt? Dann gilt die neuere Prüfung.
+      if (item.name.trim() === name) item.shopping_relevant = !inPantry;
+    } catch {
+      // bewusst ignoriert, siehe oben
+    }
   }
 
   function label(item) {
@@ -53,7 +72,8 @@
           <span class="grip"><DragHandle label="{label(item)} verschieben" /></span>
           <input class="quantity" placeholder="Menge" aria-label="Menge" inputmode="decimal" bind:value={item.quantity} />
           <input class="unit" placeholder="Einheit" aria-label="Einheit" bind:value={item.unit} />
-          <input class="name" placeholder="Zutat" aria-label="Zutat" bind:value={item.name} />
+          <!-- change feuert beim Verlassen des Feldes, wenn sich der Text geändert hat. -->
+          <input class="name" placeholder="Zutat" aria-label="Zutat" bind:value={item.name} onchange={() => suggestShopping(item)} />
           <input class="note" placeholder="Hinweis, z. B. gehackt" aria-label="Hinweis" bind:value={item.note} />
           <label class="shopping" title="Beim Einkaufen berücksichtigen">
             <input type="checkbox" bind:checked={item.shopping_relevant} />
