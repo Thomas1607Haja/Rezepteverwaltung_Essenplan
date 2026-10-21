@@ -3,7 +3,7 @@
 name: Rezeptplaner
 # Muss zum Tag der neuen Version passen (v0.1.0 -> "0.1.0"); die GitHub
 # Action prüft das. Home Assistant lädt das Image mit genau dieser Version.
-version: "0.2.0"
+version: "0.3.0"
 slug: rezeptplaner
 description: Rezepte verwalten, Essensplan und Einkaufsliste
 url: https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan

@@ -34,7 +34,7 @@ Datenbank und Bilder liegen im Datenordner der App und sind Teil der Home-Assist
 ## Bekannte Einschränkungen
 
 - Nur für ARM64-Geräte (z. B. Home Assistant Green).
-- Einkaufsliste mit Bring und Android-App sind noch in Arbeit.
+- Dashboard-Karte für Home Assistant und Android-App sind noch in Arbeit.
 
 ## Hilfe und Fehler melden
 

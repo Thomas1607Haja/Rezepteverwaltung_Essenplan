@@ -126,6 +126,20 @@ Speicherwerte abgelesen in der Systeminfo der Einstellungsseite (VmRSS/VmHWM aus
 
 Zeiten und Speicher auf dem Entwicklungsrechner (Windows) gemessen. Die Statushinweise werden bei jeder Abfrage berechnet; die Rezeptliste ist dadurch etwas langsamer als nach Phase 2, bleibt aber weit unter spürbaren Werten. Auf dem Green wurden keine einzelnen Zahlen erhoben.
 
+**Messung nach Phase 5 (2026-10-21, Version 0.3.0 mit Einkaufsliste und Bring):**
+
+| Messgröße | Wert |
+|---|---|
+| Programmdatei Linux/ARM64 (`-trimpath -ldflags="-s -w"`) | 12,3 MB (gzip: 5,1 MB) |
+| Einkaufsliste mit Differenzvergleich (500 Rezepte, 730 Planeinträge, 7 Gerichte im Zeitraum) | ca. 1,8 ms |
+| An Bring senden (Testmodus, 21 Artikel) | ca. 4 ms zuzüglich der Antwortzeit von Home Assistant je Artikel |
+| Rezeptliste mit 500 Einträgen / Essensplan über 5 Wochen | ca. 2,7 ms / 1,5 ms |
+| Arbeitsspeicher nach 600 Abfragen (Spitze) | 24,3 MB (24,7 MB) |
+| CPU im Leerlauf (20 s beobachtet) | 0 |
+| Datenbank mit 500 Rezepten und 730 Planeinträgen | 4,8 MB |
+
+Gemessen auf dem Entwicklungsrechner (Windows, Arbeitsspeicher über den Task-Manager-Wert „Arbeitssatz“). Die Einkaufsliste wird bei jedem Abruf neu berechnet; das bleibt weit unter spürbaren Zeiten. Auf dem Green beim Test mit der echten Bring-Liste nachprüfen.
+
 Build-Befehl (so auch im Dockerfile, dort zusätzlich `-tags timetzdata` und die Version per `-X main.buildVersion`):
 
 ```bash

@@ -1,5 +1,16 @@
 # Änderungen
 
+## 0.3.0
+
+- **Einkauf**: Einkaufsliste für diese oder nächste Woche aus dem Essensplan – Mengen auf die Portionen umgerechnet, gleiche Zutaten zusammengefasst (auch „Zwiebel“ und „Zwiebeln“), Eier, Dosen usw. ganz aufgerundet. Einzelne Artikel lassen sich abwählen.
+- **An Bring senden** über die Bring-Integration von Home Assistant; die Menge steht in Bring unter dem Artikel. Steht ein Artikel schon auf der Liste, wird nur die Menge ergänzt.
+- Nachträgliche Änderungen: Was nach dem Senden noch fehlt, lässt sich nachsenden; zu viel Gesendetes wird angezeigt.
+- Beim Verschieben eines Gerichts in den Einkaufszeitraum: „Zutaten an Bring senden“.
+- **Vorratsliste** in den Einstellungen (Salz, Öl, … mit Synonymen): Solche Zutaten werden in neuen Rezepten nicht zum Einkaufen vorgemerkt; per Knopf auf alle Rezepte übertragbar.
+- Neue Einstellung **Bring-Liste**.
+- Der Eintrag in der Seitenleiste heißt jetzt **Essensplan**.
+- Die App nutzt jetzt die Home-Assistant-API (`homeassistant_api`), um in die Bring-Liste zu schreiben.
+
 ## 0.2.0
 
 - **Essensplan** als Startseite: Tage nebeneinander (Handy 2, Tablet 4, Rechner 7), endlos scrollbar, Einkaufszeitraum farbig.
