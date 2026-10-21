@@ -2,6 +2,8 @@ package shopping
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/settings"
@@ -86,7 +89,7 @@ func setup(t *testing.T) (*Store, *http.ServeMux) {
 		t.Fatal(err)
 	}
 
-	store := NewStore(db, plan)
+	store := NewStore(db, plan, settings.NewStore(db), homeassistant.NewTestClient())
 	mux := http.NewServeMux()
 	NewHandler(store).Register(mux)
 	return store, mux
@@ -200,5 +203,119 @@ func TestNameKey(t *testing.T) {
 	}
 	if nameKey("Tomaten") == nameKey("Tomatenmark") || nameKey("Milch") == nameKey("Mehl") {
 		t.Error("verschiedene Zutaten fallen zusammen")
+	}
+}
+
+// chooseList wählt die Testliste als Bring-Liste.
+func chooseList(t *testing.T, store *Store) {
+	t.Helper()
+	if _, err := store.settings.Update(context.Background(), settings.Settings{FamilySize: 4, ShoppingDay: "saturday", BringEntity: homeassistant.TestListID}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSend(t *testing.T) {
+	ctx := context.Background()
+	store, _ := setup(t)
+	ha := store.ha.(*homeassistant.TestClient) // Typzusicherung: der Testmodus von setup
+
+	var verr *ValidationError
+	if _, err := store.Send(ctx, false, nil); !errors.As(err, &verr) || verr.Field != "bring_entity" {
+		t.Fatalf("ohne Bring-Liste: err = %v", err)
+	}
+	chooseList(t, store)
+	// Milch steht schon offen auf der Liste: Die Menge wird ergänzt.
+	ha.AddItem(ctx, homeassistant.TestListID, "Milch", "1 l")
+
+	result, err := store.Send(ctx, false, []string{"rindfleisch"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Entries != 2 || len(result.Sent) != 6 || len(result.Failed) != 0 {
+		t.Errorf("Ergebnis = %+v", result)
+	}
+
+	items, _ := ha.OpenItems(ctx, homeassistant.TestListID)
+	var lines []string
+	for _, it := range items {
+		lines = append(lines, it.Summary+": "+it.Description)
+	}
+	want := "Milch: 1 l + 150 ml, Eier: 5, Knoblauch: 2 Zehen, Paprikapulver: 1 ½ EL, Petersilie: , Zwiebeln: 5"
+	if got := strings.Join(lines, ", "); got != want {
+		t.Errorf("Bring-Liste:\n%s\nerwartet:\n%s", got, want)
+	}
+
+	// Protokoll: 7 gesendete Zutaten (je Gericht), Rindfleisch abgewählt.
+	var sent, skipped int
+	store.db.QueryRowContext(ctx, `SELECT count(*) FROM transferred_items WHERE sent = 1 AND period_from = '2026-10-17'`).Scan(&sent)
+	store.db.QueryRowContext(ctx, `SELECT count(*) FROM transferred_items WHERE sent = 0 AND item_key = 'rindfleisch'`).Scan(&skipped)
+	if sent != 7 || skipped != 1 {
+		t.Errorf("Protokoll: %d gesendet, %d abgewählt", sent, skipped)
+	}
+
+	// Danach ist die Liste leer und die Gerichte sind übertragen.
+	p, _ := store.Preview(ctx, false)
+	if len(p.Items) != 0 {
+		t.Errorf("Liste nach dem Senden: %s", summary(p.Items))
+	}
+	for _, e := range p.Entries {
+		if (e.Date == "2026-10-21" || e.Date == "2026-10-22" && e.Title == "Omelett") && e.Status != mealplan.StatusTransferred {
+			t.Errorf("%s %s: Status %s", e.Date, e.Title, e.Status)
+		}
+	}
+	if _, err := store.Send(ctx, false, nil); !errors.As(err, &verr) || verr.Field != "period" {
+		t.Errorf("zweites Senden: err = %v", err)
+	}
+}
+
+// failingClient lehnt einen bestimmten Artikel ab, sonst wie der Testmodus.
+// Durch das eingebettete *TestClient hat er alle anderen Methoden geerbt.
+type failingClient struct {
+	*homeassistant.TestClient
+	fail string
+}
+
+func (c failingClient) AddItem(ctx context.Context, list, summary, description string) error {
+	if summary == c.fail {
+		return fmt.Errorf("%w: abgelehnt", homeassistant.ErrUnavailable)
+	}
+	return c.TestClient.AddItem(ctx, list, summary, description)
+}
+
+func TestSendPartialFailure(t *testing.T) {
+	ctx := context.Background()
+	store, _ := setup(t)
+	store.ha = failingClient{homeassistant.NewTestClient(), "Eier"}
+	chooseList(t, store)
+
+	result, err := store.Send(ctx, false, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Failed) != 1 || result.Failed[0].Name != "Eier" || len(result.Sent) != 6 {
+		t.Errorf("Ergebnis = %+v", result)
+	}
+	// Eier sind nicht protokolliert; die Gerichte gelten trotzdem als übertragen.
+	var n int
+	store.db.QueryRowContext(ctx, `SELECT count(*) FROM transferred_items WHERE item_key = 'ei'`).Scan(&n)
+	if n != 0 {
+		t.Errorf("%d Protokollzeilen für Eier", n)
+	}
+}
+
+func TestSendHomeAssistantDown(t *testing.T) {
+	store, mux := setup(t)
+	store.ha = homeassistant.New("", "http://127.0.0.1:1", "x")
+	chooseList(t, store)
+
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, httptest.NewRequest("POST", "/api/v1/shopping/send", strings.NewReader(`{"period": "current"}`)))
+	if rec.Code != http.StatusBadGateway {
+		t.Errorf("Status %d: %s", rec.Code, rec.Body)
+	}
+	// Nichts übertragen, nichts geändert.
+	p, _ := store.Preview(context.Background(), false)
+	if len(p.Items) != 7 {
+		t.Errorf("%d Artikel übrig", len(p.Items))
 	}
 }

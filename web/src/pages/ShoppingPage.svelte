@@ -25,7 +25,39 @@
     if (next === value) return;
     next = value;
     preview = null;
+    sendResult = null;
+    sendError = '';
     load();
+  }
+
+  // Ergebnis bzw. Fehler der letzten Übertragung
+  let sending = $state(false);
+  let sendResult = $state(null);
+  let sendError = $state('');
+  let needsList = $state(false); // keine Bring-Liste gewählt
+
+  async function send() {
+    sending = true;
+    sendError = '';
+    needsList = false;
+    try {
+      sendResult = await api.sendShopping(next, [...deselected]);
+      await load();
+    } catch (e) {
+      sendError = e.message;
+      needsList = e.field === 'bring_entity';
+    } finally {
+      sending = false;
+    }
+  }
+
+  /** Zusammenfassung wie "12 Artikel gesendet, davon 2 ergänzt". */
+  function sentSummary(r) {
+    const n = r.sent.length;
+    const merged = r.sent.filter((s) => s.merged).length;
+    let text = n === 1 ? 'Ein Artikel an Bring gesendet' : `${n} Artikel an Bring gesendet`;
+    if (merged > 0) text += `, davon ${merged} bei schon vorhandenen ergänzt`;
+    return text + '.';
   }
 
   load();
@@ -111,6 +143,20 @@
       {/if}
     </div>
 
+    {#if sendResult}
+      <div class="result" role="status">
+        <p>{sentSummary(sendResult)}</p>
+        {#if sendResult.failed.length > 0}
+          <p class="error">Nicht angekommen – bitte später nachsenden oder von Hand eintragen:</p>
+          <ul class="failed">
+            {#each sendResult.failed as f (f.name)}
+              <li>{f.name}{f.spec ? ` (${f.spec})` : ''}</li>
+            {/each}
+          </ul>
+        {/if}
+      </div>
+    {/if}
+
     {#if preview.items.length === 0}
       <p class="muted">Nichts einzukaufen.</p>
     {:else}
@@ -128,11 +174,16 @@
       </ul>
 
       <div class="send">
-        <!-- Die Übertragung an Bring kommt mit der Anbindung an Home Assistant. -->
-        <button type="button" class="primary" disabled title="Folgt mit der Anbindung an Home Assistant">
-          An Bring senden ({selectedCount})
+        <button type="button" class="primary" onclick={send} disabled={sending}>
+          {sending ? 'Sendet …' : `An Bring senden (${selectedCount})`}
         </button>
-        <small class="muted">Die Anbindung an Bring folgt in Kürze.</small>
+        {#if sendError}
+          <span class="error">
+            {sendError}{#if needsList}: <a href="#/settings">Zu den Einstellungen</a>{/if}
+          </span>
+        {:else}
+          <small class="muted">Abgewählte Artikel gelten danach als erledigt.</small>
+        {/if}
       </div>
     {/if}
   </section>
@@ -318,6 +369,19 @@
   .off .spec {
     color: var(--text-muted);
     text-decoration: line-through;
+  }
+
+  .result {
+    margin: 0.25rem 0 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: calc(var(--radius) - 0.2rem);
+    background: var(--accent-soft);
+  }
+
+  .failed {
+    margin-top: 0.25rem;
+    padding-left: 1.25rem;
+    list-style: disc;
   }
 
   .send {

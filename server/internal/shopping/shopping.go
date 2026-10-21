@@ -10,10 +10,13 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/settings"
 )
 
 // dateLayout ist das Format eines Kalendertags, z. B. 2026-10-24.
@@ -64,15 +67,21 @@ type Amount struct {
 	Unit     string  `json:"unit"`
 }
 
-// Store berechnet Einkaufslisten.
+// Store berechnet Einkaufslisten und überträgt sie an Home Assistant.
 type Store struct {
-	db   *sql.DB
-	plan *mealplan.Store
+	db       *sql.DB
+	plan     *mealplan.Store
+	settings *settings.Store
+	ha       homeassistant.Client
+	// sendMu sorgt dafür, dass immer nur eine Übertragung läuft. Ein
+	// Mutex braucht keine Initialisierung: Der Nullwert ist entsperrt.
+	sendMu sync.Mutex
 }
 
-// NewStore erzeugt einen Store. plan liefert heute und den Einkaufszeitraum.
-func NewStore(db *sql.DB, plan *mealplan.Store) *Store {
-	return &Store{db: db, plan: plan}
+// NewStore erzeugt einen Store. plan liefert heute und den Einkaufszeitraum,
+// settings die gewählte Bring-Liste, ha den Zugang zu Home Assistant.
+func NewStore(db *sql.DB, plan *mealplan.Store, settings *settings.Store, ha homeassistant.Client) *Store {
+	return &Store{db: db, plan: plan, settings: settings, ha: ha}
 }
 
 // Preview berechnet die Einkaufsliste für den aktuellen Einkaufszeitraum
@@ -80,24 +89,31 @@ func NewStore(db *sql.DB, plan *mealplan.Store) *Store {
 // Einkauf am Samstag). Tage vor heute zählen nicht mit: Was schon gegessen
 // ist, muss man nicht mehr kaufen.
 func (s *Store) Preview(ctx context.Context, next bool) (Preview, error) {
-	period, err := s.plan.CurrentPeriod(ctx)
+	period, today, err := s.period(ctx, next)
 	if err != nil {
 		return Preview{}, err
 	}
-	if next {
-		period = shiftWeek(period)
-	}
-	today := s.plan.Today().Format(dateLayout)
-
 	entries, err := s.loadEntries(ctx, period, today)
 	if err != nil {
 		return Preview{}, err
 	}
-	items, err := s.loadItems(ctx, period, max(today, period.From))
+	needs, err := s.loadNeeds(ctx, max(today, period.From), period.To, mealplan.StatusPlanned)
 	if err != nil {
 		return Preview{}, err
 	}
-	return Preview{Period: period, Today: today, Entries: entries, Items: items}, nil
+	return Preview{Period: period, Today: today, Entries: entries, Items: summarize(needs)}, nil
+}
+
+// period liefert den gewünschten Einkaufszeitraum und heute.
+func (s *Store) period(ctx context.Context, next bool) (mealplan.Period, string, error) {
+	period, err := s.plan.CurrentPeriod(ctx)
+	if err != nil {
+		return mealplan.Period{}, "", err
+	}
+	if next {
+		period = shiftWeek(period)
+	}
+	return period, s.plan.Today().Format(dateLayout), nil
 }
 
 // shiftWeek verschiebt einen Zeitraum um eine Woche nach hinten.
@@ -139,41 +155,61 @@ func (s *Store) loadEntries(ctx context.Context, period mealplan.Period, today s
 	return entries, nil
 }
 
-// loadItems liest die einkaufsrelevanten Zutaten aller geplanten Gerichte
-// von from bis period.To, rechnet sie auf die Portionen des Eintrags um und
-// fasst gleiche Zutaten zusammen.
-func (s *Store) loadItems(ctx context.Context, period mealplan.Period, from string) ([]Item, error) {
+// need ist der Bedarf eines Planeintrags an einer Zutat, schon auf die
+// Portionen des Eintrags umgerechnet.
+type need struct {
+	EntryID  int64
+	Recipe   string
+	Name     string
+	Quantity *float64 // nil = ohne Mengenangabe
+	Unit     string
+}
+
+// key ist der Artikel, zu dem der Bedarf gehört (siehe Item.Key).
+func (n need) key() string { return nameKey(cleanName(n.Name)) }
+
+// loadNeeds liest die einkaufsrelevanten Zutaten aller Gerichte mit Status
+// status von from bis to und rechnet sie auf die Portionen um.
+func (s *Store) loadNeeds(ctx context.Context, from, to, status string) ([]need, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT r.title, e.servings, r.base_servings, i.quantity, i.unit, i.name
+		SELECT e.id, r.title, e.servings, r.base_servings, i.quantity, i.unit, i.name
 		FROM meal_plan_entries e
 		JOIN recipes r ON r.id = e.recipe_id
 		JOIN recipe_ingredients i ON i.recipe_id = r.id AND i.shopping_relevant = 1
 		WHERE e.date BETWEEN ? AND ? AND e.status = ?
 		ORDER BY e.date, `+slotOrder+`, e.position, e.id, i.position`,
-		from, period.To, mealplan.StatusPlanned)
+		from, to, status)
 	if err != nil {
 		return nil, fmt.Errorf("einkaufsliste: zutaten lesen: %w", err)
 	}
 	defer rows.Close()
 
-	list := newCollector()
+	needs := []need{}
 	for rows.Next() {
-		var title, unit, name string
+		var n need
 		var servings, baseServings int
-		var quantity *float64
-		if err := rows.Scan(&title, &servings, &baseServings, &quantity, &unit, &name); err != nil {
+		if err := rows.Scan(&n.EntryID, &n.Recipe, &servings, &baseServings, &n.Quantity, &n.Unit, &n.Name); err != nil {
 			return nil, fmt.Errorf("einkaufsliste: zutaten lesen: %w", err)
 		}
-		if quantity != nil {
-			scaled := *quantity * float64(servings) / float64(baseServings)
-			quantity = &scaled
+		if n.Quantity != nil {
+			scaled := *n.Quantity * float64(servings) / float64(baseServings)
+			n.Quantity = &scaled
 		}
-		list.add(title, name, quantity, unit)
+		needs = append(needs, n)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("einkaufsliste: zutaten lesen: %w", err)
 	}
-	return list.items(), nil
+	return needs, nil
+}
+
+// summarize fasst den Bedarf zu Artikeln zusammen.
+func summarize(needs []need) []Item {
+	list := newCollector()
+	for _, n := range needs {
+		list.add(n.Recipe, n.Name, n.Quantity, n.Unit)
+	}
+	return list.items()
 }
 
 // collector fasst Zutaten zu Artikeln zusammen.
@@ -213,7 +249,7 @@ func (c *collector) add(recipe, name string, quantity *float64, unit string) {
 	}
 
 	unit = strings.TrimSpace(unit)
-	ukey := key + "|" + stem(database.Fold(strings.TrimSuffix(unit, ".")))
+	ukey := key + "|" + unitKey(unit)
 	if i, ok := c.unitIndex[ukey]; ok {
 		it.Amounts[i].Quantity += *quantity
 		if len(unit) > len(it.Amounts[i].Unit) {
@@ -253,6 +289,11 @@ var parenthesized = regexp.MustCompile(`\s*\([^)]*\)`)
 // cleanName entfernt Klammerzusätze und doppelte Leerzeichen.
 func cleanName(name string) string {
 	return strings.Join(strings.Fields(parenthesized.ReplaceAllString(name, "")), " ")
+}
+
+// unitKey bildet den Vergleichsschlüssel einer Einheit ("Zehen" = "Zehe").
+func unitKey(unit string) string {
+	return stem(database.Fold(strings.TrimSuffix(strings.TrimSpace(unit), ".")))
 }
 
 // nameKey bildet den Vergleichsschlüssel eines Zutatennamens: gefaltet und

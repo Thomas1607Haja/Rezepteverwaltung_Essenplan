@@ -121,6 +121,14 @@ export const api = {
   shoppingPreview: (next = false) => request('GET', `/shopping/preview?period=${next ? 'next' : 'current'}`),
 
   /**
+   * Sendet die Einkaufsliste an die gewählte Bring-Liste; deselected sind
+   * die keys abgewählter Artikel. Ergebnis { list, sent: [{ name, spec,
+   * merged }], failed: [{ name, spec, error }], entries }.
+   */
+  sendShopping: (next, deselected) =>
+    request('POST', '/shopping/send', { period: next ? 'next' : 'current', deselected }),
+
+  /**
    * Verbindung zu Home Assistant: { mode: "supervisor" | "direct" | "test",
    * lists: [{ entity_id, name }], error? }.
    */

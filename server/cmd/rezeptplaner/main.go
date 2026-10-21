@@ -119,7 +119,6 @@ func run() error {
 	settings.NewHandler(settingsStore).Register(mux)
 	planStore := mealplan.NewStore(db, settingsStore)
 	mealplan.NewHandler(planStore).Register(mux)
-	shopping.NewHandler(shopping.NewStore(db, planStore)).Register(mux)
 	system.NewHandler(buildVersion, cfg.DataDir).Register(mux)
 	// SUPERVISOR_TOKEN setzt Home Assistant in der App. Lokal lässt sich
 	// mit REZEPTPLANER_HA_URL und REZEPTPLANER_HA_TOKEN (langlebiger Token
@@ -128,6 +127,7 @@ func run() error {
 	ha := homeassistant.New(os.Getenv("SUPERVISOR_TOKEN"), os.Getenv("REZEPTPLANER_HA_URL"), os.Getenv("REZEPTPLANER_HA_TOKEN"))
 	slog.Info("Home Assistant", "modus", ha.Mode())
 	homeassistant.NewHandler(ha).Register(mux)
+	shopping.NewHandler(shopping.NewStore(db, planStore, settingsStore, ha)).Register(mux)
 	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist
 	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
 	mux.Handle("GET /", web.Handler())

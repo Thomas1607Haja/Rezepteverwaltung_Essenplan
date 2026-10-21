@@ -312,13 +312,19 @@ Keine Eindeutigkeit über (`date`, `slot`): Mehrere Einträge pro Slot sind erla
 
 ### `transferred_items`
 
-| Feld | Typ |
-|---|---|
-| id | Integer |
-| entry_id | Integer |
-| ingredient_name | Text |
-| quantity | Dezimalzahl |
-| unit | Text |
+| Feld | Typ | Bemerkung |
+|---|---|---|
+| id | Integer | |
+| entry_id | Integer | optional; wird beim Löschen des Planeintrags leer, die Zeile bleibt |
+| period_from | Datum | Beginn des Einkaufszeitraums, für den übertragen wurde |
+| item_key | Text | Vergleichsschlüssel des Artikels (Name ohne Pluralendung usw.) |
+| ingredient_name | Text | |
+| quantity | Dezimalzahl | auf die Portionen umgerechnet, ungerundet; leer = ohne Menge |
+| unit | Text | |
+| sent | Boolean | gesendet bzw. beim Senden abgewählt (gilt als erledigt) |
+| transferred_at | Zeitstempel | |
+
+Eine Zeile je Planeintrag und Zutat, damit sich Änderungen am Plan später genau mit dem Übertragenen vergleichen lassen.
 
 ### `api_keys`
 
@@ -434,8 +440,8 @@ Siehe Warnregeln in Abschnitt 3. Ringtausche über mehrere Tage erfolgen als auf
 
 1. Server berechnet die Liste für den Einkaufszeitraum.
 2. Abwahl einzelner Artikel in der Vorschau.
-3. Übertragung an die Bring-Liste in Home Assistant.
-4. Einträge erhalten Status `transferred`, Artikel werden in `transferred_items` protokolliert.
+3. Übertragung an die Bring-Liste in Home Assistant. Steht ein Artikel gleichen Namens schon offen auf der Liste, wird seine Mengenangabe ergänzt („1 l + 250 ml“) statt einen zweiten Eintrag anzulegen.
+4. Einträge erhalten Status `transferred`, Artikel werden in `transferred_items` protokolliert – auch abgewählte (als erledigt). Lehnt Home Assistant einzelne Artikel ab, geht es mit den übrigen weiter; die abgelehnten werden nicht protokolliert und erscheinen dadurch als nachzusenden.
 
 ### F. Nachträgliche Änderungen
 
