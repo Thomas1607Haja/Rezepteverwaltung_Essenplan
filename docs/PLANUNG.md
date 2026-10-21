@@ -140,6 +140,8 @@ Zeiten und Speicher auf dem Entwicklungsrechner (Windows) gemessen. Die Statushi
 
 Gemessen auf dem Entwicklungsrechner (Windows, Arbeitsspeicher über den Task-Manager-Wert „Arbeitssatz“). Die Einkaufsliste wird bei jedem Abruf neu berechnet; das bleibt weit unter spürbaren Zeiten. Auf dem Green (App 0.3.0) liefen Senden an Bring und Nachsenden ohne spürbare Wartezeit.
 
+**Test nach Phase 6 (2026-10-21, App 0.4.0, Integration 0.4.2 über HACS auf dem Green):** Discovery und Einrichtung per „Entdeckt“ ok; Kalender „Essensplan“ und Sensor „Heute“ zeigen die richtigen Gerichte; Karte mit Bildern und Kochansicht ok; „Öffnen“ führt zur Weboberfläche, auch ohne Eintrag in der Seitenleiste. Die Karte erscheint erst nach einem Neuladen der Seite (Strg + F5), weil sie beim Einrichten der Integration angemeldet wird – steht in der Doku. Die Integration fragt den Server nur alle 15 Minuten ab; zusätzliche Last auf dem Green ist nicht spürbar.
+
 Build-Befehl (so auch im Dockerfile, dort zusätzlich `-tags timetzdata` und die Version per `-X main.buildVersion`):
 
 ```bash
