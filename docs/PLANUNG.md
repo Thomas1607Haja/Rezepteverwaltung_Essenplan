@@ -101,7 +101,21 @@ Die ARM64-Datei wurde nur gebaut; Speicher und Zeiten stammen vom Windows-Build 
 
 Gemessen wie in Phase 1 auf dem Entwicklungsrechner (Windows). Das Testfoto war künstlich erzeugt (Verlauf mit Rauschen) und lässt sich schlechter komprimieren als ein echtes Foto; echte Bilder werden eher kleiner. Die Spitze beim Hochladen passt zur Schätzung oben (rund 60 MB für das Bild). Gemessen wurden Uploads nacheinander; gleichzeitige Uploads wartet eine Sperre ab (immer nur ein Bild in Arbeit), die Spitze sollte also auch dann nicht steigen.
 
-Build-Befehl (später in der GitHub Action):
+**Messung nach Phase 3 (2026-10-21, App 0.1.1 auf dem Home Assistant Green):**
+
+| Messgröße | Wert |
+|---|---|
+| Arbeitsspeicher nach 10 min mit Anlegen, Foto-Upload und URL-Import | 15,6 MB |
+| Arbeitsspeicher-Spitze seit dem Start (Foto vom Handy hochgeladen) | 66,8 MB |
+| Datenbank mit wenigen Testrezepten | 152 KB |
+| Bilder für 3 Rezepte (je großes Bild + Vorschaubild) | 558 KB, also ca. 190 KB je Rezept |
+| CPU im Leerlauf (Infoseite der App) | 0,1 % |
+| RAM-Nutzung laut Infoseite der App | 0,2 % |
+| Foto vom Handy hochladen | gefühlt sofort |
+
+Speicherwerte abgelesen in der Systeminfo der Einstellungsseite (VmRSS/VmHWM aus `/proc/self/status`; MB = MiB), CPU und RAM in Prozent auf der Infoseite der App in Home Assistant. Die Dauer des URL-Imports wurde auf dem Green nicht gesondert gemessen. Auf dem Green belegt der Server im Betrieb weniger als auf dem Entwicklungsrechner; die Spitze beim Foto-Upload entspricht der Schätzung. Echte Fotos werden kleiner gespeichert als das künstliche Testfoto der Phase-2-Messung.
+
+Build-Befehl (so auch im Dockerfile, dort zusätzlich `-tags timetzdata` und die Version per `-X main.buildVersion`):
 
 ```bash
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" ./cmd/rezeptplaner
