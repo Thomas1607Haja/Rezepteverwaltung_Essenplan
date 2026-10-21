@@ -420,7 +420,7 @@ Familiengröße, Einkaufstag, Bring-Liste, Vorratsliste, Kategorien, API-Schlüs
 
 - Karte mit dem aktuellen Einkaufszeitraum: Tag, kleines Bild, Gericht; heutiger Tag hervorgehoben.
 - Antippen öffnet einen großen Dialog mit der Kochansicht (Portionen aus dem Plan).
-- Kein Bearbeiten auf der Karte; Link zur Weboberfläche.
+- Kein Bearbeiten auf der Karte; Link zur Weboberfläche (`/app/<App-ID>`, funktioniert auch ohne Eintrag in der Seitenleiste).
 - Die Integration stellt zusätzlich bereit: Kalender „Essensplan“ (jedes Gericht als ganztägiger Termin, Mittagessen mit „Mittag:“) und Sensor „Heute“ (Abendgerichte von heute; Mittagessen und Portionen als Attribute). Sie fragt den Server alle 15 Minuten ab; die Karte und die Kalenderansicht holen ihre Daten beim Öffnen direkt.
 
 **Verbindung Integration – App:** Die App meldet sich per Supervisor-Discovery (`discovery: [rezeptplaner]` in `config.yaml`) mit Hostname, Port und einem zufällig erzeugten Schlüssel (Datei `integration_token` im Datenordner). Die Integration richtet sich damit nach einer Bestätigung selbst ein. Der Server lässt neben Ingress nur lesende Anfragen (GET) mit diesem Schlüssel zu; nach außen bleibt kein Port offen. Die Karte erreicht den Server über Endpunkte der Integration (`/api/rezeptplaner/…`, mit Anmeldung bei Home Assistant; Bilder über signierte Adressen).

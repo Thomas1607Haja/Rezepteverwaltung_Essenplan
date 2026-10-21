@@ -49,9 +49,10 @@ class PlanView(HomeAssistantView):
             data = await rt.client.meal_plan()
         except RezeptplanerError as err:
             return web.json_response({"error": str(err)}, status=502)
-        # Link zur Weboberfläche der App: Home Assistant meldet ihre Seite in
-        # der Seitenleiste unter der App-ID an (hassio/addon_panel.py).
-        data["app_url"] = f"/{rt.slug}"
+        # Link zur Weboberfläche der App, wie „Weboberfläche öffnen“ auf der
+        # Seite der App. Anders als /<App-ID> (Eintrag in der Seitenleiste)
+        # gibt es diese Seite auch, wenn die App nicht in der Seitenleiste steht.
+        data["app_url"] = f"/app/{rt.slug}"
         return self.json(data)
 
 

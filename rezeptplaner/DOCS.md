@@ -31,7 +31,7 @@ Optional gibt es eine Integration für Home Assistant:
 4. Die Seite einmal neu laden (am Rechner Strg + F5, in der Companion-App unter Einstellungen → Companion App → Debugging „Frontend-Cache leeren“), damit der Browser die Karte kennt.
 5. Im Dashboard eine Karte **Essensplan** hinzufügen.
 
-„Öffnen“ auf der Karte führt zur Weboberfläche der App; dafür muss bei der App **In Seitenleiste anzeigen** eingeschaltet sein.
+„Öffnen“ auf der Karte führt zur Weboberfläche der App – auch wenn die App nicht in der Seitenleiste steht.
 
 Danach gibt es den Kalender `calendar.rezeptplaner_essensplan` und den Sensor `sensor.rezeptplaner_heute` (z. B. für eine Ansage „Heute gibt es …“).
 
