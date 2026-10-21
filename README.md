@@ -1,14 +1,22 @@
 # Rezeptplaner
 
-Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wochenplanung des Essens – als Add-on für Home Assistant.
+Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wochenplanung des Essens – als App (Add-on) für Home Assistant.
 
-## Funktionen (geplant)
+## Funktionen
 
 - **Rezepte** per URL (z. B. chefkoch.de) oder per Foto importieren, manuell anlegen und frei bearbeiten
 - **Essensplan** mit frei scrollbaren Tagen, Planung beliebig weit im Voraus, Verschieben per Drag and Drop
 - **Einkaufsliste** für den aktuellen Einkaufszeitraum, Übertragung an die Bring-App über Home Assistant
 - **Dashboard-Karte** mit dem aktuellen Essensplan in Home Assistant
-- **Android-App** mit Offline-Lesezugriff und Foto-Import
+- **Kalender und Sensor** in Home Assistant (Integration über HACS)
+- **Android-App** mit Offline-Lesezugriff und Foto-Import (geplant)
+
+## Installation
+
+1. **App:** In Home Assistant unter Einstellungen → Apps → App-Store → ⋮ → Repositories diese Adresse hinzufügen und „Rezeptplaner“ installieren:
+   `https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan`
+2. **Integration und Dashboard-Karte (optional):** In HACS → ⋮ → Benutzerdefinierte Repositories dieselbe Adresse mit Typ „Integration“ hinzufügen, „Rezeptplaner“ herunterladen und Home Assistant neu starten. Die Integration erscheint dann unter Einstellungen → Geräte & Dienste als „Entdeckt“ – nur noch bestätigen.
+3. Im Dashboard eine Karte „Essensplan“ hinzufügen (in der Kartenauswahl oder als `type: custom:rezeptplaner-card`).
 
 ## Bausteine
 
@@ -23,16 +31,15 @@ Grundsatz: Das System muss so schlank sein, dass es einen Home Assistant Green n
 
 ## Projektstand
 
-Das Projekt befindet sich am Anfang der Entwicklung. Die vollständige Planung – Architektur, fachliche Regeln, Datenmodell, Bildschirme und Projektphasen – steht in [docs/PLANUNG.md](docs/PLANUNG.md).
+Fertig: Rezepte, Essensplan, Einkaufsliste mit Bring, Integration mit Dashboard-Karte. In Arbeit: Android-App. Die vollständige Planung – Architektur, fachliche Regeln, Datenmodell, Bildschirme und Projektphasen – steht in [docs/PLANUNG.md](docs/PLANUNG.md).
 
 ## Projektstruktur
 
 ```
 rezeptplaner/                    Home-Assistant-Add-on
-custom_components/rezeptplaner/  HA-Integration (HACS)
+custom_components/rezeptplaner/  HA-Integration (HACS) mit Dashboard-Karte (frontend/)
 server/                          Go-Backend
 web/                             Weboberfläche
-ha-card/                         Dashboard-Karte
 android/                         Android-App
 docs/                            Planung und Notizen
 ```

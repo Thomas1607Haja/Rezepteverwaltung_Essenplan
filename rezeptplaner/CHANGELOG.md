@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.4.0
+
+- **Integration für Home Assistant** (über HACS, siehe DOCS): Die App meldet sich selbst an, die Integration muss nur bestätigt werden. Sie bringt den Kalender **Essensplan**, den Sensor **Heute** und die Dashboard-Karte **Essensplan** mit (Tage mit Bild und Gericht, Antippen öffnet die Kochansicht).
+- Die App nutzt dafür die Discovery des Supervisors; die Integration darf nur lesen.
+
 ## 0.3.0
 
 - **Einkauf**: Einkaufsliste für diese oder nächste Woche aus dem Essensplan – Mengen auf die Portionen umgerechnet, gleiche Zutaten zusammengefasst (auch „Zwiebel“ und „Zwiebeln“), Eier, Dosen usw. ganz aufgerundet. Einzelne Artikel lassen sich abwählen.

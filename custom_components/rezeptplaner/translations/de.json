@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "hassio_confirm": {
+        "title": "Rezeptplaner",
+        "description": "Die Rezeptplaner-App wurde gefunden. Integration einrichten? Danach gibt es den Kalender „Essensplan“, den Sensor „Heute“ und die Dashboard-Karte „Essensplan“."
+      }
+    },
+    "abort": {
+      "already_configured": "Der Rezeptplaner ist schon eingerichtet.",
+      "discovery_only": "Die Integration richtet sich von selbst ein, sobald die Rezeptplaner-App läuft. Bitte die App installieren bzw. starten und die Integration dann unter „Entdeckt“ hinzufügen."
+    }
+  },
+  "entity": {
+    "calendar": {
+      "meal_plan": { "name": "Essensplan" }
+    },
+    "sensor": {
+      "today": {
+        "name": "Heute",
+        "state_attributes": {
+          "lunch": { "name": "Mittagessen" },
+          "dishes": { "name": "Gerichte" }
+        }
+      }
+    }
+  }
+}

@@ -421,6 +421,9 @@ Familiengröße, Einkaufstag, Bring-Liste, Vorratsliste, Kategorien, API-Schlüs
 - Karte mit dem aktuellen Einkaufszeitraum: Tag, kleines Bild, Gericht; heutiger Tag hervorgehoben.
 - Antippen öffnet einen großen Dialog mit der Kochansicht (Portionen aus dem Plan).
 - Kein Bearbeiten auf der Karte; Link zur Weboberfläche.
+- Die Integration stellt zusätzlich bereit: Kalender „Essensplan“ (jedes Gericht als ganztägiger Termin, Mittagessen mit „Mittag:“) und Sensor „Heute“ (Abendgerichte von heute; Mittagessen und Portionen als Attribute). Sie fragt den Server alle 15 Minuten ab; die Karte und die Kalenderansicht holen ihre Daten beim Öffnen direkt.
+
+**Verbindung Integration – App:** Die App meldet sich per Supervisor-Discovery (`discovery: [rezeptplaner]` in `config.yaml`) mit Hostname, Port und einem zufällig erzeugten Schlüssel (Datei `integration_token` im Datenordner). Die Integration richtet sich damit nach einer Bestätigung selbst ein. Der Server lässt neben Ingress nur lesende Anfragen (GET) mit diesem Schlüssel zu; nach außen bleibt kein Port offen. Die Karte erreicht den Server über Endpunkte der Integration (`/api/rezeptplaner/…`, mit Anmeldung bei Home Assistant; Bilder über signierte Adressen).
 
 ---
 
@@ -505,10 +508,9 @@ Rezepteverwaltung_Essenplan/
 ├── repository.yaml                  Kennzeichnet das Repo als Add-on-Repository
 ├── hacs.json                        HACS-Metadaten für die Integration
 ├── rezeptplaner/                    Add-on: config.yaml, Doku, Icon
-├── custom_components/rezeptplaner/  HA-Integration (Pfad von HACS vorgegeben)
+├── custom_components/rezeptplaner/  HA-Integration (Pfad von HACS vorgegeben), Karte in frontend/
 ├── server/                          Go-Backend
 ├── web/                             Weboberfläche (wird in den Server eingebettet)
-├── ha-card/                         Quellcode der Dashboard-Karte
 ├── android/                         Android-App
 ├── .github/workflows/               Automatische Builds
 └── docs/                            Planung und Notizen
@@ -517,7 +519,7 @@ Rezepteverwaltung_Essenplan/
 ### Builds und Installation
 
 - **Add-on-Image wird nicht auf dem Green gebaut.** Ohne vorgefertigtes Image würde der Green bei jeder Installation und jedem Update Go und die Weboberfläche selbst kompilieren. Stattdessen baut eine GitHub Action das ARM64-Image und legt es in der GitHub Container Registry (ghcr.io) ab; die `config.yaml` des Add-ons verweist darauf. Der Green lädt nur noch das fertige Image herunter.
-- **Dashboard-Karte wird von der Integration mitgeliefert.** Die gebaute JavaScript-Datei der Karte liegt in der Integration, die sie beim Start in Home Assistant registriert. So genügt eine einzige HACS-Installation für Integration und Karte. (Bei der Umsetzung prüfen, ob das automatische Registrieren wie geplant funktioniert; sonst Fallback auf ein eigenes Repository für die Karte.)
+- **Dashboard-Karte wird von der Integration mitgeliefert.** Die JavaScript-Datei der Karte liegt in der Integration (`custom_components/rezeptplaner/frontend/`), die sie beim Start registriert (`add_extra_js_url`). So genügt eine einzige HACS-Installation für Integration und Karte. Die Karte ist eine schlichte Web Component ohne Bibliotheken und braucht keinen Build-Schritt; einen eigenen Ordner `ha-card/` gibt es deshalb nicht (geändert 2026-10-21).
 - **Installation zu Hause:** Repository-URL im Add-on-Store von Home Assistant hinzufügen; dieselbe URL in HACS als benutzerdefiniertes Repository vom Typ „Integration“.
 
 ### Öffentliches Repository – Regeln

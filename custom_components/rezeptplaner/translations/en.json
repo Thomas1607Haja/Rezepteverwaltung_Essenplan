@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "hassio_confirm": {
+        "title": "Rezeptplaner",
+        "description": "The Rezeptplaner app was found. Set up the integration? It provides the calendar \"Meal plan\", the sensor \"Today\" and the dashboard card \"Essensplan\"."
+      }
+    },
+    "abort": {
+      "already_configured": "Rezeptplaner is already configured.",
+      "discovery_only": "The integration sets itself up once the Rezeptplaner app is running. Please install or start the app, then add the integration under \"Discovered\"."
+    }
+  },
+  "entity": {
+    "calendar": {
+      "meal_plan": { "name": "Meal plan" }
+    },
+    "sensor": {
+      "today": {
+        "name": "Today",
+        "state_attributes": {
+          "lunch": { "name": "Lunch" },
+          "dishes": { "name": "Dishes" }
+        }
+      }
+    }
+  }
+}
