@@ -107,7 +107,7 @@ func TestPreviewCurrentPeriod(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if p.Period.From != "2026-10-17" || p.Period.To != "2026-10-23" {
+	if p.Period.From != "2026-10-17" || p.Period.To != "2026-10-23" || p.Today != "2026-10-21" {
 		t.Errorf("Zeitraum = %+v", p.Period)
 	}
 

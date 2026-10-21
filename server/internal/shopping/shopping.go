@@ -22,6 +22,7 @@ const dateLayout = "2006-01-02"
 // Preview ist die Einkaufsliste mit den Gerichten, aus denen sie entsteht.
 type Preview struct {
 	Period mealplan.Period `json:"period"`
+	Today  string          `json:"today"` // aus Sicht des Servers
 	// Entries sind alle Planeinträge im Zeitraum, auch solche, die nicht
 	// in die Liste eingehen (siehe Entry.Included).
 	Entries []Entry `json:"entries"`
@@ -33,7 +34,8 @@ type Entry struct {
 	ID       int64  `json:"id"`
 	Date     string `json:"date"`
 	Slot     string `json:"slot"`
-	Title    string `json:"title"` // Rezepttitel oder Notiz
+	RecipeID *int64 `json:"recipe_id"` // nil = Eintrag ohne Rezept
+	Title    string `json:"title"`     // Rezepttitel oder Notiz
 	Servings int    `json:"servings"`
 	Status   string `json:"status"`
 	// Included: Die Zutaten dieses Eintrags stehen auf der Liste. Nein bei
@@ -95,7 +97,7 @@ func (s *Store) Preview(ctx context.Context, next bool) (Preview, error) {
 	if err != nil {
 		return Preview{}, err
 	}
-	return Preview{Period: period, Entries: entries, Items: items}, nil
+	return Preview{Period: period, Today: today, Entries: entries, Items: items}, nil
 }
 
 // shiftWeek verschiebt einen Zeitraum um eine Woche nach hinten.
@@ -112,8 +114,7 @@ const slotOrder = `CASE e.slot WHEN 'lunch' THEN 0 ELSE 1 END`
 
 func (s *Store) loadEntries(ctx context.Context, period mealplan.Period, today string) ([]Entry, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT e.id, e.date, e.slot, coalesce(r.title, e.note), e.servings, e.status,
-		       e.recipe_id IS NOT NULL
+		SELECT e.id, e.date, e.slot, e.recipe_id, coalesce(r.title, e.note), e.servings, e.status
 		FROM meal_plan_entries e LEFT JOIN recipes r ON r.id = e.recipe_id
 		WHERE e.date BETWEEN ? AND ?
 		ORDER BY e.date, `+slotOrder+`, e.position, e.id`,
@@ -126,11 +127,10 @@ func (s *Store) loadEntries(ctx context.Context, period mealplan.Period, today s
 	entries := []Entry{}
 	for rows.Next() {
 		var e Entry
-		var hasRecipe bool
-		if err := rows.Scan(&e.ID, &e.Date, &e.Slot, &e.Title, &e.Servings, &e.Status, &hasRecipe); err != nil {
+		if err := rows.Scan(&e.ID, &e.Date, &e.Slot, &e.RecipeID, &e.Title, &e.Servings, &e.Status); err != nil {
 			return nil, fmt.Errorf("einkaufsliste: gerichte lesen: %w", err)
 		}
-		e.Included = hasRecipe && e.Status == mealplan.StatusPlanned && e.Date >= today
+		e.Included = e.RecipeID != nil && e.Status == mealplan.StatusPlanned && e.Date >= today
 		entries = append(entries, e)
 	}
 	if err := rows.Err(); err != nil {

@@ -112,6 +112,14 @@ export const api = {
    */
   applyPantry: (confirm) => request('POST', '/pantry/apply', { confirm }),
 
+  /**
+   * Einkaufsliste des aktuellen (next = false) bzw. folgenden
+   * Einkaufszeitraums. Ergebnis { period, today, entries: [{ id, date,
+   * title, servings, status, included, … }], items: [{ key, name, spec,
+   * recipes, … }] }.
+   */
+  shoppingPreview: (next = false) => request('GET', `/shopping/preview?period=${next ? 'next' : 'current'}`),
+
   /** Version, Arbeitsspeicher und Platzbedarf der Daten. */
   system: () => request('GET', '/system'),
 
