@@ -29,6 +29,12 @@ func NewStore(db *sql.DB, settings *settings.Store) *Store {
 	return &Store{db: db, settings: settings, now: time.Now}
 }
 
+// SetClock ersetzt die Uhr. Gedacht für Tests anderer Pakete, die einen
+// festen Tag als "heute" brauchen.
+func (s *Store) SetClock(now func() time.Time) {
+	s.now = now
+}
+
 // Today ist der heutige Kalendertag in der Zeitzone des Servers (in Home
 // Assistant über die Umgebungsvariable TZ eingestellt).
 func (s *Store) Today() time.Time {

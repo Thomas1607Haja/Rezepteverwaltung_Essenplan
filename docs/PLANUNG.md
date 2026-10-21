@@ -201,6 +201,10 @@ Es wird nicht ausgelesen, was in Bring tatsächlich abgehakt wurde.
 - Grundlage: alle Einträge im Einkaufszeitraum mit Status `planned`.
 - Mengen werden nach Portionen skaliert, nicht einkaufsrelevante Zutaten (darunter die vorgeschlagenen Vorratsartikel) entfallen.
 - Gleiche Zutaten werden zusammengefasst. Unterschiedliche Einheiten derselben Zutat werden zunächst nicht umgerechnet, sondern gemeinsam angegeben.
+  - Gleich heißt: gleicher Name ohne Klammerzusätze, unabhängig von Groß-/Kleinschreibung, Umlauten und einer Pluralendung am letzten Wort („Zwiebel“ = „Zwiebeln“, „Ei“ = „Eier“). Angezeigt wird die längere Schreibweise.
+  - Mengen derselben Einheit werden addiert, verschiedene Einheiten mit „+“ verbunden („500 g + 2 EL“). Zutaten ohne Menge stehen nur mit Namen auf der Liste.
+  - Stück-Einheiten (ohne Einheit, Stück, Dose, Packung, Bund, Zehe, Glas usw.) werden nach dem Addieren auf ganze Zahlen aufgerundet; andere Mengen werden wie in der Kochansicht gerundet dargestellt.
+- Tage vor heute zählen nicht mit (schon gegessen). Neben dem aktuellen lässt sich auch der folgende Einkaufszeitraum abrufen, z. B. am Abend vor dem Einkaufstag (ergänzt 2026-10-21).
 - Vor dem Senden lassen sich einzelne Artikel abwählen.
 - Übertragung über die Bring-Integration von Home Assistant (To-do-Entität) per Supervisor-API; Artikelname und Mengenangabe getrennt, soweit möglich.
 - Übertragene Artikel werden protokolliert, um Differenzen nachsenden zu können. Zu viel Gekauftes wird nur angezeigt, nicht aus Bring gelöscht.
@@ -455,7 +459,7 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App) bzw. 
 | Rezepte | Liste mit Suche/Filtern, Einzelabruf, Anlegen, Ändern, Löschen, Favorit setzen, Bild hochladen |
 | Import | URL einlesen (liefert Entwurf, Bildadresse und Dubletten), Zutatenzeilen zerlegen; Bild der Quellseite beim Speichern übernehmen |
 | Essensplan | Einträge eines Zeitraums, Anlegen, Ändern, Löschen, Verschieben/Tauschen mit Warnprüfung (erst prüfen, dann bestätigen) |
-| Einkauf | Vorschau der Einkaufsliste, An Bring senden, Differenz nachsenden |
+| Einkauf | Vorschau der Einkaufsliste (aktueller oder folgender Einkaufszeitraum), An Bring senden, Differenz nachsenden |
 | Stammdaten | Kategorien, Vorratsliste (inkl. Prüfung, ob Zutatennamen im Vorrat sind), Einstellungen |
 | Statistik | Häufigkeiten nach Zeitraum |
 | Abgleich | Änderungen seit Zeitpunkt X |
