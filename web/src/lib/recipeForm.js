@@ -43,9 +43,14 @@ export function toForm(recipe) {
     };
   }
 
+  // Ein Import-Entwurf kann Listen als null liefern.
+  const ingredients = recipe.ingredients ?? [];
+  const steps = recipe.steps ?? [];
+  const tags = recipe.tags ?? [];
+
   const items = [];
   let group = '';
-  for (const ing of recipe.ingredients) {
+  for (const ing of ingredients) {
     if (ing.group_name !== group) {
       group = ing.group_name;
       // Wechsel zurück zu "ohne Gruppe" ist mitten in der Liste nicht
@@ -71,9 +76,9 @@ export function toForm(recipe) {
     source_url: recipe.source_url,
     notes: recipe.notes,
     is_favorite: recipe.is_favorite,
-    tagIds: recipe.tags.map((t) => t.id),
+    tagIds: tags.map((t) => t.id),
     items: items.length > 0 ? items : [newIngredient()],
-    steps: recipe.steps.length > 0 ? recipe.steps.map((s) => ({ ...newStep(), text: s.text })) : [newStep()],
+    steps: steps.length > 0 ? steps.map((s) => ({ ...newStep(), text: s.text })) : [newStep()],
   };
 }
 

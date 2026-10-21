@@ -92,6 +92,16 @@ export const api = {
 
   deleteImage: (id) => request('DELETE', `/recipes/${id}/image`),
 
+  /** Lässt den Server das Bild unter url laden und als Rezeptbild speichern. */
+  fetchImage: (id, url) => request('POST', `/recipes/${id}/image/fetch`, { url }),
+
+  /**
+   * Liest ein Rezept von einer Webseite. Ergebnis: { recipe, image_url,
+   * duplicates } – recipe ist ein noch nicht gespeicherter Entwurf,
+   * duplicates sind vorhandene Rezepte mit derselben Quell-URL.
+   */
+  importUrl: (url) => request('POST', '/import/url', { url }),
+
   /** Kategorien nach Gruppen: [{ name, tags: [{ id, name, ... }] }]. */
   listTagGroups: async () => (await request('GET', '/tags')).groups,
 };

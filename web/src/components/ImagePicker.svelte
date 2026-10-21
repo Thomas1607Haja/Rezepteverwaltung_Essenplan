@@ -5,7 +5,9 @@
   // current: Dateiname des gespeicherten Bildes (leer = keins).
   // file: neu gewählte, noch nicht hochgeladene Datei (oder null).
   // remove: gespeichertes Bild beim Speichern entfernen.
-  let { current = '', file = $bindable(null), remove = $bindable(false) } = $props();
+  // remoteUrl: Bild einer Quellseite (URL-Import), das der Server beim
+  // Speichern lädt; eine gewählte Datei hat Vorrang.
+  let { current = '', file = $bindable(null), remove = $bindable(false), remoteUrl = $bindable('') } = $props();
 
   let error = $state('');
 
@@ -23,7 +25,7 @@
     return () => URL.revokeObjectURL(url);
   });
 
-  const preview = $derived(fileUrl || (current && !remove ? imageUrl(current) : ''));
+  const preview = $derived(fileUrl || remoteUrl || (current && !remove ? imageUrl(current) : ''));
 
   function choose(event) {
     const chosen = event.currentTarget.files[0];
@@ -39,11 +41,13 @@
     }
     error = '';
     file = chosen;
+    remoteUrl = '';
     remove = false;
   }
 
   function clear() {
     file = null;
+    remoteUrl = '';
     remove = Boolean(current);
     error = '';
   }
@@ -52,7 +56,8 @@
 <div class="picker">
   <div class="preview">
     {#if preview}
-      <img src={preview} alt="Vorschau des Rezeptbildes" />
+      <!-- no-referrer: Die Quellseite erfährt nicht, wer ihr Bild anzeigt. -->
+      <img src={preview} alt="Vorschau des Rezeptbildes" referrerpolicy="no-referrer" />
     {:else}
       <Icon name="dish" size={48} />
     {/if}
@@ -70,6 +75,8 @@
     {/if}
     {#if file}
       <p class="hint">Wird beim Speichern hochgeladen und verkleinert.</p>
+    {:else if remoteUrl}
+      <p class="hint">Bild der Quellseite – wird beim Speichern übernommen.</p>
     {:else if remove}
       <p class="hint">Wird beim Speichern entfernt.</p>
     {/if}

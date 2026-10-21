@@ -29,6 +29,14 @@
   let currentImage = $state('');
   let imageFile = $state(null);
   let removeImage = $state(false);
+  // Bildadresse der Quellseite nach einem URL-Import (leer = keine).
+  let remoteImage = $state('');
+
+  // URL-Import (nur bei neuen Rezepten)
+  let importAddress = $state('');
+  let importing = $state(false);
+  let importError = $state('');
+  let duplicates = $state([]);
 
   // Stand beim Laden, um ungespeicherte Änderungen zu erkennen.
   let initial = '';
@@ -50,6 +58,48 @@
   function start(f) {
     form = f;
     initial = JSON.stringify(f);
+  }
+
+  /** Lädt das Rezept von importAddress und füllt damit das Formular. */
+  async function importRecipe(event) {
+    event.preventDefault();
+    importError = '';
+    if (importAddress.trim() === '') {
+      importError = 'Bitte eine Adresse einfügen.';
+      return;
+    }
+    if (JSON.stringify(form) !== initial && !confirm('Bisherige Eingaben durch das importierte Rezept ersetzen?')) return;
+
+    importing = true;
+    try {
+      const draft = await api.importUrl(importAddress.trim());
+      // initial bleibt beim leeren Formular: Der Entwurf ist noch nicht
+      // gespeichert, Abbrechen fragt also nach.
+      form = toForm(draft.recipe);
+      errors = {};
+      remoteImage = draft.image_url;
+      imageFile = null;
+      duplicates = draft.duplicates ?? [];
+      importAddress = '';
+    } catch (e) {
+      importError = importMessage(e);
+    } finally {
+      importing = false;
+    }
+  }
+
+  /** Verständliche Meldung zu einem fehlgeschlagenen Import. */
+  function importMessage(e) {
+    switch (e.status) {
+      case 0:
+        return e.message;
+      case 422:
+        return 'Auf dieser Seite wurde kein Rezept gefunden. Das Rezept lässt sich unten von Hand eingeben.';
+      case 502:
+        return `Die Seite ließ sich nicht laden: ${e.message}`;
+      default:
+        return `Import fehlgeschlagen: ${e.message}`;
+    }
   }
 
   function toggleTag(tagId) {
@@ -78,6 +128,7 @@
       initial = JSON.stringify(form);
       try {
         if (imageFile) await api.setImage(saved.id, imageFile);
+        else if (remoteImage) await api.fetchImage(saved.id, remoteImage);
         else if (removeImage) await api.deleteImage(saved.id);
       } catch (e) {
         // Das Rezept selbst ist gespeichert; nur das Bild hat nicht geklappt.
@@ -93,7 +144,7 @@
   }
 
   function cancel() {
-    const changed = JSON.stringify(form) !== initial || imageFile !== null || removeImage;
+    const changed = JSON.stringify(form) !== initial || imageFile !== null || removeImage || remoteImage !== '';
     if (changed && !confirm('Änderungen verwerfen?')) return;
     navigate(isNew ? '/recipes' : `/recipes/${recipeId}`);
   }
@@ -108,6 +159,37 @@
   <p class="muted">Lädt …</p>
 {:else}
   <!-- novalidate: Die Prüfung macht toPayload, mit deutschen Meldungen. -->
+  {#if isNew}
+    <form class="import" onsubmit={importRecipe} novalidate>
+      <h2>Aus dem Internet übernehmen</h2>
+      <p class="hint">Adresse einer Rezeptseite einfügen, z. B. von chefkoch.de. Das Rezept landet als Entwurf im Formular.</p>
+      <div class="import-row">
+        <input
+          type="url"
+          placeholder="https://…"
+          aria-label="Adresse der Rezeptseite"
+          bind:value={importAddress}
+          class:invalid={importError}
+          disabled={importing}
+        />
+        <button type="submit" class="primary" disabled={importing}>{importing ? 'Lädt …' : 'Übernehmen'}</button>
+      </div>
+      {#if importError}<p class="error">{importError}</p>{/if}
+    </form>
+  {/if}
+
+  {#if duplicates.length > 0}
+    <div class="duplicates" role="status">
+      <strong>Dieses Rezept gibt es schon:</strong>
+      <ul>
+        {#each duplicates as d (d.id)}
+          <li><a href="#/recipes/{d.id}">{d.title}</a></li>
+        {/each}
+      </ul>
+      <span>Speichern legt trotzdem ein weiteres an.</span>
+    </div>
+  {/if}
+
   <form onsubmit={save} novalidate>
     <section>
       <h2>Allgemein</h2>
@@ -148,7 +230,7 @@
 
     <section>
       <h2>Bild</h2>
-      <ImagePicker current={currentImage} bind:file={imageFile} bind:remove={removeImage} />
+      <ImagePicker current={currentImage} bind:file={imageFile} bind:remove={removeImage} bind:remoteUrl={remoteImage} />
     </section>
 
     <section>
@@ -199,11 +281,44 @@
     gap: 1rem;
   }
 
-  section {
+  section,
+  .import {
     padding: 1rem;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+  }
+
+  .import {
+    gap: 0;
+    margin-bottom: 1rem;
+  }
+
+  .import .error {
+    margin: 0.5rem 0 0;
+  }
+
+  .import-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .duplicates {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--danger);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .duplicates ul {
+    margin: 0.25rem 0;
+    padding-left: 1.25rem;
+  }
+
+  .duplicates span {
+    font-size: 0.85rem;
+    color: var(--text-muted);
   }
 
   h2 {
