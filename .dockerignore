@@ -1,0 +1,10 @@
+# Nur web/ und server/ werden für das Image gebraucht. Alles andere bleibt
+# draußen – vor allem lokale Daten, Builds und node_modules.
+*
+!web/
+!server/
+web/node_modules/
+server/internal/web/dist/app/
+server/data/
+**/*.db*
+**/*.exe
