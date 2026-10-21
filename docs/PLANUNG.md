@@ -115,6 +115,17 @@ Gemessen wie in Phase 1 auf dem Entwicklungsrechner (Windows). Das Testfoto war 
 
 Speicherwerte abgelesen in der Systeminfo der Einstellungsseite (VmRSS/VmHWM aus `/proc/self/status`; MB = MiB), CPU und RAM in Prozent auf der Infoseite der App in Home Assistant. Die Dauer des URL-Imports wurde auf dem Green nicht gesondert gemessen. Auf dem Green belegt der Server im Betrieb weniger als auf dem Entwicklungsrechner; die Spitze beim Foto-Upload entspricht der Schätzung. Echte Fotos werden kleiner gespeichert als das künstliche Testfoto der Phase-2-Messung.
 
+**Messung nach Phase 4 (2026-10-21, Version 0.2.0 mit Essensplan):**
+
+| Messgröße | Wert |
+|---|---|
+| Rezeptliste mit 500 Einträgen (mit Statushinweisen aus dem Plan) | ca. 4,7 ms |
+| Essensplan über 5 Wochen, bei 730 Planeinträgen insgesamt | ca. 2,5 ms |
+| Arbeitsspeicher mit 500 Rezepten und 730 Planeinträgen | 23 MB |
+| Auf dem Green (App 0.2.0, inkl. Ziehen am Handy) | unauffällig |
+
+Zeiten und Speicher auf dem Entwicklungsrechner (Windows) gemessen. Die Statushinweise werden bei jeder Abfrage berechnet; die Rezeptliste ist dadurch etwas langsamer als nach Phase 2, bleibt aber weit unter spürbaren Werten. Auf dem Green wurden keine einzelnen Zahlen erhoben.
+
 Build-Befehl (so auch im Dockerfile, dort zusätzlich `-tags timetzdata` und die Version per `-X main.buildVersion`):
 
 ```bash
