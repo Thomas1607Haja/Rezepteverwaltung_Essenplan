@@ -3,8 +3,9 @@
   import { imageUrl } from '../lib/api.js';
 
   // entry ist ein Eintrag aus GET /meal-plan; onmenu(entry) öffnet das
-  // Menü (Portionen, Notiz, Ersetzen, Entfernen).
-  let { entry, onmenu } = $props();
+  // Menü (Portionen, Notiz, Ersetzen, Entfernen). dropTarget hebt den
+  // Eintrag hervor, wenn ein anderer zum Tauschen darüber gezogen wird.
+  let { entry, onmenu, dropTarget = false } = $props();
 
   const title = $derived(entry.recipe ? entry.recipe.title : entry.note);
   // Bei einem Rezept ist die Notiz eine Zusatzangabe (z. B. „mit Salat“).
@@ -20,12 +21,20 @@
 <!-- Einträge mit Rezept öffnen die Kochansicht (mit den Portionen des
      Eintrags), Einträge ohne Rezept das Menü. Der Menüknopf liegt neben
      dem Link, denn ein Knopf darf nicht in einem Link stecken. -->
-<div class="entry" class:no-recipe={!entry.recipe_id}>
+<!-- data-*: Angaben für das Ziehen (lib/planDrag.js) -->
+<div
+  class="entry"
+  class:no-recipe={!entry.recipe_id}
+  class:drop-target={dropTarget}
+  data-entry-id={entry.id}
+  data-date={entry.date}
+  data-slot={entry.slot}
+>
   {#snippet content()}
     {#if entry.recipe}
       <span class="thumb">
         {#if entry.recipe.thumbnail}
-          <img src={imageUrl(entry.recipe.thumbnail)} alt="" loading="lazy" />
+          <img src={imageUrl(entry.recipe.thumbnail)} alt="" loading="lazy" draggable="false" />
         {:else}
           <Icon name="dish" size={22} />
         {/if}
@@ -46,7 +55,7 @@
     </span>
   {/snippet}
   {#if entry.recipe_id}
-    <a class="main" href="#/recipes/{entry.recipe_id}/entry/{entry.id}">{@render content()}</a>
+    <a class="main" href="#/recipes/{entry.recipe_id}/entry/{entry.id}" draggable="false">{@render content()}</a>
   {:else}
     <button type="button" class="main" onclick={() => onmenu(entry)}>{@render content()}</button>
   {/if}
@@ -68,6 +77,24 @@
 
   .entry:hover {
     border-color: var(--accent);
+  }
+
+  /* Beim langen Drücken auf dem Handy keinen Text markieren und kein
+     Link-Menü öffnen */
+  .entry {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .drop-target {
+    outline: 3px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  /* Original, solange eine Kopie davon gezogen wird (Klasse aus planDrag.js) */
+  :global(.entry.drag-source) {
+    opacity: 0.35;
   }
 
   .main {

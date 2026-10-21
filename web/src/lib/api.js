@@ -89,6 +89,13 @@ export const api = {
 
   deleteEntry: (id) => request('DELETE', `/meal-plan/${id}`),
 
+  /**
+   * Verschiebt einen Eintrag: { date, slot, swap_with?, confirm?,
+   * have_ingredients? }. Ergebnis { applied, warnings, entries }; bei
+   * Warnungen ohne confirm ist nichts gespeichert.
+   */
+  moveEntry: (id, move) => request('POST', `/meal-plan/${id}/move`, move),
+
   /** Version, Arbeitsspeicher und Platzbedarf der Daten. */
   system: () => request('GET', '/system'),
 

@@ -6,8 +6,10 @@
   import Icon from './Icon.svelte';
 
   // entry: der Planeintrag. onsaved(entry) meldet den neuen Stand,
-  // ondeleted(id) das Entfernen, onclose das Schließen ohne Änderung.
-  let { entry, onsaved, ondeleted, onclose } = $props();
+  // ondeleted(id) das Entfernen, onmove(entry, date) den Wunsch, den
+  // Eintrag auf einen anderen Tag zu verschieben (ohne Ziehen), onclose das
+  // Schließen ohne Änderung.
+  let { entry, onsaved, ondeleted, onmove, onclose } = $props();
 
   // Bearbeitet wird eine Kopie; übernommen wird erst beim Speichern.
   // svelte-ignore state_referenced_locally
@@ -18,6 +20,8 @@
   let haveIngredients = $state(entry.status === 'have_ingredients');
   // svelte-ignore state_referenced_locally
   let isFavorite = $state(entry.recipe?.is_favorite ?? false);
+  // svelte-ignore state_referenced_locally
+  let moveDate = $state(entry.date);
   let error = $state('');
   let busy = $state(false);
 
@@ -120,6 +124,19 @@
         </label>
       {/if}
     {/if}
+
+    <div class="move">
+      <label for="move-date">Verschieben auf</label>
+      <input id="move-date" type="date" bind:value={moveDate} />
+      <button
+        type="button"
+        class="secondary"
+        disabled={!moveDate || moveDate === entry.date || busy}
+        onclick={() => onmove(entry, moveDate)}
+      >
+        Verschieben
+      </button>
+    </div>
 
     {#if error}<p class="error">{error}</p>{/if}
 
@@ -297,6 +314,43 @@
     color: var(--accent);
     font: inherit;
     cursor: pointer;
+  }
+
+  .move {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .move label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .move input {
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 0.2rem);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+  }
+
+  .secondary {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .secondary:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 
   footer {

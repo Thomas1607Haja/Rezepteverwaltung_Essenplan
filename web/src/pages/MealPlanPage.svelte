@@ -6,6 +6,8 @@
   import Icon from '../components/Icon.svelte';
   import PlanEntry from '../components/PlanEntry.svelte';
   import EntryDialog from '../components/EntryDialog.svelte';
+  import MoveWarningDialog from '../components/MoveWarningDialog.svelte';
+  import { planDrag } from '../lib/planDrag.js';
 
   // Wie viele Tage beim Start und bei jedem Nachladen am Rand.
   const INITIAL_BEFORE = 7;
@@ -25,6 +27,8 @@
   let strip; // der waagerecht scrollende Streifen (bind:this)
   let loading = false; // verhindert doppeltes Nachladen beim Scrollen
   let menuEntry = $state(null); // Eintrag, dessen Menü offen ist
+  let dropTarget = $state(null); // Ziel beim Ziehen, zum Hervorheben
+  let pendingMove = $state(null); // { entry, move, warnings }, wartet auf Bestätigung
   // Tag, den der Plan zeigen soll, z. B. nach dem Einplanen; sonst heute.
   const focusDate = takePlanFocus();
 
@@ -77,12 +81,16 @@
 
   async function shiftWeek(direction) {
     const target = addDays(firstVisibleDay(), 7 * direction);
-    // Vor dem Springen links und rechts vom Ziel mindestens eine Woche
-    // laden. Sonst würde das Nachladen am Rand erst während des weichen
-    // Scrollens Spalten einfügen, und die Ansicht landete daneben.
-    while (addDays(target, -7) < from) await loadEarlier();
-    while (addDays(target, 13) > to) await loadLater();
+    await ensureLoaded(target);
     scrollToDay(target);
+  }
+
+  // Vor dem Springen links und rechts von date mindestens eine Woche
+  // laden. Sonst würde das Nachladen am Rand erst während des weichen
+  // Scrollens Spalten einfügen, und die Ansicht landete daneben.
+  async function ensureLoaded(date) {
+    while (addDays(date, -7) < from) await loadEarlier();
+    while (addDays(date, 13) > to) await loadLater();
   }
 
   async function loadEarlier() {
@@ -142,6 +150,71 @@
     menuEntry = null;
   }
 
+  /** Sucht einen geladenen Eintrag anhand seiner ID. */
+  function findEntry(id) {
+    for (const list of Object.values(entriesByDate)) {
+      const entry = list.find((e) => e.id === id);
+      if (entry) return entry;
+    }
+    return null;
+  }
+
+  // Abgelegt: auf einem Gericht = tauschen, auf freier Fläche = anhängen.
+  function handleDrop(id, target) {
+    const entry = findEntry(id);
+    if (!entry) return;
+    runMove(entry, {
+      date: target.date,
+      slot: target.slot,
+      swap_with: target.type === 'swap' ? target.id : null,
+    });
+  }
+
+  /** Schickt das Verschieben an den Server; bei Warnungen erst fragen. */
+  async function runMove(entry, move) {
+    try {
+      const result = await api.moveEntry(entry.id, move);
+      if (!result.applied) {
+        pendingMove = { entry, move, warnings: result.warnings };
+        return;
+      }
+      await reloadDates([entry.date, ...result.entries.map((e) => e.date)]);
+    } catch (e) {
+      alert(`Verschieben fehlgeschlagen: ${e.message}`);
+      await reloadDates([entry.date, move.date]);
+    }
+  }
+
+  async function moveChoice(choice) {
+    const { entry, move, warnings } = pendingMove;
+    pendingMove = null;
+    if (choice === 'cancel') return;
+    const haveIngredients =
+      choice === 'have_ingredients'
+        ? warnings.filter((w) => w.type === 'planned_into_period').map((w) => w.entry_id)
+        : [];
+    await runMove(entry, { ...move, confirm: true, have_ingredients: haveIngredients });
+  }
+
+  /** Lädt die geladenen unter den Tagen dates neu (z. B. nach einem Tausch). */
+  async function reloadDates(dates) {
+    for (const date of new Set(dates)) {
+      if (date >= from && date <= to) await load(date, date);
+    }
+  }
+
+  // Verschieben über das Menü (ohne Ziehen), z. B. per Tastatur.
+  async function moveFromMenu(entry, date) {
+    menuEntry = null;
+    await runMove(entry, { date, slot: entry.slot });
+    await ensureLoaded(date);
+    await tick();
+    scrollToDay(date);
+  }
+
+  const isDropTarget = (date, slot) =>
+    dropTarget?.type === 'append' && dropTarget.date === date && dropTarget.slot === slot;
+
   const inPeriod = (date) => period && date >= period.from && date <= period.to;
   const lunch = (date) => entriesByDate[date]?.filter((e) => e.slot === 'lunch') ?? [];
   const dinner = (date) => entriesByDate[date]?.filter((e) => e.slot === 'dinner') ?? [];
@@ -167,7 +240,12 @@
   <p class="error">Der Plan konnte nicht geladen werden: {error}</p>
 {/if}
 
-<div class="strip" bind:this={strip} onscroll={onScroll}>
+<div
+  class="strip"
+  bind:this={strip}
+  onscroll={onScroll}
+  use:planDrag={{ ondrop: handleDrop, ontarget: (t) => (dropTarget = t) }}
+>
   {#each days as date (date)}
     {@const label = dayLabel(date)}
     {@const lunchEntries = lunch(date)}
@@ -177,26 +255,32 @@
         <span class="date">{label.date}</span>
         {#if date === today}<span class="badge">Heute</span>{/if}
       </header>
+      <!-- data-slot-zone: Ablagefläche beim Ziehen (lib/planDrag.js) -->
       <div class="entries">
         {#if lunchEntries.length > 0}
-          <span class="slot">Mittag</span>
-          {#each lunchEntries as entry (entry.id)}
-            <PlanEntry {entry} onmenu={(e) => (menuEntry = e)} />
-          {/each}
-          <span class="slot">Abend</span>
+          <div class="zone" data-slot-zone="lunch" class:drop-target={isDropTarget(date, 'lunch')}>
+            <span class="slot">Mittag</span>
+            {#each lunchEntries as entry (entry.id)}
+              <PlanEntry {entry} onmenu={(e) => (menuEntry = e)} dropTarget={dropTarget?.id === entry.id} />
+            {/each}
+          </div>
         {/if}
-        {#each dinner(date) as entry (entry.id)}
-          <PlanEntry {entry} onmenu={(e) => (menuEntry = e)} />
-        {/each}
-        <!-- Leerer Tag: großes Plus; belegter Tag: kleines Plus für ein
-             weiteres Gericht -->
-        <a
-          class="add"
-          class:small={entriesByDate[date]?.length > 0}
-          href="#/plan/add/{date}"
-          title="Gericht für {label.weekday} {label.date} planen"
-          aria-label="Gericht für {label.weekday} {label.date} planen"
-        >+</a>
+        <div class="zone dinner" data-slot-zone="dinner" class:drop-target={isDropTarget(date, 'dinner')}>
+          {#if lunchEntries.length > 0}<span class="slot">Abend</span>{/if}
+          {#each dinner(date) as entry (entry.id)}
+            <PlanEntry {entry} onmenu={(e) => (menuEntry = e)} dropTarget={dropTarget?.id === entry.id} />
+          {/each}
+          <!-- Leerer Tag: großes Plus; belegter Tag: kleines Plus für ein
+               weiteres Gericht -->
+          <a
+            class="add"
+            class:small={entriesByDate[date]?.length > 0}
+            href="#/plan/add/{date}"
+            draggable="false"
+            title="Gericht für {label.weekday} {label.date} planen"
+            aria-label="Gericht für {label.weekday} {label.date} planen"
+          >+</a>
+        </div>
       </div>
     </section>
   {/each}
@@ -207,8 +291,13 @@
     entry={menuEntry}
     onsaved={entrySaved}
     ondeleted={entryDeleted}
+    onmove={moveFromMenu}
     onclose={() => (menuEntry = null)}
   />
+{/if}
+
+{#if pendingMove}
+  <MoveWarningDialog warnings={pendingMove.warnings} onchoice={moveChoice} />
 {/if}
 
 <style>
@@ -354,8 +443,40 @@
 
   .entries {
     display: flex;
+    flex: 1;
     flex-direction: column;
     gap: 0.4rem;
+  }
+
+  .zone {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    border-radius: calc(var(--radius) - 0.15rem);
+  }
+
+  /* Der Abend füllt den Rest der Spalte: auch die freie Fläche unter den
+     Gerichten nimmt beim Ziehen etwas an. */
+  .zone.dinner {
+    flex: 1;
+  }
+
+  .zone.drop-target {
+    outline: 2px dashed var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* Während des Ziehens keinen Text markieren (Klasse aus planDrag.js) */
+  :global(body.plan-dragging) {
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grabbing;
+  }
+
+  /* Einrasten an Spaltenkanten würde das Mitscrollen am Rand beim Ziehen
+     sofort wieder zurücksetzen. */
+  :global(body.plan-dragging) .strip {
+    scroll-snap-type: none;
   }
 
   .add {
