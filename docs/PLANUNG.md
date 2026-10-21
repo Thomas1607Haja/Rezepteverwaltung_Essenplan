@@ -83,6 +83,24 @@ Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wo
 
 Die ARM64-Datei wurde nur gebaut; Speicher und Zeiten stammen vom Windows-Build auf dem Entwicklungsrechner. In Phase 3 auf dem Green nachmessen.
 
+**Messung nach Phase 2 (2026-10-21, Server mit eingebetteter Weboberfläche, Bildverarbeitung und URL-Import):**
+
+| Messgröße | Wert |
+|---|---|
+| Programmdatei Linux/ARM64 (`-trimpath -ldflags="-s -w"`) | 11,4 MB (gzip: 4,7 MB), +1,2 MB gegenüber Phase 1 |
+| Weboberfläche (eingebettet) | 145 KB; beim ersten Aufruf 28 KB gzip (JS + CSS), Bearbeiten-Seite wird mit 21 KB gzip nachgeladen |
+| Arbeitsspeicher nach dem Start | 13 MB |
+| Arbeitsspeicher mit 500 Rezepten, nach 4000 Abfragen | 26 MB |
+| Arbeitsspeicher-Spitze beim Hochladen eines 12-Megapixel-Fotos (4,9 MB) | 71 MB, danach wieder 23 MB |
+| Arbeitsspeicher nach 3 URL-Importen mit Bild, nach 2 min Leerlauf | 28 MB |
+| CPU im Leerlauf (20 s beobachtet) | 0 |
+| Rezeptliste mit 500 Einträgen / Suche mit 3 Kategorien / Einzelrezept (curl) | ca. 2,3 ms / 4,2 ms / 2,8 ms |
+| Foto hochladen und verkleinern (12 MP) | ca. 290 ms |
+| URL-Import Chefkoch / Bild der Quellseite übernehmen | 150–250 ms / 130–180 ms |
+| Bilder je Rezept (großes Bild + Vorschaubild) | ca. 300 KB |
+
+Gemessen wie in Phase 1 auf dem Entwicklungsrechner (Windows). Das Testfoto war künstlich erzeugt (Verlauf mit Rauschen) und lässt sich schlechter komprimieren als ein echtes Foto; echte Bilder werden eher kleiner. Die Spitze beim Hochladen passt zur Schätzung oben (rund 60 MB für das Bild). Gemessen wurden Uploads nacheinander; gleichzeitige Uploads wartet eine Sperre ab (immer nur ein Bild in Arbeit), die Spitze sollte also auch dann nicht steigen.
+
 Build-Befehl (später in der GitHub Action):
 
 ```bash
