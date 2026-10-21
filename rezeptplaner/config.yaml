@@ -21,6 +21,11 @@ ingress_port: 8099
 panel_icon: mdi:chef-hat
 panel_title: Essensplan
 
+# Zugriff auf die REST-API von Home Assistant (über den Supervisor), um
+# die Einkaufsliste in eine To-do-Liste wie Bring zu schreiben. Der
+# Supervisor stellt dafür SUPERVISOR_TOKEN bereit.
+homeassistant_api: true
+
 # Kein offener Port: Die API ist nur über Ingress erreichbar. Ein Port für
 # die Android-App kommt zusammen mit den API-Schlüsseln.
 

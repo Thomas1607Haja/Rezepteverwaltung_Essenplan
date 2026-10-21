@@ -33,7 +33,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 }
 
 // update ersetzt alle Einstellungen, Anfrage z. B.
-// {"family_size": 4, "shopping_day": "saturday"}.
+// {"family_size": 4, "shopping_day": "saturday", "bring_entity": "todo.zuhause"}.
 func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 	var in Settings
 	if err := httpx.ReadJSON(w, r, &in); err != nil {

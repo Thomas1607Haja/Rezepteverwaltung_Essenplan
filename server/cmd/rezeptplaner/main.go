@@ -18,6 +18,7 @@ import (
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/importer"
@@ -120,6 +121,13 @@ func run() error {
 	mealplan.NewHandler(planStore).Register(mux)
 	shopping.NewHandler(shopping.NewStore(db, planStore)).Register(mux)
 	system.NewHandler(buildVersion, cfg.DataDir).Register(mux)
+	// SUPERVISOR_TOKEN setzt Home Assistant in der App. Lokal lässt sich
+	// mit REZEPTPLANER_HA_URL und REZEPTPLANER_HA_TOKEN (langlebiger Token
+	// aus dem Benutzerprofil) eine echte Instanz nutzen, sonst gilt der
+	// Testmodus.
+	ha := homeassistant.New(os.Getenv("SUPERVISOR_TOKEN"), os.Getenv("REZEPTPLANER_HA_URL"), os.Getenv("REZEPTPLANER_HA_TOKEN"))
+	slog.Info("Home Assistant", "modus", ha.Mode())
+	homeassistant.NewHandler(ha).Register(mux)
 	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist
 	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
 	mux.Handle("GET /", web.Handler())

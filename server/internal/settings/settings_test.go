@@ -38,7 +38,7 @@ func TestDefaultsAndUpdate(t *testing.T) {
 		t.Errorf("leere Datenbank: %+v, erwartet Standardwerte %+v", got, Defaults)
 	}
 
-	want := Settings{FamilySize: 3, ShoppingDay: "friday"}
+	want := Settings{FamilySize: 3, ShoppingDay: "friday", BringEntity: "todo.zuhause"}
 	got, err = store.Update(ctx, want)
 	if err != nil {
 		t.Fatal(err)
@@ -80,6 +80,8 @@ func TestValidation(t *testing.T) {
 		{FamilySize: 0, ShoppingDay: "saturday"},
 		{FamilySize: 4, ShoppingDay: "samstag"},
 		{FamilySize: 4, ShoppingDay: ""},
+		{FamilySize: 4, ShoppingDay: "saturday", BringEntity: "sensor.bring"},
+		{FamilySize: 4, ShoppingDay: "saturday", BringEntity: "todo.a b"},
 	} {
 		_, err := store.Update(context.Background(), in)
 		var verr *ValidationError

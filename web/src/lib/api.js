@@ -69,7 +69,7 @@ function listParams(filter) {
 export const api = {
   health: () => request('GET', '/health'),
 
-  /** Familiengröße und Einkaufstag: { family_size, shopping_day }. */
+  /** Einstellungen: { family_size, shopping_day, bring_entity }. */
   getSettings: () => request('GET', '/settings'),
   updateSettings: (settings) => request('PUT', '/settings', settings),
 
@@ -119,6 +119,12 @@ export const api = {
    * recipes, … }] }.
    */
   shoppingPreview: (next = false) => request('GET', `/shopping/preview?period=${next ? 'next' : 'current'}`),
+
+  /**
+   * Verbindung zu Home Assistant: { mode: "supervisor" | "direct" | "test",
+   * lists: [{ entity_id, name }], error? }.
+   */
+  homeAssistantStatus: () => request('GET', '/homeassistant/status'),
 
   /** Version, Arbeitsspeicher und Platzbedarf der Daten. */
   system: () => request('GET', '/system'),

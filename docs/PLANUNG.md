@@ -207,6 +207,9 @@ Es wird nicht ausgelesen, was in Bring tatsächlich abgehakt wurde.
 - Tage vor heute zählen nicht mit (schon gegessen). Neben dem aktuellen lässt sich auch der folgende Einkaufszeitraum abrufen, z. B. am Abend vor dem Einkaufstag (ergänzt 2026-10-21).
 - Vor dem Senden lassen sich einzelne Artikel abwählen.
 - Übertragung über die Bring-Integration von Home Assistant (To-do-Entität) per Supervisor-API; Artikelname und Mengenangabe getrennt, soweit möglich.
+  - Die App hat `homeassistant_api: true` und ruft mit `SUPERVISOR_TOKEN` die Dienste `todo.get_items`, `todo.add_item` und `todo.update_item` unter `http://supervisor/core/api/` auf. Die To-do-Entität wird in den Einstellungen gewählt (`bring_entity`).
+  - Die Bring-Integration übernimmt die Beschreibung eines To-do-Eintrags als Spezifikation, also die Mengenangabe unter dem Artikel.
+  - Lokal ohne Supervisor: mit `REZEPTPLANER_HA_URL` und `REZEPTPLANER_HA_TOKEN` (langlebiger Token) gegen eine echte Instanz, sonst Testmodus mit einer Liste im Arbeitsspeicher.
 - Übertragene Artikel werden protokolliert, um Differenzen nachsenden zu können. Zu viel Gekauftes wird nur angezeigt, nicht aus Bring gelöscht.
 
 ### Statistik und Statushinweis
@@ -517,7 +520,7 @@ Rezepteverwaltung_Essenplan/
 
 ## 11. Offene Punkte
 
-- **Bring-Mengenangabe:** Prüfen, wie die HA-To-do-Schnittstelle Artikelname und Spezifikation an Bring übergibt.
+- **Bring-Mengenangabe:** Laut Quelltext der Bring-Integration wird die Beschreibung (`description`) zur Spezifikation. Noch auf dem Green bestätigen, auch was Bring bei einem Artikel tut, der schon auf der Liste steht.
 
 ## 12. Mögliche spätere Erweiterungen
 

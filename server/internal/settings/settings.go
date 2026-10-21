@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
@@ -21,6 +22,9 @@ type Settings struct {
 	// Kleinbuchstaben, z. B. "saturday". Mit ihm beginnt der
 	// Einkaufszeitraum.
 	ShoppingDay string `json:"shopping_day"`
+	// BringEntity ist die To-do-Entität in Home Assistant, an die die
+	// Einkaufsliste geht, z. B. "todo.zuhause"; leer = noch nicht gewählt.
+	BringEntity string `json:"bring_entity"`
 }
 
 // Defaults gelten, solange nichts gespeichert ist.
@@ -55,6 +59,9 @@ func (s Settings) validate() error {
 	// Bei einer Map liefert der zweite Rückgabewert, ob es den Schlüssel gibt.
 	if _, ok := weekdays[s.ShoppingDay]; !ok {
 		return &ValidationError{"shopping_day", "muss ein englischer wochentag sein, z. b. saturday"}
+	}
+	if s.BringEntity != "" && (!strings.HasPrefix(s.BringEntity, "todo.") || strings.ContainsAny(s.BringEntity, " ,")) {
+		return &ValidationError{"bring_entity", "muss eine to-do-entität sein, z. b. todo.zuhause"}
 	}
 	return nil
 }
@@ -94,6 +101,8 @@ func (s *Store) Get(ctx context.Context) (Settings, error) {
 			if _, ok := weekdays[value]; ok {
 				result.ShoppingDay = value
 			}
+		case "bring_entity":
+			result.BringEntity = value
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -118,6 +127,7 @@ func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
 	values := map[string]string{
 		"family_size":  strconv.Itoa(in.FamilySize),
 		"shopping_day": in.ShoppingDay,
+		"bring_entity": in.BringEntity,
 	}
 	for key, value := range values {
 		// "Upsert": neu anlegen oder, falls der Schlüssel schon existiert,

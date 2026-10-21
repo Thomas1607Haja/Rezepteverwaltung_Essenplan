@@ -37,6 +37,21 @@
 
   const changed = $derived(household !== null && JSON.stringify(household) !== saved);
 
+  // To-do-Listen aus Home Assistant für die Auswahl der Bring-Liste
+  let ha = $state(null);
+  api
+    .homeAssistantStatus()
+    .then((s) => (ha = s))
+    .catch((e) => (ha = { mode: '', lists: [], error: e.message }));
+
+  // Eine gespeicherte Liste, die Home Assistant nicht (mehr) kennt, bleibt
+  // auswählbar, damit sie nicht stillschweigend verloren geht.
+  const missingEntity = $derived(
+    household?.bring_entity && ha && !ha.lists.some((l) => l.entity_id === household.bring_entity)
+      ? household.bring_entity
+      : '',
+  );
+
   function showMessage(text, isError = false) {
     message = text;
     messageIsError = isError;
@@ -76,6 +91,27 @@
           {/each}
         </select>
         <small>Mit ihm beginnt der Einkaufszeitraum (eine Woche)</small>
+      </label>
+      <label>
+        <span>Bring-Liste</span>
+        <select bind:value={household.bring_entity} onchange={() => (message = '')} disabled={!ha}>
+          <option value="">– keine gewählt –</option>
+          {#each ha?.lists ?? [] as list (list.entity_id)}
+            <option value={list.entity_id}>{list.name}</option>
+          {/each}
+          {#if missingEntity}<option value={missingEntity}>{missingEntity} (nicht gefunden)</option>{/if}
+        </select>
+        {#if !ha}
+          <small>Listen werden geladen …</small>
+        {:else if ha.error}
+          <small class="error">Home Assistant nicht erreichbar: {ha.error}</small>
+        {:else if ha.mode === 'test'}
+          <small>Testmodus ohne Home Assistant: Artikel landen nur in einer Testliste.</small>
+        {:else if ha.lists.length === 0}
+          <small>Keine To-do-Liste gefunden. Bitte die Bring-Integration in Home Assistant einrichten.</small>
+        {:else}
+          <small>To-do-Liste in Home Assistant, an die die Einkaufsliste geht</small>
+        {/if}
       </label>
       <div class="save">
         <button type="submit" class="primary" disabled={!changed || saving}>{saving ? 'Speichert …' : 'Speichern'}</button>
