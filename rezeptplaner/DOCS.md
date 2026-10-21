@@ -12,7 +12,7 @@ Die Weboberfläche erscheint dann als **Rezepte** in der Seitenleiste.
 
 ## Einstellungen
 
-Die App hat noch keine Einstellungen.
+Die App selbst hat keine Optionen in Home Assistant. Familiengröße (Standard-Portionen im Essensplan) und Einkaufstag (Beginn des einwöchigen Einkaufszeitraums) stellst du in der Weboberfläche unter **Einstellungen** ein.
 
 ## Zugriff und Sicherheit
 
@@ -26,7 +26,7 @@ Datenbank und Bilder liegen im Datenordner der App und sind Teil der Home-Assist
 ## Bekannte Einschränkungen
 
 - Nur für ARM64-Geräte (z. B. Home Assistant Green).
-- Essensplan, Einkaufsliste und Android-App sind noch in Arbeit.
+- Einkaufsliste mit Bring und Android-App sind noch in Arbeit.
 
 ## Hilfe und Fehler melden
 
