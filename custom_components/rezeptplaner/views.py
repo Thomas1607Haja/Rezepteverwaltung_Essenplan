@@ -8,6 +8,7 @@ Adressen, siehe auth/sign_path).
 
 from __future__ import annotations
 
+from datetime import timedelta
 import re
 from typing import TYPE_CHECKING
 
@@ -15,6 +16,7 @@ from aiohttp import web
 
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.helpers.http import KEY_HASS
+from homeassistant.util import dt as dt_util
 
 from .api import RezeptplanerError
 from .const import DOMAIN
@@ -26,6 +28,9 @@ if TYPE_CHECKING:
 # abgelehnt, damit niemand über den Namen andere Pfade ansprechen kann.
 IMAGE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
+# Höchstens so viele Tage zeigt die Karte auf einmal (Einstellung "days").
+MAX_DAYS = 31
+
 
 def _runtime(request: web.Request) -> RuntimeData | None:
     return request.app[KEY_HASS].data.get(DOMAIN)
@@ -36,7 +41,12 @@ def _unavailable() -> web.Response:
 
 
 class PlanView(HomeAssistantView):
-    """Aktueller Einkaufszeitraum, immer frisch vom Server."""
+    """Essensplan für die Karte, immer frisch vom Server.
+
+    Ohne Parameter der aktuelle Einkaufszeitraum, mit ?days=N die N Tage ab
+    heute (Datum nach der Zeitzone von Home Assistant). Der gezeigte
+    Zeitraum steht in der Antwort unter "range".
+    """
 
     url = "/api/rezeptplaner/plan"
     name = "api:rezeptplaner:plan"
@@ -45,8 +55,18 @@ class PlanView(HomeAssistantView):
         rt = _runtime(request)
         if rt is None:
             return _unavailable()
+        days = request.query.get("days", "")
+        if days and not (days.isdigit() and 1 <= int(days) <= MAX_DAYS):
+            return web.json_response({"error": f"days muss zwischen 1 und {MAX_DAYS} liegen"}, status=400)
         try:
-            data = await rt.client.meal_plan()
+            if days:
+                start = dt_util.now().date()
+                end = start + timedelta(days=int(days) - 1)
+                data = await rt.client.meal_plan(start.isoformat(), end.isoformat())
+                data["range"] = {"from": start.isoformat(), "to": end.isoformat()}
+            else:
+                data = await rt.client.meal_plan()
+                data["range"] = data["shopping_period"]
         except RezeptplanerError as err:
             return web.json_response({"error": str(err)}, status=502)
         # Link zur Weboberfläche der App, wie „Weboberfläche öffnen“ auf der

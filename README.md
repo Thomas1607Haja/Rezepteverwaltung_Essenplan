@@ -18,6 +18,14 @@ Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wo
 2. **Integration und Dashboard-Karte (optional):** In HACS → ⋮ → Benutzerdefinierte Repositories dieselbe Adresse mit Typ „Integration“ hinzufügen, „Rezeptplaner“ herunterladen und Home Assistant neu starten. Die Integration erscheint dann unter Einstellungen → Geräte & Dienste als „Entdeckt“ – nur noch bestätigen.
 3. Nach der Einrichtung die Seite einmal neu laden (F5), dann im Dashboard eine Karte „Essensplan“ hinzufügen (in der Kartenauswahl oder als `type: custom:rezeptplaner-card`). Die Integration trägt die Karte selbst als Dashboard-Ressource ein (Einstellungen → Dashboards → ⋮ → Ressourcen) und hält den Eintrag bei Updates aktuell. Werden die Ressourcen in YAML gepflegt (`lovelace: resource_mode: yaml`), dort einen Eintrag mit `url: /rezeptplaner_static/rezeptplaner-card.js` und `type: module` ergänzen; bis dahin lädt die Integration die Karte ersatzweise über die Startseite.
 
+   Einstellungen der Karte (im visuellen Editor oder in YAML):
+
+   | Feld | Bedeutung | Standard |
+   |---|---|---|
+   | `title` | Überschrift | „Essensplan“ |
+   | `days` | Anzahl Tage ab heute (1–31) | aktueller Einkaufszeitraum |
+   | `height` | Höhe in Pixel; passt nicht alles hinein, scrollt der Inhalt innerhalb der Karte | so hoch wie der Inhalt |
+
 ### Zugriff über einen Cloudflare-Tunnel
 
 Cloudflare speichert ohne eigene Regel auch Fehlerantworten zwischen und weist Browser an, sie 4 Stunden zu behalten. Fragt ein Browser oder die Companion-App die Karte während eines Neustarts von Home Assistant ab, bleibt sie danach stundenlang verschwunden („Konfigurationsfehler“). Abhilfe im Cloudflare-Dashboard der Domain:

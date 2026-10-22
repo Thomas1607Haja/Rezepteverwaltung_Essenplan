@@ -1,7 +1,8 @@
 // Dashboard-Karte „Essensplan“ für Home Assistant.
 //
-// Zeigt den aktuellen Einkaufszeitraum: je Tag ein kleines Bild und das
-// Gericht, der heutige Tag hervorgehoben. Antippen öffnet die Kochansicht
+// Zeigt den aktuellen Einkaufszeitraum oder die nächsten Tage ab heute
+// (Einstellung days): je Tag ein kleines Bild und das Gericht, der heutige
+// Tag hervorgehoben. Mit fester Höhe (height) scrollt der Inhalt. Antippen öffnet die Kochansicht
 // mit den Portionen aus dem Plan. Bearbeitet wird in der Rezeptplaner-App.
 //
 // Die Daten kommen über die Endpunkte der Integration (/api/rezeptplaner/…),
@@ -11,6 +12,8 @@
 const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const RELOAD_MS = 5 * 60 * 1000; // Plan höchstens alle 5 Minuten neu holen
 const RETRY_MS = 30 * 1000; // nach einem Fehler schneller neu versuchen
+const MAX_DAYS = 31; // wie MAX_DAYS in views.py
+const MIN_HEIGHT = 100;
 
 // Brüche wie in der Kochansicht der App (web/src/lib/format.js)
 const FRACTIONS = [
@@ -64,7 +67,10 @@ function esc(text) {
 
 const STYLE = `
   :host { display: block; }
-  ha-card { display: block; padding: 12px 16px 16px; }
+  ha-card { display: block; padding: 12px 16px 16px; box-sizing: border-box; }
+  /* Feste Höhe: Überschrift bleibt stehen, die Tage scrollen. */
+  ha-card.fixed { display: flex; flex-direction: column; overflow: hidden; }
+  ha-card.fixed .content { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
   h2 { margin: 0; font-size: 1.2rem; font-weight: 500; }
   header a { color: var(--primary-color); text-decoration: none; font-size: 0.9rem; }
@@ -130,8 +136,29 @@ function createCardClass() {
       this._signed = new Map(); // Bildname -> signierte Adresse
     }
 
+    // Einstellungen (auch aus dem visuellen Editor):
+    //   title  – Überschrift, Standard „Essensplan“
+    //   days   – Anzahl Tage ab heute; ohne Angabe der Einkaufszeitraum
+    //   height – Höhe in Pixel; ohne Angabe so hoch wie der Inhalt
     setConfig(config) {
-      this._config = config || {};
+      config = config || {};
+      if (config.days != null && !(Number.isInteger(config.days) && config.days >= 1 && config.days <= MAX_DAYS)) {
+        throw new Error(`days muss eine ganze Zahl von 1 bis ${MAX_DAYS} sein`);
+      }
+      if (config.height != null && !(Number.isFinite(config.height) && config.height >= MIN_HEIGHT)) {
+        throw new Error(`height muss eine Zahl ab ${MIN_HEIGHT} (Pixel) sein`);
+      }
+      const reload = this._config && this._config.days !== config.days;
+      this._config = config;
+      this._card.classList.toggle('fixed', config.height != null);
+      this._card.style.height = config.height != null ? `${config.height}px` : '';
+      if (reload) {
+        // Anderer Zeitraum: gleich neu laden (z. B. beim Ändern im Editor).
+        this._data = null;
+        this._loadedAt = 0;
+        if (this._hass && !this._loading) this._load();
+      }
+      if (this._hass) this._render();
     }
 
     // Home Assistant setzt hass bei jeder Zustandsänderung neu. Geladen wird
@@ -156,17 +183,23 @@ function createCardClass() {
     }
 
     getCardSize() {
-      return 6;
+      // Eine Einheit entspricht etwa 50 Pixeln.
+      return this._config?.height ? Math.ceil(this._config.height / 50) : 6;
     }
 
     static getStubConfig() {
       return {};
     }
 
+    static getConfigElement() {
+      return document.createElement('rezeptplaner-card-editor');
+    }
+
     async _load() {
       this._loading = true;
       try {
-        this._data = await this._hass.callApi('GET', 'rezeptplaner/plan');
+        const days = this._config?.days;
+        this._data = await this._hass.callApi('GET', days ? `rezeptplaner/plan?days=${days}` : 'rezeptplaner/plan');
         this._error = '';
         await this._signImages(this._data.entries.map((e) => e.recipe?.thumbnail));
       } catch (e) {
@@ -218,7 +251,9 @@ function createCardClass() {
       } else if (!this._data) {
         body = '<p class="muted">Lädt …</p>';
       } else {
-        const { entries, today, shopping_period: period } = this._data;
+        // range: gezeigter Zeitraum (ältere Integrationen kennen nur shopping_period)
+        const { entries, today } = this._data;
+        const period = this._data.range ?? this._data.shopping_period;
         body = '<ul>';
         for (const date of daysBetween(period.from, period.to)) {
           const label = dayLabel(date);
@@ -238,7 +273,7 @@ function createCardClass() {
         body += '</ul>';
       }
       const link = this._data?.app_url ? `<a href="${esc(this._data.app_url)}">Öffnen</a>` : '';
-      this._card.innerHTML = `<header><h2>${esc(title)}</h2>${link}</header>${body}`;
+      this._card.innerHTML = `<header><h2>${esc(title)}</h2>${link}</header><div class="content">${body}</div>`;
       for (const btn of this._card.querySelectorAll('button.dish:not([disabled])')) {
         btn.addEventListener('click', () => this._open(Number(btn.dataset.id)));
       }
@@ -291,6 +326,59 @@ function createCardClass() {
   };
 }
 
+// Visueller Editor im Dashboard: dieselben Formularfelder wie bei den
+// eingebauten Karten (ha-form von Home Assistant).
+const EDITOR_SCHEMA = [
+  { name: 'title', selector: { text: {} } },
+  { name: 'days', selector: { number: { min: 1, max: MAX_DAYS, step: 1, mode: 'box' } } },
+  { name: 'height', selector: { number: { min: MIN_HEIGHT, max: 3000, step: 10, mode: 'box', unit_of_measurement: 'px' } } },
+];
+const EDITOR_LABELS = { title: 'Titel', days: 'Anzahl Tage ab heute', height: 'Höhe der Karte' };
+const EDITOR_HELPERS = {
+  title: 'Leer: „Essensplan“',
+  days: `1 bis ${MAX_DAYS}. Leer: aktueller Einkaufszeitraum`,
+  height: 'In Pixel. Leer: so hoch wie der Inhalt. Passt nicht alles hinein, wird innerhalb der Karte gescrollt.',
+};
+
+function createEditorClass() {
+  return class RezeptplanerCardEditor extends HTMLElement {
+    setConfig(config) {
+      this._config = { ...config };
+      this._update();
+    }
+
+    set hass(hass) {
+      this._hass = hass;
+      this._update();
+    }
+
+    _update() {
+      if (!this._form) {
+        this._form = document.createElement('ha-form');
+        this._form.schema = EDITOR_SCHEMA;
+        this._form.computeLabel = (field) => EDITOR_LABELS[field.name] ?? field.name;
+        this._form.computeHelper = (field) => EDITOR_HELPERS[field.name];
+        this._form.addEventListener('value-changed', (ev) => this._changed(ev.detail.value));
+        this.append(this._form);
+      }
+      this._form.hass = this._hass;
+      this._form.data = this._config ?? {};
+    }
+
+    /** Leere Felder fallen aus der Konfiguration, dann gilt der Standard. */
+    _changed(value) {
+      const config = { ...this._config };
+      for (const key of ['title', 'days', 'height']) {
+        const v = value[key];
+        if (v == null || v === '') delete config[key];
+        else config[key] = v;
+      }
+      this._config = config;
+      this.dispatchEvent(new CustomEvent('config-changed', { detail: { config }, bubbles: true, composed: true }));
+    }
+  };
+}
+
 // Anmelden erst, wenn das Frontend von Home Assistant läuft. Es tauscht
 // beim Start window.customElements aus (Polyfill für „scoped registries“).
 // Lief die Karte vorher – möglich, wenn sie früh geladen wird, z. B. bei
@@ -302,6 +390,9 @@ function register() {
   try {
     if (!window.customElements.get('rezeptplaner-card')) {
       window.customElements.define('rezeptplaner-card', createCardClass());
+    }
+    if (!window.customElements.get('rezeptplaner-card-editor')) {
+      window.customElements.define('rezeptplaner-card-editor', createEditorClass());
     }
   } catch (err) {
     console.error('Rezeptplaner-Karte: Anmelden fehlgeschlagen', err);
@@ -326,6 +417,7 @@ if (!window.customCards.some((c) => c.type === 'rezeptplaner-card')) {
   window.customCards.push({
     type: 'rezeptplaner-card',
     name: 'Essensplan',
-    description: 'Aktueller Einkaufszeitraum aus dem Rezeptplaner mit Kochansicht',
+    description: 'Essensplan aus dem Rezeptplaner mit Kochansicht – Einkaufszeitraum oder die nächsten Tage',
+    preview: false,
   });
 }
