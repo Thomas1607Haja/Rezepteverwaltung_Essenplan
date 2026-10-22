@@ -23,3 +23,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Node nur innerhalb der LTS-Version (24); ungerade Versionen wie 25
+      # haben keinen Langzeit-Support.
+      - dependency-name: node
+        update-types: [version-update:semver-major]
