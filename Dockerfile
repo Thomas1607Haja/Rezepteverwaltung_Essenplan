@@ -21,7 +21,7 @@ COPY web/ ./
 RUN npm run build
 
 # --- 2. Server für die Zielplattform übersetzen ---
-FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS server
+FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine AS server
 # Zertifikate der Zertifizierungsstellen, damit der URL-Import
 # HTTPS-Seiten prüfen kann. Werden in Stufe 3 übernommen.
 RUN apk add --no-cache ca-certificates
@@ -49,8 +49,10 @@ LABEL org.opencontainers.image.source="https://github.com/Thomas1607Haja/Rezepte
 
 # Port 8099 ist der Standard-Port für Ingress. /data ist der Datenordner
 # der App (Teil der Home-Assistant-Backups). 172.30.32.2 ist der
-# Ingress-Vermittler; nur er darf die App ansprechen.
+# Ingress-Vermittler; nur er darf die Weboberfläche ansprechen.
+# Port 8100 ist der App-Zugang: jede Anfrage nur mit API-Schlüssel.
 ENV REZEPTPLANER_LISTEN_ADDR=":8099" \
+    REZEPTPLANER_APP_ADDR=":8100" \
     REZEPTPLANER_DATA_DIR="/data" \
     REZEPTPLANER_TRUSTED_PROXY="172.30.32.2"
 

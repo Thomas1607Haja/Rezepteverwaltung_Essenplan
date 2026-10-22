@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -16,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apikeys"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
@@ -43,6 +45,9 @@ type config struct {
 	// dieser Adresse an (in Home Assistant der Ingress-Vermittler
 	// 172.30.32.2). Leer = keine Einschränkung, z. B. beim lokalen Testen.
 	TrustedProxy string
+	// AppAddr: Adresse des App-Zugangs (Android-App). Dort verlangt jede
+	// Anfrage einen API-Schlüssel. Leer = kein App-Zugang.
+	AppAddr string
 }
 
 // loadConfig liest die Einstellungen aus Umgebungsvariablen. Fehlt eine
@@ -54,6 +59,7 @@ func loadConfig() config {
 		DataDir:    getEnv("REZEPTPLANER_DATA_DIR", "data"),
 		// Ohne Standardwert: getEnv liefert dann "", also keine Einschränkung.
 		TrustedProxy: getEnv("REZEPTPLANER_TRUSTED_PROXY", ""),
+		AppAddr:      getEnv("REZEPTPLANER_APP_ADDR", ""),
 	}
 }
 
@@ -102,35 +108,28 @@ func run() error {
 	}
 	slog.Info("Datenbank bereit", "schemaversion", version)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/v1/health", handleHealth)
 	imgs, err := images.NewStore(filepath.Join(cfg.DataDir, "images"))
 	if err != nil {
 		return err
 	}
-	// Lädt fremde Seiten und Bilder für den URL-Import; Heimnetz gesperrt.
-	fetcher := fetch.New(20*time.Second, false)
-	recipeStore := recipes.NewStore(db)
-	recipes.NewHandler(recipeStore, imgs, fetcher).Register(mux)
-	pantryStore := pantry.NewStore(db)
-	pantry.NewHandler(pantryStore).Register(mux)
-	importer.NewHandler(recipeStore, pantryStore, fetcher).Register(mux)
-	settingsStore := settings.NewStore(db)
-	settings.NewHandler(settingsStore).Register(mux)
-	planStore := mealplan.NewStore(db, settingsStore)
-	mealplan.NewHandler(planStore).Register(mux)
-	system.NewHandler(buildVersion, cfg.DataDir).Register(mux)
 	// SUPERVISOR_TOKEN setzt Home Assistant in der App. Lokal lässt sich
 	// mit REZEPTPLANER_HA_URL und REZEPTPLANER_HA_TOKEN (langlebiger Token
 	// aus dem Benutzerprofil) eine echte Instanz nutzen, sonst gilt der
 	// Testmodus.
 	ha := homeassistant.New(os.Getenv("SUPERVISOR_TOKEN"), os.Getenv("REZEPTPLANER_HA_URL"), os.Getenv("REZEPTPLANER_HA_TOKEN"))
 	slog.Info("Home Assistant", "modus", ha.Mode())
-	homeassistant.NewHandler(ha).Register(mux)
-	shopping.NewHandler(shopping.NewStore(db, planStore, settingsStore, ha)).Register(mux)
-	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist
-	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
-	mux.Handle("GET /", web.Handler())
+	keys := apikeys.NewStore(db)
+
+	mux := http.NewServeMux()
+	registerRoutes(mux, services{
+		db:      db,
+		images:  imgs,
+		fetcher: fetch.New(20*time.Second, false), // Heimnetz gesperrt
+		ha:      ha,
+		keys:    keys,
+		version: buildVersion,
+		dataDir: cfg.DataDir,
+	})
 
 	// handler ist vom Typ http.Handler, einem Interface: Jeder Typ mit der
 	// Methode ServeHTTP passt hinein – der Router genauso wie eine
@@ -154,29 +153,39 @@ func run() error {
 		slog.Info("Nur Verbindungen über Ingress erlaubt", "proxy", proxy, "integration", integrationToken != "")
 	}
 
-	srv := &http.Server{
-		Addr:    cfg.ListenAddr,
-		Handler: httpx.LogRequests(handler),
-		// Schutz gegen Verbindungen, die ihre Anfrage nie zu Ende senden.
-		ReadHeaderTimeout: 10 * time.Second,
+	// Zwei getrennte Zugänge auf eigenen Ports:
+	// - Weboberfläche über Ingress (handler oben, Anmeldung durch Home
+	//   Assistant) – Port 8099, nach außen nicht freigegeben.
+	// - App-Zugang: jede Anfrage nur mit gültigem API-Schlüssel.
+	servers := []*http.Server{newServer(cfg.ListenAddr, handler)}
+	if cfg.AppAddr != "" {
+		servers = append(servers, newServer(cfg.AppAddr, apikeys.Require(keys, mux)))
 	}
 
-	// Port zuerst belegen: Ist er schon vergeben, bricht der Start hier mit
-	// einer klaren Fehlermeldung ab.
-	listener, err := net.Listen("tcp", cfg.ListenAddr)
-	if err != nil {
-		return fmt.Errorf("server starten: %w", err)
+	// Ports zuerst belegen: Ist einer schon vergeben, bricht der Start hier
+	// mit einer klaren Fehlermeldung ab.
+	listeners := make([]net.Listener, len(servers))
+	for i, srv := range servers {
+		if listeners[i], err = net.Listen("tcp", srv.Addr); err != nil {
+			return fmt.Errorf("server starten: %w", err)
+		}
 	}
 	slog.Info("Server gestartet", "version", buildVersion, "url", "http://"+cfg.ListenAddr, "data_dir", cfg.DataDir)
+	if cfg.AppAddr != "" {
+		slog.Info("App-Zugang aktiv (nur mit API-Schlüssel)", "adresse", cfg.AppAddr)
+	}
 
-	// Der Server läuft in einer eigenen Goroutine, damit run() parallel auf
-	// das Stoppsignal warten kann. Sein Ergebnis kommt über den Kanal zurück.
-	serverErr := make(chan error, 1)
-	go func() {
-		serverErr <- srv.Serve(listener)
-	}()
+	// Jeder Server läuft in einer eigenen Goroutine, damit run() parallel
+	// auf das Stoppsignal warten kann. Die Ergebnisse kommen über den Kanal
+	// zurück; er hat für jeden Server Platz, damit keine Goroutine hängt.
+	serverErr := make(chan error, len(servers))
+	for i, srv := range servers {
+		go func() {
+			serverErr <- srv.Serve(listeners[i])
+		}()
+	}
 	if supervisorToken != "" {
-		go announce(ctx, supervisorToken, listener.Addr(), integrationToken)
+		go announce(ctx, supervisorToken, listeners[0].Addr(), integrationToken)
 	}
 
 	// Warten, was zuerst passiert: unerwarteter Serverfehler oder Stoppsignal.
@@ -190,16 +199,65 @@ func run() error {
 	slog.Info("Stoppsignal empfangen, beende Server")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("server beenden: %w", err)
+	for _, srv := range servers {
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			return fmt.Errorf("server beenden: %w", err)
+		}
 	}
 	// Nach Shutdown liefert Serve immer ErrServerClosed – das ist
 	// der normale Weg und kein Fehler.
-	if err := <-serverErr; !errors.Is(err, http.ErrServerClosed) {
-		return fmt.Errorf("server beenden: %w", err)
+	for range servers {
+		if err := <-serverErr; !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("server beenden: %w", err)
+		}
 	}
 	slog.Info("Server sauber beendet")
 	return nil
+}
+
+// newServer erzeugt einen HTTP-Server mit Protokoll jeder Anfrage.
+func newServer(addr string, handler http.Handler) *http.Server {
+	return &http.Server{
+		Addr:    addr,
+		Handler: httpx.LogRequests(httpx.SecurityHeaders(handler)),
+		// Schutz gegen Verbindungen, die ihre Anfrage nie zu Ende senden.
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+}
+
+// services bündelt, was die Endpunkte brauchen.
+type services struct {
+	db      *sql.DB
+	images  *images.Store
+	fetcher *fetch.Client
+	ha      homeassistant.Client
+	keys    *apikeys.Store
+	version string
+	dataDir string
+}
+
+// registerRoutes meldet alle Endpunkte an. Beide Zugänge (Ingress und App)
+// teilen sich diesen Router; was über den App-Zugang erreichbar ist,
+// regelt apikeys.Require. Der Test in main_test.go durchläuft alle hier
+// angemeldeten Muster.
+func registerRoutes(mux httpx.Router, s services) {
+	mux.HandleFunc("GET /api/v1/health", handleHealth)
+	recipeStore := recipes.NewStore(s.db)
+	recipes.NewHandler(recipeStore, s.images, s.fetcher).Register(mux)
+	pantryStore := pantry.NewStore(s.db)
+	pantry.NewHandler(pantryStore).Register(mux)
+	importer.NewHandler(recipeStore, pantryStore, s.fetcher).Register(mux)
+	settingsStore := settings.NewStore(s.db)
+	settings.NewHandler(settingsStore).Register(mux)
+	planStore := mealplan.NewStore(s.db, settingsStore)
+	mealplan.NewHandler(planStore).Register(mux)
+	system.NewHandler(s.version, s.dataDir).Register(mux)
+	homeassistant.NewHandler(s.ha).Register(mux)
+	shopping.NewHandler(shopping.NewStore(s.db, planStore, settingsStore, s.ha)).Register(mux)
+	apikeys.NewHandler(s.keys).Register(mux)
+	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist
+	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
+	mux.Handle("GET /", web.Handler())
 }
 
 // handleHealth ist das Lebenszeichen: antwortet immer mit "ok", solange der

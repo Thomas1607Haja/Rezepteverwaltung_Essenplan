@@ -18,9 +18,13 @@ import (
 // Anmeldung umgehen, indem er die App direkt anspricht.
 //
 // Ausnahme: Ist token gesetzt, dürfen lesende Anfragen (GET) mit der
-// Kopfzeile "Authorization: Bearer <token>" auch von anderswo kommen. So
-// holt sich die Home-Assistant-Integration den Essensplan über das interne
-// Netz des Supervisors; einen offenen Port nach außen gibt es weiterhin nicht.
+// Kopfzeile "Authorization: Bearer <token>" auch von anderswo kommen – aber
+// nur auf die Pfade, die die Home-Assistant-Integration braucht (siehe
+// integrationPath). So holt sie sich den Essensplan über das interne Netz
+// des Supervisors.
+//
+// Kopfzeilen wie X-Ingress-Path spielen keine Rolle: Entscheidend ist
+// allein die Gegenstelle der Verbindung.
 func AllowOnlyFrom(allowed netip.Addr, token string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// RemoteAddr ist die Gegenstelle der TCP-Verbindung, z. B.
@@ -33,7 +37,7 @@ func AllowOnlyFrom(allowed netip.Addr, token string, next http.Handler) http.Han
 			next.ServeHTTP(w, r)
 			return
 		}
-		if token != "" && r.Method == http.MethodGet && validBearer(r, token) {
+		if token != "" && r.Method == http.MethodGet && integrationPath(r.URL.Path) && validBearer(r, token) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -49,4 +53,13 @@ func AllowOnlyFrom(allowed netip.Addr, token string, next http.Handler) http.Han
 func validBearer(r *http.Request, token string) bool {
 	got, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 	return ok && subtle.ConstantTimeCompare([]byte(got), []byte(token)) == 1
+}
+
+// integrationPath meldet, ob die Home-Assistant-Integration path lesen
+// darf: Essensplan, einzelne Rezepte und Bilder – mehr braucht sie nicht
+// (siehe custom_components/rezeptplaner/api.py).
+func integrationPath(path string) bool {
+	return path == "/api/v1/meal-plan" ||
+		strings.HasPrefix(path, "/api/v1/recipes/") ||
+		strings.HasPrefix(path, "/api/v1/images/")
 }

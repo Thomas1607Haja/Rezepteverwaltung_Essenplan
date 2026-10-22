@@ -69,3 +69,13 @@ func TestMissingBuild(t *testing.T) {
 		t.Errorf("API-Status = %d, erwartet 404", rec.Code)
 	}
 }
+
+func TestContentSecurityPolicy(t *testing.T) {
+	rec := get(newHandler(testApp), "/")
+	csp := rec.Header().Get("Content-Security-Policy")
+	for _, want := range []string{"script-src 'self'", "object-src 'none'", "frame-ancestors 'self'"} {
+		if !strings.Contains(csp, want) {
+			t.Errorf("CSP %q enthält nicht %q", csp, want)
+		}
+	}
+}

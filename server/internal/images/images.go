@@ -247,6 +247,9 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Der Inhalt zu einem Namen ändert sich nie (siehe randomName).
-	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	// "private": Nur der Browser darf speichern, kein Zwischenspeicher
+	// unterwegs (z. B. Cloudflare) – der würde das Bild sonst auch ohne
+	// API-Schlüssel ausliefern.
+	w.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
 	http.ServeFile(w, r, path)
 }

@@ -92,6 +92,17 @@
     }
   }
 
+  // Nur Webadressen als Link: "javascript:…" würde beim Anklicken im
+  // Browser ausgeführt – und die Oberfläche läuft in der Sitzung von Home
+  // Assistant. Der Server lehnt solche Adressen ohnehin ab.
+  function isWebUrl(url) {
+    try {
+      return ['http:', 'https:'].includes(new URL(url).protocol);
+    } catch {
+      return false;
+    }
+  }
+
   async function toggleFavorite() {
     const next = !recipe.is_favorite;
     recipe.is_favorite = next; // sofort anzeigen, bei Fehler zurücknehmen
@@ -186,7 +197,11 @@
         {#if recipe.source_url}
           <span>
             Quelle:
-            <a href={recipe.source_url} target="_blank" rel="noopener noreferrer">{sourceHost(recipe.source_url)}</a>
+            {#if isWebUrl(recipe.source_url)}
+              <a href={recipe.source_url} target="_blank" rel="noopener noreferrer">{sourceHost(recipe.source_url)}</a>
+            {:else}
+              {recipe.source_url}
+            {/if}
           </span>
         {/if}
       </div>

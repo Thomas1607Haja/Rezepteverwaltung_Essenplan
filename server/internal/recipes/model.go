@@ -4,6 +4,7 @@ package recipes
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -103,6 +104,14 @@ func (r *Recipe) validate() error {
 	}
 	if r.TotalMinutes != nil && *r.TotalMinutes < 0 {
 		return &ValidationError{"total_minutes", "darf nicht negativ sein"}
+	}
+	// Die Quelle erscheint als Link. Nur Webadressen, damit dort nichts wie
+	// "javascript:…" landet, das beim Anklicken im Browser ausgeführt würde.
+	if r.SourceURL != "" {
+		u, err := url.Parse(r.SourceURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return &ValidationError{"source_url", "muss mit http:// oder https:// beginnen"}
+		}
 	}
 	for i, ing := range r.Ingredients {
 		if ing.Name == "" {

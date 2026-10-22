@@ -1,0 +1,45 @@
+# Sucht bei jedem Push und einmal pro Woche nach bekannten Sicherheitslücken
+# in Go (inkl. Standardbibliothek) und in den npm-Paketen der Weboberfläche.
+# Der wöchentliche Lauf findet Lücken, die nach dem letzten Push bekannt
+# geworden sind.
+name: Sicherheit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 5 * * 1" # montags 5:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      # govulncheck meldet nur Lücken in Code, den das Programm tatsächlich
+      # aufruft. Die Weboberfläche ist für die Prüfung nicht nötig; ein
+      # leerer Platzhalter genügt für go:embed.
+      - name: govulncheck
+        working-directory: server
+        run: |
+          mkdir -p internal/web/dist/app
+          go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  npm-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: npm audit
+        working-directory: web
+        run: npm audit --audit-level=moderate

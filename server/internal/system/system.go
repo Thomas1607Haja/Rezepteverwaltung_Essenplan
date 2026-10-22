@@ -31,7 +31,7 @@ func NewHandler(version, dataDir string) *Handler {
 }
 
 // Register meldet den Endpunkt beim Router an.
-func (h *Handler) Register(mux *http.ServeMux) {
+func (h *Handler) Register(mux httpx.Router) {
 	mux.HandleFunc("GET /api/v1/system", h.info)
 }
 

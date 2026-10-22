@@ -1,0 +1,25 @@
+# Dependabot schlägt Updates als Pull Request vor; jeder läuft durch
+# Build und Sicherheitsprüfung, bevor er übernommen wird.
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /server
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    # Kleinere Updates gesammelt in einem Pull Request statt vieler.
+    groups:
+      web:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  # Basis-Images im Dockerfile, z. B. golang:1.27.3-alpine
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly

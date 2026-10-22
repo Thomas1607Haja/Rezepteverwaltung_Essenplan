@@ -35,6 +35,17 @@ func Handler() http.Handler {
 	return newHandler(app)
 }
 
+// contentSecurityPolicy legt fest, was die Oberfläche laden darf: Skripte
+// und Verbindungen nur vom eigenen Server, Bilder auch von Rezeptseiten
+// (Vorschau beim Import) sowie data:/blob: (Symbol, Vorschau beim Hochladen).
+// Inline-Styles braucht Svelte für style:-Angaben. Selbst wenn irgendwo
+// fremder Text als HTML landen sollte, führt der Browser kein Skript daraus
+// aus. frame-ancestors 'self': Home Assistant zeigt die Oberfläche in einem
+// Rahmen auf derselben Adresse an.
+const contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+	"img-src 'self' data: blob: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; " +
+	"form-action 'self'; frame-ancestors 'self'"
+
 // newHandler liefert die Dateien aus app aus; bei app == nil die
 // Hinweisseite. Getrennt von Handler, damit Tests eigene Dateien
 // übergeben können.
@@ -54,6 +65,7 @@ func newHandler(app fs.FS) http.Handler {
 			return
 		}
 
+		w.Header().Set("Content-Security-Policy", contentSecurityPolicy)
 		if files == nil {
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusServiceUnavailable)

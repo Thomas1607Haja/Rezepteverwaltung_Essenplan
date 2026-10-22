@@ -2,6 +2,7 @@
   import { api } from '../lib/api.js';
   import { formatBytes, formatUptime } from '../lib/format.js';
   import PantryEditor from '../components/PantryEditor.svelte';
+  import ApiKeysEditor from '../components/ApiKeysEditor.svelte';
 
   // Ein Promise direkt im Markup: {#await} zeigt je nach Zustand
   // "lädt", das Ergebnis oder den Fehler an. Neu zuweisen lädt neu.
@@ -104,7 +105,7 @@
         {#if !ha}
           <small>Listen werden geladen …</small>
         {:else if ha.error}
-          <small class="error">Home Assistant nicht erreichbar: {ha.error}</small>
+          <small class="error">Fehler: {ha.error}</small>
         {:else if ha.mode === 'test'}
           <small>Testmodus ohne Home Assistant: Artikel landen nur in einer Testliste.</small>
         {:else if ha.lists.length === 0}
@@ -126,6 +127,8 @@
 </section>
 
 <PantryEditor />
+
+<ApiKeysEditor />
 
 <section class="card">
   <h2>System</h2>

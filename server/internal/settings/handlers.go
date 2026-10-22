@@ -18,7 +18,7 @@ func NewHandler(store *Store) *Handler {
 }
 
 // Register meldet die Endpunkte beim Router an.
-func (h *Handler) Register(mux *http.ServeMux) {
+func (h *Handler) Register(mux httpx.Router) {
 	mux.HandleFunc("GET /api/v1/settings", h.get)
 	mux.HandleFunc("PUT /api/v1/settings", h.update)
 }

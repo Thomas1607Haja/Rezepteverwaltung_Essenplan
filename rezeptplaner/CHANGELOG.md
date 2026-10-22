@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.4.1
+
+- **App-Zugang für die Android-App** auf Port 8100: Jede Anfrage braucht einen API-Schlüssel. Schlüssel pro Gerät unter **Einstellungen → App-Zugang** anlegen und sperren; gespeichert wird nur ein Hash. Der Port ist nach außen nicht freigegeben (Anleitung für den Cloudflare-Tunnel in `docs/APP-ZUGANG.md`).
+- Sicherheit: aktuelle Go-Version (behebt Lücken in der Standardbibliothek), Content-Security-Policy und weitere Schutz-Kopfzeilen für die Weboberfläche, Quell-URLs nur noch mit http/https, Schlüssel der Integration nur noch für Plan, Rezepte und Bilder, weitere gesperrte Adressbereiche beim URL-Import, kürzere Fehlermeldungen (Einzelheiten im Protokoll).
+
 ## 0.4.0
 
 - **Integration für Home Assistant** (über HACS, siehe DOCS): Die App meldet sich selbst an, die Integration muss nur bestätigt werden. Sie bringt den Kalender **Essensplan**, den Sensor **Heute** und die Dashboard-Karte **Essensplan** mit (Tage mit Bild und Gericht, Antippen öffnet die Kochansicht).

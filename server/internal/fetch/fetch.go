@@ -34,17 +34,26 @@ type Client struct {
 // New erzeugt einen Client. allowPrivate erlaubt Adressen im Heimnetz und
 // auf dem eigenen Rechner – nur für Tests mit einem lokalen Testserver.
 func New(timeout time.Duration, allowPrivate bool) *Client {
+	if allowPrivate {
+		return newClient(timeout, nil)
+	}
+	return newClient(timeout, func(ip net.IP, _ string) bool { return isPublic(ip) })
+}
+
+// newClient erzeugt einen Client, der nur Verbindungen aufbaut, die allowed
+// erlaubt (nil = alle). allowed bekommt die IP-Adresse und den Port.
+func newClient(timeout time.Duration, allowed func(ip net.IP, port string) bool) *Client {
 	dialer := &net.Dialer{Timeout: 10 * time.Second}
-	if !allowPrivate {
+	if allowed != nil {
 		// Control läuft für jede Verbindung, nachdem der Name zur IP-Adresse
 		// aufgelöst wurde – auch nach Weiterleitungen. So hilft auch kein
 		// Trick mit einem Namen, der auf 192.168.x.x zeigt.
 		dialer.Control = func(network, address string, _ syscall.RawConn) error {
-			host, _, err := net.SplitHostPort(address)
+			host, port, err := net.SplitHostPort(address)
 			if err != nil {
 				return err
 			}
-			if ip := net.ParseIP(host); ip == nil || !isPublic(ip) {
+			if ip := net.ParseIP(host); ip == nil || !allowed(ip, port) {
 				return ErrForbiddenAddress
 			}
 			return nil
@@ -67,17 +76,46 @@ func New(timeout time.Duration, allowPrivate bool) *Client {
 	return &Client{http: &http.Client{Timeout: timeout, Transport: transport}}
 }
 
-// sharedAddressSpace ist 100.64.0.0/10. Go zählt den Bereich nicht zu den
-// privaten, er wird aber z. B. von Tailscale für Geräte im eigenen Netz
-// genutzt.
-var sharedAddressSpace = &net.IPNet{IP: net.IPv4(100, 64, 0, 0), Mask: net.CIDRMask(10, 32)}
+// reserved sind IPv4-Bereiche, die Go nicht zu den privaten zählt, die
+// aber nie zu einer Rezeptseite im Internet gehören.
+var reserved = parseCIDRs(
+	"0.0.0.0/8",       // „dieses Netz“; 0.x.x.x erreicht unter Linux teils den Rechner selbst
+	"100.64.0.0/10",   // Carrier-NAT, z. B. Tailscale für Geräte im eigenen Netz
+	"192.0.0.0/24",    // Protokollzuweisungen der IETF
+	"192.0.2.0/24",    // Dokumentation
+	"198.18.0.0/15",   // Lasttests
+	"198.51.100.0/24", // Dokumentation
+	"203.0.113.0/24",  // Dokumentation
+	"240.0.0.0/4",     // reserviert, inkl. 255.255.255.255
+)
+
+func parseCIDRs(cidrs ...string) []*net.IPNet {
+	nets := make([]*net.IPNet, len(cidrs))
+	for i, c := range cidrs {
+		_, n, err := net.ParseCIDR(c)
+		if err != nil {
+			panic(err)
+		}
+		nets[i] = n
+	}
+	return nets
+}
 
 // isPublic ist false für den eigenen Rechner, private Netze (192.168.x.x,
-// 10.x.x.x, …), link-lokale Adressen und Ähnliches.
+// 10.x.x.x, …, auch das interne Netz des Supervisors 172.30.32.0/23),
+// link-lokale und reservierte Adressen.
 func isPublic(ip net.IP) bool {
-	return !(ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
+	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
 		ip.IsLinkLocalMulticast() || ip.IsUnspecified() || ip.IsMulticast() ||
-		ip.IsInterfaceLocalMulticast() || sharedAddressSpace.Contains(ip))
+		ip.IsInterfaceLocalMulticast() {
+		return false
+	}
+	for _, n := range reserved {
+		if n.Contains(ip) {
+			return false
+		}
+	}
+	return true
 }
 
 // Get lädt rawURL und liefert den Inhalt (höchstens maxBytes) samt

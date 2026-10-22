@@ -46,7 +46,7 @@ func (h *Handler) markPantry(r *http.Request, ingredients []recipes.Ingredient) 
 }
 
 // Register meldet die Endpunkte beim Router an.
-func (h *Handler) Register(mux *http.ServeMux) {
+func (h *Handler) Register(mux httpx.Router) {
 	mux.HandleFunc("POST /api/v1/import/url", h.importURL)
 	mux.HandleFunc("POST /api/v1/import/ingredients", h.parseIngredients)
 }

@@ -58,10 +58,16 @@ Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wo
 ### Zugriff und Sicherheit
 
 - **Weboberfläche:** über Ingress in der HA-Seitenleiste; Anmeldung erfolgt über Home Assistant.
-- **App:** über einen zusätzlichen Hostnamen im bestehenden Cloudflare-Tunnel (z. B. `rezepte.eure-domain.de`), der direkt auf den Port des Add-ons zeigt.
-- **API-Schlüssel:** einer pro Gerät, nur als Hash gespeichert, einzeln sperrbar. Einrichtung der App per QR-Code (enthält Serveradresse und Schlüssel).
+- **Zwei getrennte Zugänge** (seit App 0.4.1): Port 8099 für Ingress nimmt nur Verbindungen vom Ingress-Vermittler (172.30.32.2) an – entscheidend ist die Gegenstelle der TCP-Verbindung, nicht Kopfzeilen wie `X-Ingress-Path`. Port 8100 ist der **App-Zugang**: jede Anfrage nur mit gültigem API-Schlüssel (sonst 401, auch für Health und Bilder), nur `/api/v1/…`, keine Weboberfläche, keine Schlüsselverwaltung. Ein Test durchläuft alle angemeldeten Endpunkte.
+- **App:** über einen zusätzlichen Hostnamen im bestehenden Cloudflare-Tunnel (z. B. `rezepte.eure-domain.de`), der auf Port 8100 der App zeigt (intern über den Hostnamen der App, ohne Freigabe nach außen). Anleitung: [APP-ZUGANG.md](APP-ZUGANG.md).
+- **API-Schlüssel:** einer pro Gerät (`rp_` + 32 Byte Zufall), nur als SHA-256-Hash gespeichert, einzeln sperrbar; Verwaltung unter Einstellungen → App-Zugang, nur über Ingress. Einrichtung der App per QR-Code (enthält Serveradresse und Schlüssel).
+- **Integration:** eigener Schlüssel aus der Discovery, nur GET auf Essensplan, einzelne Rezepte und Bilder, nur im internen Netz (Port 8099).
+- **Weboberfläche:** läuft im Ursprung von Home Assistant (Ingress) – ein XSS-Fehler wäre ein Zugriff auf Home Assistant. Daher Content-Security-Policy (Skripte nur vom eigenen Server), `nosniff`, `Referrer-Policy: no-referrer`; Quell-URLs nur `http`/`https`.
 - **Import fremder Seiten:** Der Server ruft Rezeptseiten und Bilder nur per http/https und **nur über IPv4** ab; private, lokale und Tailscale-Adressen (100.64.0.0/10) sind gesperrt. So lässt sich der Import nicht nutzen, um Home Assistant oder andere Geräte im Heimnetz anzusprechen (Geräte haben dort oft zusätzlich eine weltweit gültige IPv6-Adresse). Zeitlimit 20 s, Seiten höchstens 5 MB.
-- Optional später: Cloudflare Access mit Service Token.
+- **Cloudflare Access mit Service Token** für den App-Hostnamen empfohlen (Anleitung in [APP-ZUGANG.md](APP-ZUGANG.md)); die Android-App schickt dafür optional `CF-Access-Client-Id` und `CF-Access-Client-Secret` mit.
+- **Bilder:** `Cache-Control: private`, damit kein Zwischenspeicher (Cloudflare) sie ohne Schlüssel ausliefert.
+- **Laufende Pflege:** GitHub Action „Sicherheit“ (govulncheck, npm audit) bei jedem Push und wöchentlich; Dependabot für Go-Module, npm, GitHub Actions und Docker-Basis-Images; Go-Version in `go.mod` (`toolchain`) und Dockerfile fest.
+- **Geplanter ZIP-Import (Rezeptsammlung):** Pfade beim Entpacken prüfen (kein `..`, keine absoluten Pfade, keine Symlinks – Zip Slip), nur im Speicher bzw. in einen eigenen temporären Ordner entpacken, Grenzen für Anzahl der Einträge, Größe je Datei und Gesamtgröße nach dem Entpacken (ZIP-Bombe), Bilder wie beim Upload neu kodieren.
 
 ### Ressourcen auf dem Green
 
@@ -487,7 +493,7 @@ Vergleich mit den übertragenen Artikeln; Angebot, nur die Differenz nachzusende
 
 ## 8. API-Übersicht
 
-Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App) bzw. über Ingress (Weboberfläche).
+Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App-Zugang, Port 8100) bzw. über Ingress (Weboberfläche, Port 8099).
 
 | Bereich | Funktionen |
 |---|---|
@@ -498,7 +504,7 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App) bzw. 
 | Stammdaten | Kategorien, Vorratsliste (inkl. Prüfung, ob Zutatennamen im Vorrat sind), Einstellungen |
 | Statistik | Häufigkeiten nach Zeitraum |
 | Abgleich | Änderungen seit Zeitpunkt X |
-| Verwaltung | API-Schlüssel anlegen (mit QR-Code), sperren |
+| Verwaltung | API-Schlüssel anlegen (mit QR-Code), sperren – nur über Ingress, nicht über den App-Zugang |
 | Bilder | Bild und Vorschaubild abrufen |
 
 ---
@@ -544,7 +550,7 @@ Rezepteverwaltung_Essenplan/
 | 4. Essensplan | Planansicht, Planen in beide Richtungen, Verschieben mit Warnregeln, Statushinweise, Favoriten | |
 | 5. Einkauf und Bring | Einkaufsliste, Vorratsliste, Übertragung, Differenzen | Kompletter Kern-Workflow im Browser |
 | 6. Dashboard | HA-Integration und Dashboard-Karte | |
-| 7. Android-App | QR-Einrichtung, Offline-Speicher, Teilen-Funktion, Foto-Import mit ML Kit | |
+| 7. Android-App | QR-Einrichtung, Offline-Speicher, Teilen-Funktion, Foto-Import mit ML Kit; optional `CF-Access-Client-Id`/`-Secret` (Cloudflare Access) in den Einstellungen der App, bei jeder Anfrage mitgeschickt | App-Zugang (Port 8100, API-Schlüssel) steht seit 0.4.1 |
 | 8. Feinschliff | Statistik, Kategorien-Verwaltung, Erkenntnisse aus dem Alltag | |
 
 ---

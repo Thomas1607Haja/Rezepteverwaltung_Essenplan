@@ -102,6 +102,12 @@ export const api = {
   updatePantryItem: (id, item) => request('PUT', `/pantry/${id}`, item),
   deletePantryItem: (id) => request('DELETE', `/pantry/${id}`),
 
+  /** API-Schlüssel des App-Zugangs: [{ id, name, created_at, last_used_at }]. */
+  listApiKeys: () => request('GET', '/api-keys'),
+  /** Legt einen Schlüssel an; nur diese Antwort enthält ihn (Feld key). */
+  createApiKey: (name) => request('POST', '/api-keys', { name }),
+  deleteApiKey: (id) => request('DELETE', `/api-keys/${id}`),
+
   /** Prüft Zutatennamen gegen den Vorrat; Ergebnis [true, false, …]. */
   matchPantry: async (names) => (await request('POST', '/pantry/match', { names })).in_pantry,
 

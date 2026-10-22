@@ -26,7 +26,7 @@ func NewHandler(store *Store, imgs *images.Store, fetcher *fetch.Client) *Handle
 }
 
 // Register meldet alle Rezept-Endpunkte beim Router mux an.
-func (h *Handler) Register(mux *http.ServeMux) {
+func (h *Handler) Register(mux httpx.Router) {
 	mux.HandleFunc("GET /api/v1/recipes", h.list)
 	mux.HandleFunc("POST /api/v1/recipes", h.create)
 	mux.HandleFunc("GET /api/v1/recipes/{id}", h.get)

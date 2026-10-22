@@ -28,7 +28,7 @@ Optional gibt es eine Integration für Home Assistant:
 1. In **HACS** → ⋮ → **Benutzerdefinierte Repositories** die Adresse dieses Repositorys mit Typ **Integration** hinzufügen.
 2. **Rezeptplaner** herunterladen und Home Assistant neu starten.
 3. Unter **Einstellungen → Geräte & Dienste** erscheint „Rezeptplaner“ als **Entdeckt** – auf **Hinzufügen** tippen und bestätigen. Adresse und Schlüssel liefert die App selbst.
-4. Die Seite einmal neu laden (am Rechner Strg + F5, in der Companion-App unter Einstellungen → Companion App → Debugging „Frontend-Cache leeren“), damit der Browser die Karte kennt.
+4. Die Seite einmal neu laden (F5), damit der Browser die Karte kennt. Bei Zugriff über einen Cloudflare-Tunnel vorher die Cache-Regel aus dem README des Repositorys einrichten.
 5. Im Dashboard eine Karte **Essensplan** hinzufügen.
 
 „Öffnen“ auf der Karte führt zur Weboberfläche der App – auch wenn die App nicht in der Seitenleiste steht.
@@ -37,9 +37,10 @@ Danach gibt es den Kalender `calendar.rezeptplaner_essensplan` und den Sensor `s
 
 ## Zugriff und Sicherheit
 
-- Die App ist nur über Home Assistant erreichbar (Ingress). Die Anmeldung übernimmt Home Assistant; die App öffnet keinen eigenen Port.
+- Die Weboberfläche ist nur über Home Assistant erreichbar (Ingress). Die Anmeldung übernimmt Home Assistant.
+- Für die Android-App gibt es einen getrennten **App-Zugang** auf Port 8100. Dort braucht jede Anfrage einen API-Schlüssel (anlegen unter **Einstellungen → App-Zugang**, gespeichert wird nur ein Hash). Der Port ist nach außen nicht freigegeben; ein Cloudflare-Tunnel erreicht ihn über den Hostnamen der App. Anleitung: `docs/APP-ZUGANG.md` im Repository.
 - Die App darf die Home-Assistant-API nutzen (`homeassistant_api`). Sie liest damit nur die vorhandenen To-do-Listen und schreibt in die gewählte Liste.
-- Für die Integration erzeugt die App einen eigenen Schlüssel und teilt ihn Home Assistant über die Discovery mit. Mit diesem Schlüssel ist im internen Netz nur Lesen möglich.
+- Für die Integration erzeugt die App einen eigenen Schlüssel und teilt ihn Home Assistant über die Discovery mit. Mit diesem Schlüssel lassen sich im internen Netz nur Essensplan, Rezepte und Bilder lesen.
 - Beim Übernehmen eines Rezepts aus dem Internet lädt die App die Seite und das Bild selbst. Adressen im Heimnetz sind dabei gesperrt.
 
 ## Daten und Backups

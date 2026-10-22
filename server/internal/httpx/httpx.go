@@ -63,6 +63,19 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	return nil
 }
 
+// SecurityHeaders ist eine Middleware, die jeder Antwort zwei Kopfzeilen
+// mitgibt: Der Browser soll den Content-Type nicht erraten (sonst könnte er
+// z. B. eine Textantwort als HTML ausführen) und beim Folgen von Links
+// keine Adresse der Oberfläche weitergeben (die Ingress-Adresse enthält
+// ein Sitzungsmerkmal).
+func SecurityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		next.ServeHTTP(w, r)
+	})
+}
+
 // statusRecorder merkt sich den gesendeten HTTP-Status für das Protokoll.
 // Durch das eingebettete http.ResponseWriter hat er automatisch alle
 // Methoden des Originals; nur WriteHeader wird ersetzt.
@@ -89,4 +102,12 @@ func LogRequests(next http.Handler) http.Handler {
 			"status", rec.status,
 			"dauer", time.Since(start).Round(time.Microsecond))
 	})
+}
+
+// Router ist alles, was die Fachbereiche zum Anmelden ihrer Endpunkte
+// brauchen. *http.ServeMux erfüllt das Interface; ein Test kann stattdessen
+// einen Router übergeben, der alle Muster mitschreibt.
+type Router interface {
+	Handle(pattern string, handler http.Handler)
+	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
 }

@@ -3,7 +3,7 @@
 name: Rezeptplaner
 # Muss zum Tag der neuen Version passen (v0.1.0 -> "0.1.0"); die GitHub
 # Action prüft das. Home Assistant lädt das Image mit genau dieser Version.
-version: "0.4.0"
+version: "0.4.1"
 slug: rezeptplaner
 description: Rezepte verwalten, Essensplan und Einkaufsliste
 url: https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan
@@ -32,8 +32,15 @@ homeassistant_api: true
 discovery:
   - rezeptplaner
 
-# Kein offener Port: Die API ist nur über Ingress erreichbar. Ein Port für
-# die Android-App kommt zusammen mit den API-Schlüsseln.
+# App-Zugang für die Android-App: Port 8100 verlangt bei jeder Anfrage
+# einen API-Schlüssel (anlegen in den Einstellungen der Weboberfläche).
+# "null" heißt: auf dem Green nach außen nicht freigegeben. Der
+# Cloudflare-Tunnel (eigene App im Supervisor-Netz) erreicht den Port
+# trotzdem über den Hostnamen der App, siehe docs/APP-ZUGANG.md.
+ports:
+  8100/tcp: null
+ports_description:
+  8100/tcp: App-Zugang (nur mit API-Schlüssel)
 
 # Während eines Backups wird die App kurz gestoppt. So ist die Datenbank
 # (SQLite mit WAL-Datei) garantiert in einem sauberen Zustand.

@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"slices"
 	"strings"
@@ -103,18 +104,27 @@ func (c *rest) call(ctx context.Context, method, path string, body, out any) err
 	req.Header.Set("Authorization", "Bearer "+c.token)
 	req.Header.Set("Content-Type", "application/json")
 
+	// Einzelheiten (Adressen, Antworttexte von Home Assistant) nur ins
+	// Protokoll; die Oberfläche bekommt eine kurze Meldung.
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrUnavailable, err)
+		slog.Warn("Home Assistant nicht erreichbar", "method", method, "path", path, "error", err)
+		return ErrUnavailable
 	}
 	defer resp.Body.Close()
 	// Antworten von Home Assistant sind klein; 1 MB reicht für jede Liste.
 	data, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrUnavailable, err)
+		slog.Warn("Antwort von Home Assistant nicht lesbar", "method", method, "path", path, "error", err)
+		return ErrUnavailable
 	}
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("%w: %s %s: status %d: %s", ErrUnavailable, method, path, resp.StatusCode, strings.TrimSpace(string(data)))
+		detail := strings.TrimSpace(string(data))
+		if len(detail) > 500 {
+			detail = detail[:500]
+		}
+		slog.Warn("Home Assistant lehnt Anfrage ab", "method", method, "path", path, "status", resp.StatusCode, "antwort", detail)
+		return fmt.Errorf("%w (status %d)", ErrUnavailable, resp.StatusCode)
 	}
 	if out == nil {
 		return nil
