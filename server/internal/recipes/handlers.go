@@ -32,6 +32,7 @@ func (h *Handler) Register(mux httpx.Router) {
 	mux.HandleFunc("GET /api/v1/recipes/{id}", h.get)
 	mux.HandleFunc("PUT /api/v1/recipes/{id}", h.update)
 	mux.HandleFunc("DELETE /api/v1/recipes/{id}", h.delete)
+	mux.HandleFunc("POST /api/v1/recipes/{id}/variants", h.createVariant)
 	mux.HandleFunc("PUT /api/v1/recipes/{id}/favorite", h.setFavorite)
 	mux.HandleFunc("PUT /api/v1/recipes/{id}/image", h.setImage)
 	mux.HandleFunc("DELETE /api/v1/recipes/{id}/image", h.deleteImage)
@@ -154,6 +155,36 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 	h.removeImageFiles(files)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// createVariant legt eine Kopie des Rezepts als Variante an (siehe
+// variants.go) und antwortet mit 201 und der neuen Variante. Das Bild wird
+// als eigene Datei kopiert.
+func (h *Handler) createVariant(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(w, r)
+	if !ok {
+		return
+	}
+	source, err := h.store.Get(r.Context(), id)
+	if err != nil {
+		writeStoreError(w, r, err)
+		return
+	}
+	var image, thumbnail string
+	if source.Image != "" {
+		if image, thumbnail, err = h.images.Copy(source.Image, source.Thumbnail); err != nil {
+			httpx.WriteInternalError(w, r, err)
+			return
+		}
+	}
+	variant, err := h.store.CreateVariant(r.Context(), id, image, thumbnail)
+	if err != nil {
+		h.removeImageFiles([]string{image, thumbnail}) // Kopien nicht verwaisen lassen
+		writeStoreError(w, r, err)
+		return
+	}
+	w.Header().Set("Location", fmt.Sprintf("/api/v1/recipes/%d", variant.ID))
+	httpx.WriteJSON(w, http.StatusCreated, variant)
 }
 
 // setFavorite setzt die Favoriten-Markierung, Anfrage {"is_favorite": true}.

@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.5.0
+
+- **Rezeptvarianten:** „Variante speichern“ in der Rezeptansicht legt eine Kopie als eigenes Rezept an (mit Zutaten, Schritten, Kategorien und eigenem Bild) und öffnet sie gleich zum Bearbeiten. Varianten bleiben mit dem Ursprungsrezept verbunden: Mini-Kacheln aller Varianten direkt unter dem Titel (seitwärts scrollbar), Hinweis „Variante von …“, Kennzeichen in der Übersicht. Wird das Ursprungsrezept gelöscht, bleiben die Varianten erhalten.
+
 ## 0.4.1
 
 - **App-Zugang für die Android-App** auf Port 8100: Jede Anfrage braucht einen API-Schlüssel. Schlüssel pro Gerät unter **Einstellungen → App-Zugang** anlegen und sperren; gespeichert wird nur ein Hash. Der Port ist nach außen nicht freigegeben (Anleitung für den Cloudflare-Tunnel in `docs/APP-ZUGANG.md`).

@@ -169,6 +169,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" ./cmd/
 - Jedes Rezept hat ein Bild (vom Handy, von der Quellseite oder nachträglich ersetzt).
 - Favoriten per Herzchen, setzbar im Rezept und direkt im Essensplan.
 - Ein Rezept kann beliebig vielen Kategorien angehören.
+- **Varianten:** „Variante speichern“ legt eine Kopie als eigenständiges Rezept an (Titel „<Titel> (Variante)“, nicht doppelt) und öffnet sie zum Bearbeiten; Abbrechen direkt danach verwirft sie wieder. Kopiert werden alle Felder, Zutaten (Reihenfolge, Einkaufsrelevanz), Schritte, Kategorien, Quell-URL und das Bild als eigene Datei – nicht der Favoritenstatus, keine Planeinträge (Statistik daher je Variante). Varianten hängen immer am Ursprungsrezept, auch eine Variante einer Variante (nur eine Ebene, „Rezeptfamilie“). Wird das Ursprungsrezept gelöscht, bleiben die Varianten; die älteste wird neues Ursprungsrezept (vorher Hinweis).
 
 ### Zutaten
 
@@ -268,6 +269,7 @@ Alle Tabellen erhalten zusätzlich `updated_at` für den Abgleich mit der App.
 | thumbnail | Text | Dateiname Vorschaubild |
 | is_favorite | Boolean | |
 | notes | Text | eigene Notizen |
+| parent_recipe_id | Integer | optional; gesetzt = Variante dieses Ursprungsrezepts (nur eine Ebene) |
 | created_at / updated_at | Zeitstempel | |
 
 ### `recipe_ingredients`
@@ -401,7 +403,7 @@ Eigene Seite mit Suche, Kategorie-Filtern, Favoriten und Statushinweis an jedem 
 
 - Suchfeld (Volltextsuche über Titel, Zutaten, optional Zubereitung).
 - Kategorie-Filter als Chips nach Gruppen, Herzchen-Filter.
-- Kacheln mit Bild, Titel, Zeit, Statushinweis.
+- Kacheln mit Bild, Titel, Zeit, Statushinweis; Varianten mit Kennzeichen „Variante“ (Suche, Filter, Favoriten, Statushinweis je Variante).
 - Sortierung: Name, zuletzt eingeplant, am häufigsten eingeplant, neu hinzugefügt.
 - Plus-Button für Import/Anlegen; Zugang zur Statistik.
 
@@ -412,6 +414,7 @@ Eigene Seite mit Suche, Kategorie-Filtern, Favoriten und Statushinweis an jedem 
 - Zutaten mit Gruppenüberschriften, nummerierte Schritte.
 - Buttons „Zum Essensplan hinzufügen“ (Dialog mit den nächsten Tagen und deren Belegung; bei belegtem Tag: Ersetzen oder als zweites Gericht) und „Bearbeiten“.
 - Bildschirm bleibt während der Kochansicht eingeschaltet.
+- Button „Variante speichern“; bei einer Variante „Variante von <Titel>“; direkt unter dem Titel eine Leiste mit Mini-Kacheln (Vorschaubild, Titel, „Ursprungsrezept“/„Variante“) für alle anderen Rezepte der Familie, seitwärts scrollbar, ohne Familie nicht sichtbar.
 
 ### 5.5 Rezept bearbeiten
 
@@ -499,13 +502,13 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App-Zugang
 
 | Bereich | Funktionen |
 |---|---|
-| Rezepte | Liste mit Suche/Filtern, Einzelabruf, Anlegen, Ändern, Löschen, Favorit setzen, Bild hochladen |
+| Rezepte | Liste mit Suche/Filtern, Einzelabruf (mit `parent_recipe_id` und `family`), Anlegen, Ändern, Löschen, Favorit setzen, Bild hochladen, Variante anlegen (`POST /recipes/{id}/variants`, der Server kopiert) |
 | Import | URL einlesen (liefert Entwurf, Bildadresse und Dubletten), Zutatenzeilen zerlegen; Bild der Quellseite beim Speichern übernehmen |
 | Essensplan | Einträge eines Zeitraums, Anlegen, Ändern, Löschen, Verschieben/Tauschen mit Warnprüfung (erst prüfen, dann bestätigen) |
 | Einkauf | Vorschau der Einkaufsliste (aktueller oder folgender Einkaufszeitraum), An Bring senden, Differenz nachsenden |
 | Stammdaten | Kategorien, Vorratsliste (inkl. Prüfung, ob Zutatennamen im Vorrat sind), Einstellungen |
 | Statistik | Häufigkeiten nach Zeitraum |
-| Abgleich | Änderungen seit Zeitpunkt X |
+| Abgleich | Änderungen seit Zeitpunkt X; Rezepte mit `parent_recipe_id` (beim Umhängen nach dem Löschen eines Ursprungsrezepts ändert sich `updated_at` der Varianten) |
 | Verwaltung | API-Schlüssel anlegen (mit QR-Code), sperren – nur über Ingress, nicht über den App-Zugang |
 | Bilder | Bild und Vorschaubild abrufen |
 
@@ -560,6 +563,8 @@ Rezepteverwaltung_Essenplan/
 ## 11. Offene Punkte
 
 - ~~**Bring-Mengenangabe**~~ – geklärt 2026-10-21: Die Beschreibung (`description`) eines To-do-Eintrags wird in Bring zur Spezifikation. Senden (18 Artikel in die gewählte Liste) und Nachsenden der Differenz auf dem Green mit App 0.3.0 getestet: ok.
+
+- **IDs nach dem Löschen (für Phase 7 klären):** SQLite vergibt die ID des zuletzt angelegten Datensatzes nach dem Löschen erneut (kein `AUTOINCREMENT`). Beim Abgleich können „Rezept 12 gelöscht“ (deletions) und „Rezept 12 neu“ aufeinandertreffen. Lösung vor dem Abgleich-Endpunkt festlegen: `AUTOINCREMENT` für die abgeglichenen Tabellen oder Reihenfolge über Zeitstempel (Löschung vor Neuanlage).
 
 ## 12. Mögliche spätere Erweiterungen
 

@@ -161,6 +161,8 @@ export const api = {
     request('PUT', `/recipes/${id}/favorite`, { is_favorite: isFavorite }),
 
   deleteRecipe: (id) => request('DELETE', `/recipes/${id}`),
+  /** Legt eine Kopie als Variante an (der Server kopiert alles inkl. Bild). */
+  createVariant: (id) => request('POST', `/recipes/${id}/variants`),
 
   /** Lädt file als Rezeptbild hoch; der Server verkleinert es. */
   setImage: (id, file) => request('PUT', `/recipes/${id}/image`, file),

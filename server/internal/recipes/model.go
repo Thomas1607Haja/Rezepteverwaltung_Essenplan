@@ -29,8 +29,12 @@ type Recipe struct {
 	Steps        []Step       `json:"steps"`       // in Anzeigereihenfolge
 	Tags         []Tag        `json:"tags"`        // beim Speichern zählt nur die ID
 	PlanInfo                  // nur lesbar, siehe list.go
-	CreatedAt    time.Time    `json:"created_at"`
-	UpdatedAt    time.Time    `json:"updated_at"`
+	// Nur lesbar, siehe variants.go: gesetzt = Variante dieses
+	// Ursprungsrezepts. Family sind die anderen Rezepte der Familie.
+	ParentRecipeID *int64         `json:"parent_recipe_id"`
+	Family         []FamilyMember `json:"family"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
 // Ingredient ist eine Zutatenzeile. Die Reihenfolge ergibt sich aus der

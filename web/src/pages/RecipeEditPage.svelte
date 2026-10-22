@@ -2,6 +2,7 @@
   import { tick } from 'svelte';
   import { api, ApiError } from '../lib/api.js';
   import { navigate } from '../lib/router.svelte.js';
+  import { takeFreshVariant } from '../lib/freshVariant.js';
   import { toForm, toPayload } from '../lib/recipeForm.js';
   import TagFilter from '../components/TagFilter.svelte';
   import IngredientEditor from '../components/IngredientEditor.svelte';
@@ -15,6 +16,10 @@
   // svelte-ignore state_referenced_locally
   const recipeId = id;
   const isNew = recipeId === null;
+  // Gerade per „Variante speichern“ angelegt? Dann die ID des
+  // Ausgangsrezepts, sonst null.
+  const variantSource = isNew ? null : takeFreshVariant(Number(recipeId));
+  let titleInput = $state(null);
 
   let form = $state(null);
   let tagGroups = $state([]);
@@ -51,6 +56,8 @@
       .then((recipe) => {
         currentImage = recipe.image;
         start(toForm(recipe));
+        // Neue Variante: Titel markieren, damit man ihn gleich überschreibt.
+        if (variantSource !== null) tick().then(() => titleInput?.select());
       })
       .catch((e) => (loadError = e.status === 404 ? 'Dieses Rezept gibt es nicht (mehr).' : e.message));
   }
@@ -143,7 +150,17 @@
     }
   }
 
-  function cancel() {
+  async function cancel() {
+    // Gerade angelegte Variante: Abbrechen heißt, sie wieder zu verwerfen.
+    if (variantSource !== null && confirm('Variante wieder verwerfen? Sie wird gelöscht.')) {
+      try {
+        await api.deleteRecipe(recipeId);
+        navigate(`/recipes/${variantSource}`);
+      } catch (e) {
+        alert(`Löschen fehlgeschlagen: ${e.message}`);
+      }
+      return;
+    }
     const changed = JSON.stringify(form) !== initial || imageFile !== null || removeImage || remoteImage !== '';
     if (changed && !confirm('Änderungen verwerfen?')) return;
     navigate(isNew ? '/recipes' : `/recipes/${recipeId}`);
@@ -151,7 +168,7 @@
 </script>
 
 <p class="back"><button type="button" class="link" onclick={cancel}>← Zurück</button></p>
-<h1>{isNew ? 'Neues Rezept' : 'Rezept bearbeiten'}</h1>
+<h1>{isNew ? 'Neues Rezept' : variantSource !== null ? 'Neue Variante' : 'Rezept bearbeiten'}</h1>
 
 {#if loadError}
   <p class="error">{loadError}</p>
@@ -195,7 +212,7 @@
       <h2>Allgemein</h2>
       <label class="field">
         <span>Titel</span>
-        <input bind:value={form.title} class:invalid={errors.title} />
+        <input bind:value={form.title} bind:this={titleInput} class:invalid={errors.title} />
         {#if errors.title}<small class="error">{errors.title}</small>{/if}
       </label>
 

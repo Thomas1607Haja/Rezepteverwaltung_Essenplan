@@ -216,6 +216,37 @@ func (s *Store) write(name string, data []byte) error {
 	return nil
 }
 
+// Copy legt von einem großen Bild und seinem Vorschaubild Kopien unter
+// neuen Namen an (für Rezeptvarianten). So lässt sich das Bild der Kopie
+// später ersetzen oder löschen, ohne das Original zu berühren. Die Dateien
+// sind schon verkleinert und werden unverändert kopiert.
+func (s *Store) Copy(large, thumb string) (newLarge, newThumb string, err error) {
+	if !validName.MatchString(large) || !validName.MatchString(thumb) {
+		return "", "", fmt.Errorf("bild kopieren: ungültiger dateiname %q / %q", large, thumb)
+	}
+	largeData, err := os.ReadFile(filepath.Join(s.dir, large))
+	if err != nil {
+		return "", "", fmt.Errorf("bild kopieren: %w", err)
+	}
+	thumbData, err := os.ReadFile(filepath.Join(s.dir, thumb))
+	if err != nil {
+		return "", "", fmt.Errorf("bild kopieren: %w", err)
+	}
+	name, err := randomName()
+	if err != nil {
+		return "", "", err
+	}
+	newLarge, newThumb = name+".jpg", name+"_thumb.jpg"
+	if err := s.write(newLarge, largeData); err != nil {
+		return "", "", err
+	}
+	if err := s.write(newThumb, thumbData); err != nil {
+		s.Delete(newLarge)
+		return "", "", err
+	}
+	return newLarge, newThumb, nil
+}
+
 // Delete entfernt die genannten Dateien. Leere Namen und fehlende Dateien
 // werden übergangen; Fehler werden nur zurückgegeben, nicht abgebrochen.
 func (s *Store) Delete(names ...string) error {

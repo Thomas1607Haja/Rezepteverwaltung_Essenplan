@@ -20,6 +20,7 @@
   </div>
   <div class="body">
     <h2 class="title">{recipe.title}</h2>
+    {#if recipe.parent_recipe_id != null}<span class="variant-badge">Variante</span>{/if}
     <p class="status" class:upcoming={recipe.next_planned}>{planStatus(recipe)}</p>
     <div class="meta">
       {#if minutes != null}
@@ -110,6 +111,16 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
+  }
+
+  .variant-badge {
+    align-self: flex-start;
+    margin-bottom: 0.25rem;
+    padding: 0.05rem 0.45rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
   }
 
   .favorite {

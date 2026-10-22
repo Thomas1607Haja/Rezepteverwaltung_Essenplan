@@ -144,6 +144,10 @@ func (s *Store) Delete(ctx context.Context, id int64) (imageFiles []string, err 
 		return nil, fmt.Errorf("rezept %d löschen: %w", id, err)
 	}
 
+	// Varianten bleiben: Die älteste wird zum neuen Ursprungsrezept.
+	if err := promoteOldestVariant(ctx, tx, id, now); err != nil {
+		return nil, fmt.Errorf("rezept %d löschen: %w", id, err)
+	}
 	if _, err := tx.ExecContext(ctx, "DELETE FROM recipes WHERE id = ?", id); err != nil {
 		return nil, fmt.Errorf("rezept %d löschen: %w", id, err)
 	}
@@ -274,11 +278,13 @@ func (s *Store) Get(ctx context.Context, id int64) (Recipe, error) {
 	var createdAt, updatedAt string
 	err := s.db.QueryRowContext(ctx, `
 		SELECT id, title, description, base_servings, prep_minutes, total_minutes,
-		       source_url, image, thumbnail, is_favorite, notes, created_at, updated_at,`+
+		       source_url, image, thumbnail, is_favorite, notes, created_at, updated_at,
+		       parent_recipe_id,`+
 		planInfoColumns+`
 		FROM recipes r WHERE id = ?`, s.today(), s.today(), id).Scan(
 		&r.ID, &r.Title, &r.Description, &r.BaseServings, &r.PrepMinutes, &r.TotalMinutes,
 		&r.SourceURL, &r.Image, &r.Thumbnail, &r.IsFavorite, &r.Notes, &createdAt, &updatedAt,
+		&r.ParentRecipeID,
 		&r.NextPlanned, &r.LastPlanned, &r.PlanCount)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Recipe{}, ErrNotFound
@@ -300,6 +306,9 @@ func (s *Store) Get(ctx context.Context, id int64) (Recipe, error) {
 		return Recipe{}, err
 	}
 	if r.Tags, err = s.loadTags(ctx, id); err != nil {
+		return Recipe{}, err
+	}
+	if r.Family, err = s.loadFamily(ctx, r); err != nil {
 		return Recipe{}, err
 	}
 	return r, nil

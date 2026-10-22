@@ -6,6 +6,7 @@
   import { dayLabel, formatMinutes, formatQuantity, planStatus } from '../lib/format.js';
   import { keepScreenOn } from '../lib/wakeLock.js';
   import { focusPlanOn } from '../lib/planFocus.svelte.js';
+  import { markFreshVariant } from '../lib/freshVariant.js';
   import Icon from '../components/Icon.svelte';
   import AddToPlanDialog from '../components/AddToPlanDialog.svelte';
 
@@ -26,6 +27,11 @@
   let servings = $state(1);
   let planEntry = $state(null); // Planeintrag, aus dem die Seite geöffnet wurde
   let showAddDialog = $state(false);
+  let creatingVariant = $state(false);
+
+  // Rezeptfamilie: Ursprungsrezept und Varianten (siehe Server variants.go).
+  const origin = $derived(recipe?.family.find((m) => m.is_origin) ?? null);
+  const variants = $derived(recipe?.family.filter((m) => !m.is_origin) ?? []);
 
   // Rezept und ggf. Planeintrag gleichzeitig laden. Aus dem Plan gelten
   // dessen Portionen, sonst die Grundportionen des Rezepts.
@@ -119,12 +125,30 @@
     if (recipe.next_planned) {
       question += '\n\nEs ist noch im Essensplan eingeplant. Dort bleibt der Titel als Notiz stehen.';
     }
+    // Ursprungsrezept mit Varianten: Die älteste Variante rückt nach.
+    if (recipe.parent_recipe_id == null && variants.length > 0) {
+      const n = variants.length;
+      question += `\n\nZu diesem Rezept gibt es ${n} ${n === 1 ? 'Variante' : 'Varianten'}. ${n === 1 ? 'Sie bleibt' : 'Sie bleiben'} erhalten; „${variants[0].title}“ wird zum neuen Ursprungsrezept.`;
+    }
     if (!confirm(question)) return;
     try {
       await api.deleteRecipe(recipe.id);
       navigate('/recipes');
     } catch (e) {
       alert(`Löschen fehlgeschlagen: ${e.message}`);
+    }
+  }
+
+  /** Kopie als Variante anlegen und gleich bearbeiten. */
+  async function saveVariant() {
+    creatingVariant = true;
+    try {
+      const variant = await api.createVariant(recipe.id);
+      markFreshVariant(variant.id, recipe.id);
+      navigate(`/recipes/${variant.id}/edit`);
+    } catch (e) {
+      alert(`Variante konnte nicht angelegt werden: ${e.message}`);
+      creatingVariant = false;
     }
   }
 
@@ -172,6 +196,28 @@
           <Icon name="heart" size={26} filled={recipe.is_favorite} />
         </button>
       </div>
+
+      {#if origin && recipe.parent_recipe_id != null}
+        <p class="variant-of">Variante von <a href="#/recipes/{origin.id}">{origin.title}</a></p>
+      {/if}
+
+      <!-- Die anderen Rezepte der Familie als Mini-Kacheln; passen sie
+           nicht in die Breite, scrollt die Leiste seitwärts. -->
+      {#if recipe.family.length > 0}
+        <nav class="family" aria-label="Varianten">
+          {#each recipe.family as member (member.id)}
+            <a class="mini" href="#/recipes/{member.id}" title={member.title}>
+              {#if member.thumbnail}
+                <img src={imageUrl(member.thumbnail)} alt="" loading="lazy" />
+              {:else}
+                <span class="thumb-empty"><Icon name="dish" size={22} /></span>
+              {/if}
+              <span class="mini-title">{member.title}</span>
+              <small>{member.is_origin ? 'Ursprungsrezept' : 'Variante'}</small>
+            </a>
+          {/each}
+        </nav>
+      {/if}
 
       {#if planEntry}
         {@const l = dayLabel(planEntry.date)}
@@ -288,6 +334,9 @@
 
     <footer class="actions">
       <button type="button" class="danger" onclick={remove}>Rezept löschen</button>
+      <button type="button" class="plan" onclick={saveVariant} disabled={creatingVariant}>
+        {creatingVariant ? 'Legt an …' : 'Variante speichern'}
+      </button>
       <button type="button" class="plan" onclick={() => (showAddDialog = true)}>Zum Essensplan hinzufügen</button>
       <a class="edit" href={`#/recipes/${recipe.id}/edit`}>Bearbeiten</a>
     </footer>
@@ -566,6 +615,70 @@
     font: inherit;
     font-weight: 600;
     cursor: pointer;
+  }
+
+  .variant-of {
+    margin: 0.25rem 0 0.5rem;
+    color: var(--text-muted);
+  }
+
+  .family {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0.25rem 0 0.75rem;
+    padding-bottom: 0.25rem; /* Platz für die Scrollleiste */
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+  }
+
+  .mini {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    width: 7.5rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: inherit;
+    text-decoration: none;
+    scroll-snap-align: start;
+  }
+
+  .mini:hover {
+    background: var(--surface-hover);
+  }
+
+  .mini img,
+  .thumb-empty {
+    width: 100%;
+    height: 4.5rem;
+    object-fit: cover;
+  }
+
+  .thumb-empty {
+    display: grid;
+    place-items: center;
+    background: var(--surface-hover);
+    color: var(--text-muted);
+  }
+
+  .mini-title {
+    display: -webkit-box;
+    margin: 0.35rem 0.5rem 0;
+    overflow: hidden;
+    font-size: 0.85rem;
+    line-height: 1.25;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .mini small {
+    margin: 0.15rem 0.5rem 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
   }
 
   .from-plan {

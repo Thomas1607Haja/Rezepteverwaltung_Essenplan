@@ -39,6 +39,8 @@ type Summary struct {
 	TotalMinutes *int   `json:"total_minutes"`
 	Thumbnail    string `json:"thumbnail"`
 	IsFavorite   bool   `json:"is_favorite"`
+	// Gesetzt bei einer Variante (Kennzeichen in der Übersicht).
+	ParentRecipeID *int64 `json:"parent_recipe_id"`
 	// Eingebettetes Struct: Seine Felder erscheinen im JSON direkt neben
 	// den anderen (next_planned, last_planned, plan_count).
 	PlanInfo
@@ -110,7 +112,8 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 		}
 	}
 
-	query := `SELECT r.id, r.title, r.prep_minutes, r.total_minutes, r.thumbnail, r.is_favorite,` +
+	query := `SELECT r.id, r.title, r.prep_minutes, r.total_minutes, r.thumbnail, r.is_favorite,
+		r.parent_recipe_id,` +
 		planInfoColumns + ` FROM recipes r`
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")
@@ -128,7 +131,7 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 	for rows.Next() {
 		var sum Summary
 		if err := rows.Scan(&sum.ID, &sum.Title, &sum.PrepMinutes, &sum.TotalMinutes,
-			&sum.Thumbnail, &sum.IsFavorite,
+			&sum.Thumbnail, &sum.IsFavorite, &sum.ParentRecipeID,
 			&sum.NextPlanned, &sum.LastPlanned, &sum.PlanCount); err != nil {
 			return nil, fmt.Errorf("rezeptliste laden: %w", err)
 		}
@@ -208,7 +211,7 @@ func (s *Store) FindBySourceURL(ctx context.Context, sourceURL string) ([]Summar
 		return found, nil
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, title, prep_minutes, total_minutes, thumbnail, is_favorite
+		SELECT id, title, prep_minutes, total_minutes, thumbnail, is_favorite, parent_recipe_id
 		FROM recipes WHERE source_url = ? ORDER BY id`, sourceURL)
 	if err != nil {
 		return nil, fmt.Errorf("dubletten suchen: %w", err)
@@ -217,7 +220,7 @@ func (s *Store) FindBySourceURL(ctx context.Context, sourceURL string) ([]Summar
 	for rows.Next() {
 		var sum Summary
 		if err := rows.Scan(&sum.ID, &sum.Title, &sum.PrepMinutes, &sum.TotalMinutes,
-			&sum.Thumbnail, &sum.IsFavorite); err != nil {
+			&sum.Thumbnail, &sum.IsFavorite, &sum.ParentRecipeID); err != nil {
 			return nil, fmt.Errorf("dubletten suchen: %w", err)
 		}
 		found = append(found, sum)

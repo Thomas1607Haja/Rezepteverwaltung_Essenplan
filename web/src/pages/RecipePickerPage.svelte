@@ -179,7 +179,7 @@
             {/if}
           </span>
           <span class="text">
-            <span class="title">{recipe.title}</span>
+            <span class="title">{recipe.title}{#if recipe.parent_recipe_id != null}<small class="variant-badge">Variante</small>{/if}</span>
             <span class="status" class:upcoming={recipe.next_planned}>{planStatus(recipe)}</span>
           </span>
           {#if recipe.is_favorite}<span class="fav"><Icon name="heart" size={16} filled /></span>{/if}
@@ -190,6 +190,16 @@
 {/if}
 
 <style>
+  .variant-badge {
+    margin-left: 0.4rem;
+    padding: 0 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: normal;
+    color: var(--text-muted);
+  }
+
   .back {
     margin: 0 0 0.75rem;
   }
