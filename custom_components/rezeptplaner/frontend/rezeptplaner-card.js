@@ -10,6 +10,7 @@
 
 const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const RELOAD_MS = 5 * 60 * 1000; // Plan höchstens alle 5 Minuten neu holen
+const RETRY_MS = 30 * 1000; // nach einem Fehler schneller neu versuchen
 
 // Brüche wie in der Kochansicht der App (web/src/lib/format.js)
 const FRACTIONS = [
@@ -68,6 +69,7 @@ const STYLE = `
   h2 { margin: 0; font-size: 1.2rem; font-weight: 500; }
   header a { color: var(--primary-color); text-decoration: none; font-size: 0.9rem; }
   .error { color: var(--error-color); margin: 4px 0; }
+  .error + .muted { margin: 0; font-size: 0.85rem; }
   .muted { color: var(--secondary-text-color); }
   ul { list-style: none; margin: 0; padding: 0; }
   li.day { display: grid; grid-template-columns: 3.2rem 1fr; gap: 8px; padding: 6px 4px; border-top: 1px solid var(--divider-color); }
@@ -145,6 +147,7 @@ class RezeptplanerCard extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener('visibilitychange', this._onVisible);
+    clearTimeout(this._retry);
   }
 
   getCardSize() {
@@ -162,11 +165,20 @@ class RezeptplanerCard extends HTMLElement {
       this._error = '';
       await this._signImages(this._data.entries.map((e) => e.recipe?.thumbnail));
     } catch (e) {
-      this._error = e?.body?.error || e?.message || 'Rezeptplaner nicht erreichbar';
+      // Für die Anzeige nur den Grund; die Karte meldet „nicht erreichbar“.
+      this._error = e?.body?.error || e?.error || e?.message || 'unbekannter Fehler';
     } finally {
       this._loadedAt = Date.now();
       this._loading = false;
       this._render();
+    }
+    // Nach einem Fehler (Server startet, Integration noch nicht bereit)
+    // nicht 5 Minuten warten, sondern bald neu versuchen.
+    clearTimeout(this._retry);
+    if (this._error) {
+      this._retry = setTimeout(() => {
+        if (this.isConnected && !this._loading) this._load();
+      }, RETRY_MS);
     }
   }
 
@@ -197,7 +209,7 @@ class RezeptplanerCard extends HTMLElement {
     const title = this._config?.title ?? 'Essensplan';
     let body;
     if (this._error) {
-      body = `<p class="error">${esc(this._error)}</p>`;
+      body = `<p class="error">Rezeptplaner nicht erreichbar – neuer Versuch in 30 Sekunden.</p><p class="muted">${esc(this._error)}</p>`;
     } else if (!this._data) {
       body = '<p class="muted">Lädt …</p>';
     } else {

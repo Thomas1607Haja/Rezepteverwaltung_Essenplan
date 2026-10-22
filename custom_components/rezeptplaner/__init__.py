@@ -7,6 +7,7 @@ im Config-Entry.
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -48,10 +49,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Einmal beim Start: Dashboard-Karte und Endpunkte für die Karte anmelden."""
     integration = await async_get_integration(hass, DOMAIN)
     card = Path(__file__).parent / "frontend" / "rezeptplaner-card.js"
-    await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(card), False)])
-    # Lädt die Karte in jedem Dashboard. "?v=" sorgt dafür, dass Browser
-    # nach einem Update die neue Datei holen statt der zwischengespeicherten.
-    add_extra_js_url(hass, f"{CARD_URL}?v={integration.version}")
+    card_hash = await hass.async_add_executor_job(_file_hash, card)
+    # cache_headers=True: Home Assistant schickt ein langes Cache-Control mit.
+    # Das ist sicher, weil sich die Adresse mit jedem Inhalt ändert (siehe
+    # unten). Ohne eigenen Header setzt ein vorgeschalteter Cloudflare-Tunnel
+    # seine Vorgabe (4 Stunden) ein.
+    await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(card), True)])
+    # Lädt die Karte in jedem Dashboard. "?v=" aus Version und Inhalt sorgt
+    # dafür, dass Browser nach jeder Änderung die neue Datei holen.
+    add_extra_js_url(hass, f"{CARD_URL}?v={integration.version}-{card_hash}")
     hass.http.register_view(PlanView())
     hass.http.register_view(RecipeView())
     hass.http.register_view(ImageView())
@@ -66,11 +72,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: RezeptplanerConfigEntry)
         entry.data[CONF_TOKEN],
     )
     coordinator = RezeptplanerCoordinator(hass, entry, client)
-    await coordinator.async_config_entry_first_refresh()
-
     entry.runtime_data = RuntimeData(client, coordinator, entry.data[CONF_SLUG])
-    # Die Endpunkte der Karte finden die Verbindung hier.
+    # Die Endpunkte der Karte finden die Verbindung hier – schon vor dem
+    # ersten Abruf, damit die Karte nicht auf den Coordinator warten muss.
     hass.data[DOMAIN] = entry.runtime_data
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except Exception:
+        hass.data.pop(DOMAIN, None)
+        raise
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
@@ -80,3 +91,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: RezeptplanerConfigEntry
     if unloaded:
         hass.data.pop(DOMAIN, None)
     return unloaded
+
+
+def _file_hash(path: Path) -> str:
+    """Kurze Prüfsumme des Dateiinhalts für den Versionsparameter."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:8]
