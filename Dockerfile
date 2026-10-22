@@ -10,7 +10,7 @@
 # Werkzeuge – deshalb braucht der Build für ARM64 keine Emulation.
 
 # --- 1. Weboberfläche bauen ---
-FROM --platform=$BUILDPLATFORM node:24-alpine AS web
+FROM --platform=$BUILDPLATFORM node:25-alpine AS web
 WORKDIR /src/web
 # Erst nur die Paketlisten: Solange sie sich nicht ändern, nimmt Docker die
 # installierten Pakete aus dem Zwischenspeicher.
