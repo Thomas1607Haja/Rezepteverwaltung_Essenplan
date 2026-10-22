@@ -106,188 +106,219 @@ const STYLE = `
   ol li { margin: 0 0 8px; line-height: 1.45; }
 `;
 
-class RezeptplanerCard extends HTMLElement {
-  constructor() {
-    super();
-    // Grundgerüst einmal anlegen; _render ersetzt nur den Inhalt der Karte,
-    // damit eine offene Kochansicht beim Aktualisieren erhalten bleibt.
-    this.attachShadow({ mode: 'open' }).innerHTML = `<style>${STYLE}</style><ha-card></ha-card><dialog></dialog>`;
-    this._card = this.shadowRoot.querySelector('ha-card');
-    this._dialog = this.shadowRoot.querySelector('dialog');
-    // Klick neben den Inhalt (auf den Hintergrund) oder auf × schließt.
-    this._dialog.addEventListener('click', (ev) => {
-      if (ev.target === this._dialog || ev.target.closest('.close')) this._dialog.close();
-    });
-    this._data = null;
-    this._error = '';
-    this._loadedAt = 0;
-    this._loading = false;
-    this._signed = new Map(); // Bildname -> signierte Adresse
-  }
-
-  setConfig(config) {
-    this._config = config || {};
-  }
-
-  // Home Assistant setzt hass bei jeder Zustandsänderung neu. Geladen wird
-  // nur beim ersten Mal und danach höchstens alle RELOAD_MS.
-  set hass(hass) {
-    this._hass = hass;
-    if (!this._loading && Date.now() - this._loadedAt > RELOAD_MS) this._load();
-  }
-
-  connectedCallback() {
-    // Beim Zurückkehren zum Dashboard (z. B. Handy aus dem Ruhezustand)
-    // aktualisieren, wenn die Daten alt sind.
-    this._onVisible = () => {
-      if (document.visibilityState === 'visible' && this._hass && Date.now() - this._loadedAt > RELOAD_MS) this._load();
-    };
-    document.addEventListener('visibilitychange', this._onVisible);
-  }
-
-  disconnectedCallback() {
-    document.removeEventListener('visibilitychange', this._onVisible);
-    clearTimeout(this._retry);
-  }
-
-  getCardSize() {
-    return 6;
-  }
-
-  static getStubConfig() {
-    return {};
-  }
-
-  async _load() {
-    this._loading = true;
-    try {
-      this._data = await this._hass.callApi('GET', 'rezeptplaner/plan');
+// Die Klasse entsteht erst beim Anmelden (siehe register): Das Frontend
+// ersetzt beim Start auch window.HTMLElement. Eine schon beim Laden der
+// Datei gebildete Klasse erbte sonst vom alten HTMLElement und ließe sich
+// danach nicht mehr erzeugen.
+function createCardClass() {
+  return class RezeptplanerCard extends HTMLElement {
+    constructor() {
+      super();
+      // Grundgerüst einmal anlegen; _render ersetzt nur den Inhalt der Karte,
+      // damit eine offene Kochansicht beim Aktualisieren erhalten bleibt.
+      this.attachShadow({ mode: 'open' }).innerHTML = `<style>${STYLE}</style><ha-card></ha-card><dialog></dialog>`;
+      this._card = this.shadowRoot.querySelector('ha-card');
+      this._dialog = this.shadowRoot.querySelector('dialog');
+      // Klick neben den Inhalt (auf den Hintergrund) oder auf × schließt.
+      this._dialog.addEventListener('click', (ev) => {
+        if (ev.target === this._dialog || ev.target.closest('.close')) this._dialog.close();
+      });
+      this._data = null;
       this._error = '';
-      await this._signImages(this._data.entries.map((e) => e.recipe?.thumbnail));
-    } catch (e) {
-      // Für die Anzeige nur den Grund; die Karte meldet „nicht erreichbar“.
-      this._error = e?.body?.error || e?.error || e?.message || 'unbekannter Fehler';
-    } finally {
-      this._loadedAt = Date.now();
+      this._loadedAt = 0;
       this._loading = false;
-      this._render();
+      this._signed = new Map(); // Bildname -> signierte Adresse
     }
-    // Nach einem Fehler (Server startet, Integration noch nicht bereit)
-    // nicht 5 Minuten warten, sondern bald neu versuchen.
-    clearTimeout(this._retry);
-    if (this._error) {
-      this._retry = setTimeout(() => {
-        if (this.isConnected && !this._loading) this._load();
-      }, RETRY_MS);
+
+    setConfig(config) {
+      this._config = config || {};
     }
-  }
 
-  /** Holt für Bildnamen signierte Adressen (eine Stunde gültig). */
-  async _signImages(names) {
-    const missing = [...new Set(names.filter((n) => n && !this._signed.has(n)))];
-    await Promise.all(
-      missing.map(async (name) => {
-        try {
-          const res = await this._hass.callWS({ type: 'auth/sign_path', path: `/api/rezeptplaner/images/${name}`, expires: 3600 });
-          this._signed.set(name, res.path);
-        } catch {
-          // Ohne Bild geht es auch.
-        }
-      }),
-    );
-    // Signaturen laufen ab; beim nächsten Laden nach 50 Minuten neu holen.
-    clearTimeout(this._expire);
-    this._expire = setTimeout(() => this._signed.clear(), 50 * 60 * 1000);
-  }
+    // Home Assistant setzt hass bei jeder Zustandsänderung neu. Geladen wird
+    // nur beim ersten Mal und danach höchstens alle RELOAD_MS.
+    set hass(hass) {
+      this._hass = hass;
+      if (!this._loading && Date.now() - this._loadedAt > RELOAD_MS) this._load();
+    }
 
-  _img(name, cls) {
-    const src = name && this._signed.get(name);
-    return src ? `<img class="${cls}" src="${esc(src)}" alt="" loading="lazy">` : `<span class="${cls}"></span>`;
-  }
+    connectedCallback() {
+      // Beim Zurückkehren zum Dashboard (z. B. Handy aus dem Ruhezustand)
+      // aktualisieren, wenn die Daten alt sind.
+      this._onVisible = () => {
+        if (document.visibilityState === 'visible' && this._hass && Date.now() - this._loadedAt > RELOAD_MS) this._load();
+      };
+      document.addEventListener('visibilitychange', this._onVisible);
+    }
 
-  _render() {
-    const title = this._config?.title ?? 'Essensplan';
-    let body;
-    if (this._error) {
-      body = `<p class="error">Rezeptplaner nicht erreichbar – neuer Versuch in 30 Sekunden.</p><p class="muted">${esc(this._error)}</p>`;
-    } else if (!this._data) {
-      body = '<p class="muted">Lädt …</p>';
-    } else {
-      const { entries, today, shopping_period: period } = this._data;
-      body = '<ul>';
-      for (const date of daysBetween(period.from, period.to)) {
-        const label = dayLabel(date);
-        const dishes = entries.filter((e) => e.date === date);
-        const cls = date === today ? 'day today' : date < today ? 'day past' : 'day';
-        body += `<li class="${cls}"><span class="label"><b>${label.weekday}</b><small>${label.date}</small></span><div class="dishes">`;
-        if (dishes.length === 0) body += '<span class="muted">–</span>';
-        for (const e of dishes) {
-          const name = e.recipe ? e.recipe.title : e.note;
-          const info = [e.slot === 'lunch' ? 'Mittag' : '', e.recipe ? `${e.servings} Portionen` : ''].filter(Boolean).join(' · ');
-          body += `<button class="dish" data-id="${e.id}" ${e.recipe_id ? '' : 'disabled'}>
-            ${this._img(e.recipe?.thumbnail, 'thumb')}
-            <span class="title">${esc(name)}${info ? `<small>${esc(info)}</small>` : ''}</span></button>`;
-        }
-        body += '</div></li>';
+    disconnectedCallback() {
+      document.removeEventListener('visibilitychange', this._onVisible);
+      clearTimeout(this._retry);
+    }
+
+    getCardSize() {
+      return 6;
+    }
+
+    static getStubConfig() {
+      return {};
+    }
+
+    async _load() {
+      this._loading = true;
+      try {
+        this._data = await this._hass.callApi('GET', 'rezeptplaner/plan');
+        this._error = '';
+        await this._signImages(this._data.entries.map((e) => e.recipe?.thumbnail));
+      } catch (e) {
+        // Für die Anzeige nur den Grund; die Karte meldet „nicht erreichbar“.
+        this._error = e?.body?.error || e?.error || e?.message || 'unbekannter Fehler';
+      } finally {
+        this._loadedAt = Date.now();
+        this._loading = false;
+        this._render();
       }
-      body += '</ul>';
-    }
-    const link = this._data?.app_url ? `<a href="${esc(this._data.app_url)}">Öffnen</a>` : '';
-    this._card.innerHTML = `<header><h2>${esc(title)}</h2>${link}</header>${body}`;
-    for (const btn of this._card.querySelectorAll('button.dish:not([disabled])')) {
-      btn.addEventListener('click', () => this._open(Number(btn.dataset.id)));
-    }
-    // Link zur App innerhalb von Home Assistant öffnen, ohne Seite neu zu laden.
-    this._card.querySelector('header a')?.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      history.pushState(null, '', this._data.app_url);
-      window.dispatchEvent(new CustomEvent('location-changed'));
-    });
-  }
-
-  /** Kochansicht eines Planeintrags im Dialog. */
-  async _open(entryId) {
-    const entry = this._data.entries.find((e) => e.id === entryId);
-    const dialog = this._dialog;
-    dialog.innerHTML = `<div class="sheet"><p class="muted">Lädt …</p></div>`;
-    dialog.showModal();
-    try {
-      const recipe = await this._hass.callApi('GET', `rezeptplaner/recipes/${entry.recipe_id}`);
-      await this._signImages([recipe.image]);
-      dialog.innerHTML = this._sheet(recipe, entry.servings);
-    } catch (e) {
-      dialog.innerHTML = `<div class="sheet"><header><h2>${esc(entry.recipe?.title)}</h2><button class="close" aria-label="Schließen">×</button></header>
-        <p class="error">${esc(e?.body?.error || e?.message || 'Rezept nicht geladen')}</p></div>`;
-    }
-  }
-
-  _sheet(recipe, servings) {
-    const factor = servings / recipe.base_servings;
-    let ingredients = '';
-    let group = '';
-    for (const ing of recipe.ingredients) {
-      if (ing.group_name && ing.group_name !== group) {
-        group = ing.group_name;
-        ingredients += `</ul><h4>${esc(group)}</h4><ul class="ingredients">`;
+      // Nach einem Fehler (Server startet, Integration noch nicht bereit)
+      // nicht 5 Minuten warten, sondern bald neu versuchen.
+      clearTimeout(this._retry);
+      if (this._error) {
+        this._retry = setTimeout(() => {
+          if (this.isConnected && !this._loading) this._load();
+        }, RETRY_MS);
       }
-      const qty = ing.quantity == null ? '' : formatQuantity(ing.quantity * factor);
-      ingredients += `<li><span class="qty">${esc([qty, ing.unit].filter(Boolean).join(' '))}</span>
-        <span>${esc(ing.name)}${ing.note ? ` <span class="note">${esc(ing.note)}</span>` : ''}</span></li>`;
     }
-    const steps = recipe.steps.map((s) => `<li>${esc(s.text)}</li>`).join('');
-    return `<div class="sheet">
-      <header><h2>${esc(recipe.title)}</h2><button class="close" aria-label="Schließen">×</button></header>
-      ${recipe.image && this._signed.get(recipe.image) ? this._img(recipe.image, 'hero') : ''}
-      <p class="servings">Für ${servings} ${servings === 1 ? 'Portion' : 'Portionen'}${servings !== recipe.base_servings ? ` (Rezept: ${recipe.base_servings})` : ''}</p>
-      ${recipe.ingredients.length ? `<h3>Zutaten</h3><ul class="ingredients">${ingredients}</ul>` : ''}
-      ${steps ? `<h3>Zubereitung</h3><ol>${steps}</ol>` : ''}
-    </div>`;
-  }
+
+    /** Holt für Bildnamen signierte Adressen (eine Stunde gültig). */
+    async _signImages(names) {
+      const missing = [...new Set(names.filter((n) => n && !this._signed.has(n)))];
+      await Promise.all(
+        missing.map(async (name) => {
+          try {
+            const res = await this._hass.callWS({ type: 'auth/sign_path', path: `/api/rezeptplaner/images/${name}`, expires: 3600 });
+            this._signed.set(name, res.path);
+          } catch {
+            // Ohne Bild geht es auch.
+          }
+        }),
+      );
+      // Signaturen laufen ab; beim nächsten Laden nach 50 Minuten neu holen.
+      clearTimeout(this._expire);
+      this._expire = setTimeout(() => this._signed.clear(), 50 * 60 * 1000);
+    }
+
+    _img(name, cls) {
+      const src = name && this._signed.get(name);
+      return src ? `<img class="${cls}" src="${esc(src)}" alt="" loading="lazy">` : `<span class="${cls}"></span>`;
+    }
+
+    _render() {
+      const title = this._config?.title ?? 'Essensplan';
+      let body;
+      if (this._error) {
+        body = `<p class="error">Rezeptplaner nicht erreichbar – neuer Versuch in 30 Sekunden.</p><p class="muted">${esc(this._error)}</p>`;
+      } else if (!this._data) {
+        body = '<p class="muted">Lädt …</p>';
+      } else {
+        const { entries, today, shopping_period: period } = this._data;
+        body = '<ul>';
+        for (const date of daysBetween(period.from, period.to)) {
+          const label = dayLabel(date);
+          const dishes = entries.filter((e) => e.date === date);
+          const cls = date === today ? 'day today' : date < today ? 'day past' : 'day';
+          body += `<li class="${cls}"><span class="label"><b>${label.weekday}</b><small>${label.date}</small></span><div class="dishes">`;
+          if (dishes.length === 0) body += '<span class="muted">–</span>';
+          for (const e of dishes) {
+            const name = e.recipe ? e.recipe.title : e.note;
+            const info = [e.slot === 'lunch' ? 'Mittag' : '', e.recipe ? `${e.servings} Portionen` : ''].filter(Boolean).join(' · ');
+            body += `<button class="dish" data-id="${e.id}" ${e.recipe_id ? '' : 'disabled'}>
+              ${this._img(e.recipe?.thumbnail, 'thumb')}
+              <span class="title">${esc(name)}${info ? `<small>${esc(info)}</small>` : ''}</span></button>`;
+          }
+          body += '</div></li>';
+        }
+        body += '</ul>';
+      }
+      const link = this._data?.app_url ? `<a href="${esc(this._data.app_url)}">Öffnen</a>` : '';
+      this._card.innerHTML = `<header><h2>${esc(title)}</h2>${link}</header>${body}`;
+      for (const btn of this._card.querySelectorAll('button.dish:not([disabled])')) {
+        btn.addEventListener('click', () => this._open(Number(btn.dataset.id)));
+      }
+      // Link zur App innerhalb von Home Assistant öffnen, ohne Seite neu zu laden.
+      this._card.querySelector('header a')?.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        history.pushState(null, '', this._data.app_url);
+        window.dispatchEvent(new CustomEvent('location-changed'));
+      });
+    }
+
+    /** Kochansicht eines Planeintrags im Dialog. */
+    async _open(entryId) {
+      const entry = this._data.entries.find((e) => e.id === entryId);
+      const dialog = this._dialog;
+      dialog.innerHTML = `<div class="sheet"><p class="muted">Lädt …</p></div>`;
+      dialog.showModal();
+      try {
+        const recipe = await this._hass.callApi('GET', `rezeptplaner/recipes/${entry.recipe_id}`);
+        await this._signImages([recipe.image]);
+        dialog.innerHTML = this._sheet(recipe, entry.servings);
+      } catch (e) {
+        dialog.innerHTML = `<div class="sheet"><header><h2>${esc(entry.recipe?.title)}</h2><button class="close" aria-label="Schließen">×</button></header>
+          <p class="error">${esc(e?.body?.error || e?.message || 'Rezept nicht geladen')}</p></div>`;
+      }
+    }
+
+    _sheet(recipe, servings) {
+      const factor = servings / recipe.base_servings;
+      let ingredients = '';
+      let group = '';
+      for (const ing of recipe.ingredients) {
+        if (ing.group_name && ing.group_name !== group) {
+          group = ing.group_name;
+          ingredients += `</ul><h4>${esc(group)}</h4><ul class="ingredients">`;
+        }
+        const qty = ing.quantity == null ? '' : formatQuantity(ing.quantity * factor);
+        ingredients += `<li><span class="qty">${esc([qty, ing.unit].filter(Boolean).join(' '))}</span>
+          <span>${esc(ing.name)}${ing.note ? ` <span class="note">${esc(ing.note)}</span>` : ''}</span></li>`;
+      }
+      const steps = recipe.steps.map((s) => `<li>${esc(s.text)}</li>`).join('');
+      return `<div class="sheet">
+        <header><h2>${esc(recipe.title)}</h2><button class="close" aria-label="Schließen">×</button></header>
+        ${recipe.image && this._signed.get(recipe.image) ? this._img(recipe.image, 'hero') : ''}
+        <p class="servings">Für ${servings} ${servings === 1 ? 'Portion' : 'Portionen'}${servings !== recipe.base_servings ? ` (Rezept: ${recipe.base_servings})` : ''}</p>
+        ${recipe.ingredients.length ? `<h3>Zutaten</h3><ul class="ingredients">${ingredients}</ul>` : ''}
+        ${steps ? `<h3>Zubereitung</h3><ol>${steps}</ol>` : ''}
+      </div>`;
+    }
+  };
 }
 
-if (!customElements.get('rezeptplaner-card')) {
-  customElements.define('rezeptplaner-card', RezeptplanerCard);
+// Anmelden erst, wenn das Frontend von Home Assistant läuft. Es tauscht
+// beim Start window.customElements aus (Polyfill für „scoped registries“).
+// Lief die Karte vorher – möglich, wenn sie früh geladen wird, z. B. bei
+// einem harten Neuladen –, landete sie in der alten Registry, und das
+// Dashboard meldete „Custom element doesn't exist“. Das Element
+// <home-assistant> definiert das Frontend erst nach dem Austausch; danach
+// ist window.customElements die richtige Registry.
+function register() {
+  try {
+    if (!window.customElements.get('rezeptplaner-card')) {
+      window.customElements.define('rezeptplaner-card', createCardClass());
+    }
+  } catch (err) {
+    console.error('Rezeptplaner-Karte: Anmelden fehlgeschlagen', err);
+  }
 }
+if (customElements.get('home-assistant')) {
+  register();
+} else {
+  customElements.whenDefined('home-assistant').then(register);
+  // Notnagel, falls die Karte einmal außerhalb der normalen Oberfläche läuft.
+  setTimeout(register, 10000);
+}
+
+// Banner in der Konsole: zeigt sofort, ob und welche Fassung geladen ist.
+// Die Version steht im Parameter v der Adresse (siehe Integration).
+const VERSION = new URL(import.meta.url).searchParams.get('v') || 'unbekannt';
+console.info(`%c REZEPTPLANER-KARTE %c ${VERSION} `, 'color: white; background: #c2552d; font-weight: 700;', 'color: #c2552d;');
 
 // Eintrag in der Kartenauswahl des Dashboard-Editors
 window.customCards = window.customCards || [];

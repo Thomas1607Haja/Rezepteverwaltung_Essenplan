@@ -8,11 +8,13 @@ im Config-Entry.
 from __future__ import annotations
 
 import hashlib
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
 from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
+from homeassistant.components.lovelace.const import LOVELACE_DATA, MODE_STORAGE
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -25,6 +27,8 @@ from .api import RezeptplanerClient
 from .const import CARD_URL, CONF_HOST, CONF_PORT, CONF_SLUG, CONF_TOKEN, DOMAIN
 from .coordinator import RezeptplanerCoordinator
 from .views import ImageView, PlanView, RecipeView
+
+_LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.CALENDAR, Platform.SENSOR]
 
@@ -55,9 +59,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     # unten). Ohne eigenen Header setzt ein vorgeschalteter Cloudflare-Tunnel
     # seine Vorgabe (4 Stunden) ein.
     await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(card), True)])
-    # Lädt die Karte in jedem Dashboard. "?v=" aus Version und Inhalt sorgt
-    # dafür, dass Browser nach jeder Änderung die neue Datei holen.
-    add_extra_js_url(hass, f"{CARD_URL}?v={integration.version}-{card_hash}")
+    # "?v=" aus Version und Inhalt sorgt dafür, dass Browser nach jeder
+    # Änderung die neue Datei holen.
+    await _async_register_card(hass, f"{CARD_URL}?v={integration.version}-{card_hash}")
     hass.http.register_view(PlanView())
     hass.http.register_view(RecipeView())
     hass.http.register_view(ImageView())
@@ -91,6 +95,46 @@ async def async_unload_entry(hass: HomeAssistant, entry: RezeptplanerConfigEntry
     if unloaded:
         hass.data.pop(DOMAIN, None)
     return unloaded
+
+
+async def _async_register_card(hass: HomeAssistant, url: str) -> None:
+    """Die Karte als Lovelace-Ressource anmelden, wie HACS es mit Karten tut.
+
+    Ressourcen lädt das Dashboard selbst, nachdem das Frontend von Home
+    Assistant gestartet ist. Über add_extra_js_url lief die Karte dagegen
+    schon beim Laden der Seite – bei einem harten Neuladen manchmal vor dem
+    Frontend, das danach window.customElements austauscht (Polyfill für
+    „scoped registries“). Die Karte war dann in der falschen Registry und
+    das Dashboard meldete „Custom element doesn't exist“.
+
+    Gibt es die Ressource schon (Neustart, Update), wird sie angepasst statt
+    doppelt angelegt.
+    """
+    lovelace = hass.data.get(LOVELACE_DATA)
+    if lovelace is None or lovelace.resource_mode != MODE_STORAGE:
+        # Im YAML-Modus lassen sich Ressourcen nicht von außen anlegen.
+        add_extra_js_url(hass, url)
+        _LOGGER.warning(
+            "Lovelace-Ressourcen stehen in YAML; die Karte wird ersatzweise über "
+            "die Startseite geladen. Zuverlässiger: unter lovelace: resources: "
+            "einen Eintrag mit url: %s und type: module anlegen",
+            CARD_URL,
+        )
+        return
+
+    resources = lovelace.resources
+    await resources.async_get_info()  # lädt die gespeicherten Ressourcen
+    ours = [item for item in resources.async_items() if item["url"].split("?")[0] == CARD_URL]
+    if not ours:
+        await resources.async_create_item({"res_type": "module", "url": url})
+        _LOGGER.info("Dashboard-Karte als Ressource angelegt: %s", url)
+        return
+    first, *duplicates = ours
+    if first["url"] != url or first.get("type") != "module":
+        await resources.async_update_item(first["id"], {"res_type": "module", "url": url})
+        _LOGGER.info("Ressource der Dashboard-Karte aktualisiert: %s", url)
+    for item in duplicates:
+        await resources.async_delete_item(item["id"])
 
 
 def _file_hash(path: Path) -> str:

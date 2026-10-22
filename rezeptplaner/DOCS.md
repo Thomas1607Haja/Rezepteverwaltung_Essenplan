@@ -28,7 +28,7 @@ Optional gibt es eine Integration für Home Assistant:
 1. In **HACS** → ⋮ → **Benutzerdefinierte Repositories** die Adresse dieses Repositorys mit Typ **Integration** hinzufügen.
 2. **Rezeptplaner** herunterladen und Home Assistant neu starten.
 3. Unter **Einstellungen → Geräte & Dienste** erscheint „Rezeptplaner“ als **Entdeckt** – auf **Hinzufügen** tippen und bestätigen. Adresse und Schlüssel liefert die App selbst.
-4. Die Seite einmal neu laden (F5), damit der Browser die Karte kennt. Bei Zugriff über einen Cloudflare-Tunnel vorher die Cache-Regel aus dem README des Repositorys einrichten.
+4. Die Seite einmal neu laden (F5), damit der Browser die Karte kennt. Die Integration trägt die Karte dafür selbst als Dashboard-Ressource ein. Bei Zugriff über einen Cloudflare-Tunnel vorher die Cache-Regel aus dem README des Repositorys einrichten.
 5. Im Dashboard eine Karte **Essensplan** hinzufügen.
 
 „Öffnen“ auf der Karte führt zur Weboberfläche der App – auch wenn die App nicht in der Seitenleiste steht.
