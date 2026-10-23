@@ -1,0 +1,4 @@
+configuration:
+  app_repository:
+    name: Repository der Android-App
+    description: GitHub-Repository (besitzer/name), aus dessen Releases die Android-App installiert wird. Nur für einen eigenen Fork ändern.

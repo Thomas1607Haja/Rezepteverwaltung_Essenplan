@@ -4,9 +4,10 @@
   // QR-Code als SVG. Die Module werden zu einem einzigen Pfad
   // zusammengefasst (ein Quadrat je dunklem Modul); weißer Rand und
   // schwarze Module unabhängig vom Farbschema, damit jede Kamera ihn liest.
-  let { text, size = 220, label = 'QR-Code' } = $props();
+  // ecc: Fehlerkorrektur; 'L' passt bei langen Texten mehr hinein.
+  let { text, size = 220, label = 'QR-Code', ecc = 'M' } = $props();
 
-  const qr = $derived(encode(text, { ecc: 'M', border: 2 }));
+  const qr = $derived(encode(text, { ecc, border: 2 }));
   const path = $derived.by(() => {
     let d = '';
     qr.data.forEach((row, y) =>

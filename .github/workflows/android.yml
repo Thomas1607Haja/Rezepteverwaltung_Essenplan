@@ -5,6 +5,9 @@
 # - Tag android-v1.2.3: signierte Release-APK bauen und als GitHub-Release
 #   veröffentlichen (Obtainium auf dem Handy holt sie von dort). Die Version
 #   muss zu appVersionName in android/gradle.properties passen.
+#   Die APK heißt in jedem Release gleich (rezeptplaner.apk), damit der Link
+#   …/releases/latest/download/rezeptplaner.apk immer die neueste liefert
+#   (QR-Code unter Einstellungen → App installieren, server/internal/appinstall).
 #
 # Geheime Werte (Settings → Secrets and variables → Actions):
 #   ANDROID_KEYSTORE_BASE64   Signaturschlüssel (.jks), base64-kodiert
@@ -108,12 +111,16 @@ jobs:
           apk=app/build/outputs/apk/release/app-release.apk
           apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           "$apksigner" verify --print-certs "$apk"
-          cp "$apk" "$RUNNER_TEMP/rezeptplaner-$VERSION.apk"
+          cp "$apk" "$RUNNER_TEMP/rezeptplaner.apk"
 
       - name: GitHub-Release veröffentlichen
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/rezeptplaner-$VERSION.apk" \
+          # Titel "Android-App …" und --latest: Danach filtert Obtainium, und
+          # releases/latest zeigt immer auf die App (Tags v… der
+          # Home-Assistant-App bekommen keine Releases).
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/rezeptplaner.apk" \
+            --latest \
             --title "Android-App $VERSION" \
             --notes "Rezeptplaner für Android, Version $VERSION. Installation und Updates über Obtainium (siehe docs/ANDROID.md)."

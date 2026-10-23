@@ -8,11 +8,12 @@ In den Beispielen steht `rezepte.example.org` für deinen Hostnamen. Echte Domai
 
 ## 1. API-Schlüssel anlegen
 
-1. Weboberfläche öffnen → **Einstellungen → App-Zugang**.
-2. Einmalig die **Adresse für die App** eintragen und speichern – den Hostnamen aus Abschnitt 2, z. B. `https://rezepte.example.org`.
-3. Gerätenamen eingeben (z. B. „Handy Thomas“) → **Schlüssel anlegen**.
-4. Es erscheint ein **QR-Code** mit Adresse und Schlüssel. In der App „Einrichten“ wählen und ihn scannen. Ist Cloudflare Access aktiv (Abschnitt 4), vorher unter „Cloudflare Access (optional)“ Client ID und Secret eintragen; sie kommen nur in den QR-Code und werden nicht gespeichert.
-5. QR-Code und Schlüssel werden nur dieses eine Mal angezeigt, gespeichert wird nur der Hash des Schlüssels.
+Weboberfläche öffnen → **Einstellungen → App installieren**:
+
+1. **Schritt 1 – App installieren:** QR-Codes für Obtainium und den Eintrag des Rezeptplaners in Obtainium (oder die APK direkt), dazu die Anleitung für das Galaxy A54. Siehe [ANDROID.md](ANDROID.md), Abschnitt 5.
+2. **Schritt 2 – App verbinden:** Einmalig die **Adresse für die App** eintragen und speichern – den Hostnamen aus Abschnitt 2, z. B. `https://rezepte.example.org`. Dann **Neues Gerät verbinden** → Gerätenamen eingeben (z. B. „Handy Thomas“) → **QR-Code erzeugen**. Erst jetzt entsteht ein Schlüssel.
+3. In der App „Einrichten“ wählen und den QR-Code scannen. Ist Cloudflare Access aktiv (Abschnitt 4), vorher unter „Cloudflare Access (optional)“ Client ID und Secret eintragen; sie kommen nur in den QR-Code und werden nicht gespeichert.
+4. QR-Code und Schlüssel werden nur dieses eine Mal angezeigt (bis „Fertig“ oder zum Verlassen der Seite); gespeichert wird nur der Hash des Schlüssels.
 
 Ein verlorenes oder ausgemustertes Gerät sperrst du dort mit **Sperren**. Der Schlüssel gilt sofort nicht mehr.
 

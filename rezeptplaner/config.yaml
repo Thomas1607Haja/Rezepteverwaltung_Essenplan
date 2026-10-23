@@ -3,7 +3,7 @@
 name: Rezeptplaner
 # Muss zum Tag der neuen Version passen (v0.1.0 -> "0.1.0"); die GitHub
 # Action prüft das. Home Assistant lädt das Image mit genau dieser Version.
-version: "0.6.0"
+version: "0.6.1"
 slug: rezeptplaner
 description: Rezepte verwalten, Essensplan und Einkaufsliste
 url: https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan
@@ -49,3 +49,13 @@ backup: cold
 # Prüft, ob der Server noch Verbindungen annimmt, und startet ihn sonst neu.
 # tcp statt http, weil der Server nur Anfragen über Ingress beantwortet.
 watchdog: "tcp://[HOST]:[PORT:8099]"
+
+# Einstellungen auf dem Reiter "Konfiguration" der App. Der Server liest
+# sie aus /data/options.json.
+# app_repository: GitHub-Repository mit den Releases der Android-App
+# (besitzer/name). Daraus entstehen die QR-Codes unter Einstellungen →
+# App installieren. Nur für einen eigenen Fork ändern.
+options:
+  app_repository: Thomas1607Haja/Rezepteverwaltung_Essenplan
+schema:
+  app_repository: str?

@@ -583,6 +583,7 @@ Rezepteverwaltung_Essenplan/
 | 7.1b | Importformat (`docs/importformat.md`, JSON-Schema), Spalte `source_name` (Migration 009), Datei-Import im Server mit Vorschau |
 | 7.1c | Weboberfläche: „Datei importieren“ in der Rezeptübersicht mit Vorschau; Quelle anzeigen und bearbeiten |
 | 7.1d | Claude-Skill `skills/rezeptplaner-import/` – 7.1 bis 7.1c zusammen als App 0.6.0 |
+| 7.2b | Weboberfläche „Einstellungen → App installieren“: Schritt 1 QR-Codes (Obtainium, Rezeptplaner in Obtainium, APK `releases/latest/download/rezeptplaner.apk`) mit Anleitung für das A54, Repository aus der Option `app_repository`; Schritt 2 „Neues Gerät verbinden“ erzeugt erst dann einen Schlüssel – App 0.6.1 |
 | 7.2 | Android-Grundgerüst (Kotlin, Compose, Material 3, Navigation, kotlinx.serialization; Room, OkHttp, Coil und WorkManager kommen mit den Schritten, die sie brauchen), GitHub Action baut signierte APK; Anleitung [ANDROID.md](ANDROID.md) |
 | 7.3 | Einrichtung per QR-Code, Verbindungstest, Einstellungen (Cloudflare Access), Schlüssel im Android-Keystore |
 | 7.4 | Abgleich und Offline-Lesen: Rezepte, Suche, Kochansicht, Plan ansehen; Hinweis Akku-Optimierung |
@@ -601,6 +602,8 @@ Rezepteverwaltung_Essenplan/
 - ~~**Bring-Mengenangabe**~~ – geklärt 2026-10-21: Die Beschreibung (`description`) eines To-do-Eintrags wird in Bring zur Spezifikation. Senden (18 Artikel in die gewählte Liste) und Nachsenden der Differenz auf dem Green mit App 0.3.0 getestet: ok.
 
 - ~~**IDs nach dem Löschen**~~ – geklärt 2026-10-23: `AUTOINCREMENT` für die abgeglichenen Tabellen (Migration 008, App 0.5.1). Der Zähler startet hinter der größten ID, auch hinter bereits gelöschten aus `deletions`.
+
+- **Googles Entwickler-Verifizierung (vor 2027 erledigen):** Ab 2027 sollen auf zertifizierten Geräten weltweit nur noch Apps registrierter Entwickler installierbar sein, auch außerhalb des Play Store (Details und Quellen in [ANDROID.md](ANDROID.md), Abschnitt 6). Plan: kostenloses Konto für eingeschränkten Vertrieb (bis 20 Geräte), Paketname mit dem Signaturzertifikat registrieren. Termin für Deutschland beobachten.
 
 ## 12. Mögliche spätere Erweiterungen
 

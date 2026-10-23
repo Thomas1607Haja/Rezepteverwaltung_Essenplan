@@ -2,6 +2,7 @@
   import { api } from '../lib/api.js';
   import { setupUri } from '../lib/appSetup.js';
   import QrCode from './QrCode.svelte';
+  import AppInstallStep from './AppInstallStep.svelte';
 
   // API-Schlüssel für den App-Zugang (Android-App): einer pro Gerät. Der
   // Schlüssel selbst ist nur direkt nach dem Anlegen sichtbar; der Server
@@ -12,6 +13,8 @@
   let messageIsError = $state(false);
   let name = $state('');
   let busy = $state(false);
+  // Gerätename wird abgefragt; ein Schlüssel entsteht erst beim Bestätigen.
+  let connecting = $state(false);
   // Gerade angelegter Schlüssel: { name, key } bis zum Schließen des Hinweises
   let created = $state(null);
   let copied = $state(false);
@@ -72,6 +75,7 @@
       const { key, ...info } = await api.createApiKey(name);
       keys = [info, ...keys];
       created = { name: info.name, key };
+      connecting = false;
       copied = false;
       name = '';
       message = '';
@@ -107,42 +111,15 @@
 </script>
 
 <section class="card">
-  <h2>App-Zugang</h2>
+  <h2>App installieren</h2>
   <p class="hint">
-    Die Android-App greift mit einem eigenen Schlüssel pro Gerät auf den Rezeptplaner zu. Ohne gültigen Schlüssel lehnt
-    der App-Zugang jede Anfrage ab.
+    Ein neues Handy in zwei Schritten einrichten: Android-App installieren, dann mit diesem Rezeptplaner verbinden. Jedes
+    Gerät bekommt einen eigenen Schlüssel; ohne gültigen Schlüssel lehnt der App-Zugang jede Anfrage ab.
   </p>
 
-  {#if created}
-    <div class="created" role="status">
-      <strong>Schlüssel für „{created.name}“</strong>
-      <p>Jetzt in die App übernehmen – er wird nur dieses eine Mal angezeigt.</p>
-      {#if qrText}
-        <div class="qr">
-          <QrCode text={qrText} label="QR-Code zur Einrichtung der App" />
-          <p>In der App „Einrichten“ wählen und diesen Code scannen.</p>
-        </div>
-        <details bind:open={showCf}>
-          <summary>Cloudflare Access (optional)</summary>
-          <p class="hint">
-            Nur nötig, wenn der App-Hostname mit Cloudflare Access geschützt ist. Die Angaben kommen nur in den QR-Code
-            und werden nicht gespeichert.
-          </p>
-          <div class="cf">
-            <input type="text" placeholder="Client ID (….access)" bind:value={cfId} autocomplete="off" />
-            <input type="password" placeholder="Client Secret" bind:value={cfSecret} autocomplete="off" />
-          </div>
-        </details>
-      {:else}
-        <p class="error">Für den QR-Code oben erst die Adresse für die App eintragen und speichern.</p>
-      {/if}
-      <code>{created.key}</code>
-      <div class="row">
-        <button type="button" onclick={copy}>{copied ? 'Kopiert' : 'Kopieren'}</button>
-        <button type="button" onclick={() => (created = null)}>Fertig</button>
-      </div>
-    </div>
-  {/if}
+  <AppInstallStep />
+
+  <h3>Schritt 2 – App verbinden</h3>
 
   <form class="row url" onsubmit={saveAppUrl}>
     <label for="app-url">Adresse für die App</label>
@@ -155,32 +132,81 @@
     />
     <button type="submit" disabled={appUrl.trim() === savedAppUrl}>Speichern</button>
   </form>
-  <p class="hint">Hostname im Cloudflare-Tunnel, der auf Port 8100 zeigt (Anleitung in docs/APP-ZUGANG.md).</p>
+  <p class="hint">Hostname im Cloudflare-Tunnel, der auf Port 8100 zeigt (Anleitung in docs/APP-ZUGANG.md). Einmalig eintragen.</p>
   {#if urlMessage}<p class:error={urlIsError} class:ok={!urlIsError}>{urlMessage}</p>{/if}
 
+  {#if created}
+    <div class="created" role="status">
+      <strong>„{created.name}“ verbinden</strong>
+      <p>
+        In der App „Einrichten“ wählen und diesen Code scannen. <strong>Er wird nur jetzt angezeigt</strong> – nach
+        „Fertig“ oder beim Verlassen der Seite ist er weg (dann einfach ein neues Gerät verbinden).
+      </p>
+      {#if qrText}
+        <div class="qr">
+          <QrCode text={qrText} label="QR-Code zum Verbinden der App" />
+        </div>
+      {/if}
+      <details bind:open={showCf}>
+        <summary>Cloudflare Access (optional)</summary>
+        <p class="hint">
+          Nur nötig, wenn der App-Hostname mit Cloudflare Access geschützt ist. Die Angaben kommen nur in den QR-Code und
+          werden nicht gespeichert.
+        </p>
+        <div class="cf">
+          <input type="text" placeholder="Client ID (….access)" bind:value={cfId} autocomplete="off" />
+          <input type="password" placeholder="Client Secret" bind:value={cfSecret} autocomplete="off" />
+        </div>
+      </details>
+      <details>
+        <summary>Schlüssel als Text</summary>
+        <code>{created.key}</code>
+        <button type="button" onclick={copy}>{copied ? 'Kopiert' : 'Kopieren'}</button>
+      </details>
+      <div class="row">
+        <button type="button" class="primary" onclick={() => (created = null)}>Fertig</button>
+      </div>
+    </div>
+  {:else if connecting}
+    <form class="row" onsubmit={add}>
+      <!-- svelte-ignore a11y_autofocus -->
+      <input
+        type="text"
+        maxlength="60"
+        placeholder="Gerät, z. B. Handy Thomas"
+        autofocus
+        bind:value={name}
+        oninput={() => (message = '')}
+      />
+      <button type="submit" class="primary" disabled={busy || name.trim() === ''}>QR-Code erzeugen</button>
+      <button type="button" onclick={() => (connecting = false)}>Abbrechen</button>
+    </form>
+  {:else}
+    <div class="row">
+      <button type="button" class="primary" disabled={!savedAppUrl} onclick={() => (connecting = true)}>
+        Neues Gerät verbinden
+      </button>
+      {#if !savedAppUrl}<span class="hint">Zuerst die Adresse für die App speichern.</span>{/if}
+    </div>
+  {/if}
+
+  <h3>Verbundene Geräte</h3>
   {#if loadError}
     <p class="error">{loadError}</p>
   {:else if keys === null}
     <p>Lädt …</p>
+  {:else if keys.length > 0}
+    <ul>
+      {#each keys as key (key.id)}
+        <li>
+          <span class="name">{key.name}</span>
+          <small>verbunden {formatDate(key.created_at)} · zuletzt benutzt {formatDate(key.last_used_at)}</small>
+          <button type="button" class="danger" onclick={() => remove(key)}>Sperren</button>
+        </li>
+      {/each}
+    </ul>
   {:else}
-    {#if keys.length > 0}
-      <ul>
-        {#each keys as key (key.id)}
-          <li>
-            <span class="name">{key.name}</span>
-            <small>angelegt {formatDate(key.created_at)} · zuletzt benutzt {formatDate(key.last_used_at)}</small>
-            <button type="button" class="danger" onclick={() => remove(key)}>Sperren</button>
-          </li>
-        {/each}
-      </ul>
-    {:else}
-      <p class="muted">Noch kein Schlüssel angelegt.</p>
-    {/if}
-
-    <form class="row" onsubmit={add}>
-      <input type="text" maxlength="60" placeholder="Gerät, z. B. Handy Thomas" bind:value={name} oninput={() => (message = '')} />
-      <button type="submit" class="primary" disabled={busy || name.trim() === ''}>Schlüssel anlegen</button>
-    </form>
+    <p class="muted">Noch kein Gerät verbunden.</p>
   {/if}
   {#if message}<p class:error={messageIsError} class:ok={!messageIsError}>{message}</p>{/if}
 </section>
@@ -197,6 +223,11 @@
   h2 {
     margin: 0 0 0.5rem;
     font-size: 1.1rem;
+  }
+
+  h3 {
+    margin: 1.25rem 0 0.5rem;
+    font-size: 1rem;
   }
 
   p {

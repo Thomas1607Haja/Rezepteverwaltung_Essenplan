@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.6.1
+
+- **Einstellungen → App installieren:** Ein neues Handy in zwei Schritten einrichten. Schritt 1 zeigt QR-Codes für Obtainium und den Eintrag des Rezeptplaners darin (Updates automatisch) bzw. die neueste APK direkt, dazu eine Anleitung für das Galaxy A54. Schritt 2 erzeugt erst nach „Neues Gerät verbinden“ einen Schlüssel; der QR-Code zum Verbinden ist nur einmal sichtbar.
+- Neue Option **app_repository** (Reiter „Konfiguration“): GitHub-Repository mit den Releases der Android-App, nur für einen eigenen Fork ändern.
+
 ## 0.6.0
 
 - **Datei-Import:** Unter **Rezepte → Datei importieren** lassen sich Rezepte aus einer ZIP-Datei (mit Bildern) oder JSON-Datei übernehmen – z. B. aus der neuen Claude-Skill „rezeptplaner-import“, die Fotos von Rezeptkarten und Kochbuchseiten erfasst. Vor dem Speichern zeigt eine Vorschau jedes Rezept mit Bild, Hinweisen auf Dubletten, unbekannte Kategorien und unsichere Stellen; Rezepte lassen sich einzeln abwählen. Vorratszutaten werden automatisch nicht zum Einkaufen vorgemerkt.

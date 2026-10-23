@@ -147,6 +147,9 @@ export const api = {
    */
   homeAssistantStatus: () => request('GET', '/homeassistant/status'),
 
+  /** Links zur Installation der Android-App: { apk_url, obtainium_url, … }. */
+  appInstall: () => request('GET', '/app-install'),
+
   /** Version, Arbeitsspeicher und Platzbedarf der Daten. */
   system: () => request('GET', '/system'),
 
