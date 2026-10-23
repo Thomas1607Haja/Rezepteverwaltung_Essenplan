@@ -99,3 +99,41 @@ data class SyncResponse(
     val settings: HouseholdSettings = HouseholdSettings(),
     val deletions: List<Deletion> = emptyList(),
 )
+
+// Schreibende Anfragen an den Essensplan (server/internal/mealplan).
+
+/** POST /api/v1/meal-plan; ohne servings gilt die Familiengröße. */
+@Serializable
+data class NewEntry(
+    val date: String,
+    val slot: String = "dinner",
+    @SerialName("recipe_id") val recipeId: Long? = null,
+    val servings: Int? = null,
+    val note: String = "",
+)
+
+/** PUT /api/v1/meal-plan/{id}: ersetzt diese Felder. */
+@Serializable
+data class EntryChanges(
+    @SerialName("recipe_id") val recipeId: Long?,
+    val servings: Int,
+    val note: String,
+    val status: String,
+)
+
+/** POST /api/v1/meal-plan/{id}/move. */
+@Serializable
+data class MoveRequest(
+    val date: String,
+    val slot: String,
+    @SerialName("swap_with") val swapWith: Long? = null,
+    val confirm: Boolean = false,
+    @SerialName("have_ingredients") val haveIngredients: List<Long> = emptyList(),
+)
+
+@Serializable
+data class MoveWarning(val type: String, @SerialName("entry_id") val entryId: Long, val message: String)
+
+/** Applied = false: Es gibt Warnungen, nichts ist gespeichert. */
+@Serializable
+data class MoveResult(val applied: Boolean, val warnings: List<MoveWarning> = emptyList())

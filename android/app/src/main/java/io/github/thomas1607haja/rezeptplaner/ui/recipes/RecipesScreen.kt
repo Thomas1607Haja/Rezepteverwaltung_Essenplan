@@ -64,7 +64,11 @@ class RecipesViewModel : ViewModel() {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun RecipesScreen(onOpen: (Long) -> Unit, viewModel: RecipesViewModel = viewModel()) {
+fun RecipesScreen(
+    onOpen: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: RecipesViewModel = viewModel(),
+) {
     val app = app()
     val snapshot by app.localStore.snapshot.collectAsStateWithLifecycle()
     val sync by app.syncRepository.state.collectAsStateWithLifecycle()
@@ -75,7 +79,7 @@ fun RecipesScreen(onOpen: (Long) -> Unit, viewModel: RecipesViewModel = viewMode
     var showTags by remember { mutableStateOf(false) }
     var showSort by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(modifier.fillMaxSize()) {
         OfflineBanner(sync.log)
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(

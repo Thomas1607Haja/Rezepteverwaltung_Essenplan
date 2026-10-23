@@ -73,3 +73,9 @@ fun OfflineBanner(log: SyncLog) {
             .padding(horizontal = 16.dp, vertical = 6.dp),
     )
 }
+
+/**
+ * Meldungen am unteren Rand („Eingeplant am Sa 24.10.“, Fehler beim
+ * Speichern). Das Scaffold der App stellt den Zustand bereit.
+ */
+val LocalSnackbar = androidx.compose.runtime.staticCompositionLocalOf { androidx.compose.material3.SnackbarHostState() }

@@ -6,8 +6,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
 import java.net.UnknownHostException
@@ -64,24 +66,49 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
         return get(config, "/api/v1/sync$query")
     }
 
+    // Essensplan ändern. Geändert wird nur online; danach gleicht die App ab.
+
+    suspend fun createEntry(config: ServerConfig, entry: NewEntry): MealPlanEntry =
+        send(config, "POST", "/api/v1/meal-plan", json.encodeToString(entry))
+
+    suspend fun updateEntry(config: ServerConfig, id: Long, changes: EntryChanges): MealPlanEntry =
+        send(config, "PUT", "/api/v1/meal-plan/$id", json.encodeToString(changes))
+
+    suspend fun deleteEntry(config: ServerConfig, id: Long) {
+        withContext(Dispatchers.IO) { execute(config, "/api/v1/meal-plan/$id", "application/json", "DELETE", null) }
+    }
+
+    suspend fun moveEntry(config: ServerConfig, id: Long, move: MoveRequest): MoveResult =
+        send(config, "POST", "/api/v1/meal-plan/$id/move", json.encodeToString(move))
+
     /** Lädt eine Bilddatei (Name aus Recipe.image bzw. thumbnail). */
     suspend fun image(config: ServerConfig, name: String): ByteArray =
         withContext(Dispatchers.IO) { execute(config, "/api/v1/images/$name", "image/jpeg") }
 
     private suspend inline fun <reified T> get(config: ServerConfig, path: String): T =
+        send(config, "GET", path, null)
+
+    private suspend inline fun <reified T> send(config: ServerConfig, method: String, path: String, body: String?): T =
         withContext(Dispatchers.IO) {
-            val body = execute(config, path, "application/json").decodeToString()
+            val text = execute(config, path, "application/json", method, body).decodeToString()
             try {
-                json.decodeFromString<T>(body)
+                json.decodeFromString<T>(text)
             } catch (e: Exception) {
                 throw ApiException("Unter dieser Adresse antwortet kein Rezeptplaner.", e)
             }
         }
 
     /** Führt eine GET-Anfrage aus und liefert den Inhalt; Fehler als [ApiException]. */
-    private fun execute(config: ServerConfig, path: String, accept: String): ByteArray {
+    private fun execute(
+        config: ServerConfig,
+        path: String,
+        accept: String,
+        method: String = "GET",
+        body: String? = null,
+    ): ByteArray {
         val request = Request.Builder()
             .url(config.url + path)
+            .method(method, body?.toRequestBody("application/json; charset=utf-8".toMediaType()))
             .header("Authorization", "Bearer ${config.apiKey}")
             .header("Accept", accept)
             .apply {
@@ -124,16 +151,28 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
                 response.code == 404 && start.startsWith("404: Not Found") ->
                     "Diese Adresse führt zu Home Assistant, nicht zum App-Zugang des Rezeptplaners. " +
                         "In der Weboberfläche die Adresse für die App prüfen (eigener Hostname, Port 8100)."
-                response.code == 404 -> "Unter dieser Adresse antwortet kein Rezeptplaner (oder er ist zu alt)."
+                response.code == 404 && !start.startsWith("{") -> "Unter dieser Adresse antwortet kein Rezeptplaner (oder er ist zu alt)."
                 response.isRedirect -> "Der Server leitet um ($location) – Adresse prüfen."
                 response.code in 500..599 -> "Fehler auf dem Server (${response.code}). Später erneut versuchen."
+                // Prüffehler des Servers, z. B. {"error":"servings: muss mindestens 1 sein"}
+                response.code in 400..499 && start.startsWith("{") -> serverMessage(response)
                 else -> "Unerwartete Antwort vom Server (${response.code})."
             },
         )
     }
 
+    private fun serverMessage(response: Response): String {
+        val text = runCatching { response.peekBody(4096).string() }.getOrDefault("")
+        val error = runCatching { json.decodeFromString<ErrorBody>(text).error }.getOrNull()
+        return error?.takeIf { it.isNotEmpty() }?.replaceFirstChar { it.uppercase() }
+            ?: "Der Server hat die Änderung abgelehnt (${response.code})."
+    }
+
+    @Serializable
+    private data class ErrorBody(val error: String = "")
+
     companion object {
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
         private val defaultClient: OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)

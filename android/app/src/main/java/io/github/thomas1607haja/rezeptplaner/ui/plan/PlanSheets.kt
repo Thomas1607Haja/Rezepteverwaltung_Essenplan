@@ -1,0 +1,337 @@
+package io.github.thomas1607haja.rezeptplaner.ui.plan
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedIconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import io.github.thomas1607haja.rezeptplaner.api.MealPlanEntry
+import io.github.thomas1607haja.rezeptplaner.api.MoveWarning
+import io.github.thomas1607haja.rezeptplaner.data.Snapshot
+import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
+import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
+import io.github.thomas1607haja.rezeptplaner.ui.portions
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+
+// Blätter zum Ändern des Essensplans. Alles geht direkt an den Server
+// (PlanRepository); ohne Verbindung erscheint eine Meldung.
+
+fun entryTitle(e: MealPlanEntry) = e.recipe?.title ?: e.note
+
+/** Die nächsten [count] Tage ab heute mit ihren Einträgen. */
+fun upcomingDays(snapshot: Snapshot, today: LocalDate, count: Int): List<PlanDay> {
+    val byDate = snapshot.entries.groupBy { it.date }
+    return (0 until count).map { i ->
+        val date = today.plusDays(i.toLong()).toString()
+        PlanDay(date, byDate[date].orEmpty())
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SlotChooser(slot: String, onChange: (String) -> Unit) {
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        listOf("dinner" to "Abendessen", "lunch" to "Mittagessen").forEachIndexed { i, (value, label) ->
+            SegmentedButton(
+                selected = slot == value,
+                onClick = { onChange(value) },
+                shape = SegmentedButtonDefaults.itemShape(i, 2),
+            ) { Text(label) }
+        }
+    }
+}
+
+/**
+ * Liste der Tage zum Auswählen. Ein leerer Tag (im gewählten Slot) wird
+ * mit einem Tippen gewählt; bei belegten Tagen gibt es „Dazu“ und je
+ * Gericht [entryAction] (z. B. „Tauschen“ oder „Ersetzen“).
+ */
+@Composable
+private fun DayChooser(
+    days: List<PlanDay>,
+    slot: String,
+    exclude: Long?,
+    entryAction: String,
+    onAppend: (String) -> Unit,
+    onEntry: (MealPlanEntry) -> Unit,
+) {
+    LazyColumn(Modifier.fillMaxWidth()) {
+        items(days, key = { it.date }) { day ->
+            val inSlot = day.entries.filter { it.slot == slot && it.id != exclude }
+            Column(
+                Modifier.fillMaxWidth()
+                    .then(if (inSlot.isEmpty()) Modifier.clickable { onAppend(day.date) } else Modifier)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(dayLabel(day.date), fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                    if (inSlot.isEmpty()) {
+                        Text("frei", color = MaterialTheme.colorScheme.primary)
+                    } else {
+                        TextButton(onClick = { onAppend(day.date) }) { Text("Dazu") }
+                    }
+                }
+                inSlot.forEach { e ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(entryTitle(e), modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        TextButton(onClick = { onEntry(e) }) { Text(entryAction) }
+                    }
+                }
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+    }
+}
+
+/** „Zum Essensplan hinzufügen“ aus der Kochansicht. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, today: LocalDate, onDismiss: () -> Unit) {
+    val app = app()
+    val snackbar = LocalSnackbar.current
+    val scope = rememberCoroutineScope()
+    var slot by rememberSaveable { mutableStateOf("dinner") }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var replacing by remember { mutableStateOf<MealPlanEntry?>(null) }
+
+    fun run(date: String, action: suspend () -> String?) {
+        busy = true
+        scope.launch {
+            error = action()
+            busy = false
+            if (error == null) {
+                onDismiss()
+                snackbar.showSnackbar("„$recipeTitle“ eingeplant am ${dayLabel(date)}")
+            }
+        }
+    }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Zum Essensplan hinzufügen", style = MaterialTheme.typography.titleMedium)
+                SlotChooser(slot) { slot = it }
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                if (busy) CircularProgressIndicator(Modifier.size(24.dp))
+            }
+            DayChooser(
+                days = upcomingDays(snapshot, today, 14), slot = slot, exclude = null, entryAction = "Ersetzen",
+                onAppend = { date -> if (!busy) run(date) { app.planRepository.add(date, slot, recipeId) } },
+                onEntry = { e -> replacing = e },
+            )
+        }
+    }
+
+    replacing?.let { e ->
+        AlertDialog(
+            onDismissRequest = { replacing = null },
+            title = { Text("Ersetzen?") },
+            text = { Text("„${entryTitle(e)}“ am ${dayLabel(e.date)} durch „$recipeTitle“ ersetzen?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    replacing = null
+                    run(e.date) { app.planRepository.replace(e, recipeId) }
+                }) { Text("Ersetzen") }
+            },
+            dismissButton = { TextButton(onClick = { replacing = null }) { Text("Abbrechen") } },
+        )
+    }
+}
+
+/** Langes Drücken auf einen Eintrag: Portionen, Notiz, Status, Ersetzen, Verschieben, Entfernen. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Unit, onMove: () -> Unit) {
+    val app = app()
+    val scope = rememberCoroutineScope()
+    var servings by remember(entry.id) { mutableIntStateOf(entry.servings) }
+    var note by remember(entry.id) { mutableStateOf(entry.note) }
+    var haveIngredients by remember(entry.id) { mutableStateOf(entry.status == "have_ingredients") }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    val transferred = entry.status == "transferred"
+    val changed = servings != entry.servings || note.trim() != entry.note ||
+        haveIngredients != (entry.status == "have_ingredients")
+
+    fun run(action: suspend () -> String?) {
+        busy = true
+        scope.launch {
+            error = action()
+            busy = false
+            if (error == null) onDismiss()
+        }
+    }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            Modifier.navigationBarsPadding().padding(horizontal = 16.dp).padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(entryTitle(entry), style = MaterialTheme.typography.titleMedium)
+            Text(
+                (if (entry.slot == "lunch") "Mittagessen" else "Abendessen") + " am ${dayLabel(entry.date)}",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (entry.recipeId != null) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedIconButton(onClick = { if (servings > 1) servings-- }, enabled = servings > 1) { Text("−") }
+                    Text(portions(servings), style = MaterialTheme.typography.titleMedium)
+                    OutlinedIconButton(onClick = { servings++ }) { Text("+") }
+                }
+            }
+            OutlinedTextField(
+                note, { note = it },
+                label = { Text(if (entry.recipeId != null) "Notiz" else "Text (z. B. Essen gehen)") },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (entry.recipeId != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Zutaten sind im Haus")
+                        Text(
+                            if (transferred) "Schon an Bring gesendet." else "Wird dann nicht eingekauft.",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = haveIngredients, onCheckedChange = { haveIngredients = it }, enabled = !transferred)
+                }
+            }
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            Button(
+                onClick = { run { app.planRepository.update(entry, servings, note, haveIngredients) } },
+                enabled = changed && !busy && (entry.recipeId != null || note.isNotBlank()),
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(if (busy) "Speichert …" else "Speichern") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (entry.recipeId != null) OutlinedButton(onClick = onReplace, enabled = !busy) { Text("Ersetzen") }
+                OutlinedButton(onClick = onMove, enabled = !busy) { Text("Verschieben") }
+                OutlinedButton(onClick = { confirmDelete = true }, enabled = !busy) {
+                    Text("Entfernen", color = MaterialTheme.colorScheme.error)
+                }
+            }
+        }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text("Entfernen?") },
+            text = { Text("„${entryTitle(entry)}“ am ${dayLabel(entry.date)} aus dem Plan entfernen?") },
+            confirmButton = {
+                TextButton(onClick = { confirmDelete = false; run { app.planRepository.delete(entry) } }) { Text("Entfernen") }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Abbrechen") } },
+        )
+    }
+}
+
+/**
+ * Verschieben oder Tauschen. Meldet der Server Warnungen (z. B. das
+ * Gericht rutscht in den Einkaufszeitraum), wird erst nach Bestätigung
+ * gespeichert – wie in der Weboberfläche (MoveWarningDialog).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MoveSheet(entry: MealPlanEntry, snapshot: Snapshot, today: LocalDate, onDismiss: () -> Unit) {
+    val app = app()
+    val snackbar = LocalSnackbar.current
+    val scope = rememberCoroutineScope()
+    var slot by rememberSaveable { mutableStateOf(entry.slot) }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    // Angefragte Verschiebung, die noch bestätigt werden muss.
+    var pending by remember { mutableStateOf<Triple<String, Long?, List<MoveWarning>>?>(null) }
+
+    fun move(date: String, swapWith: Long?, confirm: Boolean, have: List<Long> = emptyList()) {
+        busy = true
+        scope.launch {
+            val (result, err) = app.planRepository.move(entry, date, slot, swapWith, confirm, have)
+            busy = false
+            error = err
+            when {
+                err != null -> {}
+                result != null && !result.applied -> pending = Triple(date, swapWith, result.warnings)
+                else -> {
+                    onDismiss()
+                    snackbar.showSnackbar("„${entryTitle(entry)}“ ist jetzt am ${dayLabel(date)}")
+                }
+            }
+        }
+    }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("„${entryTitle(entry)}“ verschieben", style = MaterialTheme.typography.titleMedium)
+                SlotChooser(slot) { slot = it }
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                if (busy) CircularProgressIndicator(Modifier.size(24.dp))
+            }
+            DayChooser(
+                days = upcomingDays(snapshot, today, 28), slot = slot, exclude = entry.id, entryAction = "Tauschen",
+                onAppend = { date -> if (!busy) move(date, null, confirm = false) },
+                onEntry = { other -> if (!busy) move(other.date, other.id, confirm = false) },
+            )
+        }
+    }
+
+    pending?.let { (date, swapWith, warnings) ->
+        val canMarkAvailable = warnings.any { it.type == "planned_into_period" }
+        AlertDialog(
+            onDismissRequest = { pending = null },
+            title = { Text("Wirklich verschieben?") },
+            text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { warnings.forEach { Text(it.message) } } },
+            confirmButton = {
+                Column(horizontalAlignment = Alignment.End) {
+                    TextButton(onClick = { pending = null; move(date, swapWith, confirm = true) }) { Text("Trotzdem verschieben") }
+                    if (canMarkAvailable) {
+                        TextButton(onClick = {
+                            pending = null
+                            val ids = warnings.filter { it.type == "planned_into_period" }.map { it.entryId }
+                            move(date, swapWith, confirm = true, have = ids)
+                        }) { Text("Zutaten sind vorhanden") }
+                    }
+                    TextButton(onClick = { pending = null }) { Text("Abbrechen") }
+                }
+            },
+        )
+    }
+}

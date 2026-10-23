@@ -10,9 +10,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,7 +40,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import io.github.thomas1607haja.rezeptplaner.data.SyncTrigger
 import io.github.thomas1607haja.rezeptplaner.sync.SyncWorker
+import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.plan.MealPlanScreen
+import io.github.thomas1607haja.rezeptplaner.ui.plan.PickRecipeScreen
 import io.github.thomas1607haja.rezeptplaner.ui.recipe.RecipeScreen
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipesScreen
 import io.github.thomas1607haja.rezeptplaner.R
@@ -57,6 +62,12 @@ import kotlinx.serialization.Serializable
 @Serializable data object RecipesRoute
 @Serializable data object ShoppingRoute
 @Serializable data object SettingsRoute
+
+/**
+ * Rezeptauswahl beim Planen: für [date]/[slot] einplanen oder – mit
+ * [replaceEntryId] > 0 – das Gericht dieses Eintrags ersetzen.
+ */
+@Serializable data class PickRecipeRoute(val date: String, val slot: String = "dinner", val replaceEntryId: Long = 0)
 
 /** Kochansicht; planServings > 0 = aus dem Essensplan geöffnet. */
 @Serializable data class RecipeRoute(val id: Long, val planServings: Int = 0)
@@ -148,7 +159,9 @@ internal fun MainScaffold(onReconnect: () -> Unit) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
 
+    val snackbar = remember { SnackbarHostState() }
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
             NavigationBar {
                 Section.entries.forEach { section ->
@@ -171,13 +184,21 @@ internal fun MainScaffold(onReconnect: () -> Unit) {
             }
         },
     ) { innerPadding ->
+        CompositionLocalProvider(LocalSnackbar provides snackbar) {
         NavHost(
             navController = navController,
             startDestination = MealPlanRoute,
             modifier = Modifier.padding(innerPadding),
         ) {
             composable<MealPlanRoute> {
-                MealPlanScreen(onOpenRecipe = { id, servings -> navController.navigate(RecipeRoute(id, servings)) })
+                MealPlanScreen(
+                    onOpenRecipe = { id, servings -> navController.navigate(RecipeRoute(id, servings)) },
+                    onAdd = { date -> navController.navigate(PickRecipeRoute(date)) },
+                    onReplace = { e -> navController.navigate(PickRecipeRoute(e.date, e.slot, e.id)) },
+                )
+            }
+            composable<PickRecipeRoute> { entry ->
+                PickRecipeScreen(entry.toRoute(), onDone = { navController.popBackStack() })
             }
             composable<RecipesRoute> {
                 RecipesScreen(onOpen = { id -> navController.navigate(RecipeRoute(id)) })
@@ -200,6 +221,7 @@ internal fun MainScaffold(onReconnect: () -> Unit) {
                     onReconnect = onReconnect,
                 )
             }
+        }
         }
     }
 }

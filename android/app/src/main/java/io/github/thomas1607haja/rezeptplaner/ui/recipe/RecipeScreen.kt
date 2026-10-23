@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,6 +59,7 @@ import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
 import io.github.thomas1607haja.rezeptplaner.ui.formatQuantity
 import io.github.thomas1607haja.rezeptplaner.ui.planStatus
 import io.github.thomas1607haja.rezeptplaner.ui.portions
+import io.github.thomas1607haja.rezeptplaner.ui.plan.AddToPlanSheet
 import java.net.URI
 import java.time.LocalDate
 
@@ -90,15 +93,27 @@ fun RecipeScreen(recipeId: Long, planServings: Int, onBack: () -> Unit, onOpen: 
             Text("Dieses Rezept gibt es nicht mehr.", Modifier.padding(24.dp))
             return@Column
         }
-        RecipeContent(recipe, planServings, snapshot.recipes, snapshot.planInfo.firstOrNull { it.recipeId == recipe.id }?.let {
-            planStatus(it, snapshot.today.takeIf(String::isNotEmpty)?.let(LocalDate::parse) ?: LocalDate.now())
-        } ?: "noch nie eingeplant", onOpen)
+        val today = snapshot.today.takeIf(String::isNotEmpty)?.let(LocalDate::parse) ?: LocalDate.now()
+        var adding by remember { mutableStateOf(false) }
+        RecipeContent(
+            recipe, planServings, snapshot.recipes,
+            planStatus(snapshot.planInfo.firstOrNull { it.recipeId == recipe.id }, today),
+            onOpen, onAddToPlan = { adding = true },
+        )
+        if (adding) AddToPlanSheet(recipe.id, recipe.title, snapshot, today, onDismiss = { adding = false })
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RecipeContent(recipe: Recipe, planServings: Int, all: List<Recipe>, status: String, onOpen: (Long) -> Unit) {
+private fun RecipeContent(
+    recipe: Recipe,
+    planServings: Int,
+    all: List<Recipe>,
+    status: String,
+    onOpen: (Long) -> Unit,
+    onAddToPlan: () -> Unit,
+) {
     var servings by rememberSaveable(recipe.id) { mutableIntStateOf(if (planServings > 0) planServings else recipe.baseServings) }
     val factor = servings.toDouble() / recipe.baseServings
     val uri = LocalUriHandler.current
@@ -142,6 +157,11 @@ private fun RecipeContent(recipe: Recipe, planServings: Int, all: List<Recipe>, 
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     recipe.tags.forEach { AssistChip(onClick = {}, label = { Text(it.name) }) }
                 }
+            }
+            Button(onClick = onAddToPlan) {
+                Icon(painterResource(R.drawable.ic_plus), contentDescription = null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Zum Essensplan hinzufügen")
             }
         }
 
