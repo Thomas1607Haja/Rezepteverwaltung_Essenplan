@@ -9,3 +9,8 @@
 # Debug-Build ohne R8 lief). Beide Pakete sind klein.
 -keep class com.google.mlkit.** { *; }
 -keep class com.google.android.gms.internal.mlkit_code_scanner.** { *; }
+
+# Texterkennung (play-services-mlkit-text-recognition, Foto-Import 7.7):
+# vorsorglich dieselbe Regel für ihre internen Klassen.
+-keep class com.google.android.gms.internal.mlkit_vision_text_common.** { *; }
+-keep class com.google.android.gms.internal.mlkit_vision_common.** { *; }

@@ -74,6 +74,7 @@ fun RecipesScreen(
     onImport: (() -> Unit)? = null,
     onNew: () -> Unit = {},
     onFromUrl: () -> Unit = {},
+    onFromPhoto: () -> Unit = {},
     viewModel: RecipesViewModel = viewModel(),
 ) {
     val app = app()
@@ -152,7 +153,7 @@ fun RecipesScreen(
                 }
             }
             if (onImport != null) {
-                // „+“ mit Menü: neues Rezept, aus einer Webadresse, aus einer Datei.
+                // „+“ mit Menü: neues Rezept, aus einer Webadresse, aus Fotos, aus einer Datei.
                 var menu by remember { mutableStateOf(false) }
                 Box(Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
                     FloatingActionButton(onClick = { menu = true }) {
@@ -161,6 +162,7 @@ fun RecipesScreen(
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         DropdownMenuItem(text = { Text("Neues Rezept") }, onClick = { menu = false; onNew() })
                         DropdownMenuItem(text = { Text("Rezept aus Internetadresse") }, onClick = { menu = false; onFromUrl() })
+                        DropdownMenuItem(text = { Text("Rezept aus Foto") }, onClick = { menu = false; onFromPhoto() })
                         DropdownMenuItem(text = { Text("Datei importieren") }, onClick = { menu = false; onImport() })
                     }
                 }

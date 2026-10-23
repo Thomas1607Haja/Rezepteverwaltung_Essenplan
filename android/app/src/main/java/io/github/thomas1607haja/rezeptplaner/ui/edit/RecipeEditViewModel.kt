@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Zustand der Bearbeiten-Seite. [recipeId] 0 = neues Rezept; [fromDraft]:
- * Entwurf aus dem URL-Import (RecipeRepository.pendingDraft).
+ * Entwurf aus dem URL- oder Foto-Import (RecipeRepository.pendingDraft).
  */
 class RecipeEditViewModel(
     private val app: RezeptplanerApplication,
@@ -27,6 +27,7 @@ class RecipeEditViewModel(
     private val repo = app.recipeRepository
     private val existing = app.localStore.snapshot.value.recipes.firstOrNull { it.id == recipeId }
     private val draft = if (fromDraft) repo.pendingDraft.also { repo.pendingDraft = null } else null
+    private val draftImage = if (fromDraft) repo.pendingImage.also { repo.pendingImage = null } else null
 
     /** Formular beim Öffnen, um ungespeicherte Änderungen zu erkennen. */
     private val initial: RecipeForm = when {
@@ -40,7 +41,8 @@ class RecipeEditViewModel(
 
     /** Bild: aktuelles (Dateiname), neu gewähltes (Bytes) oder das der Quellseite. */
     val currentImage: String = existing?.thumbnail.orEmpty()
-    private val initialImage: ImageChange = draft?.imageUrl?.takeIf { it.isNotEmpty() }?.let { ImageChange.FromUrl(it) } ?: ImageChange.Keep
+    private val initialImage: ImageChange = draft?.imageUrl?.takeIf { it.isNotEmpty() }?.let { ImageChange.FromUrl(it) }
+        ?: draftImage ?: ImageChange.Keep
     private val _image = MutableStateFlow(initialImage)
     val image: StateFlow<ImageChange> = _image.asStateFlow()
 

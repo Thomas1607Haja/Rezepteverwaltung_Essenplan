@@ -43,6 +43,7 @@ import io.github.thomas1607haja.rezeptplaner.data.SyncTrigger
 import io.github.thomas1607haja.rezeptplaner.ui.importer.ImportScreen
 import io.github.thomas1607haja.rezeptplaner.ui.edit.RecipeEditScreen
 import io.github.thomas1607haja.rezeptplaner.ui.edit.UrlImportScreen
+import io.github.thomas1607haja.rezeptplaner.ui.photo.PhotoImportScreen
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.sync.SyncWorker
@@ -80,6 +81,9 @@ import kotlinx.serialization.Serializable
 
 /** Rezept aus einer Webadresse (geteilt oder eingegeben). */
 @Serializable data class UrlImportRoute(val url: String = "")
+
+/** Rezept aus Fotos (Texterkennung auf dem Handy). */
+@Serializable data object PhotoImportRoute
 
 /** Datei-Import (Teilen, „Öffnen mit“, Dateiauswahl). */
 @Serializable data object ImportRoute
@@ -260,6 +264,17 @@ internal fun MainScaffold(
                     onImport = { navController.navigate(ImportRoute) },
                     onNew = { navController.navigate(EditRecipeRoute()) },
                     onFromUrl = { navController.navigate(UrlImportRoute()) },
+                    onFromPhoto = { navController.navigate(PhotoImportRoute) },
+                )
+            }
+            composable<PhotoImportRoute> {
+                PhotoImportScreen(
+                    onDraft = {
+                        navController.navigate(EditRecipeRoute(fromDraft = true)) {
+                            popUpTo<PhotoImportRoute> { inclusive = true }
+                        }
+                    },
+                    onClose = { navController.popBackStack() },
                 )
             }
             composable<UrlImportRoute> { entry ->

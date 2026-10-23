@@ -32,8 +32,11 @@ class RecipeRepository(
     private val api: ApiClient,
     private val sync: SyncRepository,
 ) {
-    /** Entwurf aus einer Rezept-URL; der Entwurf wird erst beim Speichern angelegt. */
+    /** Entwurf aus einer Rezept-URL oder dem Foto-Import; angelegt wird erst beim Speichern. */
     var pendingDraft: UrlDraft? = null
+
+    /** Gerichtfoto zum Entwurf aus dem Foto-Import. */
+    var pendingImage: ImageChange.Upload? = null
 
     suspend fun importUrl(url: String): Outcome<UrlDraft> = call { api.importUrl(it, url) }
 

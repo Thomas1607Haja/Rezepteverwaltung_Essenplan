@@ -350,14 +350,14 @@ private fun PasteDialog(onDismiss: () -> Unit, onPaste: (String) -> Unit) {
 }
 
 /** Datei im Cache für die Kamera-App (über FileProvider freigegeben). */
-private fun cameraFile(context: Context): Uri {
+internal fun cameraFile(context: Context): Uri {
     val dir = File(context.cacheDir, "camera").apply { mkdirs() }
     val file = File(dir, "foto-${System.currentTimeMillis()}.jpg")
     return FileProvider.getUriForFile(context, "${context.packageName}.files", file)
 }
 
 /** Liest ein gewähltes Bild ein (höchstens 20 MB wie beim Server). */
-private fun readImage(context: Context, uri: Uri): ImageChange.Upload? = runCatching {
+internal fun readImage(context: Context, uri: Uri): ImageChange.Upload? = runCatching {
     val type = context.contentResolver.getType(uri) ?: "image/jpeg"
     val data = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
     if (data.size > 20 * 1024 * 1024) return null

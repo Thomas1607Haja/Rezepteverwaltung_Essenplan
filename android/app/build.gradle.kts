@@ -128,6 +128,10 @@ dependencies {
     // QR-Scanner von Google Play-Diensten: braucht keine Kamera-Berechtigung,
     // das Kamerabild sieht nur der Scanner, die App bekommt nur den Text.
     implementation(libs.play.services.code.scanner)
+    // Texterkennung für den Foto-Import (7.7), ebenfalls über die Play-Dienste:
+    // Das Modell lädt das Handy selbst, die APK bleibt klein. Erkannt wird
+    // auf dem Gerät, die Fotos verlassen das Handy dafür nicht.
+    implementation(libs.play.services.text.recognition)
     // Neuere Basis als die des Scanners, siehe libs.versions.toml.
     implementation(libs.play.services.base)
     implementation(libs.play.services.basement)
