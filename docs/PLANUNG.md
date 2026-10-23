@@ -67,7 +67,7 @@ Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wo
 - **Cloudflare Access mit Service Token** für den App-Hostnamen empfohlen (Anleitung in [APP-ZUGANG.md](APP-ZUGANG.md)); die Android-App schickt dafür optional `CF-Access-Client-Id` und `CF-Access-Client-Secret` mit.
 - **Bilder:** `Cache-Control: private`, damit kein Zwischenspeicher (Cloudflare) sie ohne Schlüssel ausliefert.
 - **Laufende Pflege:** GitHub Action „Sicherheit“ (govulncheck, npm audit) bei jedem Push und wöchentlich; Dependabot für Go-Module, npm, GitHub Actions und Docker-Basis-Images; Go-Version in `go.mod` (`toolchain`) und Dockerfile fest.
-- **Geplanter ZIP-Import (Rezeptsammlung):** Pfade beim Entpacken prüfen (kein `..`, keine absoluten Pfade, keine Symlinks – Zip Slip), nur im Speicher bzw. in einen eigenen temporären Ordner entpacken, Grenzen für Anzahl der Einträge, Größe je Datei und Gesamtgröße nach dem Entpacken (ZIP-Bombe), Bilder wie beim Upload neu kodieren.
+- **Datei-Import (ZIP/JSON, ab App 0.6.0, Ablauf G):** Pfade beim Entpacken prüfen (kein `..`, keine absoluten Pfade, keine Symlinks – Zip Slip), nur im Speicher entpacken und dabei mitzählen; Grenzen: Upload 30 MB, 200 Einträge, `recipes.json` 2 MB, je Bild entpackt 20 MB, insgesamt entpackt 150 MB, 100 Rezepte (ZIP-Bombe). Bildtyp am Inhalt erkennen, Bilder wie beim Upload neu kodieren (entfernt EXIF/GPS). Hochgeladene Dateien liegen bis zur Bestätigung höchstens 1 Stunde in einem eigenen Ordner.
 
 ### Ressourcen auf dem Green
 
@@ -266,7 +266,8 @@ Die einzeln abgeglichenen Tabellen (`recipes`, `meal_plan_entries`, `pantry_item
 | base_servings | Integer | Grundportionen |
 | prep_minutes | Integer | optional |
 | total_minutes | Integer | optional |
-| source_url | Text | optional, für Dublettenprüfung |
+| source_url | Text | optional, nur `http`/`https`, für Dublettenprüfung |
+| source_name | Text | optional, Quelle ohne Adresse, z. B. „HelloFresh-Karte“, „Kochbuch“ (Migration 009) |
 | image | Text | Dateiname großes Bild |
 | thumbnail | Text | Dateiname Vorschaubild |
 | is_favorite | Boolean | |
@@ -377,6 +378,7 @@ Schlüssel-Wert-Speicher, u. a.:
 - `family_size`
 - `shopping_day` (englischer Wochentag, z. B. `saturday`)
 - `bring_entity` (To-do-Entität der Bring-Liste in Home Assistant)
+- `app_url` (Adresse, unter der die Android-App den App-Zugang erreicht, z. B. `https://rezepte.example.org`; steht im QR-Code)
 
 ### Nicht gespeichert (wird berechnet)
 
@@ -477,6 +479,15 @@ Siehe Warnregeln in Abschnitt 3. Ringtausche über mehrere Tage erfolgen als auf
 3. Übertragung an die Bring-Liste in Home Assistant. Steht ein Artikel gleichen Namens schon offen auf der Liste, wird seine Mengenangabe ergänzt („1 l + 250 ml“) statt einen zweiten Eintrag anzulegen.
 4. Einträge erhalten Status `transferred`, Artikel werden in `transferred_items` protokolliert – auch abgewählte (als erledigt). Lehnt Home Assistant einzelne Artikel ab, geht es mit den übrigen weiter; die abgelehnten werden nicht protokolliert und erscheinen dadurch als nachzusenden.
 
+### G. Import aus einer Datei (z. B. von der Claude-Skill)
+
+Format und Schema: [importformat.md](importformat.md). Die Claude-Skill `skills/rezeptplaner-import/` erzeugt aus Fotos von Rezeptkarten oder Kochbuchseiten genau dieses Format.
+
+1. Datei wählen: Weboberfläche „Datei importieren“ in der Rezeptübersicht; App über Teilen, „Öffnen mit“ oder die Dateiauswahl. Eine ZIP-Datei (`recipes.json` + `images/`) oder eine einzelne `.json`, auch mehrere Dateien auf einmal.
+2. Der Server prüft alles und liefert eine **Vorschau**, gespeichert wird noch nichts: je Rezept Bild, Titel, Zutatenanzahl, Fehler (Rezept nicht wählbar) und Hinweise – Dublette (gleicher Titel ohne Groß/klein und Umlaute oder gleiche Quell-URL), unbekannte Kategorie (wird **nicht** angelegt, sondern weggelassen), fehlendes Bild.
+3. Zutaten auf der Vorratsliste werden wie beim URL-Import als nicht einkaufsrelevant markiert.
+4. Rezepte einzeln abwählen, **Importieren** – erst jetzt wird gespeichert. Die App erkennt das Format am Inhalt (ZIP-Kennung oder Formatkennung im JSON), nicht am Dateityp; Import nur online.
+
 ### F. Nachträgliche Änderungen
 
 Vergleich mit den übertragenen Artikeln; Angebot, nur die Differenz nachzusenden.
@@ -494,7 +505,11 @@ Vergleich mit den übertragenen Artikeln; Angebot, nur die Differenz nachzusende
 - Abgleich nur der Änderungen seit dem letzten Abgleich (über `updated_at` und `deletions`).
 - Vorschaubilder immer lokal; große Bilder für den aktuellen Einkaufszeitraum vorab, sonst beim ersten Ansehen.
 - Abgleich bei App-Start, beim Herunterziehen und regelmäßig im Hintergrund (alle paar Stunden).
-- Offline: Banner „Offline – Stand von …“, Lesen und Kochansicht funktionieren, Bearbeiten und Foto-Import sind deaktiviert.
+- Offline: Banner „Offline – Stand von …“, Lesen und Kochansicht funktionieren, Bearbeiten, Foto- und Datei-Import sind deaktiviert.
+- Ändern geht nur online und direkt über den Server; die App hat keine Warteschlange für Änderungen und damit keine Konflikte.
+- Zielgeräte: Samsung Galaxy A54 mit Android 16 (One UI). `compileSdk`/`targetSdk` 36, `minSdk` 29 (Android 10, kostet keinen Mehraufwand, getestet wird nur auf 16). Darstellung von Rand zu Rand (`enableEdgeToEdge`, Insets in jedem Bildschirm) und vorausschauende Zurück-Geste (Compose-Navigation, `PredictiveBackHandler`, kein `onBackPressed`).
+- Samsung schränkt Hintergrund-Apps stark ein: WorkManager alle 4 Stunden mit Netz; jeder Abgleich wird mit Uhrzeit und Anlass (Start, Herunterziehen, Hintergrund) gespeichert. Liegt der letzte Hintergrund-Abgleich über 12 Stunden zurück und ist die App akku-optimiert, zeigt die App einen Hinweis mit Knopf „Akku-Optimierung ausschalten“ und dem One-UI-Weg (App-Info → Akku → „Nicht eingeschränkt“; Akku → Hintergrundnutzungsgrenzen → „Nie in Standby versetzte Apps“).
+- Verteilung: signierte APK in den GitHub-Releases (Tag `android-v…`, löst den Add-on-Build nicht aus), Updates auf dem Handy über Obtainium.
 
 ---
 
@@ -505,12 +520,12 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App-Zugang
 | Bereich | Funktionen |
 |---|---|
 | Rezepte | Liste mit Suche/Filtern, Einzelabruf (mit `parent_recipe_id` und `family`), Anlegen, Ändern, Löschen, Favorit setzen, Bild hochladen, Variante anlegen (`POST /recipes/{id}/variants`, der Server kopiert) |
-| Import | URL einlesen (liefert Entwurf, Bildadresse und Dubletten), Zutatenzeilen zerlegen; Bild der Quellseite beim Speichern übernehmen |
+| Import | URL einlesen (liefert Entwurf, Bildadresse und Dubletten), Zutatenzeilen zerlegen; Bild der Quellseite beim Speichern übernehmen; Datei-Import: `POST /import/file` (eine oder mehrere Dateien, liefert Vorschau und Kennung), `POST /import/file/{kennung}` (ausgewählte Rezepte speichern) |
 | Essensplan | Einträge eines Zeitraums, Anlegen, Ändern, Löschen, Verschieben/Tauschen mit Warnprüfung (erst prüfen, dann bestätigen) |
 | Einkauf | Vorschau der Einkaufsliste (aktueller oder folgender Einkaufszeitraum), An Bring senden, Differenz nachsenden |
 | Stammdaten | Kategorien, Vorratsliste (inkl. Prüfung, ob Zutatennamen im Vorrat sind), Einstellungen |
 | Statistik | Häufigkeiten nach Zeitraum |
-| Abgleich | Änderungen seit Zeitpunkt X; Rezepte mit `parent_recipe_id` (beim Umhängen nach dem Löschen eines Ursprungsrezepts ändert sich `updated_at` der Varianten) |
+| Abgleich | `GET /sync?since=…`: Änderungen seit Zeitpunkt X (Rezepte vollständig, Planeinträge im Zeitfenster, Vorrat, Kategorien, Einstellungen, Löschungen) und die Serverzeit als nächster Startpunkt; Rezepte mit `parent_recipe_id` (beim Umhängen nach dem Löschen eines Ursprungsrezepts ändert sich `updated_at` der Varianten) |
 | Verwaltung | API-Schlüssel anlegen (mit QR-Code), sperren – nur über Ingress, nicht über den App-Zugang |
 | Bilder | Bild und Vorschaubild abrufen |
 
@@ -529,6 +544,7 @@ Rezepteverwaltung_Essenplan/
 ├── server/                          Go-Backend
 ├── web/                             Weboberfläche (wird in den Server eingebettet)
 ├── android/                         Android-App
+├── skills/rezeptplaner-import/      Claude-Skill: Rezeptfotos → Importdatei (Format in docs/importformat.md)
 ├── .github/workflows/               Automatische Builds
 └── docs/                            Planung und Notizen
 ```
@@ -557,7 +573,25 @@ Rezepteverwaltung_Essenplan/
 | 4. Essensplan | Planansicht, Planen in beide Richtungen, Verschieben mit Warnregeln, Statushinweise, Favoriten | |
 | 5. Einkauf und Bring | Einkaufsliste, Vorratsliste, Übertragung, Differenzen | Kompletter Kern-Workflow im Browser |
 | 6. Dashboard | HA-Integration und Dashboard-Karte | |
-| 7. Android-App | QR-Einrichtung, Offline-Speicher, Teilen-Funktion, Foto-Import mit ML Kit; optional `CF-Access-Client-Id`/`-Secret` (Cloudflare Access) in den Einstellungen der App, bei jeder Anfrage mitgeschickt | App-Zugang (Port 8100, API-Schlüssel) steht seit 0.4.1 |
+| 7. Android-App | QR-Einrichtung, Offline-Speicher, Teilen-Funktion, Datei-Import, Foto-Import mit ML Kit; optional `CF-Access-Client-Id`/`-Secret` (Cloudflare Access) in den Einstellungen der App, bei jeder Anfrage mitgeschickt | App-Zugang (Port 8100, API-Schlüssel) steht seit 0.4.1; Schritte siehe unten |
+
+**Schritte der Phase 7** (festgelegt 2026-10-23):
+
+| Schritt | Inhalt |
+|---|---|
+| 7.1 | Server: `GET /sync`, Einstellung `app_url`, QR-Code beim Anlegen eines Schlüssels (optional mit Cloudflare-Access-Daten, nicht gespeichert), Version der Schnittstelle in `/system` |
+| 7.1b | Importformat (`docs/importformat.md`, JSON-Schema), Spalte `source_name` (Migration 009), Datei-Import im Server mit Vorschau |
+| 7.1c | Weboberfläche: „Datei importieren“ in der Rezeptübersicht mit Vorschau; Quelle anzeigen und bearbeiten |
+| 7.1d | Claude-Skill `skills/rezeptplaner-import/` – 7.1 bis 7.1c zusammen als App 0.6.0 |
+| 7.2 | Android-Grundgerüst (Kotlin, Compose, Material 3, Room, OkHttp, kotlinx.serialization, Coil, WorkManager), GitHub Action baut signierte APK |
+| 7.3 | Einrichtung per QR-Code, Verbindungstest, Einstellungen (Cloudflare Access), Schlüssel im Android-Keystore |
+| 7.4 | Abgleich und Offline-Lesen: Rezepte, Suche, Kochansicht, Plan ansehen; Hinweis Akku-Optimierung |
+| 7.5 | Planen: hinzufügen, Portionen, Notiz, entfernen, verschieben/tauschen |
+| 7.6 | Teilen einer URL, Rezept bearbeiten, Bild per Kamera/Galerie, Variante speichern |
+| 7.6b | Datei-Import: Teilen (`ACTION_SEND`/`_MULTIPLE`, großzügige Typen, Erkennung am Inhalt), „Öffnen mit“ (`ACTION_VIEW`), Knopf „Datei importieren“ (Dateiauswahl), Vorschau, nur online |
+| 7.7 | Foto-Import mit ML Kit |
+| 7.8 | Einkauf und Bring |
+| 7.9 | Messungen, Doku |
 | 8. Feinschliff | Statistik, Kategorien-Verwaltung, Erkenntnisse aus dem Alltag | |
 
 ---

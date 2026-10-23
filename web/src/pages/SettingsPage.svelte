@@ -62,7 +62,13 @@
     event.preventDefault();
     saving = true;
     try {
-      household = await api.updateSettings({ ...household, family_size: Number(household.family_size) });
+      // Nur die Felder dieses Formulars: Die Adresse für die App wird unter
+      // App-Zugang gespeichert und bliebe hier sonst auf altem Stand.
+      household = await api.updateSettings({
+        family_size: Number(household.family_size),
+        shopping_day: household.shopping_day,
+        bring_entity: household.bring_entity,
+      });
       saved = JSON.stringify(household);
       showMessage('Gespeichert.');
     } catch (e) {

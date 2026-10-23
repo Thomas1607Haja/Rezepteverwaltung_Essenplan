@@ -1,5 +1,7 @@
 <script>
   import { api } from '../lib/api.js';
+  import { setupUri } from '../lib/appSetup.js';
+  import QrCode from './QrCode.svelte';
 
   // API-Schlüssel für den App-Zugang (Android-App): einer pro Gerät. Der
   // Schlüssel selbst ist nur direkt nach dem Anlegen sichtbar; der Server
@@ -13,6 +15,40 @@
   // Gerade angelegter Schlüssel: { name, key } bis zum Schließen des Hinweises
   let created = $state(null);
   let copied = $state(false);
+
+  // Adresse, unter der die App den App-Zugang erreicht (Cloudflare-Tunnel).
+  // Sie steht zusammen mit dem Schlüssel im QR-Code.
+  let appUrl = $state('');
+  let savedAppUrl = $state('');
+  let urlMessage = $state('');
+  let urlIsError = $state(false);
+  // Optional: Service Token von Cloudflare Access. Wird nicht gespeichert,
+  // nur in den QR-Code übernommen.
+  let cfId = $state('');
+  let cfSecret = $state('');
+  let showCf = $state(false);
+
+  api
+    .getSettings()
+    .then((s) => (appUrl = savedAppUrl = s.app_url ?? ''))
+    .catch((e) => (loadError = `Einstellungen nicht geladen: ${e.message}`));
+
+  async function saveAppUrl(event) {
+    event.preventDefault();
+    try {
+      const s = await api.updateSettings({ app_url: appUrl });
+      appUrl = savedAppUrl = s.app_url;
+      urlMessage = 'Gespeichert.';
+      urlIsError = false;
+    } catch (e) {
+      urlMessage = e.message;
+      urlIsError = true;
+    }
+  }
+
+  const qrText = $derived(
+    created && savedAppUrl ? setupUri({ url: savedAppUrl, key: created.key, cfId, cfSecret }) : '',
+  );
 
   api
     .listApiKeys()
@@ -81,6 +117,25 @@
     <div class="created" role="status">
       <strong>Schlüssel für „{created.name}“</strong>
       <p>Jetzt in die App übernehmen – er wird nur dieses eine Mal angezeigt.</p>
+      {#if qrText}
+        <div class="qr">
+          <QrCode text={qrText} label="QR-Code zur Einrichtung der App" />
+          <p>In der App „Einrichten“ wählen und diesen Code scannen.</p>
+        </div>
+        <details bind:open={showCf}>
+          <summary>Cloudflare Access (optional)</summary>
+          <p class="hint">
+            Nur nötig, wenn der App-Hostname mit Cloudflare Access geschützt ist. Die Angaben kommen nur in den QR-Code
+            und werden nicht gespeichert.
+          </p>
+          <div class="cf">
+            <input type="text" placeholder="Client ID (….access)" bind:value={cfId} autocomplete="off" />
+            <input type="password" placeholder="Client Secret" bind:value={cfSecret} autocomplete="off" />
+          </div>
+        </details>
+      {:else}
+        <p class="error">Für den QR-Code oben erst die Adresse für die App eintragen und speichern.</p>
+      {/if}
       <code>{created.key}</code>
       <div class="row">
         <button type="button" onclick={copy}>{copied ? 'Kopiert' : 'Kopieren'}</button>
@@ -88,6 +143,20 @@
       </div>
     </div>
   {/if}
+
+  <form class="row url" onsubmit={saveAppUrl}>
+    <label for="app-url">Adresse für die App</label>
+    <input
+      id="app-url"
+      type="url"
+      placeholder="https://rezepte.example.org"
+      bind:value={appUrl}
+      oninput={() => (urlMessage = '')}
+    />
+    <button type="submit" disabled={appUrl.trim() === savedAppUrl}>Speichern</button>
+  </form>
+  <p class="hint">Hostname im Cloudflare-Tunnel, der auf Port 8100 zeigt (Anleitung in docs/APP-ZUGANG.md).</p>
+  {#if urlMessage}<p class:error={urlIsError} class:ok={!urlIsError}>{urlMessage}</p>{/if}
 
   {#if loadError}
     <p class="error">{loadError}</p>
@@ -198,6 +267,42 @@
     padding: 0.75rem;
     border: 1px solid var(--accent);
     border-radius: var(--radius);
+  }
+
+  .url {
+    align-items: center;
+    margin-bottom: 0.25rem;
+  }
+
+  .url label {
+    flex-basis: 100%;
+    font-weight: 600;
+  }
+
+  .qr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.5rem 0;
+  }
+
+  .qr p {
+    flex: 1 1 10rem;
+  }
+
+  details {
+    margin-bottom: 0.75rem;
+  }
+
+  summary {
+    cursor: pointer;
+  }
+
+  .cf {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 
   .created p {

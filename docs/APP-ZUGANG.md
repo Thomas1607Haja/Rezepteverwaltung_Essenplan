@@ -9,8 +9,10 @@ In den Beispielen steht `rezepte.example.org` für deinen Hostnamen. Echte Domai
 ## 1. API-Schlüssel anlegen
 
 1. Weboberfläche öffnen → **Einstellungen → App-Zugang**.
-2. Gerätenamen eingeben (z. B. „Handy Thomas“) → **Schlüssel anlegen**.
-3. Den Schlüssel sofort übernehmen. Er wird nur dieses eine Mal angezeigt, gespeichert wird nur sein Hash.
+2. Einmalig die **Adresse für die App** eintragen und speichern – den Hostnamen aus Abschnitt 2, z. B. `https://rezepte.example.org`.
+3. Gerätenamen eingeben (z. B. „Handy Thomas“) → **Schlüssel anlegen**.
+4. Es erscheint ein **QR-Code** mit Adresse und Schlüssel. In der App „Einrichten“ wählen und ihn scannen. Ist Cloudflare Access aktiv (Abschnitt 4), vorher unter „Cloudflare Access (optional)“ Client ID und Secret eintragen; sie kommen nur in den QR-Code und werden nicht gespeichert.
+5. QR-Code und Schlüssel werden nur dieses eine Mal angezeigt, gespeichert wird nur der Hash des Schlüssels.
 
 Ein verlorenes oder ausgemustertes Gerät sperrst du dort mit **Sperren**. Der Schlüssel gilt sofort nicht mehr.
 

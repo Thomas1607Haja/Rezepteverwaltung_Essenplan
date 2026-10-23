@@ -46,10 +46,10 @@ func (s *Store) Create(ctx context.Context, r Recipe) (Recipe, error) {
 
 	res, err := tx.ExecContext(ctx, `
 		INSERT INTO recipes (title, description, base_servings, prep_minutes, total_minutes,
-		                     source_url, is_favorite, notes, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		                     source_url, source_name, is_favorite, notes, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		r.Title, r.Description, r.BaseServings, r.PrepMinutes, r.TotalMinutes,
-		r.SourceURL, r.IsFavorite, r.Notes, now, now)
+		r.SourceURL, r.SourceName, r.IsFavorite, r.Notes, now, now)
 	if err != nil {
 		return Recipe{}, fmt.Errorf("rezept anlegen: %w", err)
 	}
@@ -89,10 +89,10 @@ func (s *Store) Update(ctx context.Context, id int64, r Recipe) (Recipe, error) 
 	res, err := tx.ExecContext(ctx, `
 		UPDATE recipes
 		SET title = ?, description = ?, base_servings = ?, prep_minutes = ?, total_minutes = ?,
-		    source_url = ?, is_favorite = ?, notes = ?, updated_at = ?
+		    source_url = ?, source_name = ?, is_favorite = ?, notes = ?, updated_at = ?
 		WHERE id = ?`,
 		r.Title, r.Description, r.BaseServings, r.PrepMinutes, r.TotalMinutes,
-		r.SourceURL, r.IsFavorite, r.Notes, now, id)
+		r.SourceURL, r.SourceName, r.IsFavorite, r.Notes, now, id)
 	if err != nil {
 		return Recipe{}, fmt.Errorf("rezept %d ändern: %w", id, err)
 	}
@@ -278,12 +278,12 @@ func (s *Store) Get(ctx context.Context, id int64) (Recipe, error) {
 	var createdAt, updatedAt string
 	err := s.db.QueryRowContext(ctx, `
 		SELECT id, title, description, base_servings, prep_minutes, total_minutes,
-		       source_url, image, thumbnail, is_favorite, notes, created_at, updated_at,
+		       source_url, source_name, image, thumbnail, is_favorite, notes, created_at, updated_at,
 		       parent_recipe_id,`+
 		planInfoColumns+`
 		FROM recipes r WHERE id = ?`, s.today(), s.today(), id).Scan(
 		&r.ID, &r.Title, &r.Description, &r.BaseServings, &r.PrepMinutes, &r.TotalMinutes,
-		&r.SourceURL, &r.Image, &r.Thumbnail, &r.IsFavorite, &r.Notes, &createdAt, &updatedAt,
+		&r.SourceURL, &r.SourceName, &r.Image, &r.Thumbnail, &r.IsFavorite, &r.Notes, &createdAt, &updatedAt,
 		&r.ParentRecipeID,
 		&r.NextPlanned, &r.LastPlanned, &r.PlanCount)
 	if errors.Is(err, sql.ErrNoRows) {

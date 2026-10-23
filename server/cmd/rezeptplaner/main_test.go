@@ -52,7 +52,7 @@ func newAppHandler(t *testing.T) (http.Handler, *apikeys.Store, []string) {
 	}
 	keys := apikeys.NewStore(db)
 	mux := &recordingMux{ServeMux: http.NewServeMux()}
-	registerRoutes(mux, services{
+	if err := registerRoutes(mux, services{
 		db:      db,
 		images:  imgs,
 		fetcher: fetch.New(time.Second, false),
@@ -60,7 +60,9 @@ func newAppHandler(t *testing.T) (http.Handler, *apikeys.Store, []string) {
 		keys:    keys,
 		version: "test",
 		dataDir: dir,
-	})
+	}); err != nil {
+		t.Fatal(err)
+	}
 	return apikeys.Require(keys, mux), keys, mux.patterns
 }
 

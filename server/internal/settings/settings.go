@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -25,6 +26,11 @@ type Settings struct {
 	// BringEntity ist die To-do-Entität in Home Assistant, an die die
 	// Einkaufsliste geht, z. B. "todo.zuhause"; leer = noch nicht gewählt.
 	BringEntity string `json:"bring_entity"`
+	// AppURL ist die Adresse, unter der die Android-App den App-Zugang
+	// erreicht, z. B. "https://rezepte.example.org" (Cloudflare-Tunnel).
+	// Der Server kann sie nicht selbst kennen; sie steht im QR-Code beim
+	// Anlegen eines API-Schlüssels. Leer = noch nicht eingetragen.
+	AppURL string `json:"app_url"`
 }
 
 // Defaults gelten, solange nichts gespeichert ist.
@@ -59,6 +65,13 @@ func (s Settings) validate() error {
 	// Bei einer Map liefert der zweite Rückgabewert, ob es den Schlüssel gibt.
 	if _, ok := weekdays[s.ShoppingDay]; !ok {
 		return &ValidationError{"shopping_day", "muss ein englischer wochentag sein, z. b. saturday"}
+	}
+	if s.AppURL != "" {
+		u, err := url.Parse(s.AppURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" ||
+			u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+			return &ValidationError{"app_url", "muss eine adresse wie https://rezepte.example.org sein"}
+		}
 	}
 	if s.BringEntity != "" && (!strings.HasPrefix(s.BringEntity, "todo.") || strings.ContainsAny(s.BringEntity, " ,")) {
 		return &ValidationError{"bring_entity", "muss eine to-do-entität sein, z. b. todo.zuhause"}
@@ -103,6 +116,8 @@ func (s *Store) Get(ctx context.Context) (Settings, error) {
 			}
 		case "bring_entity":
 			result.BringEntity = value
+		case "app_url":
+			result.AppURL = value
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -113,6 +128,8 @@ func (s *Store) Get(ctx context.Context) (Settings, error) {
 
 // Update speichert alle Einstellungen und gibt den neuen Stand zurück.
 func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
+	// Ohne Schrägstrich am Ende, damit die App einfach "/api/v1/…" anhängt.
+	in.AppURL = strings.TrimRight(strings.TrimSpace(in.AppURL), "/")
 	if err := in.validate(); err != nil {
 		return Settings{}, err
 	}
@@ -128,6 +145,7 @@ func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
 		"family_size":  strconv.Itoa(in.FamilySize),
 		"shopping_day": in.ShoppingDay,
 		"bring_entity": in.BringEntity,
+		"app_url":      in.AppURL,
 	}
 	for key, value := range values {
 		// "Upsert": neu anlegen oder, falls der Schlüssel schon existiert,

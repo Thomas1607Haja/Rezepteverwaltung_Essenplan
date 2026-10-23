@@ -21,6 +21,7 @@
   // eine eigene Datei zu legen. Übersicht und Kochansicht bleiben so schlank.
   const loadRecipeEditPage = () => import('./pages/RecipeEditPage.svelte');
   const loadRecipePickerPage = () => import('./pages/RecipePickerPage.svelte');
+  const loadImportFilePage = () => import('./pages/ImportFilePage.svelte');
 
   // Alle Seiten. section gibt an, welcher Bereich in der Navigation
   // hervorgehoben wird. page ist eine Komponente, load eine Funktion, die
@@ -30,6 +31,7 @@
     { pattern: '/recipes', section: '/recipes', page: RecipesPage },
     // "/recipes/new" vor "/recipes/:id", sonst gälte "new" als ID.
     { pattern: '/recipes/new', section: '/recipes', load: loadRecipeEditPage },
+    { pattern: '/recipes/import', section: '/recipes', load: loadImportFilePage },
     { pattern: '/recipes/:id', section: '/recipes', page: RecipePage },
     { pattern: '/recipes/:id/edit', section: '/recipes', load: loadRecipeEditPage },
     // Kochansicht aus dem Essensplan: Portionen kommen aus dem Eintrag.

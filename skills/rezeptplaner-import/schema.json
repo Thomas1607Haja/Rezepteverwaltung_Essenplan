@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/docs/importformat.schema.json",
+  "title": "Rezeptplaner-Import, Version 1",
+  "description": "Inhalt von recipes.json in einer Import-ZIP-Datei oder einer einzelnen .json-Datei. Beschreibung: docs/importformat.md. Eine Kopie liegt in skills/rezeptplaner-import/schema.json; ein Test prüft, dass beide gleich sind.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "recipes"],
+  "properties": {
+    "format": { "const": "rezeptplaner-import" },
+    "version": { "const": 1 },
+    "generator": {
+      "description": "Wer die Datei erzeugt hat, z. B. \"claude-skill rezeptplaner-import 1.0\". Nur zur Information.",
+      "type": "string",
+      "maxLength": 200
+    },
+    "recipes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/recipe" }
+    }
+  },
+  "$defs": {
+    "recipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "base_servings"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "base_servings": {
+          "description": "Grundportionen, auf die sich die Mengen beziehen.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "prep_minutes": { "type": ["integer", "null"], "minimum": 0, "maximum": 10080 },
+        "total_minutes": { "type": ["integer", "null"], "minimum": 0, "maximum": 10080 },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "description": "Quelle ohne Adresse, z. B. \"HelloFresh-Karte\" oder \"Kochbuch\".",
+              "type": "string",
+              "maxLength": 200
+            },
+            "url": {
+              "description": "Webadresse, nur http oder https.",
+              "type": "string",
+              "maxLength": 2000,
+              "pattern": "^https?://[^\\s/]+"
+            }
+          }
+        },
+        "notes": {
+          "description": "Eigene Notizen, auch unsichere oder unleserliche Stellen.",
+          "type": "string",
+          "maxLength": 5000
+        },
+        "categories": {
+          "description": "Namen aus der Kategorieliste des Rezeptplaners. Unbekannte werden beim Import gemeldet und weggelassen.",
+          "type": "array",
+          "maxItems": 30,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 100 }
+        },
+        "image": {
+          "description": "Pfad des Rezeptbildes in der ZIP-Datei; null oder weglassen = kein Bild.",
+          "type": ["string", "null"],
+          "pattern": "^images/[A-Za-z0-9][A-Za-z0-9._-]{0,99}\\.(jpg|jpeg|png|webp)$"
+        },
+        "ingredients": {
+          "type": "array",
+          "maxItems": 150,
+          "items": { "$ref": "#/$defs/ingredient" }
+        },
+        "steps": {
+          "description": "Zubereitungsschritte in Reihenfolge, ohne Nummern.",
+          "type": "array",
+          "maxItems": 100,
+          "items": { "type": "string", "minLength": 1, "maxLength": 5000 }
+        }
+      }
+    },
+    "ingredient": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "group": {
+          "description": "Gruppenüberschrift, z. B. \"Für die Soße\"; leer = keine Gruppe.",
+          "type": "string",
+          "maxLength": 100
+        },
+        "quantity": {
+          "description": "Menge für base_servings; null = ohne Menge (z. B. \"nach Geschmack\").",
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "unit": {
+          "description": "Einheit, z. B. g, kg, ml, l, EL, TL, Msp., Pck., Stück, Prise, Zehe, Dose; leer = ohne Einheit.",
+          "type": "string",
+          "maxLength": 30
+        },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "note": {
+          "description": "Zusatz, z. B. \"fein gewürfelt\".",
+          "type": "string",
+          "maxLength": 200
+        },
+        "shopping_relevant": {
+          "description": "false = nicht einkaufen (Vorrat, z. B. Salz, Öl). Standard: true. Zutaten auf der Vorratsliste setzt der Import ohnehin auf false.",
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

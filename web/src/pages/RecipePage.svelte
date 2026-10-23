@@ -240,13 +240,15 @@
         {#if recipe.total_minutes != null}
           <span><Icon name="clock" size={16} /> Gesamt {formatMinutes(recipe.total_minutes)}</span>
         {/if}
-        {#if recipe.source_url}
+        {#if recipe.source_url || recipe.source_name}
           <span>
             Quelle:
             {#if isWebUrl(recipe.source_url)}
-              <a href={recipe.source_url} target="_blank" rel="noopener noreferrer">{sourceHost(recipe.source_url)}</a>
+              <a href={recipe.source_url} target="_blank" rel="noopener noreferrer"
+                >{recipe.source_name || sourceHost(recipe.source_url)}</a
+              >
             {:else}
-              {recipe.source_url}
+              {recipe.source_name || recipe.source_url}
             {/if}
           </span>
         {/if}

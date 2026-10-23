@@ -1,0 +1,37 @@
+{
+  "format": "rezeptplaner-import",
+  "version": 1,
+  "generator": "claude-skill rezeptplaner-import 1.0",
+  "recipes": [
+    {
+      "title": "Gnocchi-Pfanne mit Spinat und Tomaten",
+      "description": "Knusprig gebratene Gnocchi in cremiger Tomatensoße mit frischem Spinat.",
+      "base_servings": 2,
+      "prep_minutes": 10,
+      "total_minutes": 25,
+      "source": { "name": "HelloFresh-Karte" },
+      "notes": "Unsicher: Menge der Sahne auf der Karte schlecht lesbar (vermutlich 100 ml), daher ohne Menge erfasst.",
+      "categories": ["Vegetarisch", "Herzhaft", "Pfanne", "Schnell"],
+      "image": "images/01-gnocchi-pfanne-mit-spinat-und-tomaten.jpg",
+      "ingredients": [
+        { "quantity": 400, "unit": "g", "name": "Gnocchi" },
+        { "quantity": 1, "unit": "Stück", "name": "Zwiebel" },
+        { "quantity": 1, "unit": "Zehe", "name": "Knoblauch" },
+        { "quantity": 250, "unit": "g", "name": "Cherrytomaten" },
+        { "quantity": 100, "unit": "g", "name": "Babyspinat" },
+        { "quantity": null, "unit": "", "name": "Sahne", "note": "Menge unleserlich" },
+        { "quantity": 25, "unit": "g", "name": "Parmesan", "note": "gerieben" },
+        { "group": "Aus deiner Vorratskammer", "quantity": 1, "unit": "EL", "name": "Olivenöl", "shopping_relevant": false },
+        { "group": "Aus deiner Vorratskammer", "quantity": null, "unit": "", "name": "Salz", "note": "nach Geschmack", "shopping_relevant": false },
+        { "group": "Aus deiner Vorratskammer", "quantity": null, "unit": "", "name": "Pfeffer", "note": "nach Geschmack", "shopping_relevant": false }
+      ],
+      "steps": [
+        "Zwiebel und Knoblauch abziehen und fein würfeln. Cherrytomaten halbieren.",
+        "Olivenöl in einer großen Pfanne erhitzen und die Gnocchi darin 5–6 Minuten goldbraun braten. Herausnehmen.",
+        "Zwiebel und Knoblauch in derselben Pfanne 2 Minuten anschwitzen, Tomaten zugeben und 3 Minuten mitbraten.",
+        "Sahne zugießen, Spinat unterheben und zusammenfallen lassen. Mit Salz und Pfeffer abschmecken.",
+        "Gnocchi zurück in die Pfanne geben, alles vermengen und mit Parmesan bestreut servieren."
+      ]
+    }
+  ]
+}

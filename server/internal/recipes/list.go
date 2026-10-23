@@ -203,6 +203,33 @@ func escapeLike(s string) string {
 	return likeEscaper.Replace(s)
 }
 
+// FindDuplicates liefert die Rezepte mit demselben Titel (ohne Rücksicht
+// auf Groß-/Kleinschreibung und Umlaute) oder derselben Quell-URL – für den
+// Dublettenhinweis beim Datei-Import.
+func (s *Store) FindDuplicates(ctx context.Context, title, sourceURL string) ([]Summary, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, title, prep_minutes, total_minutes, thumbnail, is_favorite, parent_recipe_id
+		FROM recipes WHERE fold(title) = ? OR (? <> '' AND source_url = ?) ORDER BY id`,
+		database.Fold(strings.TrimSpace(title)), sourceURL, sourceURL)
+	if err != nil {
+		return nil, fmt.Errorf("dubletten suchen: %w", err)
+	}
+	defer rows.Close()
+	found := []Summary{}
+	for rows.Next() {
+		var sum Summary
+		if err := rows.Scan(&sum.ID, &sum.Title, &sum.PrepMinutes, &sum.TotalMinutes,
+			&sum.Thumbnail, &sum.IsFavorite, &sum.ParentRecipeID); err != nil {
+			return nil, fmt.Errorf("dubletten suchen: %w", err)
+		}
+		found = append(found, sum)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("dubletten suchen: %w", err)
+	}
+	return found, nil
+}
+
 // FindBySourceURL liefert die Rezepte mit genau dieser Quell-URL – für den
 // Dublettenhinweis beim Import. Eine leere Adresse findet nichts.
 func (s *Store) FindBySourceURL(ctx context.Context, sourceURL string) ([]Summary, error) {

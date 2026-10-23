@@ -103,6 +103,16 @@ func (s *Store) Save(r io.Reader) (large, thumb string, err error) {
 	return large, thumb, nil
 }
 
+// Preview prüft ein Bild wie Save und liefert nur das Vorschaubild, ohne
+// etwas zu speichern – für die Vorschau beim Datei-Import.
+func (s *Store) Preview(data []byte) ([]byte, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	defer debug.FreeOSMemory()
+	_, thumb, err := process(data)
+	return thumb, err
+}
+
 // process macht aus den Bytes eines Bildes die JPEG-Daten für großes Bild
 // und Vorschaubild.
 func process(data []byte) (largeJPEG, thumbJPEG []byte, err error) {

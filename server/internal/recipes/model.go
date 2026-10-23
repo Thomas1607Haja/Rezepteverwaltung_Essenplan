@@ -21,8 +21,9 @@ type Recipe struct {
 	PrepMinutes  *int         `json:"prep_minutes"`  // nil = keine Angabe
 	TotalMinutes *int         `json:"total_minutes"` // nil = keine Angabe
 	SourceURL    string       `json:"source_url"`
-	Image        string       `json:"image"`     // nur lesbar, wird per Upload gesetzt
-	Thumbnail    string       `json:"thumbnail"` // nur lesbar, wird per Upload gesetzt
+	SourceName   string       `json:"source_name"` // Quelle ohne Adresse, z. B. "HelloFresh-Karte"
+	Image        string       `json:"image"`       // nur lesbar, wird per Upload gesetzt
+	Thumbnail    string       `json:"thumbnail"`   // nur lesbar, wird per Upload gesetzt
 	IsFavorite   bool         `json:"is_favorite"`
 	Notes        string       `json:"notes"`
 	Ingredients  []Ingredient `json:"ingredients"` // in Anzeigereihenfolge
@@ -82,6 +83,7 @@ func (r *Recipe) normalize() {
 	r.Title = strings.TrimSpace(r.Title)
 	r.Description = strings.TrimSpace(r.Description)
 	r.SourceURL = strings.TrimSpace(r.SourceURL)
+	r.SourceName = strings.TrimSpace(r.SourceName)
 	r.Notes = strings.TrimSpace(r.Notes)
 	for i := range r.Ingredients {
 		ing := &r.Ingredients[i] // Zeiger, damit die Änderung im Slice landet
@@ -116,6 +118,9 @@ func (r *Recipe) validate() error {
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 			return &ValidationError{"source_url", "muss mit http:// oder https:// beginnen"}
 		}
+	}
+	if len([]rune(r.SourceName)) > 200 {
+		return &ValidationError{"source_name", "höchstens 200 zeichen"}
 	}
 	for i, ing := range r.Ingredients {
 		if ing.Name == "" {

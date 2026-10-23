@@ -17,6 +17,10 @@ import (
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 )
 
+// APIVersion der Schnittstelle. 1 = erste Version für die Android-App
+// (Abgleich, Datei-Import; App 0.6.0).
+const APIVersion = 1
+
 // Handler stellt GET /api/v1/system bereit.
 type Handler struct {
 	version string
@@ -38,7 +42,10 @@ func (h *Handler) Register(mux httpx.Router) {
 // Info ist die Antwort. Speicherwerte sind nil, wo das Betriebssystem sie
 // nicht liefert (nur Linux kennt /proc).
 type Info struct {
-	Version       string `json:"version"`
+	Version string `json:"version"`
+	// APIVersion steigt, wenn sich die Schnittstelle so ändert, dass die
+	// Android-App angepasst werden muss. Die App prüft sie beim Einrichten.
+	APIVersion    int    `json:"api_version"`
 	GoVersion     string `json:"go_version"`
 	UptimeSeconds int64  `json:"uptime_seconds"`
 	MemoryBytes   *int64 `json:"memory_bytes"`      // belegter Arbeitsspeicher (RSS)
@@ -51,6 +58,7 @@ type Info struct {
 func (h *Handler) info(w http.ResponseWriter, r *http.Request) {
 	info := Info{
 		Version:       h.version,
+		APIVersion:    APIVersion,
 		GoVersion:     runtime.Version(),
 		UptimeSeconds: int64(time.Since(h.started).Seconds()),
 	}

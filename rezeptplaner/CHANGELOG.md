@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.6.0
+
+- **Datei-Import:** Unter **Rezepte → Datei importieren** lassen sich Rezepte aus einer ZIP-Datei (mit Bildern) oder JSON-Datei übernehmen – z. B. aus der neuen Claude-Skill „rezeptplaner-import“, die Fotos von Rezeptkarten und Kochbuchseiten erfasst. Vor dem Speichern zeigt eine Vorschau jedes Rezept mit Bild, Hinweisen auf Dubletten, unbekannte Kategorien und unsichere Stellen; Rezepte lassen sich einzeln abwählen. Vorratszutaten werden automatisch nicht zum Einkaufen vorgemerkt.
+- **Quelle als Name:** Rezepte können eine Quelle ohne Webadresse haben, z. B. „HelloFresh-Karte“ oder „Kochbuch“ (Rezeptansicht und Bearbeiten).
+- **Vorbereitung Android-App:** Abgleich-Schnittstelle für die App, Einstellung **Adresse für die App** und QR-Code zur Einrichtung beim Anlegen eines API-Schlüssels (Einstellungen → App-Zugang).
+
 ## 0.5.1
 
 - Vorbereitung für die Android-App: Rezepte, Planeinträge, Vorrat und Kategorien bekommen nach dem Löschen nie wieder dieselbe Nummer, damit der spätere Abgleich mit der App eindeutig bleibt. Die Datenbank wird beim ersten Start einmalig umgestellt; vorhandene Daten bleiben erhalten.

@@ -18,8 +18,10 @@ import (
 	"time"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apikeys"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/appsync"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fileimport"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
@@ -121,7 +123,7 @@ func run() error {
 	keys := apikeys.NewStore(db)
 
 	mux := http.NewServeMux()
-	registerRoutes(mux, services{
+	if err := registerRoutes(mux, services{
 		db:      db,
 		images:  imgs,
 		fetcher: fetch.New(20*time.Second, false), // Heimnetz gesperrt
@@ -129,7 +131,9 @@ func run() error {
 		keys:    keys,
 		version: buildVersion,
 		dataDir: cfg.DataDir,
-	})
+	}); err != nil {
+		return err
+	}
 
 	// handler ist vom Typ http.Handler, einem Interface: Jeder Typ mit der
 	// Methode ServeHTTP passt hinein – der Router genauso wie eine
@@ -240,17 +244,23 @@ type services struct {
 // teilen sich diesen Router; was über den App-Zugang erreichbar ist,
 // regelt apikeys.Require. Der Test in main_test.go durchläuft alle hier
 // angemeldeten Muster.
-func registerRoutes(mux httpx.Router, s services) {
+func registerRoutes(mux httpx.Router, s services) error {
 	mux.HandleFunc("GET /api/v1/health", handleHealth)
 	recipeStore := recipes.NewStore(s.db)
 	recipes.NewHandler(recipeStore, s.images, s.fetcher).Register(mux)
 	pantryStore := pantry.NewStore(s.db)
 	pantry.NewHandler(pantryStore).Register(mux)
 	importer.NewHandler(recipeStore, pantryStore, s.fetcher).Register(mux)
+	fileImporter, err := fileimport.NewImporter(filepath.Join(s.dataDir, "import"), recipeStore, pantryStore, s.images)
+	if err != nil {
+		return err
+	}
+	fileImporter.Register(mux)
 	settingsStore := settings.NewStore(s.db)
 	settings.NewHandler(settingsStore).Register(mux)
 	planStore := mealplan.NewStore(s.db, settingsStore)
 	mealplan.NewHandler(planStore).Register(mux)
+	appsync.NewHandler(s.db, recipeStore, planStore, pantryStore, settingsStore).Register(mux)
 	system.NewHandler(s.version, s.dataDir).Register(mux)
 	homeassistant.NewHandler(s.ha).Register(mux)
 	shopping.NewHandler(shopping.NewStore(s.db, planStore, settingsStore, s.ha)).Register(mux)
@@ -258,6 +268,7 @@ func registerRoutes(mux httpx.Router, s services) {
 	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist
 	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
 	mux.Handle("GET /", web.Handler())
+	return nil
 }
 
 // handleHealth ist das Lebenszeichen: antwortet immer mit "ok", solange der

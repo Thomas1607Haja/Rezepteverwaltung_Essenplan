@@ -32,10 +32,18 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, s)
 }
 
-// update ersetzt alle Einstellungen, Anfrage z. B.
-// {"family_size": 4, "shopping_day": "saturday", "bring_entity": "todo.zuhause"}.
+// update ändert die Einstellungen, die in der Anfrage stehen, z. B.
+// {"family_size": 4, "shopping_day": "saturday"}; fehlende behalten ihren
+// Wert. So überschreibt das Speichern des Haushalts nicht die Adresse für
+// die App, die an anderer Stelle bearbeitet wird.
 func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
-	var in Settings
+	in, err := h.store.Get(r.Context())
+	if err != nil {
+		httpx.WriteInternalError(w, r, err)
+		return
+	}
+	// json.Unmarshal setzt nur die Felder, die im JSON vorkommen; die
+	// übrigen behalten den eben gelesenen Stand.
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, err.Error())
 		return

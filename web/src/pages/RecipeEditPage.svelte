@@ -243,6 +243,10 @@
         <span>Quelle (URL)</span>
         <input type="url" placeholder="https://…" bind:value={form.source_url} />
       </label>
+      <label class="field">
+        <span>Quelle (Name)</span>
+        <input type="text" maxlength="200" placeholder="z. B. HelloFresh-Karte, Kochbuch" bind:value={form.source_name} />
+      </label>
     </section>
 
     <section>

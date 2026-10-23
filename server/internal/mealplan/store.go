@@ -139,6 +139,33 @@ func (s *Store) List(ctx context.Context, from, to string) ([]Entry, error) {
 	return entries, nil
 }
 
+// ChangedSince liefert für den Abgleich mit der App alle Einträge ab dem
+// Tag from (ohne Ende), deren updated_at nicht vor since liegt
+// (Datenbankformat, leer = alle).
+func (s *Store) ChangedSince(ctx context.Context, from, since string) ([]Entry, error) {
+	rows, err := s.db.QueryContext(ctx, selectEntry+`
+		WHERE e.date >= ? AND e.updated_at >= ?
+		ORDER BY e.date, CASE e.slot WHEN 'lunch' THEN 0 ELSE 1 END, e.position, e.id`,
+		from, since)
+	if err != nil {
+		return nil, fmt.Errorf("essensplan für den abgleich lesen: %w", err)
+	}
+	defer rows.Close()
+
+	entries := []Entry{}
+	for rows.Next() {
+		e, err := scanEntry(rows)
+		if err != nil {
+			return nil, fmt.Errorf("essensplan für den abgleich lesen: %w", err)
+		}
+		entries = append(entries, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("essensplan für den abgleich lesen: %w", err)
+	}
+	return entries, nil
+}
+
 // Get liefert den Eintrag id oder ErrNotFound.
 func (s *Store) Get(ctx context.Context, id int64) (Entry, error) {
 	e, err := scanEntry(s.db.QueryRowContext(ctx, selectEntry+" WHERE e.id = ?", id))

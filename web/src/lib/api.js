@@ -19,7 +19,10 @@ export class ApiError extends Error {
  */
 export async function request(method, path, body) {
   const options = { method, headers: {} };
-  if (body instanceof Blob) {
+  if (body instanceof FormData) {
+    // Mehrere Dateien: Der Browser setzt Content-Type samt Trennzeichen.
+    options.body = body;
+  } else if (body instanceof Blob) {
     // Dateien (z. B. ein Bild) gehen unverändert als Anfragekörper raus.
     options.headers['Content-Type'] = body.type || 'application/octet-stream';
     options.body = body;
@@ -69,7 +72,10 @@ function listParams(filter) {
 export const api = {
   health: () => request('GET', '/health'),
 
-  /** Einstellungen: { family_size, shopping_day, bring_entity }. */
+  /**
+   * Einstellungen: { family_size, shopping_day, bring_entity, app_url }.
+   * updateSettings ändert nur die übergebenen Felder.
+   */
   getSettings: () => request('GET', '/settings'),
   updateSettings: (settings) => request('PUT', '/settings', settings),
 
@@ -178,6 +184,21 @@ export const api = {
    * duplicates sind vorhandene Rezepte mit derselben Quell-URL.
    */
   importUrl: (url) => request('POST', '/import/url', { url }),
+
+  /**
+   * Lädt Importdateien (ZIP/JSON) hoch. Ergebnis ist nur eine Vorschau:
+   * { token, expires_at, recipes: [{ index, file, recipe, thumbnail,
+   * errors, warnings, duplicates }], file_errors: [{ file, error }] }.
+   */
+  importFiles: (files) => {
+    const form = new FormData();
+    for (const file of files) form.append('file', file, file.name);
+    return request('POST', '/import/file', form);
+  },
+  /** Legt die ausgewählten Rezepte der Vorschau an: { created, failed }. */
+  confirmImport: (token, selected) => request('POST', `/import/file/${token}`, { selected }),
+  /** Vorschaubild eines Rezepts der Vorschau. */
+  importThumbnailUrl: (token, index) => `api/v1/import/file/${token}/images/${index}`,
 
   /** Kategorien nach Gruppen: [{ name, tags: [{ id, name, ... }] }]. */
   listTagGroups: async () => (await request('GET', '/tags')).groups,

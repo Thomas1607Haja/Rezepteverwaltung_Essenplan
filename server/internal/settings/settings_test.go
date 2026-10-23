@@ -114,3 +114,28 @@ func TestHandlers(t *testing.T) {
 		t.Errorf("PUT ungültig: %d %s", rec.Code, rec.Body)
 	}
 }
+
+func TestAppURLAndPartialUpdate(t *testing.T) {
+	mux := http.NewServeMux()
+	NewHandler(newTestStore(t)).Register(mux)
+	do := func(body string) *httptest.ResponseRecorder {
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, httptest.NewRequest(http.MethodPut, "/api/v1/settings", strings.NewReader(body)))
+		return rec
+	}
+
+	if rec := do(`{"family_size":3}`); rec.Code != http.StatusOK {
+		t.Fatalf("PUT family_size: %d %s", rec.Code, rec.Body)
+	}
+	// Nur app_url: Familiengröße bleibt, Schrägstrich am Ende fällt weg.
+	rec := do(`{"app_url":" https://rezepte.example.org/ "}`)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"app_url":"https://rezepte.example.org"`) ||
+		!strings.Contains(rec.Body.String(), `"family_size":3`) {
+		t.Errorf("PUT app_url: %d %s", rec.Code, rec.Body)
+	}
+	for _, bad := range []string{"rezepte.example.org", "javascript:alert(1)", "https://user:pw@example.org", "https://example.org/?x=1"} {
+		if rec := do(`{"app_url":"` + bad + `"}`); rec.Code != http.StatusBadRequest {
+			t.Errorf("app_url %q: %d, erwartet 400", bad, rec.Code)
+		}
+	}
+}

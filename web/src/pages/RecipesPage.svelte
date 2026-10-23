@@ -55,7 +55,10 @@
 
 <div class="page-head">
   <h1>Rezepte</h1>
-  <a class="new" href="#/recipes/new">+ Neues Rezept</a>
+  <div class="head-actions">
+    <a class="secondary" href="#/recipes/import">Datei importieren</a>
+    <a class="new" href="#/recipes/new">+ Neues Rezept</a>
+  </div>
 </div>
 
 <div class="toolbar">
@@ -139,6 +142,23 @@
 
   .page-head h1 {
     margin: 0;
+  }
+
+  .head-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .secondary {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
   }
 
   .new {

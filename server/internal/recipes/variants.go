@@ -72,10 +72,10 @@ func (s *Store) CreateVariant(ctx context.Context, sourceID int64, image, thumbn
 	// INSERT … SELECT kopiert die Zeile direkt in der Datenbank.
 	res, err := tx.ExecContext(ctx, `
 		INSERT INTO recipes (title, description, base_servings, prep_minutes, total_minutes,
-		                     source_url, image, thumbnail, is_favorite, notes,
+		                     source_url, source_name, image, thumbnail, is_favorite, notes,
 		                     parent_recipe_id, created_at, updated_at)
 		SELECT ?, description, base_servings, prep_minutes, total_minutes,
-		       source_url, ?, ?, 0, notes, ?, ?, ?
+		       source_url, source_name, ?, ?, 0, notes, ?, ?, ?
 		FROM recipes WHERE id = ?`,
 		variantTitle(title), image, thumbnail, origin, now, now, sourceID)
 	if err != nil {

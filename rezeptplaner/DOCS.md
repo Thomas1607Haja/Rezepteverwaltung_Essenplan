@@ -14,6 +14,10 @@ Die Weboberfläche erscheint dann als **Essensplan** in der Seitenleiste.
 
 Die App selbst hat keine Optionen in Home Assistant. Familiengröße (Standard-Portionen im Essensplan) und Einkaufstag (Beginn des einwöchigen Einkaufszeitraums) stellst du in der Weboberfläche unter **Einstellungen** ein.
 
+## Rezepte aus Dateien importieren
+
+**Rezepte → Datei importieren** liest eine ZIP- oder JSON-Datei im Format „rezeptplaner-import“ (z. B. erzeugt von der Claude-Skill `skills/rezeptplaner-import` aus Fotos von Rezeptkarten). Zuerst erscheint eine Vorschau mit Hinweisen auf Dubletten, unbekannte Kategorien und unsichere Stellen; gespeichert wird erst nach **Importieren**. Format: `docs/importformat.md` im Repository.
+
 ## Einkaufsliste an Bring senden
 
 1. In Home Assistant die Integration **Bring!** einrichten (**Einstellungen → Geräte & Dienste → Integration hinzufügen**). Jede Bring-Liste erscheint dann als To-do-Liste.
