@@ -518,6 +518,34 @@ Vergleich mit den übertragenen Artikeln; Angebot, nur die Differenz nachzusende
 
 ---
 
+### Datei-Import in der App (7.6b)
+
+**Wege in die App**
+
+| Weg | Android | Hinweise |
+|---|---|---|
+| Antippen einer Datei (WhatsApp, „Eigene Dateien“, Download-Benachrichtigung) | `ACTION_VIEW` | Rezeptplaner erscheint in „Öffnen mit“. Hat jemand für ZIP eine andere Standard-App festgelegt, öffnet WhatsApp diese – dann über Teilen |
+| Lange drücken → Teilen (WhatsApp, „Eigene Dateien“, Claude-App) | `ACTION_SEND`, `ACTION_SEND_MULTIPLE` | Datei kommt als `EXTRA_STREAM`; ein geteilter Text (`EXTRA_TEXT`) ist dagegen eine Rezept-URL (7.6) |
+| Knopf „Datei importieren“ in der App | Dateiauswahl (`ACTION_OPEN_DOCUMENT`, mehrere Dateien) | Ausweichweg; WhatsApp-Dokumente liegen unter *Interner Speicher → Android → media → com.whatsapp → WhatsApp → Media → WhatsApp Documents*, meist auch unter „Zuletzt“ |
+
+**Dateitypen:** Intent-Filter für `application/zip`, `application/x-zip-compressed`, `application/json` und `application/octet-stream` (WhatsApp und andere geben oft diesen allgemeinen Typ an). Nicht `*/*`, damit der Rezeptplaner nicht bei jedem Foto oder Dokument im Teilen-Menü steht. `text/plain` nur für geteilte URLs (7.6) und für `.json`, die manche Apps als Text weitergeben – dann entscheidet der Inhalt.
+
+**Einlesen:** Andere Apps (WhatsApp) geben Dateien über eigene `content://`-Adressen mit befristeter Leseberechtigung und oft geändertem Namen weiter. Die App kopiert die Datei deshalb **sofort beim Empfang** in ihren Cache (höchstens 30 MB, wie die Grenze des Servers) und erkennt das Format **am Inhalt**: ZIP-Kennung `PK\x03\x04` bzw. `"format": "rezeptplaner-import"` im JSON. Andere Dateien lehnt sie sofort mit klarer Meldung ab („Keine Rezeptplaner-Importdatei“). Der Dateiname dient nur zur Anzeige.
+
+**Ablauf:** Import-Bildschirm (erreichbar über Rezepte → „Datei importieren“ und über jeden der Wege oben) → Upload an `POST /api/v1/import/file` → Vorschau wie in der Weboberfläche (Bild, Titel, Portionen, Zutaten/Schritte, Hinweise zu Dubletten, unbekannten Kategorien und unsicheren Stellen; Rezepte einzeln abwählbar, Dubletten nicht vorausgewählt) → „Importieren“ → Abgleich. Nur online; ohne Verbindung „Import geht nur mit Verbindung zum Rezeptplaner“. Ist die App noch nicht verbunden, erst die Einrichtung, danach geht es mit der Datei weiter.
+
+**Hinweis im Import-Bildschirm:** „Aus WhatsApp: Datei lange drücken → Teilen → Rezeptplaner“.
+
+**Testfälle** (Samsung Galaxy A54, Android 16; vorher im Emulator, soweit dort möglich):
+
+1. ZIP in WhatsApp antippen → „Öffnen mit“ → Rezeptplaner → Vorschau → Importieren
+2. ZIP in WhatsApp lange drücken → Teilen → Rezeptplaner
+3. einzelne `.json`-Datei auf beiden Wegen (1 und 2)
+4. ZIP über „Datei importieren“ aus dem WhatsApp-Dokumentordner
+5. Datei in der Samsung-App „Eigene Dateien“ antippen (Öffnen mit) und teilen
+6. Datei direkt aus der Claude-App teilen; kann die Claude-App nur herunterladen: Download-Benachrichtigung antippen bzw. aus „Eigene Dateien → Downloads“ öffnen oder teilen (genauen Weg nach dem Test hier festhalten)
+7. Gegenproben: ein Foto bzw. eine fremde ZIP teilen → klare Ablehnung; ohne Verbindung → Hinweis; mehrere Dateien auf einmal teilen → eine gemeinsame Vorschau
+
 ## 8. API-Übersicht
 
 Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App-Zugang, Port 8100) bzw. über Ingress (Weboberfläche, Port 8099).
@@ -555,6 +583,8 @@ Rezepteverwaltung_Essenplan/
 ```
 
 ### Builds und Installation
+
+- **Claude-Skill als Download (7.6c):** Die GitHub Action packt `skills/rezeptplaner-import/` als `rezeptplaner-import-skill.zip` (Ordner `rezeptplaner-import/` mit `SKILL.md` darin) und hängt sie unter diesem festen Namen an jedes Android-Release. Ändert sich die Skill zwischen zwei Releases (Push auf `main` mit Änderungen unter `skills/`), ersetzt eine Action die Datei am neuesten Release. So zeigt `…/releases/latest/download/rezeptplaner-import-skill.zip` immer auf die aktuelle Skill. Ändert sich das Importformat, wird die Skill im selben Release mitgeändert (Regel in CLAUDE.md).
 
 - **Add-on-Image wird nicht auf dem Green gebaut.** Ohne vorgefertigtes Image würde der Green bei jeder Installation und jedem Update Go und die Weboberfläche selbst kompilieren. Stattdessen baut eine GitHub Action das ARM64-Image und legt es in der GitHub Container Registry (ghcr.io) ab; die `config.yaml` des Add-ons verweist darauf. Der Green lädt nur noch das fertige Image herunter.
 - **Dashboard-Karte wird von der Integration mitgeliefert.** Die JavaScript-Datei der Karte liegt in der Integration (`custom_components/rezeptplaner/frontend/`), die sie beim Start registriert (`add_extra_js_url`). So genügt eine einzige HACS-Installation für Integration und Karte. Die Karte ist eine schlichte Web Component ohne Bibliotheken und braucht keinen Build-Schritt; einen eigenen Ordner `ha-card/` gibt es deshalb nicht (geändert 2026-10-21).
@@ -594,7 +624,8 @@ Rezepteverwaltung_Essenplan/
 | 7.4 | Abgleich und Offline-Lesen: Rezepte (Suche, Kategorien, Favoriten, Sortierung), Kochansicht (Portionen, Bildschirm bleibt an, Varianten), Plan ansehen, Offline-Hinweis, Abgleich bei Start/Herunterziehen/alle 4 h (WorkManager), Hinweis Akku-Optimierung – App 0.3.0. Lokaler Speicher als eine JSON-Datei im Speicher statt Room (die App liest nur, geändert wird online; spart Room/KSP) |
 | 7.5 | Planen: hinzufügen („+“ je Tag mit Rezeptauswahl, „Zum Essensplan hinzufügen“ in der Kochansicht), Portionen, Notiz, „Zutaten im Haus“, ersetzen, entfernen, verschieben/tauschen mit den Warnregeln des Servers – App 0.4.0. Verschieben über eine Tagesauswahl statt Ziehen mit dem Finger (in der langen Tagesliste auf dem Handy zuverlässiger; Ziehen bei Bedarf später) |
 | 7.6 | Teilen einer URL, Rezept bearbeiten, Bild per Kamera/Galerie, Variante speichern |
-| 7.6b | Datei-Import: Teilen (`ACTION_SEND`/`_MULTIPLE`, großzügige Typen, Erkennung am Inhalt), „Öffnen mit“ (`ACTION_VIEW`), Knopf „Datei importieren“ (Dateiauswahl), Vorschau, nur online |
+| 7.6b | Datei-Import in der App, siehe „Datei-Import in der App (7.6b)“ unten: Teilen (`ACTION_SEND`/`_MULTIPLE`), „Öffnen mit“ (`ACTION_VIEW`), Knopf „Datei importieren“ (Dateiauswahl), WhatsApp als Quelle, Vorschau, nur online |
+| 7.6c | Claude-Skill als Download: ZIP `rezeptplaner-import-skill.zip` am neuesten Release (fester Link), Weboberfläche „App installieren“ → dritter Punkt „Claude-Skill“ mit Anleitung |
 | 7.7 | Foto-Import mit ML Kit |
 | 7.8 | Einkauf und Bring |
 | 7.9 | Messungen, Doku |

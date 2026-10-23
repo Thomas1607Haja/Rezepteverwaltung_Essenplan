@@ -26,6 +26,11 @@ Das Repository ist öffentlich. Niemals einchecken:
 
 Alles Persönliche gehört in die Add-on-Konfiguration oder die Einstellungen der Anwendung. Neue Arten lokaler Dateien sofort in die `.gitignore` aufnehmen.
 
+## Importformat und Claude-Skill
+
+- Das Importformat (`docs/importformat.md`, `docs/importformat.schema.json`) und die Claude-Skill (`skills/rezeptplaner-import/`) gehören zusammen: **Ändert sich das Format, wird die Skill im selben Release mitgeändert** (Schema-Kopie, `SKILL.md`, Beispiel, Skript). Die Tests in `server/internal/fileimport/repo_test.go` prüfen, dass Schema-Kopie, Kategorieliste und Beispiel zum Server passen.
+- Werden die Startkategorien geändert, `skills/rezeptplaner-import/categories.md` nachziehen.
+
 ## Schlankheit hat Vorrang
 
 Das System läuft auf einem Home Assistant Green (ARM64, wenig RAM). Bei jeder Entscheidung gilt:
