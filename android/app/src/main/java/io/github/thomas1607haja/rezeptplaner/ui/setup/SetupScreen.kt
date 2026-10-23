@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.ui.setup
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,8 @@ import io.github.thomas1607haja.rezeptplaner.ui.CrashReportCard
 
 // Die App gibt es nur auf Deutsch; die Texte stehen deshalb direkt hier.
 
+private const val TAG = "Rezeptplaner"
+
 /**
  * Einrichtung der Verbindung. [onFinished] wird nach erfolgreichem
  * Speichern aufgerufen, [onCancel] (falls gesetzt) bricht eine erneute
@@ -66,10 +69,14 @@ fun SetupScreen(
                 .build()
             GmsBarcodeScanning.getClient(context, options).startScan()
                 .addOnSuccessListener { barcode -> barcode.rawValue?.let(viewModel::onLink) }
-                .addOnFailureListener { viewModel.onScanFailed(unavailable) }
+                .addOnFailureListener { e ->
+                    Log.w(TAG, "QR-Scanner meldet Fehler", e)
+                    viewModel.onScanFailed("$unavailable (${e.javaClass.simpleName}: ${e.message})")
+                }
         } catch (e: RuntimeException) {
             // Fehler der Play-Dienste beim Start sollen die App nicht beenden.
-            viewModel.onScanFailed(unavailable)
+            Log.w(TAG, "QR-Scanner startet nicht", e)
+            viewModel.onScanFailed("$unavailable (${e.javaClass.simpleName}: ${e.message})")
         }
         Unit
     }

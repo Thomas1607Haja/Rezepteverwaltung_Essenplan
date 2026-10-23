@@ -41,6 +41,8 @@ Oberflächentests ohne Gerät (Robolectric) mit Bildschirmfotos unter `app/build
 ./gradlew recordRoborazziDebug
 ```
 
+**Release-Build vor dem Veröffentlichen auf einem Gerät oder Emulator prüfen.** Nur er wird von R8 verkleinert; Fehler durch fehlende R8-Regeln (z. B. beim QR-Scanner in 0.2.0/0.2.1) zeigen weder Debug-Build noch Unit-Tests. Eigene Regeln stehen in `app/proguard-rules.pro`. Einen verschleierten Stacktrace übersetzt `retrace` mit `app/build/outputs/mapping/release/mapping.txt`.
+
 ## 2. Galaxy A54 per USB verbinden
 
 1. **Samsung-USB-Treiber** für Windows installieren: <https://developer.samsung.com/android-usb-driver> (der Google-Treiber passt nicht).
