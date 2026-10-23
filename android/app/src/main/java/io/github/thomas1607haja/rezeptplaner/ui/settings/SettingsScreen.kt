@@ -78,13 +78,15 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
             }
         }
 
+        SyncCard()
+
         CloudflareCard(viewModel, configured = config?.hasCloudflareAccess == true)
 
         Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Gerät trennen", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Entfernt die Verbindung von diesem Handy. Den Schlüssel in der Weboberfläche unter " +
+                    "Entfernt die Verbindung und alle Rezepte und Bilder von diesem Handy. Den Schlüssel in der Weboberfläche unter " +
                         "„Verbundene Geräte“ zusätzlich sperren, wenn das Gerät weitergegeben wird.",
                     style = MaterialTheme.typography.bodySmall,
                 )

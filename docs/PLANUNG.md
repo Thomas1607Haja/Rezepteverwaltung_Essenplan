@@ -501,7 +501,7 @@ Vergleich mit den übertragenen Artikeln; Angebot, nur die Differenz nachzusende
 
 ## 7. Android-App: Offline-Verhalten
 
-- Lokale Datenbank (Room) mit allen Rezepten, dem Essensplan (einige Tage zurück bis Ende der Planung) und den Einstellungen.
+- Lokaler Stand mit allen Rezepten, dem Essensplan (14 Tage zurück bis Ende der Planung) und den Einstellungen – als eine JSON-Datei, beim Start in den Speicher geladen (geändert 2026-10-23: statt Room, weil die App nur liest und bei einigen hundert Rezepten Suchen im Speicher genügt).
 - Abgleich nur der Änderungen seit dem letzten Abgleich (über `updated_at` und `deletions`).
 - Vorschaubilder immer lokal; große Bilder für den aktuellen Einkaufszeitraum vorab, sonst beim ersten Ansehen.
 - Abgleich bei App-Start, beim Herunterziehen und regelmäßig im Hintergrund (alle paar Stunden).
@@ -586,7 +586,7 @@ Rezepteverwaltung_Essenplan/
 | 7.2b | Weboberfläche „Einstellungen → App installieren“: Schritt 1 QR-Codes (Obtainium, Rezeptplaner in Obtainium, APK `releases/latest/download/rezeptplaner.apk`) mit Anleitung für das A54, Repository aus der Option `app_repository`; Schritt 2 „Neues Gerät verbinden“ erzeugt erst dann einen Schlüssel – App 0.6.1 |
 | 7.2 | Android-Grundgerüst (Kotlin, Compose, Material 3, Navigation, kotlinx.serialization; Room, OkHttp, Coil und WorkManager kommen mit den Schritten, die sie brauchen), GitHub Action baut signierte APK; Anleitung [ANDROID.md](ANDROID.md) |
 | 7.3 | Einrichtung per QR-Code (Google-Code-Scanner ohne Kamera-Berechtigung; auch Direktlink `rezeptplaner://setup` aus der Kamera-App, immer mit Bestätigung der Adresse) oder von Hand, Verbindungstest über `/system` (`api_version`), Einstellungen (Verbindung testen, Cloudflare Access, trennen), Verbindungsdaten verschlüsselt mit Schlüssel im Android-Keystore – App 0.2.0 |
-| 7.4 | Abgleich und Offline-Lesen: Rezepte, Suche, Kochansicht, Plan ansehen; Hinweis Akku-Optimierung |
+| 7.4 | Abgleich und Offline-Lesen: Rezepte (Suche, Kategorien, Favoriten, Sortierung), Kochansicht (Portionen, Bildschirm bleibt an, Varianten), Plan ansehen, Offline-Hinweis, Abgleich bei Start/Herunterziehen/alle 4 h (WorkManager), Hinweis Akku-Optimierung – App 0.3.0. Lokaler Speicher als eine JSON-Datei im Speicher statt Room (die App liest nur, geändert wird online; spart Room/KSP) |
 | 7.5 | Planen: hinzufügen, Portionen, Notiz, entfernen, verschieben/tauschen |
 | 7.6 | Teilen einer URL, Rezept bearbeiten, Bild per Kamera/Galerie, Variante speichern |
 | 7.6b | Datei-Import: Teilen (`ACTION_SEND`/`_MULTIPLE`, großzügige Typen, Erkennung am Inhalt), „Öffnen mit“ (`ACTION_VIEW`), Knopf „Datei importieren“ (Dateiauswahl), Vorschau, nur online |

@@ -2,6 +2,7 @@ package io.github.thomas1607haja.rezeptplaner.ui.setup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.thomas1607haja.rezeptplaner.BuildConfig
 import io.github.thomas1607haja.rezeptplaner.api.ApiClient
 import io.github.thomas1607haja.rezeptplaner.api.ApiException
 import io.github.thomas1607haja.rezeptplaner.data.ConfigRepository
@@ -44,7 +45,7 @@ class SetupViewModel(
     /** Text aus dem QR-Scanner oder einem geöffneten Link. */
     fun onLink(text: String) {
         _state.value = try {
-            State.Confirm(SetupLink.parse(text))
+            State.Confirm(SetupLink.parse(text, allowLocalHttp = BuildConfig.ALLOW_LOCAL_HTTP))
         } catch (e: InvalidSetupException) {
             State.Choose(e.message)
         }
@@ -64,7 +65,7 @@ class SetupViewModel(
 
     fun onManual(url: String, key: String, cfId: String, cfSecret: String) {
         _state.value = try {
-            State.Confirm(SetupLink.validate(url, key, cfId, cfSecret))
+            State.Confirm(SetupLink.validate(url, key, cfId, cfSecret, allowLocalHttp = BuildConfig.ALLOW_LOCAL_HTTP))
         } catch (e: InvalidSetupException) {
             State.Manual(e.message)
         }

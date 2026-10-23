@@ -60,6 +60,7 @@ class ApiClientTest {
     fun explainsErrors() = runTest {
         assertTrue(errorFor(MockResponse.Builder().code(401).build()).contains("ungültig oder gesperrt"))
         assertTrue(errorFor(MockResponse.Builder().code(404).build()).contains("kein Rezeptplaner"))
+        assertTrue(errorFor(MockResponse.Builder().code(404).body("404: Not Found").build()).contains("Home Assistant"))
         assertTrue(
             errorFor(
                 MockResponse.Builder().code(302)

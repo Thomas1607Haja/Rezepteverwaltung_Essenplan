@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.6.2
+
+- **Adresse für die App prüfen:** Beim Speichern (und per Knopf „Adresse prüfen“) ruft der Rezeptplaner die eingetragene Adresse selbst ab und meldet, ob dort der App-Zugang antwortet – oder ob sie zu Home Assistant, zur Weboberfläche oder ins Leere führt.
+
 ## 0.6.1
 
 - **Einstellungen → App installieren:** Ein neues Handy in zwei Schritten einrichten. Schritt 1 zeigt QR-Codes für Obtainium und den Eintrag des Rezeptplaners darin (Updates automatisch) bzw. die neueste APK direkt, dazu eine Anleitung für das Galaxy A54. Schritt 2 erzeugt erst nach „Neues Gerät verbinden“ einen Schlüssel; der QR-Code zum Verbinden ist nur einmal sichtbar.

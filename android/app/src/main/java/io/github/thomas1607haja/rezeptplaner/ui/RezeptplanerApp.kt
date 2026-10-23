@@ -34,6 +34,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import io.github.thomas1607haja.rezeptplaner.data.SyncTrigger
+import io.github.thomas1607haja.rezeptplaner.sync.SyncWorker
+import io.github.thomas1607haja.rezeptplaner.ui.plan.MealPlanScreen
+import io.github.thomas1607haja.rezeptplaner.ui.recipe.RecipeScreen
+import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipesScreen
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.RezeptplanerApplication
 import io.github.thomas1607haja.rezeptplaner.data.ServerConfig
@@ -51,6 +57,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object RecipesRoute
 @Serializable data object ShoppingRoute
 @Serializable data object SettingsRoute
+
+/** Kochansicht; planServings > 0 = aus dem Essensplan geöffnet. */
+@Serializable data class RecipeRoute(val id: Long, val planServings: Int = 0)
 
 /** Die vier Hauptbereiche in der unteren Leiste, wie in der Weboberfläche. */
 private enum class Section(val route: Any, @StringRes val label: Int, @DrawableRes val icon: Int) {
@@ -116,6 +125,17 @@ fun RezeptplanerApp(pendingLink: String?, onLinkConsumed: () -> Unit) {
             },
         )
     } else {
+        // Einmal je App-Start abgleichen und den Abgleich im Hintergrund
+        // einplanen (bleibt bestehen, bis die Verbindung getrennt wird).
+        val context = LocalContext.current
+        var synced by rememberSaveable { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            if (!synced) {
+                synced = true
+                SyncWorker.schedule(context)
+                app.syncRepository.sync(SyncTrigger.Start)
+            }
+        }
         MainScaffold(onReconnect = { reconnecting = true })
     }
 }
@@ -156,12 +176,27 @@ internal fun MainScaffold(onReconnect: () -> Unit) {
             startDestination = MealPlanRoute,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable<MealPlanRoute> { Placeholder(stringResource(R.string.nav_meal_plan)) }
-            composable<RecipesRoute> { Placeholder(stringResource(R.string.nav_recipes)) }
+            composable<MealPlanRoute> {
+                MealPlanScreen(onOpenRecipe = { id, servings -> navController.navigate(RecipeRoute(id, servings)) })
+            }
+            composable<RecipesRoute> {
+                RecipesScreen(onOpen = { id -> navController.navigate(RecipeRoute(id)) })
+            }
+            composable<RecipeRoute> { entry ->
+                val route = entry.toRoute<RecipeRoute>()
+                RecipeScreen(
+                    recipeId = route.id,
+                    planServings = route.planServings,
+                    onBack = { navController.popBackStack() },
+                    onOpen = { id -> navController.navigate(RecipeRoute(id)) },
+                )
+            }
             composable<ShoppingRoute> { Placeholder(stringResource(R.string.nav_shopping)) }
             composable<SettingsRoute> {
                 SettingsScreen(
-                    viewModel = viewModel { SettingsViewModel(app.configRepository, app.apiClient) },
+                    viewModel = viewModel {
+                        SettingsViewModel(app.configRepository, app.apiClient, app.syncRepository) { SyncWorker.cancel(app) }
+                    },
                     onReconnect = onReconnect,
                 )
             }

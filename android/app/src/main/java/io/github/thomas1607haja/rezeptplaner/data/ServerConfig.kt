@@ -43,7 +43,7 @@ object SetupLink {
      * `rezeptplaner://setup?url=…&key=…[&cf_id=…&cf_secret=…]`
      * (erzeugt in web/src/lib/appSetup.js).
      */
-    fun parse(text: String): ServerConfig {
+    fun parse(text: String, allowLocalHttp: Boolean = false): ServerConfig {
         val uri = runCatching { URI(text.trim()) }.getOrNull()
         if (uri == null || uri.scheme != SCHEME || uri.host != HOST) {
             throw InvalidSetupException("Das ist kein QR-Code zum Verbinden des Rezeptplaners.")
@@ -54,15 +54,27 @@ object SetupLink {
             apiKey = params["key"].orEmpty(),
             cfAccessId = params["cf_id"].orEmpty(),
             cfAccessSecret = params["cf_secret"].orEmpty(),
+            allowLocalHttp = allowLocalHttp,
         )
     }
 
-    /** Prüft die Angaben und liefert sie bereinigt zurück. */
-    fun validate(url: String, apiKey: String, cfAccessId: String = "", cfAccessSecret: String = ""): ServerConfig {
+    /**
+     * Prüft die Angaben und liefert sie bereinigt zurück. [allowLocalHttp]
+     * (nur Debug-Build) erlaubt http für den Testserver auf dem
+     * Entwicklungsrechner (10.0.2.2 aus dem Emulator).
+     */
+    fun validate(
+        url: String,
+        apiKey: String,
+        cfAccessId: String = "",
+        cfAccessSecret: String = "",
+        allowLocalHttp: Boolean = false,
+    ): ServerConfig {
         val cleanUrl = url.trim().trimEnd('/')
         val parsed = runCatching { URI(cleanUrl) }.getOrNull()
+        val localHttp = allowLocalHttp && parsed?.scheme == "http" && parsed.host in setOf("10.0.2.2", "localhost")
         // Nur https: Der API-Schlüssel darf nicht unverschlüsselt durchs Netz.
-        if (parsed == null || parsed.scheme != "https" || parsed.host.isNullOrEmpty() ||
+        if (parsed == null || (parsed.scheme != "https" && !localHttp) || parsed.host.isNullOrEmpty() ||
             parsed.rawQuery != null || parsed.rawFragment != null || parsed.rawUserInfo != null
         ) {
             throw InvalidSetupException("Die Adresse muss mit https:// beginnen, z. B. https://rezepte.example.org.")

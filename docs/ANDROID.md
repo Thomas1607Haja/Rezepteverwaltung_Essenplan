@@ -41,7 +41,7 @@ Oberflächentests ohne Gerät (Robolectric) mit Bildschirmfotos unter `app/build
 ./gradlew recordRoborazziDebug
 ```
 
-**Release-Build vor dem Veröffentlichen auf einem Gerät oder Emulator prüfen.** Nur er wird von R8 verkleinert; Fehler durch fehlende R8-Regeln (z. B. beim QR-Scanner in 0.2.0/0.2.1) zeigen weder Debug-Build noch Unit-Tests. Eigene Regeln stehen in `app/proguard-rules.pro`. Einen verschleierten Stacktrace übersetzt `retrace` mit `app/build/outputs/mapping/release/mapping.txt`.
+**Release-Build vor dem Veröffentlichen auf einem Gerät oder Emulator prüfen** – am einfachsten mit der Variante `qa` (`./gradlew assembleQa`): wie Release mit R8, aber mit Debug-Schlüssel signiert und mit `http` zum Testserver (`http://10.0.2.2:<Port>` aus dem Emulator; Debug und QA erlauben das, Release nur `https`). Nur er wird von R8 verkleinert; Fehler durch fehlende R8-Regeln (z. B. beim QR-Scanner in 0.2.0/0.2.1) zeigen weder Debug-Build noch Unit-Tests. Eigene Regeln stehen in `app/proguard-rules.pro`. Einen verschleierten Stacktrace übersetzt `retrace` mit `app/build/outputs/mapping/release/mapping.txt`.
 
 ## 2. Galaxy A54 per USB verbinden
 

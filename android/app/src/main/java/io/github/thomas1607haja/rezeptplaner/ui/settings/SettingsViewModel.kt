@@ -8,6 +8,7 @@ import io.github.thomas1607haja.rezeptplaner.data.ConfigRepository
 import io.github.thomas1607haja.rezeptplaner.data.InvalidSetupException
 import io.github.thomas1607haja.rezeptplaner.data.ServerConfig
 import io.github.thomas1607haja.rezeptplaner.data.SetupLink
+import io.github.thomas1607haja.rezeptplaner.data.SyncRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +21,8 @@ import kotlinx.coroutines.launch
 class SettingsViewModel(
     private val repository: ConfigRepository,
     private val api: ApiClient,
+    private val sync: SyncRepository,
+    private val stopBackgroundSync: () -> Unit,
 ) : ViewModel() {
 
     /** Ergebnis des letzten Verbindungstests. */
@@ -64,9 +67,12 @@ class SettingsViewModel(
         return null
     }
 
+    /** Trennt die Verbindung: Daten und Bilder auf dem Handy werden gelöscht. */
     fun disconnect() {
         viewModelScope.launch {
+            stopBackgroundSync()
             repository.clear()
+            sync.reset()
             _check.value = Check.None
         }
     }

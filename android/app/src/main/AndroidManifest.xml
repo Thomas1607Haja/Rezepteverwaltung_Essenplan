@@ -12,6 +12,9 @@
     <!-- Zugriff auf den Rezeptplaner. Eine Kamera-Berechtigung braucht es
          nicht: Den QR-Code liest der Scanner der Google Play-Dienste. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Knopf „Akku-Optimierung ausschalten“: Samsung hält sonst den Abgleich
+         im Hintergrund an (siehe ui/settings/SyncCard.kt). -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:name=".RezeptplanerApplication"

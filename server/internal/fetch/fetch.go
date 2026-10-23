@@ -156,3 +156,43 @@ func (c *Client) Get(ctx context.Context, rawURL string, maxBytes int64) (body [
 	}
 	return body, resp.Header.Get("Content-Type"), nil
 }
+
+// Response ist eine Antwort von Probe, unabhängig vom Status.
+type Response struct {
+	Status int
+	Header http.Header
+	Body   []byte // höchstens maxBytes
+}
+
+// Probe ruft rawURL ab wie Get, liefert aber jede Antwort (auch 4xx/5xx)
+// und folgt keiner Weiterleitung – etwa um zu prüfen, was unter einer
+// Adresse antwortet. Die Sperre für Adressen im Heimnetz gilt genauso.
+func (c *Client) Probe(ctx context.Context, rawURL string, maxBytes int64) (Response, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return Response{}, errors.New("ungültige adresse (erwartet http:// oder https://)")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return Response{}, err
+	}
+	req.Header.Set("User-Agent", userAgent)
+
+	// Kopie des Clients mit gleichem Transport (also gleicher Sperre),
+	// aber ohne Weiterleitungen.
+	client := *c.http
+	client.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	resp, err := client.Do(req)
+	if err != nil {
+		if errors.Is(err, ErrForbiddenAddress) {
+			return Response{}, ErrForbiddenAddress
+		}
+		return Response{}, fmt.Errorf("nicht erreichbar: %w", err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBytes))
+	if err != nil {
+		return Response{}, fmt.Errorf("antwort lesen: %w", err)
+	}
+	return Response{Status: resp.StatusCode, Header: resp.Header, Body: body}, nil
+}

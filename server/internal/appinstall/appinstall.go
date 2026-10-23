@@ -118,21 +118,36 @@ func obtainiumURL(repo string) string {
 	return "https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/" + url.QueryEscape(string(config))
 }
 
-// Handler stellt GET /api/v1/app-install bereit.
+// Handler stellt GET /api/v1/app-install und POST /api/v1/app-install/check bereit.
 type Handler struct {
-	links Links
+	links  Links
+	prober prober
 }
 
-// NewHandler erzeugt den Endpunkt für das Repository repo.
-func NewHandler(repo string) *Handler {
-	return &Handler{links: NewLinks(repo)}
+// NewHandler erzeugt die Endpunkte für das Repository repo; p ruft beim
+// Prüfen die Adresse für die App ab.
+func NewHandler(repo string, p prober) *Handler {
+	return &Handler{links: NewLinks(repo), prober: p}
 }
 
-// Register meldet den Endpunkt beim Router an.
+// Register meldet die Endpunkte beim Router an.
 func (h *Handler) Register(mux httpx.Router) {
 	mux.HandleFunc("GET /api/v1/app-install", h.get)
+	mux.HandleFunc("POST /api/v1/app-install/check", h.check)
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, h.links)
+}
+
+// check prüft eine Adresse für die App, Anfrage {"url": "https://…"}.
+func (h *Handler) check(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		URL string `json:"url"`
+	}
+	if err := httpx.ReadJSON(w, r, &in); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, Check(r.Context(), h.prober, in.URL))
 }

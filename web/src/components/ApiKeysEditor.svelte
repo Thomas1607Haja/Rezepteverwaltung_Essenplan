@@ -36,6 +36,8 @@
     .then((s) => (appUrl = savedAppUrl = s.app_url ?? ''))
     .catch((e) => (loadError = `Einstellungen nicht geladen: ${e.message}`));
 
+  let checking = $state(false);
+
   async function saveAppUrl(event) {
     event.preventDefault();
     try {
@@ -46,6 +48,26 @@
     } catch (e) {
       urlMessage = e.message;
       urlIsError = true;
+      return;
+    }
+    // Gleich prüfen, ob dort der App-Zugang antwortet – ein falscher
+    // Hostname fällt sonst erst am Handy auf.
+    await checkAppUrl();
+  }
+
+  async function checkAppUrl() {
+    checking = true;
+    urlMessage = 'Prüfe die Adresse …';
+    urlIsError = false;
+    try {
+      const result = await api.checkAppUrl(appUrl);
+      urlMessage = result.message;
+      urlIsError = !result.ok;
+    } catch (e) {
+      urlMessage = e.message;
+      urlIsError = true;
+    } finally {
+      checking = false;
     }
   }
 
@@ -131,6 +153,9 @@
       oninput={() => (urlMessage = '')}
     />
     <button type="submit" disabled={appUrl.trim() === savedAppUrl}>Speichern</button>
+    <button type="button" disabled={checking || appUrl.trim() === '' || appUrl.trim() !== savedAppUrl} onclick={checkAppUrl}
+      >Adresse prüfen</button
+    >
   </form>
   <p class="hint">Hostname im Cloudflare-Tunnel, der auf Port 8100 zeigt (Anleitung in docs/APP-ZUGANG.md). Einmalig eintragen.</p>
   {#if urlMessage}<p class:error={urlIsError} class:ok={!urlIsError}>{urlMessage}</p>{/if}

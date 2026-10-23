@@ -149,6 +149,8 @@ export const api = {
 
   /** Links zur Installation der Android-App: { apk_url, obtainium_url, … }. */
   appInstall: () => request('GET', '/app-install'),
+  /** Prüft, ob unter url der App-Zugang antwortet: { ok, message }. */
+  checkAppUrl: (url) => request('POST', '/app-install/check', { url }),
 
   /** Version, Arbeitsspeicher und Platzbedarf der Daten. */
   system: () => request('GET', '/system'),

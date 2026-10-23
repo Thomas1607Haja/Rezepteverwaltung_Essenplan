@@ -266,7 +266,7 @@ func registerRoutes(mux httpx.Router, s services) error {
 	homeassistant.NewHandler(s.ha).Register(mux)
 	shopping.NewHandler(shopping.NewStore(s.db, planStore, settingsStore, s.ha)).Register(mux)
 	apikeys.NewHandler(s.keys).Register(mux)
-	appinstall.NewHandler(appinstall.LoadRepository(s.dataDir)).Register(mux)
+	appinstall.NewHandler(appinstall.LoadRepository(s.dataDir), s.fetcher).Register(mux)
 	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist
 	// die Weboberfläche. Die API-Muster oben sind genauer und gewinnen.
 	mux.Handle("GET /", web.Handler())

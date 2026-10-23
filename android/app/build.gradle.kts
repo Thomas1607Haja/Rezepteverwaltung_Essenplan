@@ -65,12 +65,25 @@ android {
             // Debug-Version neben der installierten Release-Version nutzbar.
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            buildConfigField("boolean", "ALLOW_LOCAL_HTTP", "true")
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("release")
+            buildConfigField("boolean", "ALLOW_LOCAL_HTTP", "false")
+        }
+        // Wie release (mit R8), aber mit Debug-Schlüssel und http zum
+        // Testserver im Emulator: zum Prüfen des verkleinerten Builds vor
+        // jedem Release (./gradlew assembleQa). Wird nie veröffentlicht.
+        create("qa") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".qa"
+            versionNameSuffix = "-qa"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            buildConfigField("boolean", "ALLOW_LOCAL_HTTP", "true")
         }
     }
 
@@ -110,6 +123,8 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.coil.compose)
     // QR-Scanner von Google Play-Diensten: braucht keine Kamera-Berechtigung,
     // das Kamerabild sieht nur der Scanner, die App bekommt nur den Text.
     implementation(libs.play.services.code.scanner)

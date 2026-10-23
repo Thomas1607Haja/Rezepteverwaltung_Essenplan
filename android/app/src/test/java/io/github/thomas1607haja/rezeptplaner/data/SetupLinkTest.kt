@@ -59,4 +59,20 @@ class SetupLinkTest {
         val config = SetupLink.validate("https://a.example.org", key)
         assertFalse(config.toString().contains(key))
     }
+
+    @Test
+    fun localHttpOnlyWhenAllowed() {
+        val text = link("url" to "http://10.0.2.2:8100", "key" to key)
+        assertEquals("http://10.0.2.2:8100", SetupLink.parse(text, allowLocalHttp = true).url)
+        try {
+            SetupLink.parse(text)
+            fail("http ohne Freigabe angenommen")
+        } catch (_: InvalidSetupException) {
+        }
+        try {
+            SetupLink.parse(link("url" to "http://rezepte.example.org", "key" to key), allowLocalHttp = true)
+            fail("http für fremde Adresse angenommen")
+        } catch (_: InvalidSetupException) {
+        }
+    }
 }
