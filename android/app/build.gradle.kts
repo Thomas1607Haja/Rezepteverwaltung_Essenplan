@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    // Bildschirmfotos der Oberfläche in JVM-Tests (Robolectric):
+    // ./gradlew recordRoborazziDebug → app/build/outputs/roborazzi/
+    alias(libs.plugins.roborazzi)
 }
 
 val appVersionName = providers.gradleProperty("appVersionName").get()
@@ -76,6 +79,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    testOptions {
+        // Robolectric braucht die Ressourcen der App (Texte, Symbole, Farben).
+        unitTests.isIncludeAndroidResources = true
+        // Robolectric greift für Android 16 auf JDK-Interna zu.
+        unitTests.all { it.jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED") }
+    }
+
     lint {
         // targetSdk 36 ist bewusst gewählt (Zielgeräte mit Android 16).
         disable += "OldTargetApi"
@@ -96,8 +106,23 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.okhttp)
+    // QR-Scanner von Google Play-Diensten: braucht keine Kamera-Berechtigung,
+    // das Kamerabild sieht nur der Scanner, die App bekommt nur den Text.
+    implementation(libs.play.services.code.scanner)
     debugImplementation(libs.compose.ui.tooling)
+    debugImplementation(libs.compose.ui.test.manifest)
 
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(libs.androidx.test.junit)
 }

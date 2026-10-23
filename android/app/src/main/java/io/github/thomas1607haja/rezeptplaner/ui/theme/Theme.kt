@@ -20,10 +20,20 @@ private val LightColors = lightColorScheme(
     onBackground = Color(0xFF1F1D1A),
     surface = Color(0xFFF7F6F3),
     onSurface = Color(0xFF1F1D1A),
+    // Karten, Leisten und Dialoge: weiß bzw. warmes Grau wie --surface im Web
+    // (sonst nimmt Material 3 lila getönte Standardfarben).
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFFFFFFF),
     surfaceContainer = Color(0xFFFFFFFF),
+    surfaceContainerHigh = Color(0xFFFFFFFF),
+    surfaceContainerHighest = Color(0xFFFFFFFF),
     surfaceVariant = Color(0xFFEFEDE8),
     onSurfaceVariant = Color(0xFF6B665E),
-    outline = Color(0xFFE2DFD8),
+    secondary = Color(0xFF6B665E),
+    onSecondary = Color(0xFFFFFFFF),
+    tertiary = Color(0xFF6B665E),
+    outline = Color(0xFFCFCBC2),
+    outlineVariant = Color(0xFFE2DFD8),
     error = Color(0xFFB3261E),
 )
 
@@ -38,10 +48,18 @@ private val DarkColors = darkColorScheme(
     onBackground = Color(0xFFECE9E4),
     surface = Color(0xFF171614),
     onSurface = Color(0xFFECE9E4),
+    surfaceContainerLowest = Color(0xFF211F1C),
+    surfaceContainerLow = Color(0xFF211F1C),
     surfaceContainer = Color(0xFF211F1C),
+    surfaceContainerHigh = Color(0xFF262421),
+    surfaceContainerHighest = Color(0xFF2C2925),
     surfaceVariant = Color(0xFF2C2925),
     onSurfaceVariant = Color(0xFFA39D93),
-    outline = Color(0xFF3A3631),
+    secondary = Color(0xFFA39D93),
+    onSecondary = Color(0xFF1F1D1A),
+    tertiary = Color(0xFFA39D93),
+    outline = Color(0xFF55504A),
+    outlineVariant = Color(0xFF3A3631),
     error = Color(0xFFF2B8B5),
 )
 

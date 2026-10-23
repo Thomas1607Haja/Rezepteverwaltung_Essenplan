@@ -35,6 +35,12 @@ cd /c/Projekte/Rezepteverwaltung_Essenplan/android
 ./gradlew installDebug      # auf das per USB verbundene Handy installieren
 ```
 
+Oberflächentests ohne Gerät (Robolectric) mit Bildschirmfotos unter `app/build/outputs/roborazzi/`:
+
+```bash
+./gradlew recordRoborazziDebug
+```
+
 ## 2. Galaxy A54 per USB verbinden
 
 1. **Samsung-USB-Treiber** für Windows installieren: <https://developer.samsung.com/android-usb-driver> (der Google-Treiber passt nicht).

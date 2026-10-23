@@ -585,7 +585,7 @@ Rezepteverwaltung_Essenplan/
 | 7.1d | Claude-Skill `skills/rezeptplaner-import/` – 7.1 bis 7.1c zusammen als App 0.6.0 |
 | 7.2b | Weboberfläche „Einstellungen → App installieren“: Schritt 1 QR-Codes (Obtainium, Rezeptplaner in Obtainium, APK `releases/latest/download/rezeptplaner.apk`) mit Anleitung für das A54, Repository aus der Option `app_repository`; Schritt 2 „Neues Gerät verbinden“ erzeugt erst dann einen Schlüssel – App 0.6.1 |
 | 7.2 | Android-Grundgerüst (Kotlin, Compose, Material 3, Navigation, kotlinx.serialization; Room, OkHttp, Coil und WorkManager kommen mit den Schritten, die sie brauchen), GitHub Action baut signierte APK; Anleitung [ANDROID.md](ANDROID.md) |
-| 7.3 | Einrichtung per QR-Code, Verbindungstest, Einstellungen (Cloudflare Access), Schlüssel im Android-Keystore |
+| 7.3 | Einrichtung per QR-Code (Google-Code-Scanner ohne Kamera-Berechtigung; auch Direktlink `rezeptplaner://setup` aus der Kamera-App, immer mit Bestätigung der Adresse) oder von Hand, Verbindungstest über `/system` (`api_version`), Einstellungen (Verbindung testen, Cloudflare Access, trennen), Verbindungsdaten verschlüsselt mit Schlüssel im Android-Keystore – App 0.2.0 |
 | 7.4 | Abgleich und Offline-Lesen: Rezepte, Suche, Kochansicht, Plan ansehen; Hinweis Akku-Optimierung |
 | 7.5 | Planen: hinzufügen, Portionen, Notiz, entfernen, verschieben/tauschen |
 | 7.6 | Teilen einer URL, Rezept bearbeiten, Bild per Kamera/Galerie, Variante speichern |

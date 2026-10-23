@@ -9,7 +9,12 @@
       enableOnBackInvokedCallback: vorausschauende Zurück-Geste (Android 13+,
       ab Zielversion 36 ohnehin Standard).
     -->
+    <!-- Zugriff auf den Rezeptplaner. Eine Kamera-Berechtigung braucht es
+         nicht: Den QR-Code liest der Scanner der Google Play-Dienste. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
+        android:name=".RezeptplanerApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
@@ -24,10 +29,19 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- QR-Code zum Verbinden (rezeptplaner://setup?url=…&key=…), z. B.
+                 mit der Kamera-App gescannt. Die App fragt vor dem Speichern nach. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="rezeptplaner" android:host="setup" />
             </intent-filter>
         </activity>
     </application>
