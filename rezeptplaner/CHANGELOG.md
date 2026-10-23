@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.7.1
+
+- **Weniger Daten für die App:** Der App-Zugang komprimiert JSON-Antworten (gzip). Der volle Abgleich mit 500 Rezepten schrumpft von 1,4 MB auf rund 130 KB; das spart vor allem den Upload aus dem Heimnetz.
+
 ## 0.7.0
 
 - **Illustrierte Rezepte:** Die Claude-Skill (Version 2.0) zeichnet ein Bild, wenn die Vorlage kein brauchbares Foto vom Gericht hat, und vergibt einen Titel, wenn keiner da ist (vermerkt in den Notizen). Solche Rezepte tragen in der Übersicht das Kennzeichen „Illustration“; der neue Filter **Illustrationen** findet sie, um sie durch ein Foto zu ersetzen. Ein neu hochgeladenes Bild gilt wieder als Foto.

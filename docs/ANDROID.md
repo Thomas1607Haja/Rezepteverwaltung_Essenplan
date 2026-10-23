@@ -115,7 +115,7 @@ GitHub zeigt geheime Werte nie wieder an und gibt sie nicht an Pull Requests aus
 
 1. `appVersionName` in `android/gradle.properties` erhöhen (z. B. `0.2.0`).
 2. Committen, Tag `android-v0.2.0` setzen und pushen.
-3. Die Action **Android** baut die signierte APK, prüft die Signatur und legt ein GitHub-Release „Android-App 0.2.0“ mit `rezeptplaner-0.2.0.apk` an.
+3. Die Action **Android** baut die signierte APK, prüft die Signatur und legt ein GitHub-Release „Android-App 0.2.0“ an – mit `rezeptplaner.apk` (fester Name für den Link „neueste Version“) und der Claude-Skill `rezeptplaner-import-skill.zip`.
 
 Tags `v…` (ohne `android-`) bleiben der Home-Assistant-App vorbehalten.
 
@@ -148,3 +148,35 @@ Google verlangt schrittweise, dass auf zertifizierten Android-Geräten nur noch 
 - **Für uns vorgesehen:** ein kostenloses **Konto für eingeschränkten Vertrieb** (Studierende/Hobby, ohne Ausweis, ohne Gebühr, bis 20 Geräte) in der Android Developer Console, dort den Paketnamen `io.github.thomas1607haja.rezeptplaner` mit dem Signaturzertifikat registrieren. Rechtzeitig vor der Ausweitung 2027 erledigen; an App und Action ändert sich dafür nichts. **Der Signaturschlüssel ist dafür Voraussetzung** – ohne ihn lässt sich das Paket nicht registrieren.
 
 Quellen: [Android Developers Blog](https://developer.android.com/blog/posts/android-developer-verification-rolling-out-to-all-developers-on-play-console-and-android-developer-console), [Developer Verification](https://developer.android.com/developer-verification), [FAQ](https://developer.android.com/developer-verification/guides/faq).
+
+## 7. Was die App kann und welche Daten auf dem Handy liegen
+
+**Funktionen (App 0.8):**
+
+| Bereich | Offline | Online |
+|---|---|---|
+| Essensplan | lesen (Stand des letzten Abgleichs) | planen, ändern, verschieben/tauschen mit den Warnungen des Servers |
+| Rezepte | suchen, filtern, Kochansicht mit Portionsrechner | anlegen, bearbeiten, Variante, Favorit, löschen |
+| Import | – | Link teilen (Browser, Chefkoch-App), Foto einer Seite (Texterkennung), Datei der Claude-Skill (Teilen, „Öffnen mit“, Dateiauswahl, WhatsApp) |
+| Einkauf | – | Liste der eingekauften Woche / des nächsten Einkaufs, an Bring senden, Differenz nachsenden |
+
+Geändert wird nur online und direkt beim Server; danach gleicht die App ab. Es gibt keine Warteschlange und damit keine Konflikte (PLANUNG.md, Abschnitt 7).
+
+**Abgleich:** beim Start, durch Herunterziehen, nach jeder Änderung und im Hintergrund alle 4 Stunden (WorkManager, nur mit Netz). Geladen werden die Vorschaubilder aller Rezepte und die großen Bilder der eingekauften Woche und des nächsten Einkaufs; andere große Bilder beim ersten Ansehen. Messwerte: PLANUNG.md, „Messung nach Phase 7“.
+
+**Daten auf dem Handy** (nur im App-Speicher, nicht in der Galerie):
+
+| Datei | Inhalt |
+|---|---|
+| `files/snapshot.json` | Rezepte, Plan, Kategorien, Vorrat, Einstellungen – Stand des letzten Abgleichs (500 Rezepte: ca. 1 MB) |
+| `files/images/` | Rezeptbilder (500 Rezepte: ca. 26 MB) |
+| DataStore | Adresse, API-Schlüssel und ggf. Cloudflare-Token, verschlüsselt mit einem Schlüssel im Android-Keystore (`SecureBox`) |
+| `files/sync_log.json` | Zeitpunkte und letzter Fehler der Abgleiche |
+| `files/last_crash.txt` | nur nach einem Absturz: Fehler und Geräteangaben, kein Inhalt und kein Schlüssel; wird nicht automatisch verschickt |
+| `cache/camera/` | Fotos der Kamera-App für Rezeptbild und Foto-Import, bis Android den Cache leert |
+
+Android-Backups sind ausgeschaltet (`allowBackup="false"`). „Verbindung trennen“ in den Einstellungen löscht Snapshot, Bilder und Zugangsdaten.
+
+**Berechtigungen:** nur Internet und die Frage nach der Akku-Optimierung (für den Hintergrund-Abgleich). Kamera und Fotos laufen über die Kamera-App bzw. die Fotoauswahl von Android, ohne eigene Berechtigung. QR-Scanner und Texterkennung kommen von den Google-Play-Diensten und arbeiten auf dem Gerät: Das Kamerabild des Scanners sieht die App nicht, und Fotos für den Foto-Import verlassen das Handy nicht (an den Server geht nur der erkannte Text der Zutatenzeilen und, falls gewählt, das Gerichtfoto).
+
+**Fehlersuche:** `adb logcat -s Rezeptplaner` zeigt Abgleiche („Abgleich (Start): … Daten … ms, … Bilder in … ms“), Texterkennung und Fehler. Abstürze lassen sich ohne USB unter Einstellungen teilen.

@@ -60,6 +60,7 @@ class SyncRepository(
         val cfg = config.config.first() ?: return@withLock null
         store.load()
         _state.update { it.copy(running = true) }
+        val started = now()
         try {
             val old = store.snapshot.value
             val since = old.serverTime.takeIf { old.serverUrl == cfg.url }
@@ -77,7 +78,11 @@ class SyncRepository(
                     offline = false,
                 )
             }
-            fetchImages(cfg, merged)
+            val dataDone = now()
+            val loaded = fetchImages(cfg, merged)
+            // Messwerte für docs/PLANUNG.md (Messung nach Phase 7) und zur Fehlersuche.
+            Log.i(TAG, "Abgleich ($trigger): ${response.recipes.size} Rezepte, ${response.mealPlanEntries.size} Planeinträge geändert; " +
+                "Daten ${dataDone - started} ms, $loaded Bilder in ${now() - dataDone} ms")
             null
         } catch (e: ApiException) {
             Log.w(TAG, "Abgleich fehlgeschlagen ($trigger)", e)
@@ -113,7 +118,7 @@ class SyncRepository(
      * Bricht still ab, wenn die Verbindung wegfällt – beim nächsten
      * Abgleich geht es weiter.
      */
-    private suspend fun fetchImages(cfg: ServerConfig, snapshot: Snapshot) {
+    private suspend fun fetchImages(cfg: ServerConfig, snapshot: Snapshot): Int {
         // Eingekaufte Woche und die folgende (nächster Einkauf).
         val from = snapshot.shoppingPeriod?.from
         val to = snapshot.shoppingPeriod?.to?.let { java.time.LocalDate.parse(it).plusDays(7).toString() }
@@ -123,10 +128,12 @@ class SyncRepository(
         val wanted = snapshot.recipes.flatMap { r ->
             listOfNotNull(r.thumbnail.ifEmpty { null }, r.image.takeIf { it.isNotEmpty() && r.id in planned })
         }
+        var loaded = 0
         for (name in wanted) {
             if (images.has(name)) continue
             try {
                 images.save(name, api.image(cfg, name))
+                loaded++
             } catch (e: ApiException) {
                 if (e.offline) break
                 Log.w(TAG, "Bild $name nicht geladen", e)
@@ -135,6 +142,7 @@ class SyncRepository(
         // Große Bilder anderer Rezepte, die schon einmal angesehen wurden, bleiben.
         val keep = snapshot.recipes.flatMap { listOf(it.thumbnail, it.image) }.filter { it.isNotEmpty() }.toSet()
         images.prune(keep)
+        return loaded
     }
 
     private fun readLog(): SyncLog =

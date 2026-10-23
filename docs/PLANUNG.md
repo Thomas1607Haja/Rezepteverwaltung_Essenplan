@@ -146,6 +146,25 @@ Zeiten und Speicher auf dem Entwicklungsrechner (Windows) gemessen. Die Statushi
 
 Gemessen auf dem Entwicklungsrechner (Windows, Arbeitsspeicher über den Task-Manager-Wert „Arbeitssatz“). Die Einkaufsliste wird bei jedem Abruf neu berechnet; das bleibt weit unter spürbaren Zeiten. Auf dem Green (App 0.3.0) liefen Senden an Bring und Nachsenden ohne spürbare Wartezeit.
 
+**Messung nach Phase 7 (2026-10-23, Server 0.7.1, Android-App 0.8.1):**
+
+| Messgröße | Wert |
+|---|---|
+| APK (signiert, R8) | 5,1 MB (0.1.0: 1,7 MB; Sprünge durch QR-Scanner in 0.2.x und Texterkennung in 0.7.0, beide über die Play-Dienste) |
+| Programmdatei Server Linux/ARM64 | 12,3 MB (gzip: 5,1 MB) |
+| Voller Abgleich, 500 Rezepte und 730 Planeinträge (Server) | ca. 22 ms; 1,4 MB JSON, mit gzip 126 KB (gzip seit 0.7.1, vorher unkomprimiert) |
+| Abgleich ohne Änderungen | ca. 2,5 ms; 4,5 KB mit gzip |
+| Voller Abgleich in der App (Daten einlesen und speichern) | ca. 0,2 s |
+| Bilder beim ersten Abgleich (500 Vorschaubilder + 14 große der beiden Einkaufswochen) | ca. 14 s im Emulator über das lokale Netz |
+| Daten auf dem Handy: `snapshot.json` / Bilder | 0,97 MB / ca. 26 MB (Vorschaubild je Rezept ca. 37 KB) |
+| Kaltstart der App (R8, 500 Rezepte) | ca. 0,4 s |
+| Arbeitsspeicher der App nach Blättern in Rezepten und Plan (PSS) | 79 MB |
+| Texterkennung einer Kochbuchseite (1200 × 1700 px, 17 Zeilen) | 1,7–2,7 s |
+| Arbeitsspeicher Server nach 50 vollen Abgleichen (Spitze inkl. 500 Bild-Uploads) | 43 MB (75 MB) |
+| Hintergrund-Abgleich | alle 4 Stunden (WorkManager), nur mit Netz |
+
+App-Werte im Emulator (Android 16, Profil Galaxy A54, x86_64 mit WHPX) mit dem qa-Build (R8 wie das Release), Speicherplatz mit dem Debug-Build; Server auf dem Entwicklungsrechner (Windows). Die Testdaten erzeugt ein Skript: 500 Rezepte mit je 10 Zutaten, 6 Schritten, 3 Kategorien und einem echten Foto, dazu 730 Planeinträge. Die Dauer stammt aus den Logzeilen der App („Abgleich (…): … Daten … ms, … Bilder in … ms“ und „Texterkennung: …“, sichtbar mit `adb logcat -s Rezeptplaner`). Der erste Abgleich ist der teure: Danach kommen nur Änderungen und neue Bilder. Auf dem A54 über den Cloudflare-Tunnel sind andere Zeiten zu erwarten; Cloudflare komprimiert JSON auf dem Weg zum Handy ohnehin, gzip im Server spart zusätzlich den Upload aus dem Heimnetz und hilft bei direkter Verbindung.
+
 **Test nach Phase 6 (2026-10-21, App 0.4.0, Integration 0.4.2 über HACS auf dem Green):** Discovery und Einrichtung per „Entdeckt“ ok; Kalender „Essensplan“ und Sensor „Heute“ zeigen die richtigen Gerichte; Karte mit Bildern und Kochansicht ok; „Öffnen“ führt zur Weboberfläche, auch ohne Eintrag in der Seitenleiste. Nach der Einrichtung die Seite einmal neu laden (F5). Die Integration fragt den Server nur alle 15 Minuten ab; zusätzliche Last auf dem Green ist nicht spürbar.
 
 **Korrektur Karte (2026-10-22, Integration 0.4.3):** Über den Cloudflare-Tunnel verschwand die Karte zeitweise („Konfigurationsfehler“), lokal nie. Ursache: Während eines Neustarts von Home Assistant ist der Pfad der Kartendatei noch nicht angemeldet und liefert 404. Cloudflare speicherte diesen 404 zwischen und gab Browsern ohne eigenen Header die Vorgabe „4 Stunden behalten“ mit. Behoben durch eine Cloudflare-Cache-Regel (Bypass für den HA-Host, Browser-Cache-TTL „Respect Existing Headers“, Anleitung im README), eine Inhalts-Prüfsumme im Versionsparameter (`?v=0.4.3-<hash>`), eigenes Cache-Control für die Kartendatei und eine Karte, die bei Fehlern „Rezeptplaner nicht erreichbar“ zeigt und nach 30 Sekunden neu lädt. Test im Browser und in der Companion-App über den Tunnel erfolgreich, auch nach HA-Neustart.
@@ -631,7 +650,7 @@ Rezepteverwaltung_Essenplan/
 | 7.6d | (umgesetzt, Server 0.7.0, Skill 2.0) Skill vergibt fehlende Titel und zeichnet Illustrationen, wenn kein brauchbares Foto da ist; Format Version 2 mit `image_kind`, Filter „Illustrationen“ in Web und App |
 | 7.7 | (umgesetzt, App 0.7.0) Foto-Import: „+“ → „Rezept aus Foto“, Seiten per Kamera-App oder aus der Galerie (bis 5 auf einmal, weitere Seiten anhängbar). Texterkennung von ML Kit über die Google-Play-Dienste auf dem Handy (Modell lädt das Handy selbst, APK bleibt klein; Fotos verlassen das Handy nicht). Zeilen werden vorbelegt – Überschriften „Zutaten“/„Zubereitung“ schalten den Abschnitt um, sonst Mengenangabe am Anfang = Zutat, lange Zeile/Satzende = Schritt, erste kurze Zeile = Titel; Seitenzahlen und Schrittnummern werden ignoriert. Korrektur: Art wählen, Zeile antippen; lange drücken markiert den Bereich seit der zuletzt angetippten Zeile. Schritte = Absätze der Texterkennung, Nummern und Silbentrennung am Zeilenende werden aufgelöst. Zutaten zerlegt der Server (gemeinsamer Parser, Vorratsabgleich), ohne Verbindung bleiben die Zeilen als Namen. Optional Gerichtfoto. Weiter im Bearbeiten-Bildschirm als Entwurf. Im Emulator geprüft (debug und qa/R8) mit einer Kochbuchseite aus der Galerie; Kamera steht noch aus (A54). Dazu Filter „Illustrationen“ (7.6d) |
 | 7.8 | (umgesetzt, App 0.8.0) Einkauf wie in der Weboberfläche: Umschalter „Eingekaufte Woche“/„Nächster Einkauf“ (öffnet den nächsten Einkauf, wenn für die eingekaufte Woche nichts mehr zu senden ist), Gerichte mit Grund, warum sie nicht eingehen (Antippen öffnet die Kochansicht mit den Plan-Portionen), Artikel mit Häkchen, „Alle“/„Keine“, „An Bring senden“ immer sichtbar unten; danach Abgleich, damit der Plan „an Bring gesendet“ zeigt. „Nach dem Senden geändert“: Differenz nachsenden, zu viel Gesendetes als Hinweis. Ist keine Bring-Liste gewählt, bietet die App die Listen aus Home Assistant zur Auswahl an (speichert die Einstellung `bring_entity`). Nur online, gerechnet wird auf dem Server. Im Emulator geprüft (debug und qa/R8) mit der Testliste des lokalen Servers |
-| 7.9 | Messungen, Doku |
+| 7.9 | (umgesetzt, Server 0.7.1, App 0.8.1) Messung nach Phase 7 (siehe Ressourcen auf dem Green), daraus gzip für JSON am App-Zugang; Logzeilen für Abgleich und Texterkennung; Doku: README (App, Skill), ANDROID.md Abschnitt 7 (Funktionen und Daten auf dem Handy) |
 | 8. Feinschliff | Statistik, Kategorien-Verwaltung, Erkenntnisse aus dem Alltag | |
 
 ---

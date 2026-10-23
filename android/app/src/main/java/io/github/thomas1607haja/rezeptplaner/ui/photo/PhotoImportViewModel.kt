@@ -2,6 +2,7 @@ package io.github.thomas1607haja.rezeptplaner.ui.photo
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.tasks.Task
@@ -130,8 +131,12 @@ suspend fun recognizeText(context: Context, uri: Uri, page: Int): List<OcrLine> 
     val image = InputImage.fromFilePath(context, uri)
     val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     try {
+        val started = System.currentTimeMillis()
         val text = recognizer.process(image).await()
-        return text.textBlocks.flatMapIndexed { b, block -> block.lines.map { OcrLine(it.text, page, b) } }
+        val lines = text.textBlocks.flatMapIndexed { b, block -> block.lines.map { OcrLine(it.text, page, b) } }
+        // Messwert für docs/PLANUNG.md (Messung nach Phase 7).
+        Log.i("Rezeptplaner", "Texterkennung: ${lines.size} Zeilen in ${System.currentTimeMillis() - started} ms (${image.width}×${image.height})")
+        return lines
     } finally {
         recognizer.close()
     }

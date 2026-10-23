@@ -4,12 +4,13 @@ Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wo
 
 ## Funktionen
 
-- **Rezepte** per URL (z. B. chefkoch.de) oder per Foto importieren, manuell anlegen und frei bearbeiten
+- **Rezepte** per URL (z. B. chefkoch.de), per Foto (Android-App) oder aus einer Datei importieren, manuell anlegen und frei bearbeiten
 - **Essensplan** mit frei scrollbaren Tagen, Planung beliebig weit im Voraus, Verschieben per Drag and Drop
 - **Einkaufsliste** für den aktuellen Einkaufszeitraum, Übertragung an die Bring-App über Home Assistant
 - **Dashboard-Karte** mit dem aktuellen Essensplan in Home Assistant
 - **Kalender und Sensor** in Home Assistant (Integration über HACS)
-- **Android-App** mit Offline-Lesezugriff und Foto-Import (geplant)
+- **Android-App:** Rezepte und Plan auch offline lesen, planen, Rezepte anlegen und bearbeiten, Rezept-Links teilen, Foto-Import mit Texterkennung auf dem Handy, Einkauf an Bring senden
+- **Claude-Skill** „rezeptplaner-import“: erfasst Rezepte aus Fotos (Rezeptkarten, Kochbuchseiten, Zettel) und liefert eine Importdatei; fehlt ein Foto vom Gericht, zeichnet sie eine Illustration
 
 ## Installation
 
@@ -34,6 +35,14 @@ Cloudflare speichert ohne eigene Regel auch Fehlerantworten zwischen und weist B
 2. **Caching → Configuration → Browser Cache TTL:** **Respect Existing Headers**.
 3. Einmalig **Caching → Configuration → Purge Everything**; in der Companion-App unter Einstellungen → Companion-App → Fehlerbehebung den Frontend-Cache zurücksetzen.
 
+### Android-App
+
+In der Weboberfläche unter **Einstellungen → App installieren**: Schritt 1 zeigt QR-Codes für Obtainium (installiert und aktualisiert die App aus den GitHub-Releases), Schritt 2 verbindet das Handy per QR-Code. Damit die App von unterwegs erreichbar ist, braucht der App-Zugang (Port 8100) einen eigenen Hostnamen, z. B. im bestehenden Cloudflare-Tunnel – Anleitung in [docs/APP-ZUGANG.md](docs/APP-ZUGANG.md). Details zur App: [docs/ANDROID.md](docs/ANDROID.md).
+
+### Claude-Skill
+
+Unter **Einstellungen → App installieren → Claude-Skill** liegt die aktuelle Skill zum Herunterladen. In Claude unter Einstellungen → Fähigkeiten → Skills hochladen; danach Fotos von Rezepten in einen Chat geben. Die erzeugte ZIP-Datei in der App per Teilen oder in der Weboberfläche unter **Rezepte → Datei importieren** übernehmen. Format: [docs/importformat.md](docs/importformat.md).
+
 ## Bausteine
 
 | Baustein | Technik |
@@ -47,7 +56,7 @@ Grundsatz: Das System muss so schlank sein, dass es einen Home Assistant Green n
 
 ## Projektstand
 
-Fertig: Rezepte, Essensplan, Einkaufsliste mit Bring, Integration mit Dashboard-Karte. In Arbeit: Android-App. Die vollständige Planung – Architektur, fachliche Regeln, Datenmodell, Bildschirme und Projektphasen – steht in [docs/PLANUNG.md](docs/PLANUNG.md).
+Fertig: Rezepte, Essensplan, Einkaufsliste mit Bring, Integration mit Dashboard-Karte, Android-App, Datei-Import mit Claude-Skill. Als Nächstes: Feinschliff (Statistik, Kategorien verwalten). Die vollständige Planung – Architektur, fachliche Regeln, Datenmodell, Bildschirme und Projektphasen – steht in [docs/PLANUNG.md](docs/PLANUNG.md).
 
 ## Projektstruktur
 
@@ -57,6 +66,7 @@ custom_components/rezeptplaner/  HA-Integration (HACS) mit Dashboard-Karte (fron
 server/                          Go-Backend
 web/                             Weboberfläche
 android/                         Android-App
+skills/                          Claude-Skill „rezeptplaner-import“ (mit Tests)
 docs/                            Planung und Notizen
 ```
 

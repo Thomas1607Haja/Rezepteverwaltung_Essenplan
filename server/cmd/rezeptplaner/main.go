@@ -161,10 +161,11 @@ func run() error {
 	// Zwei getrennte Zugänge auf eigenen Ports:
 	// - Weboberfläche über Ingress (handler oben, Anmeldung durch Home
 	//   Assistant) – Port 8099, nach außen nicht freigegeben.
-	// - App-Zugang: jede Anfrage nur mit gültigem API-Schlüssel.
+	// - App-Zugang: jede Anfrage nur mit gültigem API-Schlüssel; JSON-Antworten
+	//   gzip-komprimiert (mobile Daten, Upload aus dem Heimnetz).
 	servers := []*http.Server{newServer(cfg.ListenAddr, handler)}
 	if cfg.AppAddr != "" {
-		servers = append(servers, newServer(cfg.AppAddr, apikeys.Require(keys, mux)))
+		servers = append(servers, newServer(cfg.AppAddr, httpx.Gzip(apikeys.Require(keys, mux))))
 	}
 
 	// Ports zuerst belegen: Ist einer schon vergeben, bricht der Start hier
