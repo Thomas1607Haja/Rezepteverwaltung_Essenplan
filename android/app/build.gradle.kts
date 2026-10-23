@@ -33,7 +33,10 @@ val signing: Map<String, String> = run {
 
 android {
     namespace = "io.github.thomas1607haja.rezeptplaner"
-    compileSdk = 36
+    // Übersetzt wird gegen das SDK von Android 17, weil die aktuellen
+    // AndroidX-Bibliotheken das verlangen. Das Verhalten der App bestimmt
+    // targetSdk (Android 16); compileSdk macht nur neuere APIs verfügbar.
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "io.github.thomas1607haja.rezeptplaner"
@@ -71,6 +74,11 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    lint {
+        // targetSdk 36 ist bewusst gewählt (Zielgeräte mit Android 16).
+        disable += "OldTargetApi"
     }
 
     buildFeatures {

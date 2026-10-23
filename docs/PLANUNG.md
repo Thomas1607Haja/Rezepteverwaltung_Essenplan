@@ -507,7 +507,7 @@ Vergleich mit den übertragenen Artikeln; Angebot, nur die Differenz nachzusende
 - Abgleich bei App-Start, beim Herunterziehen und regelmäßig im Hintergrund (alle paar Stunden).
 - Offline: Banner „Offline – Stand von …“, Lesen und Kochansicht funktionieren, Bearbeiten, Foto- und Datei-Import sind deaktiviert.
 - Ändern geht nur online und direkt über den Server; die App hat keine Warteschlange für Änderungen und damit keine Konflikte.
-- Zielgeräte: Samsung Galaxy A54 mit Android 16 (One UI). `compileSdk`/`targetSdk` 36, `minSdk` 29 (Android 10, kostet keinen Mehraufwand, getestet wird nur auf 16). Darstellung von Rand zu Rand (`enableEdgeToEdge`, Insets in jedem Bildschirm) und vorausschauende Zurück-Geste (Compose-Navigation, `PredictiveBackHandler`, kein `onBackPressed`).
+- Zielgeräte: Samsung Galaxy A54 mit Android 16 (One UI). `targetSdk` 36 (Verhalten von Android 16), `minSdk` 29 (Android 10, kostet keinen Mehraufwand, getestet wird nur auf 16). `compileSdk` 37, weil die aktuellen AndroidX-Bibliotheken (Compose, Navigation, Core) dagegen übersetzt werden müssen; das ändert am Verhalten der App nichts (geändert 2026-10-23). Darstellung von Rand zu Rand (`enableEdgeToEdge`, Insets in jedem Bildschirm) und vorausschauende Zurück-Geste (Compose-Navigation, `PredictiveBackHandler`, kein `onBackPressed`).
 - Samsung schränkt Hintergrund-Apps stark ein: WorkManager alle 4 Stunden mit Netz; jeder Abgleich wird mit Uhrzeit und Anlass (Start, Herunterziehen, Hintergrund) gespeichert. Liegt der letzte Hintergrund-Abgleich über 12 Stunden zurück und ist die App akku-optimiert, zeigt die App einen Hinweis mit Knopf „Akku-Optimierung ausschalten“ und dem One-UI-Weg (App-Info → Akku → „Nicht eingeschränkt“; Akku → Hintergrundnutzungsgrenzen → „Nie in Standby versetzte Apps“).
 - Verteilung: signierte APK in den GitHub-Releases (Tag `android-v…`, löst den Add-on-Build nicht aus), Updates auf dem Handy über Obtainium.
 
@@ -583,7 +583,7 @@ Rezepteverwaltung_Essenplan/
 | 7.1b | Importformat (`docs/importformat.md`, JSON-Schema), Spalte `source_name` (Migration 009), Datei-Import im Server mit Vorschau |
 | 7.1c | Weboberfläche: „Datei importieren“ in der Rezeptübersicht mit Vorschau; Quelle anzeigen und bearbeiten |
 | 7.1d | Claude-Skill `skills/rezeptplaner-import/` – 7.1 bis 7.1c zusammen als App 0.6.0 |
-| 7.2 | Android-Grundgerüst (Kotlin, Compose, Material 3, Room, OkHttp, kotlinx.serialization, Coil, WorkManager), GitHub Action baut signierte APK |
+| 7.2 | Android-Grundgerüst (Kotlin, Compose, Material 3, Navigation, kotlinx.serialization; Room, OkHttp, Coil und WorkManager kommen mit den Schritten, die sie brauchen), GitHub Action baut signierte APK; Anleitung [ANDROID.md](ANDROID.md) |
 | 7.3 | Einrichtung per QR-Code, Verbindungstest, Einstellungen (Cloudflare Access), Schlüssel im Android-Keystore |
 | 7.4 | Abgleich und Offline-Lesen: Rezepte, Suche, Kochansicht, Plan ansehen; Hinweis Akku-Optimierung |
 | 7.5 | Planen: hinzufügen, Portionen, Notiz, entfernen, verschieben/tauschen |
