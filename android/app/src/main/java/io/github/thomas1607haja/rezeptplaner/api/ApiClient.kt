@@ -83,6 +83,22 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
     suspend fun moveEntry(config: ServerConfig, id: Long, move: MoveRequest): MoveResult =
         send(config, "POST", "/api/v1/meal-plan/$id/move", json.encodeToString(move))
 
+    // Einkauf und Bring
+
+    /** Einkaufsliste der eingekauften Woche bzw. mit [next] des nächsten Einkaufs. */
+    suspend fun shoppingPreview(config: ServerConfig, next: Boolean): ShoppingPreview =
+        get(config, "/api/v1/shopping/preview?period=" + if (next) "next" else "current")
+
+    suspend fun sendShopping(config: ServerConfig, request: ShoppingSend): SendResult =
+        send(config, "POST", "/api/v1/shopping/send", json.encodeToString(request))
+
+    suspend fun homeAssistantStatus(config: ServerConfig): HomeAssistantStatus = get(config, "/api/v1/homeassistant/status")
+
+    /** Wählt die Bring-Liste (Einstellung bring_entity; die anderen bleiben). */
+    suspend fun setBringList(config: ServerConfig, entityId: String) {
+        send<HouseholdSettings>(config, "PUT", "/api/v1/settings", json.encodeToString(mapOf("bring_entity" to entityId)))
+    }
+
     /**
      * Lädt Importdateien hoch (multipart, Feld "file"); Ergebnis ist die
      * Vorschau. [files]: Anzeigename und Inhalt je Datei.
@@ -239,6 +255,8 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
                         "In der Weboberfläche die Adresse für die App prüfen (eigener Hostname, Port 8100)."
                 response.code == 404 && !start.startsWith("{") -> "Unter dieser Adresse antwortet kein Rezeptplaner (oder er ist zu alt)."
                 response.isRedirect -> "Der Server leitet um ($location) – Adresse prüfen."
+                // 502: Home Assistant (Bring) nicht erreichbar, Grund steht in der Antwort.
+                response.code == 502 && start.startsWith("{") -> serverMessage(response)
                 response.code in 500..599 -> "Fehler auf dem Server (${response.code}). Später erneut versuchen."
                 // Prüffehler des Servers, z. B. {"error":"servings: muss mindestens 1 sein"}
                 response.code in 400..499 && start.startsWith("{") -> serverMessage(response)

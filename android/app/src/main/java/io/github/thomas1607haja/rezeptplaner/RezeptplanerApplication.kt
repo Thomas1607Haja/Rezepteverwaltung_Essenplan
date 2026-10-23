@@ -8,6 +8,7 @@ import io.github.thomas1607haja.rezeptplaner.data.ImportRepository
 import io.github.thomas1607haja.rezeptplaner.data.LocalStore
 import io.github.thomas1607haja.rezeptplaner.data.PlanRepository
 import io.github.thomas1607haja.rezeptplaner.data.RecipeRepository
+import io.github.thomas1607haja.rezeptplaner.data.ShoppingRepository
 import io.github.thomas1607haja.rezeptplaner.data.SyncRepository
 import java.io.File
 
@@ -25,6 +26,7 @@ class RezeptplanerApplication : Application() {
         SyncRepository(configRepository, apiClient, localStore, imageStore, File(filesDir, "sync_log.json"))
     }
     val planRepository by lazy { PlanRepository(configRepository, apiClient, syncRepository) }
+    val shoppingRepository by lazy { ShoppingRepository(configRepository, apiClient, syncRepository) }
     val recipeRepository by lazy { RecipeRepository(configRepository, apiClient, syncRepository) }
     val importRepository by lazy { ImportRepository(contentResolver, configRepository, apiClient, syncRepository) }
 

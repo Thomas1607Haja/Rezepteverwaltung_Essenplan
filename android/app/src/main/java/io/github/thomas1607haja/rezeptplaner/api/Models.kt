@@ -217,3 +217,68 @@ data class UrlDraft(
     @SerialName("image_url") val imageUrl: String = "",
     val duplicates: List<DuplicateRecipe> = emptyList(),
 )
+
+// Einkauf (server/internal/shopping): Liste eines Einkaufszeitraums und
+// Senden an Bring über Home Assistant.
+
+@Serializable
+data class ShoppingPreview(
+    val period: Period,
+    val today: String,
+    val entries: List<ShoppingEntry> = emptyList(),
+    val items: List<ShoppingItem> = emptyList(),
+    /** Fehlt noch auf der Bring-Liste (Gerichte nach dem Senden geändert). */
+    val missing: List<ShoppingItem> = emptyList(),
+    /** Zu viel gesendet. */
+    val surplus: List<ShoppingItem> = emptyList(),
+)
+
+@Serializable
+data class ShoppingEntry(
+    val id: Long,
+    val date: String,
+    val slot: String = "dinner",
+    @SerialName("recipe_id") val recipeId: Long? = null,
+    val title: String,
+    val servings: Int = 0,
+    val status: String = "",
+    /** Die Zutaten stehen auf der Liste. */
+    val included: Boolean = false,
+)
+
+@Serializable
+data class ShoppingItem(
+    val key: String,
+    val name: String,
+    /** Mengenangabe als Text, z. B. "500 g + 2 EL"; so geht sie an Bring. */
+    val spec: String = "",
+    val recipes: List<String> = emptyList(),
+)
+
+@Serializable
+data class ShoppingSend(
+    val period: String,
+    val deselected: List<String>,
+    val missing: Boolean = false,
+)
+
+@Serializable
+data class SentItem(val name: String, val spec: String = "", val merged: Boolean = false)
+
+@Serializable
+data class FailedItem(val name: String, val spec: String = "", val error: String = "")
+
+@Serializable
+data class SendResult(
+    val list: String = "",
+    val sent: List<SentItem> = emptyList(),
+    val failed: List<FailedItem> = emptyList(),
+    val entries: Int = 0,
+)
+
+/** To-do-Liste in Home Assistant (Bring). */
+@Serializable
+data class TodoList(@SerialName("entity_id") val entityId: String, val name: String)
+
+@Serializable
+data class HomeAssistantStatus(val mode: String = "", val lists: List<TodoList> = emptyList(), val error: String = "")

@@ -2,7 +2,6 @@ package io.github.thomas1607haja.rezeptplaner.ui
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -44,6 +43,7 @@ import io.github.thomas1607haja.rezeptplaner.ui.importer.ImportScreen
 import io.github.thomas1607haja.rezeptplaner.ui.edit.RecipeEditScreen
 import io.github.thomas1607haja.rezeptplaner.ui.edit.UrlImportScreen
 import io.github.thomas1607haja.rezeptplaner.ui.photo.PhotoImportScreen
+import io.github.thomas1607haja.rezeptplaner.ui.shopping.ShoppingScreen
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.sync.SyncWorker
@@ -327,7 +327,9 @@ internal fun MainScaffold(
                     onVariantCreated = { id -> navController.navigate(EditRecipeRoute(id, freshVariant = true)) },
                 )
             }
-            composable<ShoppingRoute> { Placeholder(stringResource(R.string.nav_shopping)) }
+            composable<ShoppingRoute> {
+                ShoppingScreen(onOpenRecipe = { id, servings -> navController.navigate(RecipeRoute(id, servings)) })
+            }
             composable<SettingsRoute> {
                 SettingsScreen(
                     viewModel = viewModel {
@@ -338,13 +340,5 @@ internal fun MainScaffold(
             }
         }
         }
-    }
-}
-
-/** Platzhalter, bis die Bereiche in den nächsten Schritten gebaut sind. */
-@Composable
-private fun Placeholder(title: String) {
-    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Text(title, style = MaterialTheme.typography.headlineSmall)
     }
 }
