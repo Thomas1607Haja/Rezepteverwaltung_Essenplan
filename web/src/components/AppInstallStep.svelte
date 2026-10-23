@@ -30,7 +30,7 @@
         <QrCode text={links.obtainium_download_url} size={150} label="QR-Code: Obtainium herunterladen" />
       </a>
       <figcaption>
-        <strong>a)</strong> Obtainium herunterladen<br /><small>Datei <code>app-arm64-v8a-release.apk</code></small>
+        <strong>a)</strong> Obtainium herunterladen<br /><small>lädt direkt <code>app-arm64-v8a-release.apk</code></small>
       </figcaption>
     </figure>
     <figure>

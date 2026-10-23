@@ -74,7 +74,9 @@ type Links struct {
 	// Weiterleitungsseite von Obtainium, weil Kamera-Apps Links mit
 	// obtainium:// meist nicht öffnen).
 	ObtainiumURL string `json:"obtainium_url"`
-	// ObtainiumDownloadURL: Obtainium selbst.
+	// ObtainiumDownloadURL: Obtainium selbst, direkt die APK für 64-Bit-ARM
+	// (alle aktuellen Handys, z. B. Galaxy A54) – die Release-Seite
+	// enthält über 30 Dateien.
 	ObtainiumDownloadURL string `json:"obtainium_download_url"`
 }
 
@@ -86,7 +88,7 @@ func NewLinks(repo string) Links {
 		APKURL:               base + "/releases/latest/download/" + APKName,
 		ReleasesURL:          base + "/releases",
 		ObtainiumURL:         obtainiumURL(repo),
-		ObtainiumDownloadURL: "https://github.com/ImranR98/Obtainium/releases/latest",
+		ObtainiumDownloadURL: "https://github.com/ImranR98/Obtainium/releases/latest/download/app-arm64-v8a-release.apk",
 	}
 }
 

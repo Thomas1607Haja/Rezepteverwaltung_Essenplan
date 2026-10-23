@@ -117,7 +117,7 @@ Am einfachsten über die Weboberfläche: **Einstellungen → App installieren �
 
 | QR-Code | Ziel |
 |---|---|
-| Obtainium herunterladen | <https://github.com/ImranR98/Obtainium/releases/latest> → `app-arm64-v8a-release.apk` |
+| Obtainium herunterladen | `https://github.com/ImranR98/Obtainium/releases/latest/download/app-arm64-v8a-release.apk` (64-Bit-ARM, ohne `fdroid`; passt für das A54) |
 | Rezeptplaner in Obtainium eintragen | `https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/<Konfiguration>` – öffnet Obtainium mit fertiger Konfiguration (Repository; Version aus dem Tag `android-v1.2.3` per `versionExtractionRegEx`), dort bestätigen und **Installieren** |
 | APK direkt (ohne Obtainium) | `…/releases/latest/download/rezeptplaner.apk` – immer die neueste APK; die GitHub Action legt sie in jedem Release unter diesem Namen ab |
 
