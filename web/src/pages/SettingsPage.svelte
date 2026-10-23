@@ -67,6 +67,7 @@
       household = await api.updateSettings({
         family_size: Number(household.family_size),
         shopping_day: household.shopping_day,
+        shopping_time: household.shopping_time,
         bring_entity: household.bring_entity,
       });
       saved = JSON.stringify(household);
@@ -97,7 +98,12 @@
             <option {value}>{name}</option>
           {/each}
         </select>
-        <small>Mit ihm beginnt der Einkaufszeitraum (eine Woche)</small>
+        <small>Mit ihm beginnt die eingekaufte Woche</small>
+      </label>
+      <label>
+        <span>Uhrzeit des Einkaufs</span>
+        <input type="time" step="60" bind:value={household.shopping_time} oninput={() => (message = '')} />
+        <small>Ab dieser Uhrzeit gilt am Einkaufstag eingekauft; vorher ist die neue Woche der „nächste Einkauf“</small>
       </label>
       <label>
         <span>Bring-Liste</span>

@@ -114,9 +114,11 @@ class SyncRepository(
      * Abgleich geht es weiter.
      */
     private suspend fun fetchImages(cfg: ServerConfig, snapshot: Snapshot) {
-        val period = snapshot.shoppingPeriod
+        // Eingekaufte Woche und die folgende (nächster Einkauf).
+        val from = snapshot.shoppingPeriod?.from
+        val to = snapshot.shoppingPeriod?.to?.let { java.time.LocalDate.parse(it).plusDays(7).toString() }
         val planned = snapshot.entries
-            .filter { period != null && it.date >= period.from && it.date <= period.to }
+            .filter { from != null && to != null && it.date >= from && it.date <= to }
             .mapNotNull { it.recipeId }.toSet()
         val wanted = snapshot.recipes.flatMap { r ->
             listOfNotNull(r.thumbnail.ifEmpty { null }, r.image.takeIf { it.isNotEmpty() && r.id in planned })

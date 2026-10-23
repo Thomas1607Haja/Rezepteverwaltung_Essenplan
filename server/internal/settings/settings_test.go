@@ -38,7 +38,7 @@ func TestDefaultsAndUpdate(t *testing.T) {
 		t.Errorf("leere Datenbank: %+v, erwartet Standardwerte %+v", got, Defaults)
 	}
 
-	want := Settings{FamilySize: 3, ShoppingDay: "friday", BringEntity: "todo.zuhause"}
+	want := Settings{FamilySize: 3, ShoppingDay: "friday", BringEntity: "todo.zuhause", ShoppingTime: "00:00"}
 	got, err = store.Update(ctx, want)
 	if err != nil {
 		t.Fatal(err)
@@ -136,6 +136,25 @@ func TestAppURLAndPartialUpdate(t *testing.T) {
 	for _, bad := range []string{"rezepte.example.org", "javascript:alert(1)", "https://user:pw@example.org", "https://example.org/?x=1"} {
 		if rec := do(`{"app_url":"` + bad + `"}`); rec.Code != http.StatusBadRequest {
 			t.Errorf("app_url %q: %d, erwartet 400", bad, rec.Code)
+		}
+	}
+}
+
+func TestShoppingTime(t *testing.T) {
+	store := newTestStore(t)
+	ctx := context.Background()
+	s, err := store.Get(ctx)
+	if err != nil || s.ShoppingTime != "00:00" || s.ShoppingCutoff() != 0 {
+		t.Fatalf("Standard: %+v %v", s, err)
+	}
+	s.ShoppingTime = "18:30"
+	if s, err = store.Update(ctx, s); err != nil || s.ShoppingCutoff() != 18*time.Hour+30*time.Minute {
+		t.Fatalf("18:30: %+v %v", s, err)
+	}
+	for _, bad := range []string{"24:00", "18", "6:00", "18:60"} {
+		s.ShoppingTime = bad
+		if _, err := store.Update(ctx, s); err == nil {
+			t.Errorf("%q angenommen", bad)
 		}
 	}
 }

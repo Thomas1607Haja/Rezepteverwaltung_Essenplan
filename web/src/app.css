@@ -12,6 +12,9 @@
   --on-accent: #ffffff;
   --danger: #b3261e;
   --warning: #8a5a00;
+  /* nächster Einkauf im Essensplan (hellblau) */
+  --next-soft: #e4eef8;
+  --next: #4a7fb5;
 
   --radius: 0.6rem;
   --nav-height: 4rem;
@@ -35,6 +38,8 @@
     --on-accent: #1f1d1a;
     --danger: #f2b8b5;
     --warning: #f0c36b;
+    --next-soft: #1c2936;
+    --next: #7fb0e0;
   }
 }
 

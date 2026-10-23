@@ -59,9 +59,34 @@ func TestShoppingPeriod(t *testing.T) {
 	}
 	for _, tt := range tests {
 		today, _ := time.Parse(dateLayout, tt.today)
-		if got := ShoppingPeriod(today, tt.shoppingDay); got != tt.want {
+		if got := ShoppingPeriod(today, tt.shoppingDay, 0); got != tt.want {
 			t.Errorf("ShoppingPeriod(%s, %v) = %+v, erwartet %+v", tt.today, tt.shoppingDay, got, tt.want)
 		}
+	}
+}
+
+// Mit Uhrzeit: Am Einkaufstag gilt vor der Uhrzeit noch die vorige Woche
+// als eingekauft, danach die neue. Einkaufstag Donnerstag, 22.10.2026.
+func TestShoppingPeriodWithTime(t *testing.T) {
+	cutoff := 18 * time.Hour
+	tests := []struct {
+		now  string
+		want Period
+	}{
+		{"2026-10-21 23:59", Period{"2026-10-15", "2026-10-21"}}, // Mittwoch
+		{"2026-10-22 09:30", Period{"2026-10-15", "2026-10-21"}}, // Donnerstag vor 18 Uhr
+		{"2026-10-22 17:59", Period{"2026-10-15", "2026-10-21"}},
+		{"2026-10-22 18:00", Period{"2026-10-22", "2026-10-28"}}, // ab 18 Uhr eingekauft
+		{"2026-10-23 08:00", Period{"2026-10-22", "2026-10-28"}}, // Freitag
+	}
+	for _, tt := range tests {
+		now, _ := time.Parse("2006-01-02 15:04", tt.now)
+		if got := ShoppingPeriod(now, time.Thursday, cutoff); got != tt.want {
+			t.Errorf("ShoppingPeriod(%s) = %+v, erwartet %+v", tt.now, got, tt.want)
+		}
+	}
+	if next := (Period{"2026-10-22", "2026-10-28"}).Next(); next != (Period{"2026-10-29", "2026-11-04"}) {
+		t.Errorf("Next = %+v", next)
 	}
 }
 

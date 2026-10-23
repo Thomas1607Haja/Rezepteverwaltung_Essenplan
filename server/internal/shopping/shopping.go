@@ -11,7 +11,6 @@ import (
 	"slices"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
@@ -119,18 +118,9 @@ func (s *Store) period(ctx context.Context, next bool) (mealplan.Period, string,
 		return mealplan.Period{}, "", err
 	}
 	if next {
-		period = shiftWeek(period)
+		period = period.Next()
 	}
 	return period, s.plan.Today().Format(dateLayout), nil
-}
-
-// shiftWeek verschiebt einen Zeitraum um eine Woche nach hinten.
-func shiftWeek(p mealplan.Period) mealplan.Period {
-	shift := func(date string) string {
-		t, _ := time.Parse(dateLayout, date)
-		return t.AddDate(0, 0, 7).Format(dateLayout)
-	}
-	return mealplan.Period{From: shift(p.From), To: shift(p.To)}
 }
 
 // slotOrder sortiert Mittag- vor Abendessen (alphabetisch wäre es umgekehrt).

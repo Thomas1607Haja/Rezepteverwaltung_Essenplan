@@ -43,16 +43,18 @@ type Response struct {
 	Full bool `json:"full"`
 	// PlanFrom ist der erste Tag des Plans in der App; ältere Einträge
 	// darf sie löschen.
-	PlanFrom        string                   `json:"plan_from"`
-	Today           string                   `json:"today"`
-	ShoppingPeriod  mealplan.Period          `json:"shopping_period"`
-	Recipes         []recipes.Recipe         `json:"recipes"`
-	PlanInfo        []recipes.RecipePlanInfo `json:"plan_info"`
-	MealPlanEntries []mealplan.Entry         `json:"meal_plan_entries"`
-	PantryItems     []pantry.Item            `json:"pantry_items"`
-	TagGroups       []recipes.TagGroup       `json:"tag_groups"`
-	Settings        settings.Settings        `json:"settings"`
-	Deletions       []Deletion               `json:"deletions"`
+	PlanFrom       string          `json:"plan_from"`
+	Today          string          `json:"today"`
+	ShoppingPeriod mealplan.Period `json:"shopping_period"`
+	// NextShoppingPeriod: der nächste Einkauf (folgende Woche).
+	NextShoppingPeriod mealplan.Period          `json:"next_shopping_period"`
+	Recipes            []recipes.Recipe         `json:"recipes"`
+	PlanInfo           []recipes.RecipePlanInfo `json:"plan_info"`
+	MealPlanEntries    []mealplan.Entry         `json:"meal_plan_entries"`
+	PantryItems        []pantry.Item            `json:"pantry_items"`
+	TagGroups          []recipes.TagGroup       `json:"tag_groups"`
+	Settings           settings.Settings        `json:"settings"`
+	Deletions          []Deletion               `json:"deletions"`
 }
 
 // Deletion ist ein gelöschter Datensatz, z. B. {"table": "recipes", "id": 12}.
@@ -116,6 +118,7 @@ func (h *Handler) collect(ctx context.Context, since string) (Response, error) {
 	if resp.ShoppingPeriod, err = h.plan.CurrentPeriod(ctx); err != nil {
 		return Response{}, err
 	}
+	resp.NextShoppingPeriod = resp.ShoppingPeriod.Next()
 	if resp.Recipes, err = h.recipes.ChangedSince(ctx, since); err != nil {
 		return Response{}, err
 	}

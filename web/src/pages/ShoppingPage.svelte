@@ -3,7 +3,10 @@
   import { api } from '../lib/api.js';
   import { dayLabel } from '../lib/format.js';
 
-  let next = $state(false); // false = dieser Einkaufszeitraum, true = der folgende
+  let next = $state(false); // false = eingekaufte Woche, true = nächster Einkauf
+  // Beim Öffnen: Ist für die eingekaufte Woche nichts mehr zu senden,
+  // gleich den nächsten Einkauf zeigen – den plant man dann gerade.
+  let firstLoad = true;
   let preview = $state(null);
   let error = $state('');
   // Abgewählte Artikel (über ihren key). SvelteSet ist eine Menge, deren
@@ -19,6 +22,14 @@
       preview = await api.shoppingPreview(next);
       deselected.clear();
       deselectedMissing.clear();
+      if (firstLoad && !next && preview.items.length === 0 && preview.missing.length === 0) {
+        firstLoad = false;
+        next = true;
+        preview = null;
+        await load();
+        return;
+      }
+      firstLoad = false;
     } catch (e) {
       error = `Einkaufsliste nicht geladen: ${e.message}`;
     }
@@ -98,9 +109,9 @@
 
 <h1>Einkauf</h1>
 
-<div class="period-switch" role="group" aria-label="Einkaufszeitraum">
-  <button type="button" aria-pressed={!next} onclick={() => switchPeriod(false)}>Diese Woche</button>
-  <button type="button" aria-pressed={next} onclick={() => switchPeriod(true)}>Nächste Woche</button>
+<div class="period-switch" role="group" aria-label="Zeitraum">
+  <button type="button" aria-pressed={!next} onclick={() => switchPeriod(false)}>Eingekaufte Woche</button>
+  <button type="button" aria-pressed={next} onclick={() => switchPeriod(true)}>Nächster Einkauf</button>
 </div>
 
 {#if error}

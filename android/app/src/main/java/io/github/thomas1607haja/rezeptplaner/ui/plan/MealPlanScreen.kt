@@ -52,7 +52,11 @@ import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import io.github.thomas1607haja.rezeptplaner.ui.portions
 import kotlinx.coroutines.launch
+import io.github.thomas1607haja.rezeptplaner.api.Period
+import io.github.thomas1607haja.rezeptplaner.ui.theme.nextShoppingColor
+import androidx.compose.ui.graphics.Color
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 /** Ein Tag im Plan mit seinen Einträgen (Mittag vor Abend). */
 data class PlanDay(val date: String, val entries: List<MealPlanEntry>)
@@ -91,7 +95,11 @@ fun MealPlanScreen(
     val todayIndex = days.indexOfFirst { it.date == today.toString() }.coerceAtLeast(0)
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
-    val period = snapshot.shoppingPeriod
+    // Eingekaufte Woche und nächster Einkauf, mit der Uhr des Handys
+    // berechnet (Wechsel zur Einkaufsuhrzeit auch ohne Verbindung).
+    val periods = remember(snapshot.settings, snapshot.today) {
+        shoppingPeriods(snapshot.settings, LocalDateTime.now())
+    }
     // Geöffnete Blätter: Eintrag bearbeiten bzw. verschieben.
     var editing by remember { mutableStateOf<MealPlanEntry?>(null) }
     var moving by remember { mutableStateOf<MealPlanEntry?>(null) }
@@ -101,6 +109,8 @@ fun MealPlanScreen(
 
     Column(Modifier.fillMaxSize()) {
         OfflineBanner(sync.log)
+        // Fest über dem Plan, damit sie beim Öffnen auf „heute“ sichtbar ist.
+        if (periods != null) Legend(periods)
         PullToRefreshBox(
             isRefreshing = sync.running,
             onRefresh = { scope.launch { app.syncRepository.sync(SyncTrigger.Pull) } },
@@ -116,9 +126,14 @@ fun MealPlanScreen(
             } else {
                 LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 80.dp), modifier = Modifier.fillMaxSize()) {
                     items(days, key = { it.date }) { day ->
-                        val inPeriod = period != null && day.date >= period.from && day.date <= period.to
+                        val shading = when {
+                            periods == null -> null
+                            day.date >= periods.bought.from && day.date <= periods.bought.to -> Shading.Bought
+                            day.date >= periods.next.from && day.date <= periods.next.to -> Shading.Next
+                            else -> null
+                        }
                         DayRow(
-                            day, isToday = day.date == today.toString(), inPeriod = inPeriod,
+                            day, isToday = day.date == today.toString(), shading = shading,
                             canAdd = day.date >= today.toString(),
                             onOpenRecipe = onOpenRecipe, onAdd = { onAdd(day.date) }, onEdit = { editing = it },
                         )
@@ -143,17 +158,44 @@ fun MealPlanScreen(
     moving?.let { entry -> MoveSheet(entry, snapshot, today, onDismiss = { moving = null }) }
 }
 
+private enum class Shading { Bought, Next }
+
+@Composable
+private fun Legend(periods: ShoppingPeriods) {
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        LegendItem(MaterialTheme.colorScheme.primaryContainer, "Eingekauft: ${range(periods.bought)}")
+        LegendItem(nextShoppingColor(), "Nächster Einkauf: ${range(periods.next)}")
+    }
+}
+
+@Composable
+private fun LegendItem(color: Color, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(Modifier.size(14.dp).clip(MaterialTheme.shapes.extraSmall).background(color))
+        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+private fun range(p: Period) = "${dayLabel(p.from)}–${dayLabel(p.to)}"
+
 @Composable
 private fun DayRow(
     day: PlanDay,
     isToday: Boolean,
-    inPeriod: Boolean,
+    shading: Shading?,
     canAdd: Boolean,
     onOpenRecipe: (Long, Int) -> Unit,
     onAdd: () -> Unit,
     onEdit: (MealPlanEntry) -> Unit,
 ) {
-    val background = if (inPeriod) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f) else MaterialTheme.colorScheme.background
+    val background = when (shading) {
+        Shading.Bought -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+        Shading.Next -> nextShoppingColor()
+        null -> MaterialTheme.colorScheme.background
+    }
     Column(
         Modifier.fillMaxWidth().background(background).padding(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),

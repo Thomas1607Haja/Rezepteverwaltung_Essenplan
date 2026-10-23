@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.6.3
+
+- **Eingekaufte Woche und nächster Einkauf:** Der Essensplan zeigt die eingekaufte Woche (warm) und die Woche des nächsten Einkaufs (hellblau) mit Legende.
+- Neue Einstellung **Uhrzeit des Einkaufs** (Einstellungen → Haushalt): Erst ab dieser Uhrzeit gilt am Einkaufstag die neue Woche als eingekauft; vorher ist sie der nächste Einkauf.
+- Einkaufsseite: Schalter „Eingekaufte Woche / Nächster Einkauf“; sie öffnet direkt den nächsten Einkauf, wenn für die eingekaufte Woche nichts mehr zu senden ist.
+
 ## 0.6.2
 
 - **Adresse für die App prüfen:** Beim Speichern (und per Knopf „Adresse prüfen“) ruft der Rezeptplaner die eingetragene Adresse selbst ab und meldet, ob dort der App-Zugang antwortet – oder ob sie zu Home Assistant, zur Weboberfläche oder ins Leere führt.

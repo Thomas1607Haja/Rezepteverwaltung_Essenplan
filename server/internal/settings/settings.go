@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +27,10 @@ type Settings struct {
 	// BringEntity ist die To-do-Entität in Home Assistant, an die die
 	// Einkaufsliste geht, z. B. "todo.zuhause"; leer = noch nicht gewählt.
 	BringEntity string `json:"bring_entity"`
+	// ShoppingTime: Ab dieser Uhrzeit ("18:00") gilt am Einkaufstag der
+	// neue Zeitraum als eingekauft; vorher ist er der „nächste Einkauf“.
+	// "00:00" = gleich ab Mitternacht (Standard).
+	ShoppingTime string `json:"shopping_time"`
 	// AppURL ist die Adresse, unter der die Android-App den App-Zugang
 	// erreicht, z. B. "https://rezepte.example.org" (Cloudflare-Tunnel).
 	// Der Server kann sie nicht selbst kennen; sie steht im QR-Code beim
@@ -34,13 +39,25 @@ type Settings struct {
 }
 
 // Defaults gelten, solange nichts gespeichert ist.
-var Defaults = Settings{FamilySize: 4, ShoppingDay: "saturday"}
+var Defaults = Settings{FamilySize: 4, ShoppingDay: "saturday", ShoppingTime: "00:00"}
+
+// shoppingTime prüft die Uhrzeit, z. B. "18:00".
+var shoppingTime = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
 
 // weekdays ordnet die Namen den Wochentagen von Go zu (Sonntag = 0).
 var weekdays = map[string]time.Weekday{
 	"sunday": time.Sunday, "monday": time.Monday, "tuesday": time.Tuesday,
 	"wednesday": time.Wednesday, "thursday": time.Thursday,
 	"friday": time.Friday, "saturday": time.Saturday,
+}
+
+// ShoppingCutoff ist die Uhrzeit des Einkaufs als Dauer seit Mitternacht.
+func (s Settings) ShoppingCutoff() time.Duration {
+	var h, m int
+	if _, err := fmt.Sscanf(s.ShoppingTime, "%d:%d", &h, &m); err != nil {
+		return 0
+	}
+	return time.Duration(h)*time.Hour + time.Duration(m)*time.Minute
 }
 
 // ShoppingWeekday liefert den Einkaufstag als time.Weekday.
@@ -65,6 +82,9 @@ func (s Settings) validate() error {
 	// Bei einer Map liefert der zweite Rückgabewert, ob es den Schlüssel gibt.
 	if _, ok := weekdays[s.ShoppingDay]; !ok {
 		return &ValidationError{"shopping_day", "muss ein englischer wochentag sein, z. b. saturday"}
+	}
+	if !shoppingTime.MatchString(s.ShoppingTime) {
+		return &ValidationError{"shopping_time", "muss eine uhrzeit wie 18:00 sein"}
 	}
 	if s.AppURL != "" {
 		u, err := url.Parse(s.AppURL)
@@ -118,6 +138,10 @@ func (s *Store) Get(ctx context.Context) (Settings, error) {
 			result.BringEntity = value
 		case "app_url":
 			result.AppURL = value
+		case "shopping_time":
+			if shoppingTime.MatchString(value) {
+				result.ShoppingTime = value
+			}
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -130,6 +154,9 @@ func (s *Store) Get(ctx context.Context) (Settings, error) {
 func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
 	// Ohne Schrägstrich am Ende, damit die App einfach "/api/v1/…" anhängt.
 	in.AppURL = strings.TrimRight(strings.TrimSpace(in.AppURL), "/")
+	if in.ShoppingTime == "" {
+		in.ShoppingTime = Defaults.ShoppingTime
+	}
 	if err := in.validate(); err != nil {
 		return Settings{}, err
 	}
@@ -142,10 +169,11 @@ func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
 	defer tx.Rollback()
 
 	values := map[string]string{
-		"family_size":  strconv.Itoa(in.FamilySize),
-		"shopping_day": in.ShoppingDay,
-		"bring_entity": in.BringEntity,
-		"app_url":      in.AppURL,
+		"family_size":   strconv.Itoa(in.FamilySize),
+		"shopping_day":  in.ShoppingDay,
+		"bring_entity":  in.BringEntity,
+		"app_url":       in.AppURL,
+		"shopping_time": in.ShoppingTime,
 	}
 	for key, value := range values {
 		// "Upsert": neu anlegen oder, falls der Schlüssel schon existiert,

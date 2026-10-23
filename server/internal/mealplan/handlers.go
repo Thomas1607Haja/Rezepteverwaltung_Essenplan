@@ -28,12 +28,13 @@ func (h *Handler) Register(mux httpx.Router) {
 	mux.HandleFunc("POST /api/v1/meal-plan/{id}/move", h.move)
 }
 
-// listResponse enthält neben den Einträgen den heutigen Tag und den
-// aktuellen Einkaufszeitraum, beides aus Sicht des Servers.
+// listResponse enthält neben den Einträgen den heutigen Tag, die
+// eingekaufte Woche und den nächsten Einkauf, alles aus Sicht des Servers.
 type listResponse struct {
-	Entries        []Entry `json:"entries"`
-	Today          string  `json:"today"`
-	ShoppingPeriod Period  `json:"shopping_period"`
+	Entries            []Entry `json:"entries"`
+	Today              string  `json:"today"`
+	ShoppingPeriod     Period  `json:"shopping_period"`
+	NextShoppingPeriod Period  `json:"next_shopping_period"`
 }
 
 // list liefert die Einträge eines Zeitraums: ?from=2026-10-17&to=2026-10-23.
@@ -55,9 +56,10 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, listResponse{
-		Entries:        entries,
-		Today:          h.store.Today().Format(dateLayout),
-		ShoppingPeriod: period,
+		Entries:            entries,
+		Today:              h.store.Today().Format(dateLayout),
+		ShoppingPeriod:     period,
+		NextShoppingPeriod: period.Next(),
 	})
 }
 

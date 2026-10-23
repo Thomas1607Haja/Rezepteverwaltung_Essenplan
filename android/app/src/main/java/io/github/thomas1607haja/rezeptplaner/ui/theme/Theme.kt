@@ -63,6 +63,13 @@ private val DarkColors = darkColorScheme(
     error = Color(0xFFF2B8B5),
 )
 
+/** Hintergrund der Tage des nächsten Einkaufs im Plan (hellblau wie --next-soft im Web). */
+val NextShoppingLight = Color(0xFFE4EEF8)
+val NextShoppingDark = Color(0xFF1C2936)
+
+@Composable
+fun nextShoppingColor(): Color = if (isSystemInDarkTheme()) NextShoppingDark else NextShoppingLight
+
 @Composable
 fun RezeptplanerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

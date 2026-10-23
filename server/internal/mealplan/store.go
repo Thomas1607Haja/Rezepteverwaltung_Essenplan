@@ -42,13 +42,15 @@ func (s *Store) Today() time.Time {
 	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 }
 
-// CurrentPeriod ist der Einkaufszeitraum, in dem heute liegt.
+// CurrentPeriod ist der Einkaufszeitraum („eingekaufte Woche“), in dem
+// der jetzige Zeitpunkt liegt – mit Einkaufstag und Uhrzeit aus den
+// Einstellungen.
 func (s *Store) CurrentPeriod(ctx context.Context) (Period, error) {
 	st, err := s.settings.Get(ctx)
 	if err != nil {
 		return Period{}, err
 	}
-	return ShoppingPeriod(s.Today(), st.ShoppingWeekday()), nil
+	return ShoppingPeriod(s.now(), st.ShoppingWeekday(), st.ShoppingCutoff()), nil
 }
 
 // selectEntry ist der gemeinsame Anfang aller Abfragen; scanEntry liest

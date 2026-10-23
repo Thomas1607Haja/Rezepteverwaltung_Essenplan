@@ -200,6 +200,10 @@ CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" ./cmd/
 
 - Ein fester Einkaufstag in den Einstellungen bestimmt den Einkaufszeitraum (z. B. Samstag bis Freitag).
 - Die Einkaufsliste umfasst immer nur diesen einen Zeitraum.
+- **Eingekaufte Woche und nächster Einkauf** (geändert 2026-10-23): Die eingekaufte Woche beginnt am letzten Einkaufstag, und zwar erst ab der **Uhrzeit des Einkaufs** (Einstellung `shopping_time`, Standard 00:00). Beispiel Donnerstag 18:00: Bis Donnerstag 17:59 gilt die Vorwoche als eingekauft, Donnerstag bis Mittwoch ist der **nächste Einkauf**, den man gerade plant. Ab 18:00 wechselt beides.
+- Plan in Web und App: eingekaufte Woche warm hervorgehoben, nächster Einkauf hellblau, mit Legende. Die App berechnet beide Zeiträume selbst aus Einkaufstag und Uhrzeit, damit der Wechsel auch ohne Verbindung pünktlich passiert.
+- Einkaufsseite: Schalter „Eingekaufte Woche / Nächster Einkauf“. Sie öffnet „Nächster Einkauf“, wenn für die eingekaufte Woche nichts mehr zu senden ist.
+- Warnregeln beim Verschieben beziehen sich auf die eingekaufte Woche.
 
 ### Status eines Planeintrags
 
@@ -377,6 +381,7 @@ Schlüssel-Wert-Speicher, u. a.:
 
 - `family_size`
 - `shopping_day` (englischer Wochentag, z. B. `saturday`)
+- `shopping_time` (Uhrzeit des Einkaufs, z. B. `18:00`; ab dann gilt am Einkaufstag eingekauft)
 - `bring_entity` (To-do-Entität der Bring-Liste in Home Assistant)
 - `app_url` (Adresse, unter der die Android-App den App-Zugang erreicht, z. B. `https://rezepte.example.org`; steht im QR-Code)
 

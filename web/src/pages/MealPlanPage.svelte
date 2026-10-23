@@ -19,9 +19,11 @@
   let to = $state('');
   // Einträge je Tag: { "2026-10-21": [entry, …] }
   let entriesByDate = $state({});
-  // Heute und Einkaufszeitraum laut Server (Zeitzone von Home Assistant).
+  // Heute, eingekaufte Woche und nächster Einkauf laut Server (Zeitzone
+  // von Home Assistant, Einkaufstag und -uhrzeit aus den Einstellungen).
   let today = $state(todayString());
   let period = $state(null);
+  let nextPeriod = $state(null);
   let error = $state('');
 
   let strip; // der waagerecht scrollende Streifen (bind:this)
@@ -44,6 +46,7 @@
     const result = await api.mealPlan(start, end);
     today = result.today;
     period = result.shopping_period;
+    nextPeriod = result.next_shopping_period ?? null;
     for (let d = start; d <= end; d = addDays(d, 1)) entriesByDate[d] = [];
     for (const entry of result.entries) entriesByDate[entry.date].push(entry);
   }
@@ -227,6 +230,8 @@
     dropTarget?.type === 'append' && dropTarget.date === date && dropTarget.slot === slot;
 
   const inPeriod = (date) => period && date >= period.from && date <= period.to;
+  const inNext = (date) => nextPeriod && date >= nextPeriod.from && date <= nextPeriod.to;
+  const range = (p) => `${dayLabel(p.from).weekday} ${dayLabel(p.from).date}–${dayLabel(p.to).weekday} ${dayLabel(p.to).date}`;
   const lunch = (date) => entriesByDate[date]?.filter((e) => e.slot === 'lunch') ?? [];
   const dinner = (date) => entriesByDate[date]?.filter((e) => e.slot === 'dinner') ?? [];
 </script>
@@ -244,7 +249,10 @@
   </div>
 </div>
 {#if period}
-  <p class="legend"><span class="swatch"></span> Einkaufszeitraum</p>
+  <p class="legend">
+    <span class="item"><span class="swatch"></span> Eingekauft: {range(period)}</span>
+    {#if nextPeriod}<span class="item"><span class="swatch next"></span> Nächster Einkauf: {range(nextPeriod)}</span>{/if}
+  </p>
 {/if}
 
 {#if error}
@@ -260,7 +268,7 @@
   {#each days as date (date)}
     {@const label = dayLabel(date)}
     {@const lunchEntries = lunch(date)}
-    <section class="day" class:today={date === today} class:period={inPeriod(date)} class:past={date < today} data-date={date}>
+    <section class="day" class:today={date === today} class:period={inPeriod(date)} class:next={inNext(date)} class:past={date < today} data-date={date}>
       <header class="day-head">
         <span class="weekday">{label.weekday}</span>
         <span class="date">{label.date}</span>
@@ -357,11 +365,18 @@
 
   .legend {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.4rem 1rem;
     margin: 0.5rem 0 0.75rem;
     font-size: 0.8rem;
     color: var(--text-muted);
+  }
+
+  .legend .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
   }
 
   .swatch {
@@ -370,6 +385,11 @@
     border-radius: 0.2rem;
     background: var(--accent-soft);
     border: 1px solid var(--accent);
+  }
+
+  .swatch.next {
+    background: var(--next-soft);
+    border-color: var(--next);
   }
 
   .error {
@@ -415,6 +435,10 @@
 
   .day.period {
     background: var(--accent-soft);
+  }
+
+  .day.next {
+    background: var(--next-soft);
   }
 
   .day.today {

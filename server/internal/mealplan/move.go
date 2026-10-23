@@ -186,7 +186,7 @@ func checkMove(e *movingEntry, period Period) (Warning, bool) {
 	switch {
 	case e.status == StatusPlanned && !wasIn && isIn:
 		return Warning{WarnPlannedIntoPeriod, e.id,
-			fmt.Sprintf("„%s“ rutscht in den aktuellen Einkaufszeitraum, die Zutaten sind aber noch nicht eingekauft.", e.label)}, true
+			fmt.Sprintf("„%s“ rutscht in die eingekaufte Woche, die Zutaten sind aber noch nicht eingekauft.", e.label)}, true
 	case e.status == StatusTransferred && wasIn && !isIn:
 		return Warning{WarnTransferredOutOfPeriod, e.id,
 			fmt.Sprintf("Die Zutaten für „%s“ sind schon eingekauft und halten sich vielleicht nicht so lange.", e.label)}, true

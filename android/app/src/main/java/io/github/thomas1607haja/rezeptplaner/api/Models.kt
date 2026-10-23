@@ -79,6 +79,8 @@ data class Period(val from: String, val to: String)
 data class HouseholdSettings(
     @SerialName("family_size") val familySize: Int = 4,
     @SerialName("shopping_day") val shoppingDay: String = "saturday",
+    /** Ab dieser Uhrzeit gilt am Einkaufstag eingekauft ("18:00"). */
+    @SerialName("shopping_time") val shoppingTime: String = "00:00",
 )
 
 @Serializable
