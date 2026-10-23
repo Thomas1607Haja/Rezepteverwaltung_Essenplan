@@ -254,6 +254,8 @@ Es wird nicht ausgelesen, was in Bring tatsächlich abgehakt wurde.
 
 Alle Tabellen erhalten zusätzlich `updated_at` für den Abgleich mit der App.
 
+Die einzeln abgeglichenen Tabellen (`recipes`, `meal_plan_entries`, `pantry_items`, `tags`) vergeben IDs mit `AUTOINCREMENT` (seit Migration 008, App 0.5.1): Eine gelöschte ID kommt nie wieder, so können sich Löschung und Neuanlage beim Abgleich nicht in die Quere kommen.
+
 ### `recipes`
 
 | Feld | Typ | Bemerkung |
@@ -564,7 +566,7 @@ Rezepteverwaltung_Essenplan/
 
 - ~~**Bring-Mengenangabe**~~ – geklärt 2026-10-21: Die Beschreibung (`description`) eines To-do-Eintrags wird in Bring zur Spezifikation. Senden (18 Artikel in die gewählte Liste) und Nachsenden der Differenz auf dem Green mit App 0.3.0 getestet: ok.
 
-- **IDs nach dem Löschen (für Phase 7 klären):** SQLite vergibt die ID des zuletzt angelegten Datensatzes nach dem Löschen erneut (kein `AUTOINCREMENT`). Beim Abgleich können „Rezept 12 gelöscht“ (deletions) und „Rezept 12 neu“ aufeinandertreffen. Lösung vor dem Abgleich-Endpunkt festlegen: `AUTOINCREMENT` für die abgeglichenen Tabellen oder Reihenfolge über Zeitstempel (Löschung vor Neuanlage).
+- ~~**IDs nach dem Löschen**~~ – geklärt 2026-10-23: `AUTOINCREMENT` für die abgeglichenen Tabellen (Migration 008, App 0.5.1). Der Zähler startet hinter der größten ID, auch hinter bereits gelöschten aus `deletions`.
 
 ## 12. Mögliche spätere Erweiterungen
 

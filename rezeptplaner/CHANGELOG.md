@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.5.1
+
+- Vorbereitung für die Android-App: Rezepte, Planeinträge, Vorrat und Kategorien bekommen nach dem Löschen nie wieder dieselbe Nummer, damit der spätere Abgleich mit der App eindeutig bleibt. Die Datenbank wird beim ersten Start einmalig umgestellt; vorhandene Daten bleiben erhalten.
+
 ## 0.5.0
 
 - **Rezeptvarianten:** „Variante speichern“ in der Rezeptansicht legt eine Kopie als eigenes Rezept an (mit Zutaten, Schritten, Kategorien und eigenem Bild) und öffnet sie gleich zum Bearbeiten. Varianten bleiben mit dem Ursprungsrezept verbunden: Mini-Kacheln aller Varianten direkt unter dem Titel (seitwärts scrollbar), Hinweis „Variante von …“, Kennzeichen in der Übersicht. Wird das Ursprungsrezept gelöscht, bleiben die Varianten erhalten.

@@ -68,9 +68,18 @@ type migration struct {
 // erreichte Schemaversion zurück. Die aktuelle Version merkt sich SQLite
 // selbst in PRAGMA user_version.
 func Migrate(ctx context.Context, db *sql.DB) (int, error) {
+	return migrateTo(ctx, db, -1)
+}
+
+// migrateTo spielt Migrationen bis einschließlich Version target ein
+// (-1 = alle). Tests nutzen das, um Daten in einem älteren Schema anzulegen.
+func migrateTo(ctx context.Context, db *sql.DB, target int) (int, error) {
 	migrations, err := loadMigrations()
 	if err != nil {
 		return 0, err
+	}
+	if target >= 0 && target < len(migrations) {
+		migrations = migrations[:target]
 	}
 
 	var current int
@@ -118,8 +127,26 @@ func loadMigrations() ([]migration, error) {
 
 // applyMigration führt eine Migration in einer Transaktion aus: entweder
 // wird sie vollständig eingespielt oder gar nicht.
+//
+// Fremdschlüssel sind währenddessen abgeschaltet, damit eine Migration
+// Tabellen neu anlegen und umkopieren kann (DROP TABLE würde sonst per
+// ON DELETE CASCADE abhängige Zeilen mitlöschen). Vor dem Commit prüft
+// foreign_key_check, dass alle Verweise noch stimmen.
 func applyMigration(ctx context.Context, db *sql.DB, m migration) error {
-	tx, err := db.BeginTx(ctx, nil)
+	// Das PRAGMA gilt je Verbindung und wirkt nicht innerhalb einer
+	// Transaktion; deshalb eine feste Verbindung und vor BeginTx setzen.
+	conn, err := db.Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("migration %s: %w", m.name, err)
+	}
+	defer conn.Close()
+	if _, err := conn.ExecContext(ctx, "PRAGMA foreign_keys = OFF"); err != nil {
+		return fmt.Errorf("migration %s: %w", m.name, err)
+	}
+	// Die Verbindung geht danach zurück in den Pool und muss wieder prüfen.
+	defer conn.ExecContext(context.Background(), "PRAGMA foreign_keys = ON")
+
+	tx, err := conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("migration %s: %w", m.name, err)
 	}
@@ -128,6 +155,18 @@ func applyMigration(ctx context.Context, db *sql.DB, m migration) error {
 	defer tx.Rollback()
 
 	if _, err := tx.ExecContext(ctx, m.sql); err != nil {
+		return fmt.Errorf("migration %s: %w", m.name, err)
+	}
+	// foreign_key_check liefert je verletztem Verweis eine Zeile.
+	var table string
+	var rowid sql.NullInt64
+	var parent string
+	var fkid int
+	err = tx.QueryRowContext(ctx, "PRAGMA foreign_key_check").Scan(&table, &rowid, &parent, &fkid)
+	if err == nil {
+		return fmt.Errorf("migration %s: verweis in %s (zeile %d) auf %s fehlt", m.name, table, rowid.Int64, parent)
+	}
+	if err != sql.ErrNoRows {
 		return fmt.Errorf("migration %s: %w", m.name, err)
 	}
 	// PRAGMA erlaubt keine ?-Platzhalter. version ist eine Zahl aus

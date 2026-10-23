@@ -26,8 +26,8 @@ func TestMigrateCreatesSchemaAndTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Migrate: %v", err)
 	}
-	if version != 7 {
-		t.Errorf("version = %d, erwartet 7", version)
+	if version != 8 {
+		t.Errorf("version = %d, erwartet 8", version)
 	}
 
 	// 8 Hauptzutat + 2 Geschmack + 8 Art + 5 Eigenschaften
@@ -53,8 +53,8 @@ func TestMigrateTwiceChangesNothing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("zweite Migration: %v", err)
 	}
-	if version != 7 {
-		t.Errorf("version = %d, erwartet 7", version)
+	if version != 8 {
+		t.Errorf("version = %d, erwartet 8", version)
 	}
 }
 
@@ -172,5 +172,97 @@ func TestDeletingRecipeKeepsPlanEntries(t *testing.T) {
 	if _, err := db.ExecContext(ctx, `INSERT INTO meal_plan_entries (date, servings, created_at, updated_at)
 	                                   VALUES ('2026-10-26', 4, ?, ?)`, now, now); err == nil {
 		t.Error("Eintrag ohne Rezept und Notiz wurde angenommen")
+	}
+}
+
+func TestAutoincrementMigrationKeepsDataAndIDs(t *testing.T) {
+	ctx := context.Background()
+	db := openTestDB(t)
+	if _, err := migrateTo(ctx, db, 7); err != nil {
+		t.Fatalf("Migration bis 7: %v", err)
+	}
+	mustExec := func(query string, args ...any) {
+		t.Helper()
+		if _, err := db.ExecContext(ctx, query, args...); err != nil {
+			t.Fatalf("%s: %v", query, err)
+		}
+	}
+	now := "2026-10-23T10:00:00.000Z"
+	mustExec(`INSERT INTO recipes (id, title, base_servings, created_at, updated_at) VALUES (1, 'Lasagne', 4, ?, ?)`, now, now)
+	mustExec(`INSERT INTO recipes (id, title, base_servings, created_at, updated_at, parent_recipe_id)
+	          VALUES (2, 'Lasagne (Variante)', 4, ?, ?, 1)`, now, now)
+	mustExec(`INSERT INTO recipe_ingredients (recipe_id, position, name, updated_at) VALUES (1, 1, 'Nudelplatten', ?)`, now)
+	mustExec(`INSERT INTO recipe_tags (recipe_id, tag_id, updated_at) VALUES (1, 3, ?)`, now)
+	mustExec(`INSERT INTO meal_plan_entries (id, date, recipe_id, servings, created_at, updated_at)
+	          VALUES (1, '2026-10-24', 1, 4, ?, ?)`, now, now)
+	mustExec(`INSERT INTO transferred_items (entry_id, period_from, item_key, ingredient_name, sent, transferred_at)
+	          VALUES (1, '2026-10-24', 'nudelplatten', 'Nudelplatten', 1, ?)`, now)
+	// Rezept 3 war das neueste und ist gelöscht; ohne AUTOINCREMENT käme
+	// seine ID beim nächsten Rezept wieder.
+	mustExec(`INSERT INTO deletions (table_name, record_id, deleted_at) VALUES ('recipes', 3, ?)`, now)
+
+	version, err := Migrate(ctx, db)
+	if err != nil {
+		t.Fatalf("Migration 8: %v", err)
+	}
+	if version != 8 {
+		t.Fatalf("version = %d, erwartet 8", version)
+	}
+
+	count := func(query string) int {
+		t.Helper()
+		var n int
+		if err := db.QueryRowContext(ctx, query).Scan(&n); err != nil {
+			t.Fatalf("%s: %v", query, err)
+		}
+		return n
+	}
+	// Nichts darf per ON DELETE CASCADE / SET NULL verloren gehen.
+	checks := map[string]int{
+		"SELECT count(*) FROM recipes":                                       2,
+		"SELECT count(*) FROM recipes WHERE id = 2 AND parent_recipe_id = 1": 1,
+		"SELECT count(*) FROM recipe_ingredients WHERE recipe_id = 1":        1,
+		"SELECT count(*) FROM recipe_tags WHERE recipe_id = 1":               1,
+		"SELECT count(*) FROM meal_plan_entries WHERE recipe_id = 1":         1,
+		"SELECT count(*) FROM transferred_items WHERE entry_id = 1":          1,
+		"SELECT count(*) FROM tags":                                          23,
+		"SELECT count(*) FROM pantry_items":                                  5,
+	}
+	for query, want := range checks {
+		if got := count(query); got != want {
+			t.Errorf("%s = %d, erwartet %d", query, got, want)
+		}
+	}
+
+	// Neues Rezept bekommt nicht die gelöschte ID 3.
+	res, err := db.ExecContext(ctx, `INSERT INTO recipes (title, base_servings, created_at, updated_at) VALUES ('Neu', 2, ?, ?)`, now, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id, _ := res.LastInsertId(); id != 4 {
+		t.Errorf("neue Rezept-ID = %d, erwartet 4", id)
+	}
+	// Auch nach dem Löschen des neuesten Planeintrags keine Wiederverwendung.
+	mustExec(`DELETE FROM meal_plan_entries WHERE id = 1`)
+	res, err = db.ExecContext(ctx, `INSERT INTO meal_plan_entries (date, note, servings, created_at, updated_at)
+	                                VALUES ('2026-10-25', 'Essen gehen', 4, ?, ?)`, now, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id, _ := res.LastInsertId(); id != 2 {
+		t.Errorf("neue Planeintrag-ID = %d, erwartet 2", id)
+	}
+
+	// Trigger und Fremdschlüssel wirken nach der Migration wieder.
+	mustExec(`INSERT INTO meal_plan_entries (date, recipe_id, servings, created_at, updated_at) VALUES ('2026-10-26', 1, 4, ?, ?)`, now, now)
+	mustExec(`DELETE FROM recipes WHERE id = 1`)
+	if got := count("SELECT count(*) FROM meal_plan_entries WHERE recipe_id IS NULL AND note = 'Lasagne'"); got != 1 {
+		t.Errorf("Trigger meal_plan_keep_title: %d Einträge mit Titel als Notiz, erwartet 1", got)
+	}
+	if got := count("SELECT count(*) FROM recipe_ingredients"); got != 0 {
+		t.Errorf("ON DELETE CASCADE wirkt nicht: %d Zutaten übrig", got)
+	}
+	if got := count("SELECT count(*) FROM recipes WHERE id = 2 AND parent_recipe_id IS NULL"); got != 1 {
+		t.Error("ON DELETE SET NULL für parent_recipe_id wirkt nicht")
 	}
 }
