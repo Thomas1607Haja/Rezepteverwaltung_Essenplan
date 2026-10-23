@@ -182,3 +182,33 @@ data class ImportCreated(val index: Int, val id: Long, val title: String, val wa
 
 @Serializable
 data class ImportFailed(val index: Int, val title: String = "", val error: String)
+
+// Rezepte ändern (server/internal/recipes, importer).
+
+/** POST/PUT /api/v1/recipes: das ganze Rezept; Kategorien nur mit ID. */
+@Serializable
+data class RecipeInput(
+    val title: String,
+    val description: String,
+    @SerialName("base_servings") val baseServings: Int,
+    @SerialName("prep_minutes") val prepMinutes: Int?,
+    @SerialName("total_minutes") val totalMinutes: Int?,
+    @SerialName("source_url") val sourceUrl: String,
+    @SerialName("source_name") val sourceName: String,
+    @SerialName("is_favorite") val isFavorite: Boolean,
+    val notes: String,
+    val ingredients: List<Ingredient>,
+    val steps: List<Step>,
+    val tags: List<TagRef>,
+)
+
+@Serializable
+data class TagRef(val id: Long)
+
+/** Antwort von POST /api/v1/import/url: Entwurf, gespeichert ist nichts. */
+@Serializable
+data class UrlDraft(
+    val recipe: Recipe,
+    @SerialName("image_url") val imageUrl: String = "",
+    val duplicates: List<DuplicateRecipe> = emptyList(),
+)

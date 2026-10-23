@@ -70,6 +70,8 @@ fun RecipesScreen(
     modifier: Modifier = Modifier,
     /** Gesetzt: Knopf „+“ mit „Datei importieren“ (nicht in der Rezeptauswahl). */
     onImport: (() -> Unit)? = null,
+    onNew: () -> Unit = {},
+    onFromUrl: () -> Unit = {},
     viewModel: RecipesViewModel = viewModel(),
 ) {
     val app = app()
@@ -139,13 +141,15 @@ fun RecipesScreen(
                 }
             }
             if (onImport != null) {
-                // „+“ mit Menü; weitere Wege (Rezept-URL, neues Rezept) folgen in 7.6.
+                // „+“ mit Menü: neues Rezept, aus einer Webadresse, aus einer Datei.
                 var menu by remember { mutableStateOf(false) }
                 Box(Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
                     FloatingActionButton(onClick = { menu = true }) {
                         Icon(painterResource(R.drawable.ic_plus), contentDescription = "Rezept hinzufügen")
                     }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(text = { Text("Neues Rezept") }, onClick = { menu = false; onNew() })
+                        DropdownMenuItem(text = { Text("Rezept aus Internetadresse") }, onClick = { menu = false; onFromUrl() })
                         DropdownMenuItem(text = { Text("Datei importieren") }, onClick = { menu = false; onImport() })
                     }
                 }

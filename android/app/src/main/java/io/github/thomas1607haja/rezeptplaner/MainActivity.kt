@@ -11,6 +11,7 @@ import androidx.core.content.IntentCompat
 import androidx.lifecycle.lifecycleScope
 import io.github.thomas1607haja.rezeptplaner.data.SetupLink
 import io.github.thomas1607haja.rezeptplaner.ui.RezeptplanerApp
+import io.github.thomas1607haja.rezeptplaner.ui.edit.extractUrl
 import io.github.thomas1607haja.rezeptplaner.ui.theme.RezeptplanerTheme
 import kotlinx.coroutines.launch
 
@@ -26,6 +27,9 @@ class MainActivity : ComponentActivity() {
     // Import-Bildschirm zeigen.
     private val openImport = mutableStateOf(false)
 
+    // Geteilte Webadresse (Browser, Chefkoch-App) für den URL-Import.
+    private val sharedUrl = mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Von Rand zu Rand zeichnen (ab Android 16 Pflicht). Die Abstände zu
         // Statusleiste, Navigationsleiste und Tastatur setzt Scaffold.
@@ -40,6 +44,8 @@ class MainActivity : ComponentActivity() {
                     onLinkConsumed = { pendingLink.value = null },
                     openImport = openImport.value,
                     onImportOpened = { openImport.value = false },
+                    sharedUrl = sharedUrl.value,
+                    onUrlOpened = { sharedUrl.value = null },
                 )
             }
         }
@@ -56,6 +62,11 @@ class MainActivity : ComponentActivity() {
         val data = intent.data
         if (intent.action == Intent.ACTION_VIEW && data?.scheme == SetupLink.SCHEME && data.host == SetupLink.HOST) {
             pendingLink.value = data.toString()
+            return
+        }
+        // Geteilter Text ohne Datei: eine Rezept-URL (7.6).
+        if (intent.action == Intent.ACTION_SEND && IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java) == null) {
+            intent.getStringExtra(Intent.EXTRA_TEXT)?.let(::extractUrl)?.let { sharedUrl.value = it }
             return
         }
         val files = importUris(intent)

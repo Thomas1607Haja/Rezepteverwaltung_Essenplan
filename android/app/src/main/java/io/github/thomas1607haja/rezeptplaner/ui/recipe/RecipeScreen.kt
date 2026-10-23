@@ -27,6 +27,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,6 +40,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,7 +55,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.Ingredient
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
+import io.github.thomas1607haja.rezeptplaner.data.Outcome
+import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
+import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
 import io.github.thomas1607haja.rezeptplaner.ui.formatQuantity
@@ -69,8 +74,19 @@ import java.time.LocalDate
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun RecipeScreen(recipeId: Long, planServings: Int, onBack: () -> Unit, onOpen: (Long) -> Unit) {
-    val snapshot by app().localStore.snapshot.collectAsStateWithLifecycle()
+fun RecipeScreen(
+    recipeId: Long,
+    planServings: Int,
+    onBack: () -> Unit,
+    onOpen: (Long) -> Unit,
+    onEdit: () -> Unit = {},
+    onVariantCreated: (Long) -> Unit = {},
+) {
+    val app = app()
+    val snapshot by app.localStore.snapshot.collectAsStateWithLifecycle()
+    val snackbar = LocalSnackbar.current
+    val scope = rememberCoroutineScope()
+    var busy by remember { mutableStateOf(false) }
     val recipe = snapshot.recipes.firstOrNull { it.id == recipeId }
 
     // Bildschirm bleibt an, solange die Kochansicht offen ist.
@@ -99,6 +115,28 @@ fun RecipeScreen(recipeId: Long, planServings: Int, onBack: () -> Unit, onOpen: 
             recipe, planServings, snapshot.recipes,
             planStatus(snapshot.planInfo.firstOrNull { it.recipeId == recipe.id }, today),
             onOpen, onAddToPlan = { adding = true },
+            actions = RecipeActions(
+                busy = busy,
+                onToggleFavorite = {
+                    busy = true
+                    scope.launch {
+                        (app.recipeRepository.setFavorite(recipe.id, !recipe.isFavorite) as? Outcome.Error)
+                            ?.let { snackbar.showSnackbar(it.message) }
+                        busy = false
+                    }
+                },
+                onEdit = onEdit,
+                onVariant = {
+                    busy = true
+                    scope.launch {
+                        when (val r = app.recipeRepository.createVariant(recipe.id)) {
+                            is Outcome.Error -> snackbar.showSnackbar(r.message)
+                            is Outcome.Ok -> onVariantCreated(r.value.id)
+                        }
+                        busy = false
+                    }
+                },
+            ),
         )
         if (adding) AddToPlanSheet(recipe.id, recipe.title, snapshot, today, onDismiss = { adding = false })
     }
@@ -113,6 +151,7 @@ private fun RecipeContent(
     status: String,
     onOpen: (Long) -> Unit,
     onAddToPlan: () -> Unit,
+    actions: RecipeActions,
 ) {
     var servings by rememberSaveable(recipe.id) { mutableIntStateOf(if (planServings > 0) planServings else recipe.baseServings) }
     val factor = servings.toDouble() / recipe.baseServings
@@ -138,8 +177,12 @@ private fun RecipeContent(
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.Top) {
                 Text(recipe.title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-                if (recipe.isFavorite) {
-                    Icon(painterResource(R.drawable.ic_heart_filled), contentDescription = "Favorit", tint = MaterialTheme.colorScheme.primary)
+                IconButton(onClick = actions.onToggleFavorite, enabled = !actions.busy) {
+                    Icon(
+                        painterResource(if (recipe.isFavorite) R.drawable.ic_heart_filled else R.drawable.ic_heart),
+                        contentDescription = if (recipe.isFavorite) "Favorit entfernen" else "Als Favorit merken",
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
             if (recipe.parentRecipeId != null) {
@@ -162,6 +205,10 @@ private fun RecipeContent(
                 Icon(painterResource(R.drawable.ic_plus), contentDescription = null, Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("Zum Essensplan hinzufügen")
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = actions.onEdit, enabled = !actions.busy) { Text("Bearbeiten") }
+                OutlinedButton(onClick = actions.onVariant, enabled = !actions.busy) { Text("Variante speichern") }
             }
         }
 
@@ -198,6 +245,14 @@ private fun RecipeContent(
         }
     }
 }
+
+/** Aktionen der Kochansicht (Favorit, Bearbeiten, Variante). */
+private class RecipeActions(
+    val busy: Boolean,
+    val onToggleFavorite: () -> Unit,
+    val onEdit: () -> Unit,
+    val onVariant: () -> Unit,
+)
 
 @Composable
 private fun Meta(recipe: Recipe, status: String, open: (String) -> Unit) {

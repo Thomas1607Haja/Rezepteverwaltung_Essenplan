@@ -41,6 +41,10 @@ import androidx.navigation.toRoute
 import io.github.thomas1607haja.rezeptplaner.data.ImportState
 import io.github.thomas1607haja.rezeptplaner.data.SyncTrigger
 import io.github.thomas1607haja.rezeptplaner.ui.importer.ImportScreen
+import io.github.thomas1607haja.rezeptplaner.ui.edit.RecipeEditScreen
+import io.github.thomas1607haja.rezeptplaner.ui.edit.UrlImportScreen
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.sync.SyncWorker
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.plan.MealPlanScreen
@@ -70,6 +74,12 @@ import kotlinx.serialization.Serializable
  * [replaceEntryId] > 0 – das Gericht dieses Eintrags ersetzen.
  */
 @Serializable data class PickRecipeRoute(val date: String, val slot: String = "dinner", val replaceEntryId: Long = 0)
+
+/** Rezept bearbeiten bzw. anlegen (id 0); fromDraft: Entwurf aus dem URL-Import. */
+@Serializable data class EditRecipeRoute(val id: Long = 0, val fromDraft: Boolean = false, val freshVariant: Boolean = false)
+
+/** Rezept aus einer Webadresse (geteilt oder eingegeben). */
+@Serializable data class UrlImportRoute(val url: String = "")
 
 /** Datei-Import (Teilen, „Öffnen mit“, Dateiauswahl). */
 @Serializable data object ImportRoute
@@ -105,6 +115,8 @@ fun RezeptplanerApp(
     onLinkConsumed: () -> Unit,
     openImport: Boolean = false,
     onImportOpened: () -> Unit = {},
+    sharedUrl: String? = null,
+    onUrlOpened: () -> Unit = {},
 ) {
     val app = LocalContext.current.applicationContext as RezeptplanerApplication
     val configFlow = remember { app.configRepository.config.map<ServerConfig?, ConfigState> { ConfigState.Loaded(it) } }
@@ -169,13 +181,21 @@ fun RezeptplanerApp(
             onReconnect = { reconnecting = true },
             openImport = openImport || importState !is ImportState.Idle,
             onImportOpened = onImportOpened,
+            sharedUrl = sharedUrl,
+            onUrlOpened = onUrlOpened,
         )
     }
 }
 
 /** App mit unterer Leiste; internal für die Oberflächentests. */
 @Composable
-internal fun MainScaffold(onReconnect: () -> Unit, openImport: Boolean = false, onImportOpened: () -> Unit = {}) {
+internal fun MainScaffold(
+    onReconnect: () -> Unit,
+    openImport: Boolean = false,
+    onImportOpened: () -> Unit = {},
+    sharedUrl: String? = null,
+    onUrlOpened: () -> Unit = {},
+) {
     val app = LocalContext.current.applicationContext as RezeptplanerApplication
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -186,6 +206,13 @@ internal fun MainScaffold(onReconnect: () -> Unit, openImport: Boolean = false, 
     LaunchedEffect(openImport) {
         if (openImport && destination?.hasRoute(ImportRoute::class) != true) navController.navigate(ImportRoute)
         if (openImport) onImportOpened()
+    }
+    // Geteilte Rezept-URL: gleich einlesen.
+    LaunchedEffect(sharedUrl) {
+        if (sharedUrl != null) {
+            navController.navigate(UrlImportRoute(sharedUrl))
+            onUrlOpened()
+        }
     }
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
@@ -231,6 +258,41 @@ internal fun MainScaffold(onReconnect: () -> Unit, openImport: Boolean = false, 
                 RecipesScreen(
                     onOpen = { id -> navController.navigate(RecipeRoute(id)) },
                     onImport = { navController.navigate(ImportRoute) },
+                    onNew = { navController.navigate(EditRecipeRoute()) },
+                    onFromUrl = { navController.navigate(UrlImportRoute()) },
+                )
+            }
+            composable<UrlImportRoute> { entry ->
+                UrlImportScreen(
+                    initialUrl = entry.toRoute<UrlImportRoute>().url,
+                    onDraft = {
+                        navController.navigate(EditRecipeRoute(fromDraft = true)) {
+                            popUpTo<UrlImportRoute> { inclusive = true }
+                        }
+                    },
+                    onClose = { navController.popBackStack() },
+                )
+            }
+            composable<EditRecipeRoute> { entry ->
+                val route = entry.toRoute<EditRecipeRoute>()
+                val snackbar = LocalSnackbar.current
+                val scope = rememberCoroutineScope()
+                RecipeEditScreen(
+                    recipeId = route.id,
+                    fromDraft = route.fromDraft,
+                    freshVariant = route.freshVariant,
+                    onSaved = { id, warning ->
+                        // Kochansicht des gespeicherten Rezepts statt der Bearbeitung.
+                        navController.popBackStack()
+                        if (route.id == 0L || route.freshVariant) navController.navigate(RecipeRoute(id)) { launchSingleTop = true }
+                        scope.launch { snackbar.showSnackbar(warning ?: "Gespeichert") }
+                    },
+                    onCancel = { navController.popBackStack() },
+                    onDeleted = {
+                        // Verworfene Variante: zurück zum Original. Sonst vor die (gelöschte)
+                        // Kochansicht, egal über welchen Weg sie geöffnet wurde.
+                        if (route.freshVariant || !navController.popBackStack<RecipeRoute>(inclusive = true)) navController.popBackStack()
+                    },
                 )
             }
             composable<ImportRoute> {
@@ -246,6 +308,8 @@ internal fun MainScaffold(onReconnect: () -> Unit, openImport: Boolean = false, 
                     planServings = route.planServings,
                     onBack = { navController.popBackStack() },
                     onOpen = { id -> navController.navigate(RecipeRoute(id)) },
+                    onEdit = { navController.navigate(EditRecipeRoute(route.id)) },
+                    onVariantCreated = { id -> navController.navigate(EditRecipeRoute(id, freshVariant = true)) },
                 )
             }
             composable<ShoppingRoute> { Placeholder(stringResource(R.string.nav_shopping)) }

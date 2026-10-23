@@ -111,6 +111,61 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
     suspend fun confirmImport(config: ServerConfig, token: String, selected: List<Int>): ImportResult =
         send(config, "POST", "/api/v1/import/file/$token", json.encodeToString(mapOf("selected" to selected)))
 
+    // Rezepte ändern – nur online, danach gleicht die App ab.
+
+    suspend fun createRecipe(config: ServerConfig, input: RecipeInput): Recipe =
+        send(config, "POST", "/api/v1/recipes", json.encodeToString(input))
+
+    suspend fun updateRecipe(config: ServerConfig, id: Long, input: RecipeInput): Recipe =
+        send(config, "PUT", "/api/v1/recipes/$id", json.encodeToString(input))
+
+    suspend fun deleteRecipe(config: ServerConfig, id: Long) {
+        withContext(Dispatchers.IO) { execute(config, "/api/v1/recipes/$id", "application/json", "DELETE") }
+    }
+
+    suspend fun createVariant(config: ServerConfig, id: Long): Recipe =
+        // POST braucht einen Inhalt; der Server liest ihn nicht.
+        send(config, "POST", "/api/v1/recipes/$id/variants", "{}")
+
+    suspend fun setFavorite(config: ServerConfig, id: Long, favorite: Boolean) {
+        withContext(Dispatchers.IO) {
+            execute(config, "/api/v1/recipes/$id/favorite", "application/json", "PUT", json.encodeToString(mapOf("is_favorite" to favorite)))
+        }
+    }
+
+    /** Neues Rezeptbild; der Server prüft und verkleinert es. */
+    suspend fun setImage(config: ServerConfig, id: Long, data: ByteArray, mimeType: String): Recipe =
+        withContext(Dispatchers.IO) {
+            val body = data.toRequestBody(mimeType.toMediaType())
+            json.decodeFromString<Recipe>(execute(config, "/api/v1/recipes/$id/image", "application/json", "PUT", null, body).decodeToString())
+        }
+
+    /** Bild der Quellseite übernehmen (URL-Import). */
+    suspend fun fetchImage(config: ServerConfig, id: Long, url: String): Recipe =
+        send(config, "POST", "/api/v1/recipes/$id/image/fetch", json.encodeToString(mapOf("url" to url)))
+
+    suspend fun deleteImage(config: ServerConfig, id: Long) {
+        withContext(Dispatchers.IO) { execute(config, "/api/v1/recipes/$id/image", "application/json", "DELETE") }
+    }
+
+    /** Liest ein Rezept von einer Webseite (Entwurf). */
+    suspend fun importUrl(config: ServerConfig, url: String): UrlDraft =
+        send(config, "POST", "/api/v1/import/url", json.encodeToString(mapOf("url" to url)))
+
+    /** Zerlegt Zutatenzeilen wie „500 g Mehl“. */
+    suspend fun parseIngredients(config: ServerConfig, lines: List<String>): List<Ingredient> =
+        send<IngredientsBody>(config, "POST", "/api/v1/import/ingredients", json.encodeToString(mapOf("lines" to lines))).ingredients
+
+    /** Je Name: steht er auf der Vorratsliste? */
+    suspend fun pantryMatch(config: ServerConfig, names: List<String>): List<Boolean> =
+        send<PantryMatchBody>(config, "POST", "/api/v1/pantry/match", json.encodeToString(mapOf("names" to names))).inPantry
+
+    @Serializable
+    private data class IngredientsBody(val ingredients: List<Ingredient> = emptyList())
+
+    @Serializable
+    private data class PantryMatchBody(@kotlinx.serialization.SerialName("in_pantry") val inPantry: List<Boolean> = emptyList())
+
     /** Lädt eine Bilddatei (Name aus Recipe.image bzw. thumbnail). */
     suspend fun image(config: ServerConfig, name: String): ByteArray =
         withContext(Dispatchers.IO) { execute(config, "/api/v1/images/$name", "image/jpeg") }
