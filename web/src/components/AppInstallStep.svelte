@@ -78,6 +78,31 @@
   <p class="hint">
     Quelle: <a href={links.releases_url} target="_blank" rel="noopener noreferrer">{links.repository}</a> (GitHub-Releases)
   </p>
+
+  <h3>Claude-Skill (optional)</h3>
+  <p class="hint">
+    Mit der Skill „rezeptplaner-import“ erfasst Claude Rezepte aus Fotos (Rezeptkarten, Kochbuchseiten) und erzeugt eine
+    Importdatei, die du per Teilen an die App schickst oder unter Rezepte → Datei importieren hochlädst.
+  </p>
+  <p><a class="download" href={links.skill_url}>rezeptplaner-import-skill.zip herunterladen</a></p>
+  <details>
+    <summary>So kommt die Skill in Claude</summary>
+    <ol class="steps">
+      <li>
+        In Claude (claude.ai oder App) unter <em>Einstellungen → Funktionen</em> „Code execution and file creation“
+        (Codeausführung und Dateierstellung) einschalten.
+      </li>
+      <li><em>Customize → Skills</em> → Skill hochladen → die heruntergeladene ZIP-Datei wählen (nicht entpacken).</li>
+      <li>
+        Fotos der Rezepte in einen Chat schicken, z. B. „Erfasse diese Rezepte für den Rezeptplaner“. Claude liefert
+        eine ZIP-Datei zum Teilen.
+      </li>
+    </ol>
+    <p class="hint">
+      Funktioniert auch mit der kostenlosen Claude-Version; größere Stapel von Fotos stoßen dort aber schneller an die
+      Nutzungsgrenzen. Bei einer neuen Version der Skill die ZIP erneut herunterladen und in Claude ersetzen.
+    </p>
+  </details>
 {/if}
 
 <style>
@@ -137,6 +162,10 @@
 
   .steps li {
     margin-bottom: 0.4rem;
+  }
+
+  .download {
+    font-weight: 600;
   }
 
   .error {

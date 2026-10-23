@@ -1,0 +1,34 @@
+# Hält die Claude-Skill am neuesten Release aktuell.
+#
+# Die Skill liegt als rezeptplaner-import-skill.zip am neuesten Release, damit
+# …/releases/latest/download/rezeptplaner-import-skill.zip immer funktioniert
+# (Weboberfläche: Einstellungen → App installieren → Claude-Skill). Neue
+# Android-Releases bekommen die Datei in android.yml mit; ändert sich nur die
+# Skill, ersetzt diese Action die Datei am neuesten Release.
+name: Skill
+
+on:
+  push:
+    branches: [main]
+    paths: ["skills/**", ".github/workflows/skill.yml", ".github/scripts/package-skill.sh"]
+  workflow_dispatch:
+
+permissions:
+  contents: write # Datei am Release ersetzen
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Skill packen
+        run: .github/scripts/package-skill.sh "$RUNNER_TEMP/rezeptplaner-import-skill.zip"
+
+      - name: Am neuesten Release ersetzen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh release view --json tagName --jq .tagName)
+          echo "Neuestes Release: $tag"
+          gh release upload "$tag" "$RUNNER_TEMP/rezeptplaner-import-skill.zip" --clobber

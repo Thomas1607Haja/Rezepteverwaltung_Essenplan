@@ -30,6 +30,10 @@ const APKName = "rezeptplaner.apk"
 // versionRegex löst die Version aus dem Tag des Releases.
 const versionRegex = `[0-9.]+$`
 
+// SkillName ist der feste Dateiname der Claude-Skill am Release
+// (.github/scripts/package-skill.sh, skill.yml).
+const SkillName = "rezeptplaner-import-skill.zip"
+
 // PackageName der Android-App (applicationId in android/app/build.gradle.kts).
 const PackageName = "io.github.thomas1607haja.rezeptplaner"
 
@@ -74,6 +78,9 @@ type Links struct {
 	// Weiterleitungsseite von Obtainium, weil Kamera-Apps Links mit
 	// obtainium:// meist nicht öffnen).
 	ObtainiumURL string `json:"obtainium_url"`
+	// SkillURL: die Claude-Skill „rezeptplaner-import“ als ZIP zum
+	// Hochladen in Claude (immer die aktuelle).
+	SkillURL string `json:"skill_url"`
 	// ObtainiumDownloadURL: Obtainium selbst, direkt die APK für 64-Bit-ARM
 	// (alle aktuellen Handys, z. B. Galaxy A54) – die Release-Seite
 	// enthält über 30 Dateien.
@@ -87,6 +94,7 @@ func NewLinks(repo string) Links {
 		Repository:           repo,
 		APKURL:               base + "/releases/latest/download/" + APKName,
 		ReleasesURL:          base + "/releases",
+		SkillURL:             base + "/releases/latest/download/" + SkillName,
 		ObtainiumURL:         obtainiumURL(repo),
 		ObtainiumDownloadURL: "https://github.com/ImranR98/Obtainium/releases/latest/download/app-arm64-v8a-release.apk",
 	}

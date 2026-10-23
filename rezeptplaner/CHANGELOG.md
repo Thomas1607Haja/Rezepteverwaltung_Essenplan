@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.6.4
+
+- **Claude-Skill zum Herunterladen:** Einstellungen → App installieren → „Claude-Skill“ mit Download-Link (immer die aktuelle Version am neuesten Release) und Anleitung zum Hochladen in Claude.
+
 ## 0.6.3
 
 - **Eingekaufte Woche und nächster Einkauf:** Der Essensplan zeigt die eingekaufte Woche (warm) und die Woche des nächsten Einkaufs (hellblau) mit Legende.

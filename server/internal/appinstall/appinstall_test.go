@@ -38,6 +38,9 @@ func TestLinks(t *testing.T) {
 	if l.APKURL != "https://github.com/beispiel/rezepte/releases/latest/download/rezeptplaner.apk" {
 		t.Errorf("APK: %s", l.APKURL)
 	}
+	if l.SkillURL != "https://github.com/beispiel/rezepte/releases/latest/download/rezeptplaner-import-skill.zip" {
+		t.Errorf("Skill: %s", l.SkillURL)
+	}
 
 	// Obtainium-Link zurückverfolgen: Weiterleitungsseite → obtainium://app/<JSON>.
 	u, err := url.Parse(l.ObtainiumURL)

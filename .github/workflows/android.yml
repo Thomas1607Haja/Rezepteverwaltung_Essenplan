@@ -113,6 +113,10 @@ jobs:
           "$apksigner" verify --print-certs "$apk"
           cp "$apk" "$RUNNER_TEMP/rezeptplaner.apk"
 
+      - name: Claude-Skill packen
+        working-directory: .
+        run: .github/scripts/package-skill.sh "$RUNNER_TEMP/rezeptplaner-import-skill.zip"
+
       - name: GitHub-Release veröffentlichen
         env:
           GH_TOKEN: ${{ github.token }}
@@ -120,7 +124,8 @@ jobs:
           # Titel "Android-App …" und --latest: Danach filtert Obtainium, und
           # releases/latest zeigt immer auf die App (Tags v… der
           # Home-Assistant-App bekommen keine Releases).
-          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/rezeptplaner.apk" \
+          # Die Skill hängt unter festem Namen mit dran (siehe skill.yml).
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/rezeptplaner.apk" "$RUNNER_TEMP/rezeptplaner-import-skill.zip" \
             --latest \
             --title "Android-App $VERSION" \
             --notes "Rezeptplaner für Android, Version $VERSION. Installation und Updates über Obtainium (siehe docs/ANDROID.md)."
