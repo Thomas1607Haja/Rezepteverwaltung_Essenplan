@@ -1,0 +1,15 @@
+# Build-Ergebnisse und lokale Einstellungen von Gradle/Android Studio
+.gradle/
+.kotlin/
+build/
+local.properties
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signaturschlüssel und Passwörter – niemals einchecken
+*.jks
+*.keystore
+keystore.properties

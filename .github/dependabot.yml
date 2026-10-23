@@ -14,6 +14,14 @@ updates:
     groups:
       web:
         update-types: [minor, patch]
+  # Android-App: Gradle-Plugins und Bibliotheken aus libs.versions.toml
+  - package-ecosystem: gradle
+    directory: /android
+    schedule:
+      interval: weekly
+    groups:
+      android:
+        update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
     schedule:

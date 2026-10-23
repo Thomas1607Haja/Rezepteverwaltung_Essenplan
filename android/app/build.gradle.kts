@@ -1,0 +1,95 @@
+import java.util.Properties
+
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+val appVersionName = providers.gradleProperty("appVersionName").get()
+
+// versionCode muss bei jedem Update steigen: 1.2.3 -> 10203.
+val appVersionCode = appVersionName.split(".").map { it.toInt() }.let { (major, minor, patch) ->
+    major * 10000 + minor * 100 + patch
+}
+
+// Signaturschlüssel für Release-Builds. In der GitHub Action kommen die
+// Angaben aus Umgebungsvariablen (geheime Werte des Repositorys), lokal
+// optional aus android/keystore.properties (nie einchecken, steht in
+// .gitignore). Ohne Angaben entsteht nur ein unsigniertes Release-APK.
+val signing: Map<String, String> = run {
+    val file = rootProject.file("keystore.properties")
+    val props = Properties()
+    if (file.exists()) file.inputStream().use(props::load)
+    fun value(env: String, prop: String): String? =
+        System.getenv(env)?.takeIf { it.isNotBlank() } ?: props.getProperty(prop)
+    listOfNotNull(
+        value("ANDROID_KEYSTORE_PATH", "storeFile")?.let { "storeFile" to it },
+        value("ANDROID_KEYSTORE_PASSWORD", "storePassword")?.let { "storePassword" to it },
+        value("ANDROID_KEY_ALIAS", "keyAlias")?.let { "keyAlias" to it },
+        value("ANDROID_KEY_PASSWORD", "keyPassword")?.let { "keyPassword" to it },
+    ).toMap()
+}
+
+android {
+    namespace = "io.github.thomas1607haja.rezeptplaner"
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = "io.github.thomas1607haja.rezeptplaner"
+        minSdk = 29 // Android 10, siehe docs/PLANUNG.md Abschnitt 7
+        targetSdk = 36 // Android 16
+        versionCode = appVersionCode
+        versionName = appVersionName
+    }
+
+    signingConfigs {
+        if (signing.size == 4) {
+            create("release") {
+                storeFile = file(signing.getValue("storeFile"))
+                storePassword = signing.getValue("storePassword")
+                keyAlias = signing.getValue("keyAlias")
+                keyPassword = signing.getValue("keyPassword")
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            // Debug-Version neben der installierten Release-Version nutzbar.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release")
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        compose = true
+        buildConfig = true // BuildConfig.VERSION_NAME für die Anzeige der Version
+    }
+}
+
+dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.kotlinx.serialization.json)
+    debugImplementation(libs.compose.ui.tooling)
+
+    testImplementation(libs.junit)
+}
