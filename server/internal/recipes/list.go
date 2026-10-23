@@ -31,7 +31,7 @@ type ListFilter struct {
 	// IllustrationsOnly: nur Rezepte mit gezeichnetem Bild (zum Ersetzen
 	// durch ein echtes Foto).
 	IllustrationsOnly bool
-	Sort          string // eine der Sort-Konstanten oder leer (= SortName)
+	Sort              string // eine der Sort-Konstanten oder leer (= SortName)
 }
 
 // Summary ist die Kurzfassung eines Rezepts für Listen und Kacheln.
