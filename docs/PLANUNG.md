@@ -624,8 +624,8 @@ Rezepteverwaltung_Essenplan/
 | 7.4 | Abgleich und Offline-Lesen: Rezepte (Suche, Kategorien, Favoriten, Sortierung), Kochansicht (Portionen, Bildschirm bleibt an, Varianten), Plan ansehen, Offline-Hinweis, Abgleich bei Start/Herunterziehen/alle 4 h (WorkManager), Hinweis Akku-Optimierung – App 0.3.0. Lokaler Speicher als eine JSON-Datei im Speicher statt Room (die App liest nur, geändert wird online; spart Room/KSP) |
 | 7.5 | Planen: hinzufügen („+“ je Tag mit Rezeptauswahl, „Zum Essensplan hinzufügen“ in der Kochansicht), Portionen, Notiz, „Zutaten im Haus“, ersetzen, entfernen, verschieben/tauschen mit den Warnregeln des Servers – App 0.4.0. Verschieben über eine Tagesauswahl statt Ziehen mit dem Finger (in der langen Tagesliste auf dem Handy zuverlässiger; Ziehen bei Bedarf später) |
 | 7.6 | Teilen einer URL, Rezept bearbeiten, Bild per Kamera/Galerie, Variante speichern |
-| 7.6b | Datei-Import in der App, siehe „Datei-Import in der App (7.6b)“ unten: Teilen (`ACTION_SEND`/`_MULTIPLE`), „Öffnen mit“ (`ACTION_VIEW`), Knopf „Datei importieren“ (Dateiauswahl), WhatsApp als Quelle, Vorschau, nur online |
-| 7.6c | Claude-Skill als Download: ZIP `rezeptplaner-import-skill.zip` am neuesten Release (fester Link), Weboberfläche „App installieren“ → dritter Punkt „Claude-Skill“ mit Anleitung |
+| 7.6b | Datei-Import in der App, siehe „Datei-Import in der App (7.6b)“ unten: Teilen (`ACTION_SEND`/`_MULTIPLE`), „Öffnen mit“ (`ACTION_VIEW`), Knopf „Datei importieren“ (Dateiauswahl), WhatsApp als Quelle, Vorschau, nur online – App 0.5.0; im Emulator geprüft: Dateiauswahl, „Öffnen mit“ und Teilen aus der Dateien-App, mehrere Dateien, fremde ZIP, Foto (Rezeptplaner nicht im Teilen-Menü), Datei vor der Einrichtung; WhatsApp und Claude-App stehen noch aus |
+| 7.6c | (umgesetzt, App 0.6.4) Claude-Skill als Download: ZIP `rezeptplaner-import-skill.zip` am neuesten Release (fester Link), Weboberfläche „App installieren“ → dritter Punkt „Claude-Skill“ mit Anleitung |
 | 7.7 | Foto-Import mit ML Kit |
 | 7.8 | Einkauf und Bring |
 | 7.9 | Messungen, Doku |

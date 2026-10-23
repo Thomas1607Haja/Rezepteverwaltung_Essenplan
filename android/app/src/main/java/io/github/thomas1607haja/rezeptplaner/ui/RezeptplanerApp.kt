@@ -38,7 +38,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import io.github.thomas1607haja.rezeptplaner.data.ImportState
 import io.github.thomas1607haja.rezeptplaner.data.SyncTrigger
+import io.github.thomas1607haja.rezeptplaner.ui.importer.ImportScreen
 import io.github.thomas1607haja.rezeptplaner.sync.SyncWorker
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.plan.MealPlanScreen
@@ -69,6 +71,9 @@ import kotlinx.serialization.Serializable
  */
 @Serializable data class PickRecipeRoute(val date: String, val slot: String = "dinner", val replaceEntryId: Long = 0)
 
+/** Datei-Import (Teilen, „Öffnen mit“, Dateiauswahl). */
+@Serializable data object ImportRoute
+
 /** Kochansicht; planServings > 0 = aus dem Essensplan geöffnet. */
 @Serializable data class RecipeRoute(val id: Long, val planServings: Int = 0)
 
@@ -95,7 +100,12 @@ private sealed interface ConfigState {
  *   Kamera-App), null = keiner
  */
 @Composable
-fun RezeptplanerApp(pendingLink: String?, onLinkConsumed: () -> Unit) {
+fun RezeptplanerApp(
+    pendingLink: String?,
+    onLinkConsumed: () -> Unit,
+    openImport: Boolean = false,
+    onImportOpened: () -> Unit = {},
+) {
     val app = LocalContext.current.applicationContext as RezeptplanerApplication
     val configFlow = remember { app.configRepository.config.map<ServerConfig?, ConfigState> { ConfigState.Loaded(it) } }
     val configState by configFlow.collectAsStateWithLifecycle(ConfigState.Loading)
@@ -147,19 +157,36 @@ fun RezeptplanerApp(pendingLink: String?, onLinkConsumed: () -> Unit) {
                 app.syncRepository.sync(SyncTrigger.Start)
             }
         }
-        MainScaffold(onReconnect = { reconnecting = true })
+        // Kamen Dateien vor der Einrichtung, geht es jetzt mit ihnen weiter.
+        // Einmal starten und auf den Zustand warten: Ein LaunchedEffect mit dem
+        // Zustand als Schlüssel würde beim Wechsel auf „Uploading“ neu starten
+        // und dabei den laufenden Upload abbrechen.
+        val importState by app.importRepository.state.collectAsStateWithLifecycle()
+        LaunchedEffect(Unit) {
+            app.importRepository.state.collect { if (it is ImportState.WaitingForSetup) app.importRepository.resume() }
+        }
+        MainScaffold(
+            onReconnect = { reconnecting = true },
+            openImport = openImport || importState !is ImportState.Idle,
+            onImportOpened = onImportOpened,
+        )
     }
 }
 
 /** App mit unterer Leiste; internal für die Oberflächentests. */
 @Composable
-internal fun MainScaffold(onReconnect: () -> Unit) {
+internal fun MainScaffold(onReconnect: () -> Unit, openImport: Boolean = false, onImportOpened: () -> Unit = {}) {
     val app = LocalContext.current.applicationContext as RezeptplanerApplication
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
 
     val snackbar = remember { SnackbarHostState() }
+    // Neue Dateien zum Import: Import-Bildschirm zeigen (nur einmal je Eingang).
+    LaunchedEffect(openImport) {
+        if (openImport && destination?.hasRoute(ImportRoute::class) != true) navController.navigate(ImportRoute)
+        if (openImport) onImportOpened()
+    }
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
@@ -201,7 +228,16 @@ internal fun MainScaffold(onReconnect: () -> Unit) {
                 PickRecipeScreen(entry.toRoute(), onDone = { navController.popBackStack() })
             }
             composable<RecipesRoute> {
-                RecipesScreen(onOpen = { id -> navController.navigate(RecipeRoute(id)) })
+                RecipesScreen(
+                    onOpen = { id -> navController.navigate(RecipeRoute(id)) },
+                    onImport = { navController.navigate(ImportRoute) },
+                )
+            }
+            composable<ImportRoute> {
+                ImportScreen(
+                    onClose = { navController.popBackStack() },
+                    onOpenRecipe = { id -> navController.navigate(RecipeRoute(id)) },
+                )
             }
             composable<RecipeRoute> { entry ->
                 val route = entry.toRoute<RecipeRoute>()

@@ -24,6 +24,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -67,6 +68,8 @@ class RecipesViewModel : ViewModel() {
 fun RecipesScreen(
     onOpen: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    /** Gesetzt: Knopf „+“ mit „Datei importieren“ (nicht in der Rezeptauswahl). */
+    onImport: (() -> Unit)? = null,
     viewModel: RecipesViewModel = viewModel(),
 ) {
     val app = app()
@@ -133,6 +136,18 @@ fun RecipesScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     items(items, key = { it.recipe.id }) { item -> RecipeTile(item, today) { onOpen(item.recipe.id) } }
+                }
+            }
+            if (onImport != null) {
+                // „+“ mit Menü; weitere Wege (Rezept-URL, neues Rezept) folgen in 7.6.
+                var menu by remember { mutableStateOf(false) }
+                Box(Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
+                    FloatingActionButton(onClick = { menu = true }) {
+                        Icon(painterResource(R.drawable.ic_plus), contentDescription = "Rezept hinzufügen")
+                    }
+                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(text = { Text("Datei importieren") }, onClick = { menu = false; onImport() })
+                    }
                 }
             }
         }

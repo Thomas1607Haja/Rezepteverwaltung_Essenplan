@@ -139,3 +139,46 @@ data class MoveWarning(val type: String, @SerialName("entry_id") val entryId: Lo
 /** Applied = false: Es gibt Warnungen, nichts ist gespeichert. */
 @Serializable
 data class MoveResult(val applied: Boolean, val warnings: List<MoveWarning> = emptyList())
+
+// Datei-Import (server/internal/fileimport, docs/importformat.md).
+
+/** Antwort auf POST /api/v1/import/file: nur eine Vorschau, gespeichert ist nichts. */
+@Serializable
+data class ImportPreview(
+    /** Zum Bestätigen; leer, wenn nichts importierbar ist. */
+    val token: String = "",
+    val recipes: List<ImportCandidate> = emptyList(),
+    @SerialName("file_errors") val fileErrors: List<ImportFileError> = emptyList(),
+)
+
+@Serializable
+data class ImportCandidate(
+    val index: Int,
+    val file: String = "",
+    val recipe: Recipe,
+    /** Vorschaubild unter GET /api/v1/import/file/{token}/images/{index}. */
+    val thumbnail: Boolean = false,
+    val errors: List<String> = emptyList(),
+    val warnings: List<String> = emptyList(),
+    val duplicates: List<DuplicateRecipe> = emptyList(),
+) {
+    val importable: Boolean get() = errors.isEmpty()
+}
+
+@Serializable
+data class DuplicateRecipe(val id: Long, val title: String)
+
+@Serializable
+data class ImportFileError(val file: String, val error: String)
+
+@Serializable
+data class ImportResult(
+    val created: List<ImportCreated> = emptyList(),
+    val failed: List<ImportFailed> = emptyList(),
+)
+
+@Serializable
+data class ImportCreated(val index: Int, val id: Long, val title: String, val warnings: List<String> = emptyList())
+
+@Serializable
+data class ImportFailed(val index: Int, val title: String = "", val error: String)

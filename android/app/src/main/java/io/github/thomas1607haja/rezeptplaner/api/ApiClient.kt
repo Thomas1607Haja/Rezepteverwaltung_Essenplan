@@ -7,8 +7,10 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
@@ -81,6 +83,34 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
     suspend fun moveEntry(config: ServerConfig, id: Long, move: MoveRequest): MoveResult =
         send(config, "POST", "/api/v1/meal-plan/$id/move", json.encodeToString(move))
 
+    /**
+     * Lädt Importdateien hoch (multipart, Feld "file"); Ergebnis ist die
+     * Vorschau. [files]: Anzeigename und Inhalt je Datei.
+     */
+    suspend fun uploadImport(config: ServerConfig, files: List<Pair<String, ByteArray>>): ImportPreview {
+        val body = MultipartBody.Builder().setType(MultipartBody.FORM).apply {
+            for ((name, data) in files) {
+                addFormDataPart("file", name, data.toRequestBody("application/octet-stream".toMediaType()))
+            }
+        }.build()
+        return withContext(Dispatchers.IO) {
+            val text = execute(config, "/api/v1/import/file", "application/json", "POST", null, body).decodeToString()
+            try {
+                json.decodeFromString<ImportPreview>(text)
+            } catch (e: Exception) {
+                throw ApiException("Unerwartete Antwort beim Import.", e)
+            }
+        }
+    }
+
+    /** Vorschaubild eines Rezepts der Import-Vorschau. */
+    suspend fun importThumbnail(config: ServerConfig, token: String, index: Int): ByteArray =
+        withContext(Dispatchers.IO) { execute(config, "/api/v1/import/file/$token/images/$index", "image/jpeg") }
+
+    /** Legt die ausgewählten Rezepte der Vorschau an. */
+    suspend fun confirmImport(config: ServerConfig, token: String, selected: List<Int>): ImportResult =
+        send(config, "POST", "/api/v1/import/file/$token", json.encodeToString(mapOf("selected" to selected)))
+
     /** Lädt eine Bilddatei (Name aus Recipe.image bzw. thumbnail). */
     suspend fun image(config: ServerConfig, name: String): ByteArray =
         withContext(Dispatchers.IO) { execute(config, "/api/v1/images/$name", "image/jpeg") }
@@ -105,10 +135,11 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
         accept: String,
         method: String = "GET",
         body: String? = null,
+        rawBody: RequestBody? = null,
     ): ByteArray {
         val request = Request.Builder()
             .url(config.url + path)
-            .method(method, body?.toRequestBody("application/json; charset=utf-8".toMediaType()))
+            .method(method, rawBody ?: body?.toRequestBody("application/json; charset=utf-8".toMediaType()))
             .header("Authorization", "Bearer ${config.apiKey}")
             .header("Accept", accept)
             .apply {
