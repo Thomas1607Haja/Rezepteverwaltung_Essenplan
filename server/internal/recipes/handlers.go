@@ -81,6 +81,17 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		filter.FavoritesOnly = favorite
 	}
 
+	// image=illustration: nur Rezepte mit gezeichnetem Bild.
+	switch value := params.Get("image"); value {
+	case "":
+	case ImageIllustration:
+		filter.IllustrationsOnly = true
+	default:
+		httpx.WriteJSON(w, http.StatusBadRequest,
+			httpx.ErrorResponse{Error: "erwartet image=illustration", Field: "image"})
+		return
+	}
+
 	recipes, err := h.store.List(r.Context(), filter)
 	if err != nil {
 		writeStoreError(w, r, err)

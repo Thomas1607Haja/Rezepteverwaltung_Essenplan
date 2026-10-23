@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.7.0
+
+- **Illustrierte Rezepte:** Die Claude-Skill (Version 2.0) zeichnet ein Bild, wenn die Vorlage kein brauchbares Foto vom Gericht hat, und vergibt einen Titel, wenn keiner da ist (vermerkt in den Notizen). Solche Rezepte tragen in der Übersicht das Kennzeichen „Illustration“; der neue Filter **Illustrationen** findet sie, um sie durch ein Foto zu ersetzen. Ein neu hochgeladenes Bild gilt wieder als Foto.
+- Importformat **Version 2** (Feld `image_kind`); Dateien der Version 1 werden weiter angenommen. Die neue Skill braucht diese Version des Rezeptplaners.
+
 ## 0.6.4
 
 - **Claude-Skill zum Herunterladen:** Einstellungen → App installieren → „Claude-Skill“ mit Download-Link (immer die aktuelle Version am neuesten Release) und Anleitung zum Hochladen in Claude.

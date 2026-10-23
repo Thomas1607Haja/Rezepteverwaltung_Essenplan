@@ -31,7 +31,7 @@ class ReadOnlyLogicTest {
         recipes = listOf(
             Recipe(1, "Käsespätzle", baseServings = 4, tags = listOf(veg), ingredients = listOf(Ingredient(name = "Spätzle")), createdAt = "2026-01"),
             Recipe(2, "Bolognese", baseServings = 4, tags = listOf(rind, pasta), isFavorite = true, createdAt = "2026-03"),
-            Recipe(3, "Gemüsereis", baseServings = 4, tags = listOf(veg, reis), createdAt = "2026-02"),
+            Recipe(3, "Gemüsereis", baseServings = 4, tags = listOf(veg, reis), createdAt = "2026-02", image = "g.jpg", imageKind = "illustration"),
         ),
         planInfo = listOf(PlanInfo(2, lastPlanned = "2026-10-01", planCount = 5), PlanInfo(3, lastPlanned = "2026-10-15", planCount = 1)),
         entries = listOf(MealPlanEntry(9, "2026-11-20", recipeId = 2, servings = 4)),
@@ -54,6 +54,7 @@ class ReadOnlyLogicTest {
     @Test
     fun favoritesAndSorting() {
         assertEquals(listOf("Bolognese"), titles(RecipeFilter(favoritesOnly = true)))
+        assertEquals(listOf("Gemüsereis"), titles(RecipeFilter(illustrationsOnly = true)))
         assertEquals(listOf("Bolognese", "Gemüsereis", "Käsespätzle"), titles(RecipeFilter()))
         assertEquals(listOf("Bolognese", "Gemüsereis", "Käsespätzle"), titles(RecipeFilter(sort = RecipeSort.Newest)))
         assertEquals(listOf("Gemüsereis", "Bolognese", "Käsespätzle"), titles(RecipeFilter(sort = RecipeSort.LastPlanned)))

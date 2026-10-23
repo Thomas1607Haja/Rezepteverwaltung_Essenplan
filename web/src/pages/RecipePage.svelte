@@ -177,6 +177,9 @@
   <article>
     {#if recipe.image}
       <img class="photo" src={imageUrl(recipe.image)} alt={recipe.title} />
+      {#if recipe.image_kind === 'illustration'}
+        <p class="drawn-note">Gezeichnetes Bild (die Vorlage hatte kein Foto). Unter „Bearbeiten“ lässt es sich durch ein Foto ersetzen.</p>
+      {/if}
     {:else}
       <div class="hero">
         <Icon name="dish" size={64} />
@@ -364,6 +367,12 @@
 
   .error {
     color: var(--danger);
+  }
+
+  .drawn-note {
+    margin: -0.5rem 0 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
   }
 
   .photo {

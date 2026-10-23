@@ -14,6 +14,9 @@
     {#if recipe.thumbnail}
       <!-- loading="lazy": Bilder weiter unten lädt der Browser erst beim Scrollen. -->
       <img src={imageUrl(recipe.thumbnail)} alt="" loading="lazy" />
+      {#if recipe.image_kind === 'illustration'}
+        <span class="drawn" title="Gezeichnetes Bild – durch ein Foto ersetzen">Illustration</span>
+      {/if}
     {:else}
       <Icon name="dish" size={40} />
     {/if}
@@ -52,6 +55,7 @@
   }
 
   .image {
+    position: relative; /* für das Kennzeichen „Illustration“ */
     display: grid;
     place-items: center;
     aspect-ratio: 4 / 3;
@@ -121,6 +125,17 @@
     border-radius: 999px;
     font-size: 0.75rem;
     color: var(--text-muted);
+  }
+
+  .drawn {
+    position: absolute;
+    left: 0.5rem;
+    bottom: 0.5rem;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.85);
+    font-size: 0.72rem;
+    color: #444;
   }
 
   .favorite {

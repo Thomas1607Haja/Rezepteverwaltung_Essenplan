@@ -38,6 +38,7 @@
       query: recipeFilter.query,
       tagIds: [...recipeFilter.tagIds],
       favoritesOnly: recipeFilter.favoritesOnly,
+      illustrationsOnly: recipeFilter.illustrationsOnly,
       sort: recipeFilter.sort,
     };
     // Beim Tippen kurz warten, damit nicht jeder Buchstabe eine Anfrage
@@ -92,6 +93,17 @@
     >
       <Icon name="heart" size={18} filled={recipeFilter.favoritesOnly} />
       <span class="label-wide">Favoriten</span>
+    </button>
+
+    <button
+      type="button"
+      class="toggle"
+      aria-pressed={recipeFilter.illustrationsOnly}
+      title="Nur Rezepte mit gezeichnetem Bild – zum Ersetzen durch ein Foto"
+      onclick={() => (recipeFilter.illustrationsOnly = !recipeFilter.illustrationsOnly)}
+    >
+      <Icon name="brush" size={18} />
+      <span class="label-wide">Illustrationen</span>
     </button>
 
     <select bind:value={recipeFilter.sort} aria-label="Sortierung">

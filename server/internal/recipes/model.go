@@ -24,6 +24,7 @@ type Recipe struct {
 	SourceName   string       `json:"source_name"` // Quelle ohne Adresse, z. B. "HelloFresh-Karte"
 	Image        string       `json:"image"`       // nur lesbar, wird per Upload gesetzt
 	Thumbnail    string       `json:"thumbnail"`   // nur lesbar, wird per Upload gesetzt
+	ImageKind    string       `json:"image_kind"`  // nur lesbar: ImagePhoto, ImageIllustration oder leer
 	IsFavorite   bool         `json:"is_favorite"`
 	Notes        string       `json:"notes"`
 	Ingredients  []Ingredient `json:"ingredients"` // in Anzeigereihenfolge
@@ -37,6 +38,14 @@ type Recipe struct {
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 }
+
+// Art des Rezeptbilds (Spalte image_kind). Hochgeladene und von einer
+// Webadresse geholte Bilder sind Fotos; Illustrationen kommen nur über den
+// Datei-Import (Claude-Skill).
+const (
+	ImagePhoto        = "photo"
+	ImageIllustration = "illustration"
+)
 
 // Ingredient ist eine Zutatenzeile. Die Reihenfolge ergibt sich aus der
 // Position in Recipe.Ingredients.

@@ -1,16 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/docs/importformat.schema.json",
-  "title": "Rezeptplaner-Import, Version 1",
+  "title": "Rezeptplaner-Import, Version 2",
   "description": "Inhalt von recipes.json in einer Import-ZIP-Datei oder einer einzelnen .json-Datei. Beschreibung: docs/importformat.md. Eine Kopie liegt in skills/rezeptplaner-import/schema.json; ein Test prüft, dass beide gleich sind.",
   "type": "object",
   "additionalProperties": false,
   "required": ["format", "version", "recipes"],
   "properties": {
     "format": { "const": "rezeptplaner-import" },
-    "version": { "const": 1 },
+    "version": {
+      "description": "2 = aktuell (mit image_kind); Dateien der Version 1 nimmt der Server weiter an.",
+      "enum": [1, 2]
+    },
     "generator": {
-      "description": "Wer die Datei erzeugt hat, z. B. \"claude-skill rezeptplaner-import 1.0\". Nur zur Information.",
+      "description": "Wer die Datei erzeugt hat, z. B. \"claude-skill rezeptplaner-import 2.0\". Nur zur Information.",
       "type": "string",
       "maxLength": 200
     },
@@ -70,6 +73,10 @@
           "description": "Pfad des Rezeptbildes in der ZIP-Datei; null oder weglassen = kein Bild.",
           "type": ["string", "null"],
           "pattern": "^images/[A-Za-z0-9][A-Za-z0-9._-]{0,99}\\.(jpg|jpeg|png|webp)$"
+        },
+        "image_kind": {
+          "description": "Ab Version 2: Art des Bildes. \"illustration\" = gezeichneter Ersatz, weil die Vorlage kein brauchbares Foto hatte. Weglassen = Foto.",
+          "enum": ["photo", "illustration"]
         },
         "ingredients": {
           "type": "array",

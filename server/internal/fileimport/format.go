@@ -19,10 +19,12 @@ import (
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 )
 
-// Kennung und Version des Formats, siehe docs/importformat.schema.json.
+// Kennung und Versionen des Formats, siehe docs/importformat.schema.json.
+// Version 2 ergänzt image_kind; Dateien der Version 1 bleiben gültig.
 const (
-	formatID      = "rezeptplaner-import"
-	formatVersion = 1
+	formatID         = "rezeptplaner-import"
+	formatVersionMin = 1
+	formatVersion    = 2
 )
 
 // document ist der Inhalt von recipes.json. Die Rezepte bleiben zunächst
@@ -47,6 +49,7 @@ type recipeJSON struct {
 	Notes        string           `json:"notes"`
 	Categories   []string         `json:"categories"`
 	Image        *string          `json:"image"`
+	ImageKind    string           `json:"image_kind"` // ab Version 2: "photo" oder "illustration"
 	Ingredients  []ingredientJSON `json:"ingredients"`
 	Steps        []string         `json:"steps"`
 }
@@ -102,8 +105,9 @@ func parseDocument(data []byte) (document, error) {
 	if head.Format != formatID {
 		return document{}, errNotImportFile
 	}
-	if head.Version != formatVersion {
-		return document{}, fmt.Errorf("Formatversion %d wird nicht unterstützt (erwartet %d)", head.Version, formatVersion)
+	if head.Version < formatVersionMin || head.Version > formatVersion {
+		return document{}, fmt.Errorf("Formatversion %d wird nicht unterstützt (erwartet %d bis %d) – ist der Rezeptplaner aktuell?",
+			head.Version, formatVersionMin, formatVersion)
 	}
 
 	var doc document
@@ -245,6 +249,17 @@ func parseRecipe(raw json.RawMessage) parsedRecipe {
 			p.image = *in.Image
 		} else {
 			warn("Bildpfad „%s“ ist ungültig (erwartet images/name.jpg), das Bild wird weggelassen", *in.Image)
+		}
+	}
+	if p.image != "" {
+		switch in.ImageKind {
+		case "", recipes.ImagePhoto:
+			r.ImageKind = recipes.ImagePhoto
+		case recipes.ImageIllustration:
+			r.ImageKind = recipes.ImageIllustration
+		default:
+			warn("Bildart „%s“ ist unbekannt (erwartet photo oder illustration), das Bild gilt als Foto", in.ImageKind)
+			r.ImageKind = recipes.ImagePhoto
 		}
 	}
 

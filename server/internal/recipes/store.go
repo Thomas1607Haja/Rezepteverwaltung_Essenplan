@@ -163,10 +163,13 @@ func (s *Store) Delete(ctx context.Context, id int64) (imageFiles []string, err 
 	return []string{image, thumbnail}, nil
 }
 
-// SetImage trägt neue Bilddateien beim Rezept id ein (leere Namen = kein
-// Bild) und liefert die bisherigen zurück, damit der Aufrufer sie löschen
+// SetImage trägt neue Bilddateien und ihre Art (ImagePhoto,
+// ImageIllustration) beim Rezept id ein (leere Namen = kein Bild) und liefert die bisherigen zurück, damit der Aufrufer sie löschen
 // kann. Gibt es das Rezept nicht, ist der Fehler ErrNotFound.
-func (s *Store) SetImage(ctx context.Context, id int64, image, thumbnail string) (oldFiles []string, err error) {
+func (s *Store) SetImage(ctx context.Context, id int64, image, thumbnail, kind string) (oldFiles []string, err error) {
+	if image == "" {
+		kind = ""
+	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("bild für rezept %d setzen: %w", id, err)
@@ -183,8 +186,8 @@ func (s *Store) SetImage(ctx context.Context, id int64, image, thumbnail string)
 	}
 
 	_, err = tx.ExecContext(ctx, `
-		UPDATE recipes SET image = ?, thumbnail = ?, updated_at = ? WHERE id = ?`,
-		image, thumbnail, database.FormatTime(time.Now()), id)
+		UPDATE recipes SET image = ?, thumbnail = ?, image_kind = ?, updated_at = ? WHERE id = ?`,
+		image, thumbnail, kind, database.FormatTime(time.Now()), id)
 	if err != nil {
 		return nil, fmt.Errorf("bild für rezept %d setzen: %w", id, err)
 	}
@@ -278,12 +281,12 @@ func (s *Store) Get(ctx context.Context, id int64) (Recipe, error) {
 	var createdAt, updatedAt string
 	err := s.db.QueryRowContext(ctx, `
 		SELECT id, title, description, base_servings, prep_minutes, total_minutes,
-		       source_url, source_name, image, thumbnail, is_favorite, notes, created_at, updated_at,
+		       source_url, source_name, image, thumbnail, image_kind, is_favorite, notes, created_at, updated_at,
 		       parent_recipe_id,`+
 		planInfoColumns+`
 		FROM recipes r WHERE id = ?`, s.today(), s.today(), id).Scan(
 		&r.ID, &r.Title, &r.Description, &r.BaseServings, &r.PrepMinutes, &r.TotalMinutes,
-		&r.SourceURL, &r.SourceName, &r.Image, &r.Thumbnail, &r.IsFavorite, &r.Notes, &createdAt, &updatedAt,
+		&r.SourceURL, &r.SourceName, &r.Image, &r.Thumbnail, &r.ImageKind, &r.IsFavorite, &r.Notes, &createdAt, &updatedAt,
 		&r.ParentRecipeID,
 		&r.NextPlanned, &r.LastPlanned, &r.PlanCount)
 	if errors.Is(err, sql.ErrNoRows) {

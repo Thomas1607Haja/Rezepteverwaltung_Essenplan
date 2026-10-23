@@ -26,8 +26,8 @@ func TestMigrateCreatesSchemaAndTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Migrate: %v", err)
 	}
-	if version != 9 {
-		t.Errorf("version = %d, erwartet 9", version)
+	if version != 10 {
+		t.Errorf("version = %d, erwartet 10", version)
 	}
 
 	// 8 Hauptzutat + 2 Geschmack + 8 Art + 5 Eigenschaften
@@ -53,8 +53,8 @@ func TestMigrateTwiceChangesNothing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("zweite Migration: %v", err)
 	}
-	if version != 9 {
-		t.Errorf("version = %d, erwartet 9", version)
+	if version != 10 {
+		t.Errorf("version = %d, erwartet 10", version)
 	}
 }
 
@@ -205,8 +205,8 @@ func TestAutoincrementMigrationKeepsDataAndIDs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Migration 8: %v", err)
 	}
-	if version != 9 {
-		t.Fatalf("version = %d, erwartet 9", version)
+	if version < 9 {
+		t.Fatalf("version = %d, erwartet mindestens 9", version)
 	}
 
 	count := func(query string) int {

@@ -28,6 +28,9 @@ type ListFilter struct {
 	// passen (Vegetarisch und zugleich Pasta oder Reis).
 	TagIDs        []int64
 	FavoritesOnly bool
+	// IllustrationsOnly: nur Rezepte mit gezeichnetem Bild (zum Ersetzen
+	// durch ein echtes Foto).
+	IllustrationsOnly bool
 	Sort          string // eine der Sort-Konstanten oder leer (= SortName)
 }
 
@@ -38,6 +41,7 @@ type Summary struct {
 	PrepMinutes  *int   `json:"prep_minutes"`
 	TotalMinutes *int   `json:"total_minutes"`
 	Thumbnail    string `json:"thumbnail"`
+	ImageKind    string `json:"image_kind"` // ImagePhoto, ImageIllustration oder leer
 	IsFavorite   bool   `json:"is_favorite"`
 	// Gesetzt bei einer Variante (Kennzeichen in der Übersicht).
 	ParentRecipeID *int64 `json:"parent_recipe_id"`
@@ -99,6 +103,9 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 	if f.FavoritesOnly {
 		where = append(where, "r.is_favorite = 1")
 	}
+	if f.IllustrationsOnly {
+		where = append(where, "r.image_kind = 'illustration'")
+	}
 
 	groups, err := s.tagIDsByGroup(ctx, f.TagIDs)
 	if err != nil {
@@ -112,7 +119,7 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 		}
 	}
 
-	query := `SELECT r.id, r.title, r.prep_minutes, r.total_minutes, r.thumbnail, r.is_favorite,
+	query := `SELECT r.id, r.title, r.prep_minutes, r.total_minutes, r.thumbnail, r.image_kind, r.is_favorite,
 		r.parent_recipe_id,` +
 		planInfoColumns + ` FROM recipes r`
 	if len(where) > 0 {
@@ -131,7 +138,7 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 	for rows.Next() {
 		var sum Summary
 		if err := rows.Scan(&sum.ID, &sum.Title, &sum.PrepMinutes, &sum.TotalMinutes,
-			&sum.Thumbnail, &sum.IsFavorite, &sum.ParentRecipeID,
+			&sum.Thumbnail, &sum.ImageKind, &sum.IsFavorite, &sum.ParentRecipeID,
 			&sum.NextPlanned, &sum.LastPlanned, &sum.PlanCount); err != nil {
 			return nil, fmt.Errorf("rezeptliste laden: %w", err)
 		}

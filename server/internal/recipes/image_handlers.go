@@ -90,7 +90,7 @@ func (h *Handler) saveImage(w http.ResponseWriter, r *http.Request, id int64, sr
 		return
 	}
 
-	oldFiles, err := h.store.SetImage(r.Context(), id, large, thumb)
+	oldFiles, err := h.store.SetImage(r.Context(), id, large, thumb, ImagePhoto)
 	if err != nil {
 		h.removeImageFiles([]string{large, thumb}) // neue Dateien nicht verwaisen lassen
 		writeStoreError(w, r, err)
@@ -112,7 +112,7 @@ func (h *Handler) deleteImage(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	oldFiles, err := h.store.SetImage(r.Context(), id, "", "")
+	oldFiles, err := h.store.SetImage(r.Context(), id, "", "", "")
 	if err != nil {
 		writeStoreError(w, r, err)
 		return

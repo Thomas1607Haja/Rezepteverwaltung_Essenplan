@@ -18,6 +18,8 @@ data class Recipe(
     @SerialName("source_name") val sourceName: String = "",
     val image: String = "",
     val thumbnail: String = "",
+    /** "photo", "illustration" (gezeichnet von der Claude-Skill) oder leer. */
+    @SerialName("image_kind") val imageKind: String = "",
     @SerialName("is_favorite") val isFavorite: Boolean = false,
     val notes: String = "",
     val ingredients: List<Ingredient> = emptyList(),
@@ -27,6 +29,9 @@ data class Recipe(
     @SerialName("created_at") val createdAt: String = "",
     @SerialName("updated_at") val updatedAt: String = "",
 )
+
+/** Gezeichnetes Bild statt Foto (Importformat Version 2). */
+val Recipe.isIllustrated: Boolean get() = imageKind == "illustration" && image.isNotEmpty()
 
 @Serializable
 data class Ingredient(

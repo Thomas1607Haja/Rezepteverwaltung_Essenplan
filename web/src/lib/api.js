@@ -57,13 +57,14 @@ export const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
 /**
  * Baut die Parameter für die Rezeptliste. Leere Werte werden weggelassen.
- * filter: { query, tagIds, favoritesOnly, sort }
+ * filter: { query, tagIds, favoritesOnly, illustrationsOnly, sort }
  */
 function listParams(filter) {
   const params = new URLSearchParams();
   if (filter.query?.trim()) params.set('q', filter.query.trim());
   for (const id of filter.tagIds ?? []) params.append('tag', id);
   if (filter.favoritesOnly) params.set('favorite', 'true');
+  if (filter.illustrationsOnly) params.set('image', 'illustration');
   if (filter.sort) params.set('sort', filter.sort);
   const text = params.toString();
   return text ? '?' + text : '';

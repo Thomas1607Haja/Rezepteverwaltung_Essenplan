@@ -208,6 +208,10 @@ func TestZipPreviewAndConfirm(t *testing.T) {
 	if saved.Image == "" || saved.Thumbnail == "" || len(saved.Ingredients) != 3 || len(saved.Steps) != 2 || saved.SourceName != "HelloFresh-Karte" {
 		t.Errorf("gespeichert: %+v", saved)
 	}
+	// Version 1 kennt keine Bildart: Das Bild gilt als Foto.
+	if saved.ImageKind != recipes.ImagePhoto {
+		t.Errorf("Bildart = %q, erwartet photo", saved.ImageKind)
+	}
 
 	// Zweites Bestätigen: Upload ist weg, keine doppelten Rezepte.
 	if code, _ := f.confirm(t, p.Token, 0); code != http.StatusNotFound {
@@ -229,7 +233,7 @@ func TestSingleJSONAndContentDetection(t *testing.T) {
 		namedFile{"content://irgendwas/1234", []byte("\xef\xbb\xbf  " + one)},
 		namedFile{"fremd.json", []byte(`{"name": "kein Rezept"}`)},
 		namedFile{"notiz.txt", []byte("Hallo")},
-		namedFile{"alt.json", []byte(`{"format":"rezeptplaner-import","version":2,"recipes":[]}`)},
+		namedFile{"neu.json", []byte(`{"format":"rezeptplaner-import","version":3,"recipes":[]}`)},
 	)
 	if code != http.StatusOK || len(p.Recipes) != 1 || len(p.FileErrors) != 3 {
 		t.Fatalf("%d %s", code, body)
@@ -240,11 +244,49 @@ func TestSingleJSONAndContentDetection(t *testing.T) {
 	if !strings.Contains(strings.Join(p.Recipes[0].Warnings, "|"), "nur in ZIP") {
 		t.Errorf("Hinweis zum Bild fehlt: %v", p.Recipes[0].Warnings)
 	}
-	want := []string{"Formatkennung", "Weder ZIP", "Formatversion 2"}
+	want := []string{"Formatkennung", "Weder ZIP", "Formatversion 3"}
 	for i, fe := range p.FileErrors {
 		if !strings.Contains(fe.Error, want[i]) {
 			t.Errorf("Dateifehler %d: %q, erwartet %q", i, fe.Error, want[i])
 		}
+	}
+}
+
+// Version 2: image_kind wird übernommen; ohne Bild bleibt es wirkungslos,
+// unbekannte Werte gelten mit Hinweis als Foto.
+func TestImageKindVersion2(t *testing.T) {
+	f := newFixture(t)
+	doc := `{"format":"rezeptplaner-import","version":2,"recipes":[
+		{"title":"Kürbissuppe","base_servings":4,"image":"images/a.png","image_kind":"illustration"},
+		{"title":"Linsen","base_servings":4,"image":"images/b.png","image_kind":"gemalt"},
+		{"title":"Brot","base_servings":4,"image_kind":"illustration"}]}`
+	data := buildZip(t, map[string][]byte{
+		"recipes.json": []byte(doc), "images/a.png": testPNG(t), "images/b.png": testPNG(t),
+	})
+	code, p, body := f.upload(t, namedFile{"r.zip", data})
+	if code != http.StatusOK || len(p.Recipes) != 3 {
+		t.Fatalf("%d %s", code, body)
+	}
+	if k := p.Recipes[0].Recipe.ImageKind; k != recipes.ImageIllustration {
+		t.Errorf("Vorschau Bildart = %q", k)
+	}
+	if !strings.Contains(strings.Join(p.Recipes[1].Warnings, "|"), "Bildart „gemalt“") {
+		t.Errorf("Hinweis fehlt: %v", p.Recipes[1].Warnings)
+	}
+	_, result := f.confirm(t, p.Token, 0, 1, 2)
+	if len(result.Created) != 3 {
+		t.Fatalf("Bestätigen: %+v", result)
+	}
+	want := []string{recipes.ImageIllustration, recipes.ImagePhoto, ""}
+	for i, c := range result.Created {
+		saved, _ := f.recipes.Get(context.Background(), c.ID)
+		if saved.ImageKind != want[i] {
+			t.Errorf("%s: Bildart %q, erwartet %q", saved.Title, saved.ImageKind, want[i])
+		}
+	}
+	list, _ := f.recipes.List(context.Background(), recipes.ListFilter{IllustrationsOnly: true})
+	if len(list) != 1 || list[0].Title != "Kürbissuppe" {
+		t.Errorf("Filter Illustrationen: %+v", list)
 	}
 }
 

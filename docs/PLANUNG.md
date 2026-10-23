@@ -411,7 +411,7 @@ Eigene Seite mit Suche, Kategorie-Filtern, Favoriten und Statushinweis an jedem 
 ### 5.3 Rezeptübersicht
 
 - Suchfeld (Volltextsuche über Titel, Zutaten, optional Zubereitung).
-- Kategorie-Filter als Chips nach Gruppen, Herzchen-Filter.
+- Kategorie-Filter als Chips nach Gruppen, Herzchen-Filter, Filter „Illustrationen“ (gezeichnete Bilder, die ein Foto ersetzen sollte; Kachel mit Kennzeichen „Illustration“).
 - Kacheln mit Bild, Titel, Zeit, Statushinweis; Varianten mit Kennzeichen „Variante“ (Suche, Filter, Favoriten, Statushinweis je Variante).
 - Sortierung: Name, zuletzt eingeplant, am häufigsten eingeplant, neu hinzugefügt.
 - Plus-Button für Import/Anlegen; Zugang zur Statistik.
@@ -492,6 +492,8 @@ Format und Schema: [importformat.md](importformat.md). Die Claude-Skill `skills/
 2. Der Server prüft alles und liefert eine **Vorschau**, gespeichert wird noch nichts: je Rezept Bild, Titel, Zutatenanzahl, Fehler (Rezept nicht wählbar) und Hinweise – Dublette (gleicher Titel ohne Groß/klein und Umlaute oder gleiche Quell-URL), unbekannte Kategorie (wird **nicht** angelegt, sondern weggelassen), fehlendes Bild.
 3. Zutaten auf der Vorratsliste werden wie beim URL-Import als nicht einkaufsrelevant markiert.
 4. Rezepte einzeln abwählen, **Importieren** – erst jetzt wird gespeichert. Die App erkennt das Format am Inhalt (ZIP-Kennung oder Formatkennung im JSON), nicht am Dateityp; Import nur online.
+
+**Titel und Illustration (Skill 2.0, Format Version 2):** Hat die Vorlage keinen Titel (Zettel, Kochbuchausschnitt), vergibt die Skill einen beschreibenden Titel nach den Hauptbestandteilen und vermerkt das in den Notizen und im Chat. Fehlt ein brauchbares Foto vom Gericht (nur Text, schwarz-weiß, zu klein, unscharf), zeichnet `scripts/illustrate.py` eine Illustration im einheitlichen flachen Stil (nur Pillow, kein Netz – die Code-Ausführung von claude.ai hat kein Bildmodell und oft kein Internet). Das Feld `image_kind` (`photo`/`illustration`) wird gespeichert (Spalte `recipes.image_kind`); die Rezeptübersicht filtert mit „Illustrationen“ nach gezeichneten Bildern, ein hochgeladenes oder von einer Webadresse geholtes Bild gilt wieder als Foto. Weil der Server unbekannte Felder ablehnt, bekam das Format dafür die Version 2; Dateien der Version 1 bleiben gültig.
 
 ### F. Nachträgliche Änderungen
 
@@ -626,6 +628,7 @@ Rezepteverwaltung_Essenplan/
 | 7.6 | (umgesetzt, App 0.6.0) Teilen einer URL (Browser, Chefkoch-App) bzw. „+“ → „Rezept aus Internetadresse“ öffnet den Entwurf zum Prüfen, Bild der Quellseite wird beim Speichern übernommen; neues Rezept, Rezept bearbeiten (Zutaten mit Überschriften, „Zeilen einfügen“ über den Zutaten-Parser des Servers, Vorratsabgleich für „kaufen“, Reihenfolge per Pfeil statt Ziehen – auf dem Handy zuverlässiger), Bild per Kamera/Galerie/entfernen, Favorit, Variante speichern (Zurück ohne Speichern verwirft sie), Löschen; nur online. Im Emulator geprüft (debug und qa/R8): URL-Entwurf mit Bild, Bearbeiten, Einfügen, Sortieren, Galerie, Favorit, Variante verwerfen, Löschen, geteilte URL vor der Einrichtung; Kamera steht noch aus (A54) |
 | 7.6b | Datei-Import in der App, siehe „Datei-Import in der App (7.6b)“ unten: Teilen (`ACTION_SEND`/`_MULTIPLE`), „Öffnen mit“ (`ACTION_VIEW`), Knopf „Datei importieren“ (Dateiauswahl), WhatsApp als Quelle, Vorschau, nur online – App 0.5.0; im Emulator geprüft: Dateiauswahl, „Öffnen mit“ und Teilen aus der Dateien-App, mehrere Dateien, fremde ZIP, Foto (Rezeptplaner nicht im Teilen-Menü), Datei vor der Einrichtung; WhatsApp und Claude-App stehen noch aus |
 | 7.6c | (umgesetzt, App 0.6.4) Claude-Skill als Download: ZIP `rezeptplaner-import-skill.zip` am neuesten Release (fester Link), Weboberfläche „App installieren“ → dritter Punkt „Claude-Skill“ mit Anleitung |
+| 7.6d | (umgesetzt, Server 0.7.0, Skill 2.0) Skill vergibt fehlende Titel und zeichnet Illustrationen, wenn kein brauchbares Foto da ist; Format Version 2 mit `image_kind`, Filter „Illustrationen“ in Web und App |
 | 7.7 | Foto-Import mit ML Kit |
 | 7.8 | Einkauf und Bring |
 | 7.9 | Messungen, Doku |

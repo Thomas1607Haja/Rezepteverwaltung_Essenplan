@@ -1,4 +1,4 @@
-# Importformat „rezeptplaner-import“, Version 1
+# Importformat „rezeptplaner-import“, Version 2
 
 Mit diesem Format kommen Rezepte aus Dateien in den Rezeptplaner – vor allem
 aus der Claude-Skill [`skills/rezeptplaner-import/`](../skills/rezeptplaner-import/SKILL.md),
@@ -30,8 +30,8 @@ Zeichensatz UTF-8 (ein BOM am Anfang wird ignoriert).
 ```json
 {
   "format": "rezeptplaner-import",
-  "version": 1,
-  "generator": "claude-skill rezeptplaner-import 1.0",
+  "version": 2,
+  "generator": "claude-skill rezeptplaner-import 2.0",
   "recipes": [ { … }, { … } ]
 }
 ```
@@ -39,7 +39,7 @@ Zeichensatz UTF-8 (ein BOM am Anfang wird ignoriert).
 | Feld | Pflicht | Bedeutung |
 |---|---|---|
 | `format` | ja | immer `"rezeptplaner-import"` |
-| `version` | ja | `1`; andere Versionen lehnt der Server mit Meldung ab |
+| `version` | ja | `2`; Dateien der Version `1` (ohne `image_kind`) nimmt der Server weiter an. Andere Versionen lehnt er mit Meldung ab |
 | `generator` | nein | wer die Datei erzeugt hat (nur zur Information) |
 | `recipes` | ja | 1 bis 100 Rezepte |
 
@@ -60,6 +60,7 @@ statt `"ingredients"` fällt so auf, statt dass die Zutaten fehlen.
 | `notes` | nein | Text ≤ 5000 | Notizen, auch unsichere oder unleserliche Stellen |
 | `categories` | nein | Liste von Namen | Kategorien des Rezeptplaners (siehe unten) |
 | `image` | nein | `images/<name>.jpg\|jpeg\|png\|webp` oder `null` | Rezeptbild in der ZIP-Datei |
+| `image_kind` | nein | `"photo"` oder `"illustration"` | ab Version 2: Art des Bildes. `illustration` = gezeichneter Ersatz, weil die Vorlage kein brauchbares Foto hatte; weglassen = Foto. Ohne `image` ohne Bedeutung |
 | `ingredients` | nein | Liste (≤ 150) | Zutaten in Reihenfolge |
 | `steps` | nein | Liste von Texten (≤ 100) | Zubereitungsschritte in Reihenfolge, ohne Nummern |
 
@@ -89,6 +90,10 @@ statt `"ingredients"` fällt so auf, statt dass die Zutaten fehlen.
      Synonyme), werden wie beim URL-Import auf `shopping_relevant: false`
      gesetzt. Umgekehrt wird nie etwas auf `true` gesetzt.
    - **Bild:** fehlt, unlesbar oder kein echtes Bild → Rezept ohne Bild.
+     Die Bildart (`image_kind`) wird gespeichert; in der Rezeptübersicht
+     findet der Filter „Illustrationen“ (`GET /api/v1/recipes?image=illustration`)
+     gezeichnete Bilder, um sie durch Fotos zu ersetzen. Ein neu hochgeladenes
+     oder von einer Webadresse geholtes Bild gilt immer als Foto.
 2. **Bestätigen** (`POST /api/v1/import/file/{token}` mit
    `{"selected": [0, 2]}`): Die ausgewählten Rezepte werden angelegt. Die
    hochgeladenen Dateien liegen bis dahin höchstens **1 Stunde** auf dem
@@ -126,9 +131,16 @@ nachziehen.
 
 ## Änderungen am Format
 
-Nur abwärtskompatible Ergänzungen bleiben bei Version 1 (dann Schema, Kopie
-in der Skill und Server gemeinsam ändern). Alles andere bekommt eine neue
-`version`; der Server lehnt unbekannte Versionen mit klarer Meldung ab.
+Schema, Kopie in der Skill, Server und Skill werden immer gemeinsam geändert
+(Regel in CLAUDE.md). Weil der Server unbekannte Felder ablehnt, bekommt auch
+ein neues optionales Feld eine neue `version`: Ein älterer Server meldet dann
+verständlich „Formatversion … wird nicht unterstützt“ statt „unbekanntes
+Feld“. Ältere Versionen nimmt der Server weiter an.
+
+| Version | Änderung |
+|---|---|
+| 1 | erste Fassung |
+| 2 | `image_kind` (Foto oder Illustration) |
 
 ## Beispiel
 

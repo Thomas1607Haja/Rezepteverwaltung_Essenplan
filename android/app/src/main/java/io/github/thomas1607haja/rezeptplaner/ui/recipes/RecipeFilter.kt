@@ -2,6 +2,7 @@ package io.github.thomas1607haja.rezeptplaner.ui.recipes
 
 import io.github.thomas1607haja.rezeptplaner.api.PlanInfo
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
+import io.github.thomas1607haja.rezeptplaner.api.isIllustrated
 import io.github.thomas1607haja.rezeptplaner.data.Snapshot
 import io.github.thomas1607haja.rezeptplaner.ui.fold
 
@@ -17,9 +18,11 @@ data class RecipeFilter(
     val query: String = "",
     val tagIds: Set<Long> = emptySet(),
     val favoritesOnly: Boolean = false,
+    /** Nur gezeichnete Bilder – zum Ersetzen durch ein Foto. */
+    val illustrationsOnly: Boolean = false,
     val sort: RecipeSort = RecipeSort.Name,
 ) {
-    val isActive: Boolean get() = query.isNotBlank() || tagIds.isNotEmpty() || favoritesOnly
+    val isActive: Boolean get() = query.isNotBlank() || tagIds.isNotEmpty() || favoritesOnly || illustrationsOnly
 }
 
 /** Ein Rezept in der Liste mit seinen Terminen. */
@@ -40,6 +43,7 @@ fun filterRecipes(snapshot: Snapshot, filter: RecipeFilter): List<RecipeItem> {
 
     val items = snapshot.recipes.asSequence()
         .filter { !filter.favoritesOnly || it.isFavorite }
+        .filter { !filter.illustrationsOnly || it.isIllustrated }
         .filter { r ->
             if (words.isEmpty()) return@filter true
             val text = fold(r.title + " " + r.description + " " + r.ingredients.joinToString(" ") { it.name })

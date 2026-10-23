@@ -37,6 +37,10 @@ func TestImageUploadOverHTTP(t *testing.T) {
 	if !strings.HasSuffix(r.Image, ".jpg") || !strings.HasSuffix(r.Thumbnail, "_thumb.jpg") {
 		t.Fatalf("Bildfelder = %q / %q", r.Image, r.Thumbnail)
 	}
+	// Hochgeladene Bilder sind Fotos (ersetzen auch eine Illustration).
+	if r.ImageKind != ImagePhoto {
+		t.Errorf("Bildart = %q, erwartet photo", r.ImageKind)
+	}
 
 	// Das Bild ist abrufbar.
 	if rec := do(mux, "GET", "/api/v1/images/"+r.Thumbnail, ""); rec.Code != http.StatusOK {
@@ -59,8 +63,11 @@ func TestImageUploadOverHTTP(t *testing.T) {
 		t.Errorf("Bild entfernen: Status %d, erwartet 204", rec.Code)
 	}
 	json.Unmarshal(do(mux, "GET", "/api/v1/recipes/1", "").Body.Bytes(), &r)
-	if r.Image != "" || r.Thumbnail != "" {
-		t.Errorf("nach Entfernen: %q / %q", r.Image, r.Thumbnail)
+	if r.Image != "" || r.Thumbnail != "" || r.ImageKind != "" {
+		t.Errorf("nach Entfernen: %q / %q / %q", r.Image, r.Thumbnail, r.ImageKind)
+	}
+	if rec := do(mux, "GET", "/api/v1/recipes?image=foto", ""); rec.Code != http.StatusBadRequest {
+		t.Errorf("unbekannter Bildfilter: Status %d, erwartet 400", rec.Code)
 	}
 
 	if rec := do(mux, "PUT", "/api/v1/recipes/42/image", "x"); rec.Code != http.StatusNotFound {

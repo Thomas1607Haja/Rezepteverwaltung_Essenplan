@@ -55,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.Ingredient
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
+import io.github.thomas1607haja.rezeptplaner.api.isIllustrated
 import io.github.thomas1607haja.rezeptplaner.data.Outcome
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
@@ -173,6 +174,14 @@ private fun RecipeContent(
                 Modifier.fillMaxWidth().aspectRatio(16f / 10f),
                 load = true,
             )
+            if (recipe.isIllustrated) {
+                Text(
+                    "Gezeichnetes Bild (die Vorlage hatte kein Foto). Unter „Bearbeiten“ lässt es sich durch ein Foto ersetzen.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
         }
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.Top) {

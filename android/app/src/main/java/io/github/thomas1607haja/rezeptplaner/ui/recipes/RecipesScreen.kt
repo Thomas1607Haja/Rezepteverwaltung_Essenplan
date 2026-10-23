@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.ui.recipes
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +49,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.thomas1607haja.rezeptplaner.R
+import io.github.thomas1607haja.rezeptplaner.api.isIllustrated
 import io.github.thomas1607haja.rezeptplaner.data.SyncTrigger
 import io.github.thomas1607haja.rezeptplaner.ui.common.OfflineBanner
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
@@ -95,7 +97,8 @@ fun RecipesScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            // FlowRow: bricht auf schmalen Handys in eine zweite Zeile um.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
                 FilterChip(
                     selected = filter.tagIds.isNotEmpty(),
                     onClick = { showTags = true },
@@ -108,6 +111,14 @@ fun RecipesScreen(
                     label = { Text("Favoriten") },
                     leadingIcon = { Icon(painterResource(R.drawable.ic_heart), contentDescription = null, Modifier.size(18.dp)) },
                 )
+                // Nur anbieten, wenn es gezeichnete Bilder gibt.
+                if (filter.illustrationsOnly || snapshot.recipes.any { it.isIllustrated }) {
+                    FilterChip(
+                        selected = filter.illustrationsOnly,
+                        onClick = { viewModel.filter.value = filter.copy(illustrationsOnly = !filter.illustrationsOnly) },
+                        label = { Text("Illustrationen") },
+                    )
+                }
                 Box {
                     TextButton(onClick = { showSort = true }) { Text(filter.sort.label) }
                     DropdownMenu(expanded = showSort, onDismissRequest = { showSort = false }) {
@@ -201,6 +212,16 @@ private fun RecipeTile(item: RecipeItem, today: LocalDate, onClick: () -> Unit) 
                 Icon(
                     painterResource(R.drawable.ic_heart_filled), contentDescription = "Favorit",
                     tint = MaterialTheme.colorScheme.primary, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
+                )
+            }
+            if (r.isIllustrated) {
+                Text(
+                    "Illustration",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.align(Alignment.BottomStart).padding(6.dp)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f), MaterialTheme.shapes.small)
+                        .padding(horizontal = 6.dp, vertical = 1.dp),
                 )
             }
         }

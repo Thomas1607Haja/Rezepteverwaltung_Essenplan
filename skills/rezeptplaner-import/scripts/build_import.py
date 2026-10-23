@@ -16,13 +16,25 @@ Befehle:
           python build_import.py check datei.zip
 
 Die Arbeitsdatei hat den Aufbau von recipes.json (format/version dürfen
-fehlen), nur steht beim Rezept statt "image" ein "image_source":
+fehlen), nur steht beim Rezept statt "image" entweder ein Foto als
+"image_source":
 
   "image_source": {
     "file": "/mnt/user-data/uploads/karte-vorne.jpg",
     "crop": [0.0, 0.0, 1.0, 0.62],   # optional: links, oben, rechts, unten (Anteile 0..1)
     "rotate": 0                      # optional: 0, 90, 180, 270 (Grad gegen den Uhrzeigersinn)
   }
+
+oder – wenn die Vorlage kein brauchbares Foto des Gerichts hat – eine
+gezeichnete Illustration (Beschreibung wie bei illustrate.py, "title" darf
+fehlen):
+
+  "illustration": {
+    "vessel": "plate",
+    "ingredients": [{"name": "Spaghetti", "shape": "noodles", "color": "#E9C46A"}]
+  }
+
+Das Skript setzt "image_kind" ("photo" bzw. "illustration") selbst.
 
 Geprüft wird ohne Zusatzpakete (nur Python-Standardbibliothek); für Bilder
 wird Pillow gebraucht.
@@ -43,7 +55,8 @@ from pathlib import Path
 SKILL_DIR = Path(__file__).resolve().parent.parent
 SCHEMA_PATH = SKILL_DIR / "schema.json"
 CATEGORIES_PATH = SKILL_DIR / "categories.md"
-GENERATOR = "claude-skill rezeptplaner-import 1.0"
+GENERATOR = "claude-skill rezeptplaner-import 2.0"
+FORMAT_VERSION = 2
 
 MAX_SIDE = 1600       # längste Bildkante in Pixeln
 JPEG_QUALITY = 85
@@ -83,6 +96,9 @@ def validate(value, schema: dict, root: dict, path: str = "$") -> list[str]:
     errors: list[str] = []
     if "const" in schema and value != schema["const"]:
         return [f"{path}: muss {json.dumps(schema['const'], ensure_ascii=False)} sein"]
+    if "enum" in schema and value not in schema["enum"]:
+        allowed = " oder ".join(json.dumps(v, ensure_ascii=False) for v in schema["enum"])
+        return [f"{path}: muss {allowed} sein"]
 
     if "type" in schema:
         types = schema["type"] if isinstance(schema["type"], list) else [schema["type"]]
@@ -202,6 +218,16 @@ def render_image(spec: dict) -> bytes:
         return out.getvalue()
 
 
+def render_illustration(spec: dict, title: str) -> bytes:
+    """Zeichnet die Illustration (scripts/illustrate.py) und liefert JPEG-Bytes."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import illustrate  # liegt neben diesem Skript
+
+    spec = dict(spec)
+    spec.setdefault("title", title)
+    return illustrate.render(spec)
+
+
 # ---------------------------------------------------------------------------
 # Dateinamen
 # ---------------------------------------------------------------------------
@@ -256,17 +282,27 @@ def cmd_build(args) -> int:
         if isinstance(r.get("steps"), list):
             r["steps"] = [_STEP_NUMBER.sub("", s, count=1) if isinstance(s, str) else s for s in r["steps"]]
         spec = r.pop("image_source", None)
+        drawing = r.pop("illustration", None)
         r.pop("image", None)
+        r.pop("image_kind", None)
+        name = f"images/{i + 1:02d}-{slug(r.get('title', ''))}.jpg"
+        if spec and drawing:
+            print(f"HINWEIS: „{r.get('title')}“ hat Foto und Illustration – das Foto wird verwendet.")
         if spec:
-            name = f"images/{i + 1:02d}-{slug(r.get('title', ''))}.jpg"
             try:
                 images[name] = render_image(spec)
-                r["image"] = name
+                r["image"], r["image_kind"] = name, "photo"
             except Exception as e:  # Rezept trotzdem bauen, nur ohne Bild
                 print(f"HINWEIS: Bild für „{r.get('title')}“ nicht verwendbar ({e}) – Rezept ohne Bild.")
+        elif drawing:
+            try:
+                images[name] = render_illustration(drawing, r.get("title", ""))
+                r["image"], r["image_kind"] = name, "illustration"
+            except Exception as e:
+                print(f"HINWEIS: Illustration für „{r.get('title')}“ nicht möglich ({e}) – Rezept ohne Bild.")
         out_recipes.append(r)
 
-    doc = {"format": "rezeptplaner-import", "version": 1, "generator": GENERATOR, "recipes": out_recipes}
+    doc = {"format": "rezeptplaner-import", "version": FORMAT_VERSION, "generator": GENERATOR, "recipes": out_recipes}
     errors, warnings = check_document(doc)
     if errors:
         print("FEHLER – keine ZIP-Datei erzeugt:")
@@ -288,8 +324,9 @@ def cmd_build(args) -> int:
     if size > MAX_ZIP_BYTES:
         print(f"WARNUNG: größer als {MAX_ZIP_BYTES >> 20} MB – der Rezeptplaner lehnt die Datei ab. Auf mehrere Dateien aufteilen.")
     for r in out_recipes:
+        picture = {"photo": "mit Foto", "illustration": "mit Illustration"}.get(r.get("image_kind"), "ohne Bild")
         print(f"  - {r['title']} ({r['base_servings']} Portionen, {len(r.get('ingredients', []))} Zutaten, "
-              f"{len(r.get('steps', []))} Schritte, {'mit' if r.get('image') else 'ohne'} Bild)")
+              f"{len(r.get('steps', []))} Schritte, {picture})")
     for w in warnings:
         print("HINWEIS:", w)
     return 0

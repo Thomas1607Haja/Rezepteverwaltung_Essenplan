@@ -28,7 +28,7 @@ Alles Persönliche gehört in die Add-on-Konfiguration oder die Einstellungen de
 
 ## Importformat und Claude-Skill
 
-- Das Importformat (`docs/importformat.md`, `docs/importformat.schema.json`) und die Claude-Skill (`skills/rezeptplaner-import/`) gehören zusammen: **Ändert sich das Format, wird die Skill im selben Release mitgeändert** (Schema-Kopie, `SKILL.md`, Beispiel, Skript). Die Tests in `server/internal/fileimport/repo_test.go` prüfen, dass Schema-Kopie, Kategorieliste und Beispiel zum Server passen.
+- Das Importformat (`docs/importformat.md`, `docs/importformat.schema.json`) und die Claude-Skill (`skills/rezeptplaner-import/`) gehören zusammen: **Ändert sich das Format, wird die Skill im selben Release mitgeändert** (Schema-Kopie, `SKILL.md`, Beispiel, Skripte, Formatversion und `GENERATOR` in `build_import.py`, Skill-Version in `SKILL.md`). Weil der Server unbekannte Felder ablehnt, bekommt auch ein neues optionales Feld eine neue Formatversion; ältere Versionen nimmt der Server weiter an. Die Skripte testet `skills/tests/` (`python -m unittest discover -s skills/tests`, braucht Pillow). Die Tests in `server/internal/fileimport/repo_test.go` prüfen, dass Schema-Kopie, Kategorieliste und Beispiel zum Server passen.
 - Werden die Startkategorien geändert, `skills/rezeptplaner-import/categories.md` nachziehen.
 
 ## Schlankheit hat Vorrang

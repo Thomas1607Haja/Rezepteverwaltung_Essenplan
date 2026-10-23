@@ -383,7 +383,7 @@ func (im *Importer) saveImage(ctx context.Context, c *candidate, recipeID int64,
 	if err != nil {
 		return fmt.Sprintf("Bild nicht gespeichert: %v", err)
 	}
-	if _, err := im.recipes.SetImage(ctx, recipeID, large, thumb); err != nil {
+	if _, err := im.recipes.SetImage(ctx, recipeID, large, thumb, c.Recipe.ImageKind); err != nil {
 		im.images.Delete(large, thumb)
 		return fmt.Sprintf("Bild nicht gespeichert: %v", err)
 	}

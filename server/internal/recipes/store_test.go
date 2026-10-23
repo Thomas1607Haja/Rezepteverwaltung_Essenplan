@@ -364,7 +364,7 @@ func TestSetImageAndDeleteReturnFiles(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	old, err := s.SetImage(ctx, created.ID, "a.jpg", "a_thumb.jpg")
+	old, err := s.SetImage(ctx, created.ID, "a.jpg", "a_thumb.jpg", ImagePhoto)
 	if err != nil {
 		t.Fatalf("SetImage: %v", err)
 	}
@@ -376,9 +376,12 @@ func TestSetImageAndDeleteReturnFiles(t *testing.T) {
 		t.Errorf("Bild = %q / %q", got.Image, got.Thumbnail)
 	}
 
-	old, err = s.SetImage(ctx, created.ID, "b.jpg", "b_thumb.jpg")
+	old, err = s.SetImage(ctx, created.ID, "b.jpg", "b_thumb.jpg", ImageIllustration)
 	if err != nil || !slices.Equal(old, []string{"a.jpg", "a_thumb.jpg"}) {
 		t.Errorf("Ersetzen: alte Dateien = %q, Fehler %v", old, err)
+	}
+	if got, _ := s.Get(ctx, created.ID); got.ImageKind != ImageIllustration {
+		t.Errorf("ImageKind = %q, erwartet illustration", got.ImageKind)
 	}
 
 	// Update ändert das Bild nicht.
@@ -394,7 +397,7 @@ func TestSetImageAndDeleteReturnFiles(t *testing.T) {
 		t.Errorf("Delete: Dateien = %q, Fehler %v", files, err)
 	}
 
-	if _, err := s.SetImage(ctx, 42, "x.jpg", ""); !errors.Is(err, ErrNotFound) {
+	if _, err := s.SetImage(ctx, 42, "x.jpg", "", ImagePhoto); !errors.Is(err, ErrNotFound) {
 		t.Errorf("unbekanntes Rezept: Fehler = %v, erwartet ErrNotFound", err)
 	}
 }
