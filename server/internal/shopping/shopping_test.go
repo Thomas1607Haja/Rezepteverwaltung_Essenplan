@@ -183,7 +183,12 @@ func TestRoundForShopping(t *testing.T) {
 		want float64
 	}{
 		{1.33, "", 2}, {2.0000001, "", 2}, {0.25, "Dose", 1}, {1.5, "Pck.", 2},
-		{1.5, "EL", 1.5}, {333.3, "g", 333.3},
+		{1.5, "EL", 1.5}, {1.33, "EL", 1.5}, {0.25, "TL", 0.5}, {2, "Msp.", 2},
+		// Gewicht und Volumen: glatte Schritte je nach Größe, immer aufgerundet
+		{533.33, "g", 540}, {266.67, "g", 270}, {800, "g", 800}, {800.0000001, "g", 800},
+		{7.5, "g", 8}, {66.7, "ml", 70}, {1333.3, "g", 1350}, {1.333, "kg", 1.4}, {0.33, "l", 0.35},
+		// unbekannte Einheiten bleiben
+		{1.5, "Prise", 1.5}, {0.75, "Tasse", 0.75},
 	} {
 		if got := roundForShopping(tt.q, tt.unit); got != tt.want {
 			t.Errorf("roundForShopping(%v, %q) = %v, erwartet %v", tt.q, tt.unit, got, tt.want)
@@ -392,5 +397,49 @@ func TestDifferences(t *testing.T) {
 	p, _ = store.Preview(ctx, false)
 	if got, want := summary(p.Surplus), "Eier: 6\nKnoblauch: 1 Zehen\nMilch: 200 ml\nPaprikapulver: ½ EL\nPetersilie: \nZwiebeln: 3"; got != want {
 		t.Errorf("zu viel nach dem Löschen:\n%s\nerwartet:\n%s", got, want)
+	}
+}
+
+// Umgerechnete Mengen kommen glatt auf die Liste: 800 g für 6 Portionen,
+// eingeplant für 4, ergeben 540 g statt 533 g; nach dem Erhöhen auf 6
+// Portionen fehlen 260 g (zusammen 800 g) statt 267 g.
+func TestShoppingAmountsAreRounded(t *testing.T) {
+	ctx := context.Background()
+	store, _ := setup(t)
+	ha := store.ha.(*homeassistant.TestClient)
+	chooseList(t, store)
+	chili, err := recipes.NewStore(store.db).Create(ctx, recipes.Recipe{Title: "Chili", BaseServings: 6,
+		Ingredients: []recipes.Ingredient{ing(800, "g", "stückige Tomaten", true)}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, err := store.plan.Create(ctx, mealplan.NewEntry{Date: "2026-10-22", RecipeID: ptr(chili.ID), Servings: ptr(4)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, _ := store.Preview(ctx, false)
+	if got := summary(p.Items); !strings.Contains(got, "stückige Tomaten: 540 g") {
+		t.Errorf("Vorschau:\n%s\nerwartet stückige Tomaten: 540 g", got)
+	}
+	if _, err := store.Send(ctx, SendOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	items, _ := ha.OpenItems(ctx, homeassistant.TestListID)
+	sent := ""
+	for _, it := range items {
+		if it.Summary == "stückige Tomaten" {
+			sent = it.Description
+		}
+	}
+	if sent != "540 g" {
+		t.Errorf("an Bring: %q, erwartet 540 g", sent)
+	}
+
+	if _, err := store.plan.Update(ctx, e.ID, mealplan.Changes{RecipeID: ptr(chili.ID), Servings: 6, Status: mealplan.StatusTransferred}); err != nil {
+		t.Fatal(err)
+	}
+	p, _ = store.Preview(ctx, false)
+	if got := summary(p.Missing); !strings.Contains(got, "stückige Tomaten: 260 g") {
+		t.Errorf("fehlt:\n%s\nerwartet stückige Tomaten: 260 g", got)
 	}
 }

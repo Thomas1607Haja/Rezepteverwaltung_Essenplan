@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.7.2
+
+- **Glatte Mengen auf der Einkaufsliste:** Umgerechnete Mengen in Gramm, Milliliter, Kilogramm, Liter und Löffeln werden für Einkaufsliste und Bring auf glatte Werte aufgerundet – z. B. 540 g statt 533 g, und beim Nachsenden 260 g statt 267 g. Die Kochansicht zeigt weiter die genaue Menge.
+
 ## 0.7.1
 
 - **Weniger Daten für die App:** Der App-Zugang komprimiert JSON-Antworten (gzip). Der volle Abgleich mit 500 Rezepten schrumpft von 1,4 MB auf rund 130 KB; das spart vor allem den Upload aus dem Heimnetz.

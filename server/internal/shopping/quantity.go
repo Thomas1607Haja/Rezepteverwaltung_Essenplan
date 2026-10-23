@@ -27,13 +27,50 @@ func isCountUnit(unit string) bool {
 	return countUnits[strings.TrimSuffix(database.Fold(strings.TrimSpace(unit)), ".")]
 }
 
-// roundForShopping rundet Stück-Einheiten auf ganze Zahlen auf. Kleine
-// Rechenungenauigkeiten (2,0000001) zählen nicht als angefangenes Stück.
+// shoppingStep liefert die Schrittweite, auf die eine umgerechnete Menge
+// für den Einkauf aufgerundet wird, oder 0 (unverändert lassen). Aus
+// 4/6 von 800 g werden so 540 g statt 533 g; in der Kochansicht bleibt
+// die genaue Menge stehen.
+func shoppingStep(q float64, unit string) float64 {
+	switch strings.TrimSuffix(database.Fold(strings.TrimSpace(unit)), ".") {
+	case "g", "gr", "gramm", "ml", "milliliter":
+		switch {
+		case q <= 10:
+			return 1
+		case q <= 100:
+			return 5
+		case q <= 1000:
+			return 10
+		}
+		return 50
+	case "kg", "kilogramm", "l", "liter":
+		if q <= 1 {
+			return 0.05
+		}
+		return 0.1
+	case "el", "tl", "msp", "essloffel", "teeloffel", "messerspitze":
+		return 0.5
+	}
+	return 0
+}
+
+// roundForShopping rundet Mengen so auf, wie man sie einkauft: Stück-
+// Einheiten auf ganze Zahlen, Gewichte, Volumen und Löffel auf glatte
+// Schritte (siehe shoppingStep). Andere Einheiten („Prise“) bleiben.
+// Kleine Rechenungenauigkeiten (2,0000001) zählen nicht als angefangener
+// Schritt.
 func roundForShopping(q float64, unit string) float64 {
-	if !isCountUnit(unit) {
+	if isCountUnit(unit) {
+		return math.Max(1, math.Ceil(q-0.05))
+	}
+	step := shoppingStep(q, unit)
+	if step == 0 || q <= 0 {
 		return q
 	}
-	return math.Max(1, math.Ceil(q-0.05))
+	r := math.Ceil(q/step-0.001) * step
+	// Schrittweiten wie 0,05 sind als Gleitkommazahl ungenau: auf vier
+	// Nachkommastellen glätten, damit 0,15 nicht als 0,15000000000000002 ankommt.
+	return math.Round(r*10000) / 10000
 }
 
 // fractions sind die beim Kochen üblichen Brüche, wie in der Kochansicht

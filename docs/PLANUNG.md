@@ -253,7 +253,7 @@ Es wird nicht ausgelesen, was in Bring tatsächlich abgehakt wurde.
 - Gleiche Zutaten werden zusammengefasst. Unterschiedliche Einheiten derselben Zutat werden zunächst nicht umgerechnet, sondern gemeinsam angegeben.
   - Gleich heißt: gleicher Name ohne Klammerzusätze, unabhängig von Groß-/Kleinschreibung, Umlauten und einer Pluralendung am letzten Wort („Zwiebel“ = „Zwiebeln“, „Ei“ = „Eier“). Angezeigt wird die längere Schreibweise.
   - Mengen derselben Einheit werden addiert, verschiedene Einheiten mit „+“ verbunden („500 g + 2 EL“). Zutaten ohne Menge stehen nur mit Namen auf der Liste.
-  - Stück-Einheiten (ohne Einheit, Stück, Dose, Packung, Bund, Zehe, Glas usw.) werden nach dem Addieren auf ganze Zahlen aufgerundet; andere Mengen werden wie in der Kochansicht gerundet dargestellt.
+  - Stück-Einheiten (ohne Einheit, Stück, Dose, Packung, Bund, Zehe, Glas usw.) werden nach dem Addieren auf ganze Zahlen aufgerundet. Gewicht und Volumen werden auf glatte Schritte aufgerundet (g/ml: bis 10 auf 1, bis 100 auf 5, bis 1000 auf 10, darüber auf 50; kg/l: bis 1 auf 0,05, darüber auf 0,1), EL/TL/Msp. auf ½ – aus 4/6 von 800 g werden 540 g statt 533 g (seit 0.7.2). Andere Einheiten („Prise“) bleiben. Die Kochansicht zeigt weiter die genaue Menge.
 - Tage vor heute zählen nicht mit (schon gegessen). Neben dem aktuellen lässt sich auch der folgende Einkaufszeitraum abrufen, z. B. am Abend vor dem Einkaufstag (ergänzt 2026-10-21).
 - Vor dem Senden lassen sich einzelne Artikel abwählen.
 - Übertragung über die Bring-Integration von Home Assistant (To-do-Entität) per Supervisor-API; Artikelname und Mengenangabe getrennt, soweit möglich.
@@ -518,7 +518,7 @@ Format und Schema: [importformat.md](importformat.md). Die Claude-Skill `skills/
 
 Vergleich mit den übertragenen Artikeln; Angebot, nur die Differenz nachzusenden.
 
-- Verglichen wird je Artikel und Einheit der Bedarf aller übertragenen Gerichte des Einkaufszeitraums (auch vergangener Tage) mit dem Protokoll in `transferred_items`. Stück-Einheiten werden dabei gerundet verglichen, so wie sie gesendet wurden.
+- Verglichen wird je Artikel und Einheit der Bedarf aller übertragenen Gerichte des Einkaufszeitraums (auch vergangener Tage) mit dem Protokoll in `transferred_items`. Beide Seiten werden dabei gerundet verglichen, so wie sie gesendet werden (Protokoll mit genauen Werten); erhöht man z. B. von 4 auf 6 Portionen, fehlen 260 g statt 267 g.
 - **Fehlt noch:** z. B. nach mehr Portionen, einem ersetzten Rezept oder einem Artikel, der beim Senden nicht ankam. Einzelne Artikel lassen sich abwählen (gelten dann als erledigt); „Differenz nachsenden“ ergänzt offene Bring-Einträge bzw. legt neue an.
 - **Zu viel gesendet:** nur Anzeige, nichts wird aus Bring gelöscht. Abgewählte Artikel zählen nicht als zu viel, sie wurden ja nicht gekauft.
 - Der Dialog beim Verschieben bietet „Zutaten an Bring senden“: Das Gericht wird verschoben und seine Zutaten werden sofort übertragen.
