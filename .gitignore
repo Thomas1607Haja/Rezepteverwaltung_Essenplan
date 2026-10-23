@@ -19,6 +19,8 @@ uploads/
 images/
 # Ausnahme: Go-Paket für die Bildverarbeitung (Quellcode, keine Bilder)
 !/server/internal/images/
+# Ausnahme: Kotlin-Paket "data" der Android-App (Quellcode, keine Daten)
+!/android/app/src/*/java/**/data/
 
 # --- Lokale Konfiguration und Zugangsdaten ---
 .env
