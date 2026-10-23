@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import io.github.thomas1607haja.rezeptplaner.ui.CrashReportCard
 
 // Die App gibt es nur auf Deutsch; die Texte stehen deshalb direkt hier.
 
@@ -57,16 +58,19 @@ fun SetupScreen(
 ) {
     val context = LocalContext.current
     val scan = {
-        val options = GmsBarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .build()
-        GmsBarcodeScanning.getClient(context, options).startScan()
-            .addOnSuccessListener { barcode -> barcode.rawValue?.let(viewModel::onLink) }
-            .addOnFailureListener {
-                viewModel.onScanFailed(
-                    "Scanner nicht verfügbar (Google Play-Dienste). Bitte die Angaben von Hand eingeben.",
-                )
-            }
+        val unavailable = "Scanner nicht verfügbar (Google Play-Dienste). Den QR-Code mit der Kamera-App " +
+            "scannen oder die Angaben von Hand eingeben."
+        try {
+            val options = GmsBarcodeScannerOptions.Builder()
+                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                .build()
+            GmsBarcodeScanning.getClient(context, options).startScan()
+                .addOnSuccessListener { barcode -> barcode.rawValue?.let(viewModel::onLink) }
+                .addOnFailureListener { viewModel.onScanFailed(unavailable) }
+        } catch (e: RuntimeException) {
+            // Fehler der Play-Dienste beim Start sollen die App nicht beenden.
+            viewModel.onScanFailed(unavailable)
+        }
         Unit
     }
 
@@ -86,6 +90,7 @@ fun SetupScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text("Rezeptplaner verbinden", style = MaterialTheme.typography.headlineSmall)
+            CrashReportCard()
             when (state) {
                 is SetupViewModel.State.Choose -> ChooseStep(state, scan, viewModel::showManual, onCancel)
                 is SetupViewModel.State.Manual -> ManualStep(state, viewModel::onManual, viewModel::back)

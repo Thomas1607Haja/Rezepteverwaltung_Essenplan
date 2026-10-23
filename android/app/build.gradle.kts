@@ -113,6 +113,10 @@ dependencies {
     // QR-Scanner von Google Play-Diensten: braucht keine Kamera-Berechtigung,
     // das Kamerabild sieht nur der Scanner, die App bekommt nur den Text.
     implementation(libs.play.services.code.scanner)
+    // Neuere Basis als die des Scanners, siehe libs.versions.toml.
+    implementation(libs.play.services.base)
+    implementation(libs.play.services.basement)
+    implementation(libs.play.services.tasks)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
 

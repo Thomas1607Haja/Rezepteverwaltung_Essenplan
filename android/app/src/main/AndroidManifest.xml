@@ -26,6 +26,12 @@
         tools:ignore="DataExtractionRules"
         tools:targetApi="33">
 
+        <!-- Scanner-Modul der Play-Dienste schon bei der Installation laden,
+             nicht erst beim ersten Scan. -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode_ui" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

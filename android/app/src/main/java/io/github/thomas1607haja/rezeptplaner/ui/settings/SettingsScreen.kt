@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.thomas1607haja.rezeptplaner.BuildConfig
+import io.github.thomas1607haja.rezeptplaner.ui.CrashReportCard
 import kotlinx.coroutines.launch
 
 @Composable
@@ -50,6 +51,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text("Einstellungen", style = MaterialTheme.typography.headlineSmall)
+        CrashReportCard()
 
         Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

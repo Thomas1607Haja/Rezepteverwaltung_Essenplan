@@ -12,4 +12,9 @@ import io.github.thomas1607haja.rezeptplaner.data.ConfigRepository
 class RezeptplanerApplication : Application() {
     val configRepository by lazy { ConfigRepository(this) }
     val apiClient by lazy { ApiClient() }
+
+    override fun onCreate() {
+        super.onCreate()
+        CrashLog.install(this)
+    }
 }
