@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/pantry"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
@@ -27,7 +28,10 @@ type fixture struct {
 	images  *images.Store
 }
 
-func newFixture(t *testing.T) fixture {
+func newFixture(t *testing.T) fixture { return newFixtureWith(t, nil) }
+
+// newFixtureWith: mit fetcher, der Fotos von Quellseiten lädt.
+func newFixtureWith(t *testing.T, fetcher *fetch.Client) fixture {
 	t.Helper()
 	ctx := context.Background()
 	db, err := database.Open(ctx, ":memory:")
@@ -44,7 +48,7 @@ func newFixture(t *testing.T) fixture {
 		t.Fatal(err)
 	}
 	rs := recipes.NewStore(db)
-	im, err := NewImporter(dir+"/import", rs, pantry.NewStore(db), img)
+	im, err := NewImporter(dir+"/import", rs, pantry.NewStore(db), img, fetcher)
 	if err != nil {
 		t.Fatal(err)
 	}

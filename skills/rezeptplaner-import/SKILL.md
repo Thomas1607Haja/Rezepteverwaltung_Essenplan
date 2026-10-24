@@ -6,8 +6,9 @@ description: Erfasst Rezepte aus Fotos (Rezeptkarten wie HelloFresh mit Vorder- 
 # Rezeptplaner-Import
 
 Du erfasst Rezepte aus Fotos und lieferst **eine ZIP-Datei** im Format
-„rezeptplaner-import“, Version 2 (Skill-Version 2.0; braucht Rezeptplaner
-0.7.0 oder neuer – ältere melden „Formatversion 2 wird nicht unterstützt“). Der Nutzer schickt sie per Teilen an die
+„rezeptplaner-import“, Version 2 (Skill-Version 2.1; braucht Rezeptplaner
+0.7.0 oder neuer – ältere melden „Formatversion 2 wird nicht unterstützt“; das
+Foto aus dem gefundenen Link übernimmt der Rezeptplaner ab 0.8.0). Der Nutzer schickt sie per Teilen an die
 Rezeptplaner-App (oder lädt sie in der Weboberfläche hoch); dort erscheint
 eine Vorschau, erst danach wird gespeichert.
 
@@ -32,17 +33,20 @@ Dateien dieser Skill (Pfade relativ zum Skill-Ordner):
    Reihenfolge. Ist eine Zuordnung unklar, frage kurz nach, bevor du
    weitermachst.
 2. **Jedes Rezept vollständig ablesen** nach den Regeln unten.
-3. **Rezeptbild festlegen**: nur ein Foto, das das fertige Gericht zeigt.
+3. **Original im Internet suchen** (siehe „Originallink suchen“): per
+   Websuche prüfen, ob es genau dieses Rezept online gibt; nur bei
+   eindeutigem Treffer `source.url` setzen.
+4. **Rezeptbild festlegen**: nur ein Foto, das das fertige Gericht zeigt.
    Bestimme den Zuschnitt (Anteile 0–1 von links, oben, rechts, unten), so
    dass nur das Gerichtfoto übrig bleibt – ohne Kartenrand, Text, Logo oder
    Hand. Prüfe den Zuschnitt mit `crop` und sieh dir das Ergebnis an;
    korrigiere, bis es passt. Gibt es kein brauchbares Foto des Gerichts,
    beschreibe stattdessen eine **Illustration** (siehe „Rezeptbild“).
-4. **Arbeitsdatei schreiben** (Aufbau wie `example/recipes.json`, aber mit
+5. **Arbeitsdatei schreiben** (Aufbau wie `example/recipes.json`, aber mit
    `image_source` statt `image`, siehe unten) und mit `build` die ZIP-Datei
    erzeugen. Meldet das Skript Fehler, korrigieren und erneut bauen. Gib nie
    eine Datei aus, die das Skript nicht als `OK` gebaut hat.
-5. **Ausgabe** im Chat (siehe „Antwort“).
+6. **Ausgabe** im Chat (siehe „Antwort“).
 
 ## Regeln für den Inhalt
 
@@ -105,11 +109,46 @@ Ein „Tipp“ der Vorlage kommt in `notes`.
 Lieber zu wenige als falsche. Nicht passende Begriffe der Vorlage
 („Familienliebling“, „Low Carb“) nicht übernehmen.
 
+**Eigene Kategorieliste:** Fügt der Nutzer im Chat eine Kategorieliste ein
+(aus dem Rezeptplaner: Einstellungen → Kategorien → „Kategorieliste für
+Claude kopieren“; Überschriften `## Gruppe`, darunter `- Name`), gilt **nur
+diese Liste** statt `categories.md` – sie ist aktueller. Speichere sie als
+Datei (z. B. `/tmp/kategorien.md`) und gib sie beim Bauen mit
+`--categories /tmp/kategorien.md` an. Sie gilt für das ganze Gespräch.
+
 **Quelle (`source.name`):** „HelloFresh-Karte“ bei HelloFresh-Karten,
 sonst z. B. „Kochbuch: <Titel>“ (falls der Buchtitel erkennbar ist),
 „Kochbuch“, „Zeitschrift: <Name>“, „Handschriftlich“. Steht eine
 Webadresse zum Rezept auf der Vorlage, zusätzlich `source.url` (nur
-`http`/`https`). Nichts erfinden.
+`http`/`https`). Sonst kann `source.url` aus der Suche nach dem Original
+kommen (nächster Abschnitt). Nichts erfinden.
+
+## Originallink suchen
+
+Für **jedes** Rezept per Websuche prüfen, ob es genau dieses Rezept online
+gibt – typisch bei HelloFresh-Karten (hellofresh.de), Rezepten aus
+Zeitschriften und bekannten Kochbüchern (z. B. Chefkoch, Lecker, Essen &
+Trinken, Seite des Verlags). Suche mit dem Titel und zwei bis drei
+Hauptzutaten, z. B. `HelloFresh Gnocchi-Pfanne Spinat Feta`.
+
+- **Nur bei eindeutigem Treffer** übernehmen: Titel stimmt (sinngemäß,
+  z. B. ohne Werbezusatz) **und** die Hauptzutaten stimmen überein. Bei
+  HelloFresh passt meist auch das Bild auf der Seite zur Vorderseite der
+  Karte. Ähnliche Rezepte, andere Varianten, Sammelseiten, Suchergebnis-
+  seiten, Pinterest/Instagram und Seiten ohne Rezept zählen **nicht**.
+- **Im Zweifel leer lassen** – lieber kein Link als ein falscher.
+- Gefunden: die Adresse der Rezeptseite als `source.url` (nur `http`/
+  `https`, ohne Tracking-Zusätze wie `?utm_…`) und in `notes` den Satz
+  „Link automatisch per Websuche gefunden – bitte prüfen.“ `source.name`
+  bleibt die Vorlage (z. B. „HelloFresh-Karte“).
+- **Die Rezeptdaten bleiben immer die vom Foto** (Zutaten, Mengen,
+  Schritte, Zeiten). Von der Seite nichts übernehmen.
+- **Keine Bilder aus dem Internet herunterladen** (auch nicht versuchen).
+  Das Foto holt der Rezeptplaner beim Import selbst von der Seite, wenn das
+  Rezept kein Foto der Vorlage hat; bis dahin gilt wie bisher: kein
+  brauchbares Foto → Illustration.
+- Gibt es in dieser Umgebung keine Websuche, den Schritt überspringen und
+  das im Chat sagen.
 
 **Nichts erfinden:** Unleserliche oder abgeschnittene Mengen, Zeiten oder
 Wörter **nicht raten**. Menge `null`, Zeit weglassen, und in `notes` des
@@ -234,9 +273,13 @@ Nach dem Bauen im Chat, kurz:
    prüfen“), ebenso unsichere Titel.
 4. **Illustrationen:** für welche Rezepte und warum („kein Foto vom
    Gericht“ bzw. „Foto unbrauchbar: schwarz-weiß gedruckt“).
-5. **Alle unsicheren Stellen** je Rezept (dieselben wie in `notes`) und
+5. **Originallink je Rezept:** „Link gefunden: <Adresse>“ oder „kein Link
+   gefunden“ (bzw. „Websuche nicht verfügbar“). Bei Rezepten mit
+   Illustration und Link dazusagen, dass der Rezeptplaner beim Import das
+   Foto von der Seite übernimmt.
+6. **Alle unsicheren Stellen** je Rezept (dieselben wie in `notes`) und
    Hinweise des Skripts (z. B. weggelassene Kategorien).
-6. Ein Satz zum Weg in die App: „Datei antippen → Teilen → Rezeptplaner“
+7. Ein Satz zum Weg in die App: „Datei antippen → Teilen → Rezeptplaner“
    bzw. in der Weboberfläche „Rezepte → Datei importieren“.
 
 Keine langen Erklärungen, keine Wiederholung aller Zutaten im Chat.

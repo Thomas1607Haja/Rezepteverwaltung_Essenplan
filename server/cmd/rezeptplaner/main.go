@@ -253,7 +253,7 @@ func registerRoutes(mux httpx.Router, s services) error {
 	pantryStore := pantry.NewStore(s.db)
 	pantry.NewHandler(pantryStore).Register(mux)
 	importer.NewHandler(recipeStore, pantryStore, s.fetcher).Register(mux)
-	fileImporter, err := fileimport.NewImporter(filepath.Join(s.dataDir, "import"), recipeStore, pantryStore, s.images)
+	fileImporter, err := fileimport.NewImporter(filepath.Join(s.dataDir, "import"), recipeStore, pantryStore, s.images, s.fetcher)
 	if err != nil {
 		return err
 	}

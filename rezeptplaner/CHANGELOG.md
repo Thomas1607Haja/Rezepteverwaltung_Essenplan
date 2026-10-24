@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.8.0
+
+- **Foto aus dem Rezeptlink beim Datei-Import:** Hat ein importiertes Rezept eine Webadresse, aber kein Foto (oder nur eine Illustration), holt der Rezeptplaner das Rezeptbild von dieser Seite. Die Vorschau zeigt es mit „Foto von … wird übernommen“; ein Foto aus der Datei wird nie ersetzt, und von der Seite kommt nur das Bild. Die Claude-Skill (Version 2.1) sucht dafür das Originalrezept per Websuche und trägt den Link nur bei eindeutigem Treffer ein.
+- Die Skill kann eine im Chat eingefügte, aktuelle Kategorieliste statt ihrer eingebauten Liste verwenden.
+
 ## 0.7.2
 
 - **Glatte Mengen auf der Einkaufsliste:** Umgerechnete Mengen in Gramm, Milliliter, Kilogramm, Liter und Löffeln werden für Einkaufsliste und Bring auf glatte Werte aufgerundet – z. B. 540 g statt 533 g, und beim Nachsenden 260 g statt 267 g. Die Kochansicht zeigt weiter die genaue Menge.

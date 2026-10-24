@@ -55,7 +55,7 @@ from pathlib import Path
 SKILL_DIR = Path(__file__).resolve().parent.parent
 SCHEMA_PATH = SKILL_DIR / "schema.json"
 CATEGORIES_PATH = SKILL_DIR / "categories.md"
-GENERATOR = "claude-skill rezeptplaner-import 2.0"
+GENERATOR = "claude-skill rezeptplaner-import 2.1"
 FORMAT_VERSION = 2
 
 MAX_SIDE = 1600       # längste Bildkante in Pixeln
@@ -149,10 +149,13 @@ def load_schema() -> dict:
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
-def load_categories() -> set[str]:
+def load_categories(path: Path | None = None) -> set[str]:
+    """Kategorienamen aus categories.md oder aus path – einer Liste im selben
+    Aufbau („## Gruppe“, darunter „- Name“), z. B. aus der Weboberfläche
+    kopiert (Einstellungen → Kategorien → „Kategorieliste für Claude kopieren“)."""
     names = set()
     in_list = False
-    for line in CATEGORIES_PATH.read_text(encoding="utf-8").splitlines():
+    for line in (path or CATEGORIES_PATH).read_text(encoding="utf-8").splitlines():
         if line.startswith("## "):
             in_list = not line.startswith("## Hinweise")
         elif in_list and line.startswith("- "):
@@ -160,18 +163,20 @@ def load_categories() -> set[str]:
     return names
 
 
-def check_document(doc: dict) -> tuple[list[str], list[str]]:
-    """Prüft recipes.json: (Fehler, Hinweise)."""
+def check_document(doc: dict, categories: Path | None = None) -> tuple[list[str], list[str]]:
+    """Prüft recipes.json: (Fehler, Hinweise). categories: eigene Kategorieliste
+    statt categories.md."""
     errors = validate(doc, load_schema(), load_schema())
     warnings: list[str] = []
-    known = load_categories()
+    known = load_categories(categories)
+    source = categories.name if categories else "categories.md"
     for i, r in enumerate(doc.get("recipes", []) if isinstance(doc, dict) else []):
         if not isinstance(r, dict):
             continue
         title = r.get("title") or f"Rezept {i + 1}"
         for c in r.get("categories", []) or []:
             if c not in known:
-                warnings.append(f"{title}: Kategorie „{c}“ steht nicht in categories.md und wird beim Import weggelassen")
+                warnings.append(f"{title}: Kategorie „{c}“ steht nicht in {source} – beim Import zuordnen oder weglassen")
         for j, step in enumerate(r.get("steps", []) or []):
             if isinstance(step, str) and re.match(r"^\s*(\d+[.)]|Schritt \d+)", step):
                 warnings.append(f"{title}: Schritt {j + 1} beginnt mit einer Nummer – Nummern weglassen")
@@ -303,7 +308,7 @@ def cmd_build(args) -> int:
         out_recipes.append(r)
 
     doc = {"format": "rezeptplaner-import", "version": FORMAT_VERSION, "generator": GENERATOR, "recipes": out_recipes}
-    errors, warnings = check_document(doc)
+    errors, warnings = check_document(doc, _categories_arg(args))
     if errors:
         print("FEHLER – keine ZIP-Datei erzeugt:")
         for e in errors:
@@ -352,7 +357,7 @@ def cmd_check(args) -> int:
             image_names = {n for n in names if n.startswith("images/")}
     else:
         doc = json.loads(path.read_text(encoding="utf-8-sig"))
-    errors, warnings = check_document(doc)
+    errors, warnings = check_document(doc, _categories_arg(args))
     for r in doc.get("recipes", []) if isinstance(doc, dict) else []:
         img = r.get("image") if isinstance(r, dict) else None
         if img and img not in image_names:
@@ -366,6 +371,11 @@ def cmd_check(args) -> int:
     return 1 if errors else 0
 
 
+def _categories_arg(args) -> Path | None:
+    path = getattr(args, "categories", None)
+    return Path(path) if path else None
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Importdatei für den Rezeptplaner bauen")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -374,6 +384,7 @@ def main(argv=None) -> int:
     b.add_argument("--data", required=True, help="Arbeitsdatei (JSON)")
     b.add_argument("--out-dir", required=True, help="Zielordner, z. B. /mnt/user-data/outputs")
     b.add_argument("--name", help="Dateiname der ZIP-Datei (sonst automatisch)")
+    b.add_argument("--categories", help="eigene Kategorieliste statt categories.md (vom Nutzer im Chat mitgegeben)")
     b.set_defaults(func=cmd_build)
 
     c = sub.add_parser("crop", help="Zuschnitt eines Fotos als Vorschau speichern")
@@ -385,6 +396,7 @@ def main(argv=None) -> int:
 
     k = sub.add_parser("check", help="recipes.json oder ZIP-Datei prüfen")
     k.add_argument("file")
+    k.add_argument("--categories", help="eigene Kategorieliste statt categories.md")
     k.set_defaults(func=cmd_check)
 
     args = parser.parse_args(argv)

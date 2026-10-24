@@ -399,3 +399,16 @@ func ParseURL(raw string) (*url.URL, error) {
 	}
 	return u, nil
 }
+
+// PageImage liefert die Adresse des Rezeptbildes einer Seite: aus den
+// Rezeptdaten, sonst og:image; leer, wenn die Seite keins nennt. Gedacht
+// für den Datei-Import, der von der Quellseite nur das Bild übernimmt.
+func PageImage(page []byte, pageURL *url.URL) string {
+	if _, imageURL, err := Extract(page, pageURL); err == nil && imageURL != "" {
+		return imageURL
+	}
+	return ogImage(page, pageURL)
+}
+
+// MaxPageBytes begrenzt die Größe einer Rezeptseite auch für andere Pakete.
+const MaxPageBytes = maxPageBytes

@@ -116,7 +116,7 @@
       onchange={(e) => upload(e.currentTarget.files)}
     />
     <button type="button" class="primary" disabled={step === 'uploading'} onclick={() => input.click()}>
-      {step === 'uploading' ? 'Wird geprüft …' : 'Datei auswählen'}
+      {step === 'uploading' ? 'Wird geprüft (Fotos von Rezeptseiten laden kann bis zu 20 s dauern) …' : 'Datei auswählen'}
     </button>
   </section>
 {/if}
@@ -143,7 +143,10 @@
           <span class="sr-only">Importieren</span>
         </label>
         {#if r.thumbnail}
-          <img src={api.importThumbnailUrl(preview.token, r.index)} alt="" />
+          <figure>
+            <img src={api.importThumbnailUrl(preview.token, r.index)} alt="" />
+            {#if r.web_image}<figcaption>Foto aus Link</figcaption>{/if}
+          </figure>
         {:else}
           <div class="noimg" aria-hidden="true"></div>
         {/if}
@@ -169,7 +172,15 @@
                 >{/each}
             </p>
           {/if}
-          {#each r.warnings as msg, i (i)}<p class="warning">{msg}</p>{/each}
+          {#if r.web_image}
+            <!-- Der Server meldet das auch als Hinweis; hier als Info mit Link statt als Warnung. -->
+            <p class="from-web">
+              Foto von <a href={r.recipe.source_url} target="_blank" rel="noopener noreferrer">{r.web_image}</a> wird übernommen
+            </p>
+          {/if}
+          {#each r.warnings.filter((w) => !(r.web_image && w.startsWith('Foto von '))) as msg, i (i)}<p class="warning">
+              {msg}
+            </p>{/each}
           {#if importable(r)}
             <details>
               <summary>Zutaten und Schritte</summary>
@@ -298,6 +309,24 @@
     height: 1.2rem;
   }
 
+  figure {
+    position: relative;
+    margin: 0;
+  }
+
+  figcaption {
+    position: absolute;
+    right: 0.2rem;
+    bottom: 0.2rem;
+    left: 0.2rem;
+    padding: 0 0.2rem;
+    border-radius: 0.3rem;
+    background: rgb(0 0 0 / 0.6);
+    color: #fff;
+    font-size: 0.65rem;
+    text-align: center;
+  }
+
   img,
   .noimg {
     width: 4.5rem;
@@ -413,6 +442,10 @@
 
   .warning {
     color: var(--warning);
+  }
+
+  .from-web {
+    color: var(--accent);
   }
 
   .sr-only {

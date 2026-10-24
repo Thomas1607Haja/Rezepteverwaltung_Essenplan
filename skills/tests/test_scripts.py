@@ -102,6 +102,24 @@ class BuildImportTest(unittest.TestCase):
         doc, _ = self.build({"title": "Brot", "base_servings": 1})
         self.assertNotIn("image_kind", doc["recipes"][0])
 
+    def test_own_category_list_replaces_categories_md(self):
+        doc = {"format": "rezeptplaner-import", "version": 2, "recipes": [
+            {"title": "A", "base_servings": 1, "categories": ["Pasta", "Ofengericht"],
+             "ingredients": [{"name": "Nudeln"}]}]}
+        _, warnings = build_import.check_document(doc)
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("Ofengericht", warnings[0])
+        with tempfile.TemporaryDirectory() as tmp:
+            own = Path(tmp) / "kategorien.md"
+            own.write_text("# Kategorien\n\n## Art\n- Ofengericht\n- Nudeln\n", encoding="utf-8")
+            _, warnings = build_import.check_document(doc, own)
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("„Pasta“ steht nicht in kategorien.md", warnings[0])
+
+    def test_generator_is_skill_version(self):
+        doc, _ = self.build({"title": "Brot", "base_servings": 1})
+        self.assertEqual(doc["generator"], "claude-skill rezeptplaner-import 2.1")
+
     def test_schema_checks_version_and_image_kind(self):
         doc = {"format": "rezeptplaner-import", "version": 3, "recipes": [
             {"title": "A", "base_servings": 1, "image": "images/a.jpg", "image_kind": "gemalt"}]}

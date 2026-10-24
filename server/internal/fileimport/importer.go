@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/pantry"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
@@ -41,6 +42,8 @@ type Importer struct {
 	recipes *recipes.Store
 	pantry  *pantry.Store
 	images  *images.Store
+	// fetcher lädt Fotos von den Quellseiten (webimage.go); nil = aus.
+	fetcher *fetch.Client
 	now     func() time.Time
 	// mu: immer nur ein Upload bzw. Import gleichzeitig. Das hält die
 	// Speicherspitze klein und verhindert, dass zweimal Bestätigen
@@ -49,11 +52,12 @@ type Importer struct {
 }
 
 // NewImporter legt den Ordner dir an und räumt Reste früherer Läufe weg.
-func NewImporter(dir string, r *recipes.Store, p *pantry.Store, img *images.Store) (*Importer, error) {
+// fetcher lädt Fotos von den Quellseiten der Rezepte; nil schaltet das ab.
+func NewImporter(dir string, r *recipes.Store, p *pantry.Store, img *images.Store, fetcher *fetch.Client) (*Importer, error) {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, fmt.Errorf("importordner anlegen: %w", err)
 	}
-	im := &Importer{dir: dir, recipes: r, pantry: p, images: img, now: time.Now}
+	im := &Importer{dir: dir, recipes: r, pantry: p, images: img, fetcher: fetcher, now: time.Now}
 	im.cleanup()
 	return im, nil
 }
@@ -121,7 +125,10 @@ type PreviewRecipe struct {
 	Recipe recipes.Recipe `json:"recipe"`
 	// Thumbnail: Es gibt ein Vorschaubild unter
 	// GET /api/v1/import/file/{token}/images/{index}.
-	Thumbnail  bool              `json:"thumbnail"`
+	Thumbnail bool `json:"thumbnail"`
+	// WebImage: Das Foto kommt von der Quellseite (source.url), z. B.
+	// "chefkoch.de"; leer = Bild aus der Datei bzw. keins.
+	WebImage   string            `json:"web_image"`
 	Errors     []string          `json:"errors"`
 	Warnings   []string          `json:"warnings"`
 	Duplicates []recipes.Summary `json:"duplicates"`
@@ -260,18 +267,39 @@ func (im *Importer) preview(ctx context.Context, token, dir string) (Preview, er
 	}
 
 	result := Preview{Recipes: []PreviewRecipe{}, FileErrors: fileErrors}
-	importable := false
+	// Hinweise zum Bild erst nach dem Versuch mit der Quellseite.
+	imageWarnings := make(map[int]string)
+	var fromWeb []*candidate
 	for _, c := range cands {
 		if c.image != "" {
 			if thumb, err := im.loadImage(c, b); err != nil {
-				c.Warnings = append(c.Warnings, err.Error())
+				imageWarnings[c.Index] = err.Error()
 			} else if err := os.WriteFile(thumbPath(dir, c.Index), thumb, 0o600); err != nil {
 				return Preview{}, fmt.Errorf("vorschaubild speichern: %w", err)
 			} else {
 				c.Thumbnail = true
 			}
-		} else if len(c.Errors) == 0 {
-			c.Warnings = append(c.Warnings, "Kein Bild")
+		} else {
+			imageWarnings[c.Index] = "Kein Bild"
+		}
+		hasPhoto := c.Thumbnail && c.Recipe.ImageKind != recipes.ImageIllustration
+		if wantsWebImage(c, hasPhoto) {
+			fromWeb = append(fromWeb, c)
+		}
+	}
+	found := im.loadWebImages(ctx, dir, fromWeb)
+
+	importable := false
+	for _, c := range cands {
+		if site, ok := found[c.Index]; ok {
+			hint := fmt.Sprintf("Foto von %s wird übernommen", site)
+			if c.Recipe.ImageKind == recipes.ImageIllustration && c.Thumbnail {
+				hint += " (ersetzt die Illustration)"
+			}
+			c.Warnings = append(c.Warnings, hint)
+			c.Thumbnail, c.WebImage, c.Recipe.ImageKind = true, site, recipes.ImagePhoto
+		} else if w, ok := imageWarnings[c.Index]; ok && len(c.Errors) == 0 {
+			c.Warnings = append(c.Warnings, w)
 		}
 		if len(c.Errors) == 0 {
 			importable = true
@@ -355,7 +383,12 @@ func (im *Importer) confirm(ctx context.Context, token string, selected []int) (
 			continue
 		}
 		done := CreatedRecipe{Index: index, ID: created.ID, Title: created.Title, Warnings: []string{}}
-		if c.image != "" {
+		// Foto von der Quellseite aus der Vorschau, sonst das Bild der Datei.
+		fromWeb, warning := im.saveWebImage(ctx, dir, c, created.ID)
+		if warning != "" {
+			done.Warnings = append(done.Warnings, warning)
+		}
+		if (!fromWeb || warning != "") && c.image != "" {
 			if warning := im.saveImage(ctx, c, created.ID, b); warning != "" {
 				done.Warnings = append(done.Warnings, warning)
 			}

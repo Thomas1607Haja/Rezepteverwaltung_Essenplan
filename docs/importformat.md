@@ -89,6 +89,19 @@ statt `"ingredients"` fällt so auf, statt dass die Zutaten fehlen.
    - **Vorrat:** Zutaten, die auf der Vorratsliste stehen (auch über
      Synonyme), werden wie beim URL-Import auf `shopping_relevant: false`
      gesetzt. Umgekehrt wird nie etwas auf `true` gesetzt.
+   - **Foto von der Quellseite** (ab Rezeptplaner 0.8.0): Hat ein Rezept
+     eine `source.url` und kein Bild, ein unbrauchbares Bild oder eine
+     Illustration, lädt der Server das Rezeptbild dieser Seite (aus den
+     Rezeptdaten der Seite, sonst `og:image`) – mit denselben Grenzen wie der
+     URL-Import (nur Adressen im Internet, nicht im Heimnetz; Seite bis 5 MB,
+     Bild bis 20 MB; höchstens 20 Sekunden für alle Seiten einer Vorschau,
+     zwei gleichzeitig). Klappt es, zeigt die Vorschau das Foto mit dem
+     Hinweis „Foto von <Seite> wird übernommen“ (Feld `web_image` des
+     Rezepts der Vorschau), und das Rezept bekommt es beim Bestätigen als
+     Foto (`image_kind` `photo`, die Illustration entfällt). Klappt es nicht,
+     bleibt alles wie in der Datei, ohne Fehler. Ein Foto aus der Datei wird
+     nie ersetzt, und von der Seite wird nur das Bild übernommen. Beim
+     Bestätigen wird nichts erneut geladen.
    - **Bild:** fehlt, unlesbar oder kein echtes Bild → Rezept ohne Bild.
      Die Bildart (`image_kind`) wird gespeichert; in der Rezeptübersicht
      findet der Filter „Illustrationen“ (`GET /api/v1/recipes?image=illustration`)
