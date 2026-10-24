@@ -3,6 +3,7 @@ package io.github.thomas1607haja.rezeptplaner.ui
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -258,7 +259,9 @@ internal fun MainScaffold(
         NavHost(
             navController = navController,
             startDestination = MealPlanRoute,
-            modifier = Modifier.padding(innerPadding),
+            // consumeWindowInsets: imePadding() in den Seiten rechnet die untere
+            // Leiste heraus, die Tastatur schiebt den Inhalt nur so weit wie nötig.
+            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
         ) {
             composable<MealPlanRoute> {
                 MealPlanScreen(

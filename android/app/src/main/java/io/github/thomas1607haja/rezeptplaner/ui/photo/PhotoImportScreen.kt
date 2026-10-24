@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -98,49 +99,58 @@ fun PhotoImportScreen(onDraft: () -> Unit, onClose: () -> Unit) {
             windowInsets = WindowInsets(0),
         )
 
-        Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (state.lines.isEmpty()) {
-                Text(
-                    "Fotografiere die Seite(n) mit dem Rezept – gerade, gut beleuchtet, eine Seite je Foto. " +
-                        "Der Text wird auf dem Handy erkannt; danach ordnest du die Zeilen zu.",
-                )
-            }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { takePhoto(dish = false) }, enabled = state.busy == null) {
-                    Text(if (state.pages == 0) "Seite fotografieren" else "+ Seite fotografieren")
-                }
-                OutlinedButton(onClick = { pages.launch(imagesOnly) }, enabled = state.busy == null) {
-                    Text("Aus Galerie")
-                }
-            }
-            state.busy?.let {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    CircularProgressIndicator(Modifier.size(24.dp))
-                    Text(it)
-                }
-            }
-            state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        }
-
-        if (state.lines.isNotEmpty()) {
-            Column(Modifier.padding(16.dp, 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LineKind.entries.forEach { kind ->
-                        FilterChip(
-                            selected = state.brush == kind,
-                            onClick = { vm.setBrush(kind) },
-                            label = { Text(kind.label, color = if (kind == LineKind.Ignore) Color.Unspecified else kindColor(kind)) },
+        // Eine Liste für alles: Knöpfe, Zeilen und Gerichtfoto scrollen
+        // zusammen (im Querformat blieb für die Zeilen sonst kaum Platz).
+        // Die Auswahl der Art haftet oben, fest bleibt nur „Weiter“.
+        LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+            item {
+                Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (state.lines.isEmpty()) {
+                        Text(
+                            "Fotografiere die Seite(n) mit dem Rezept – gerade, gut beleuchtet, eine Seite je Foto. " +
+                                "Der Text wird auf dem Handy erkannt; danach ordnest du die Zeilen zu.",
                         )
                     }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { takePhoto(dish = false) }, enabled = state.busy == null) {
+                            Text(if (state.pages == 0) "Seite fotografieren" else "+ Seite fotografieren")
+                        }
+                        OutlinedButton(onClick = { pages.launch(imagesOnly) }, enabled = state.busy == null) {
+                            Text("Aus Galerie")
+                        }
+                    }
+                    state.busy?.let {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            CircularProgressIndicator(Modifier.size(24.dp))
+                            Text(it)
+                        }
+                    }
+                    state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 }
-                Text(
-                    "Zeile antippen: bekommt die gewählte Art. Lange drücken: alle Zeilen seit der zuletzt angetippten.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
-            HorizontalDivider()
-            LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+
+            if (state.lines.isNotEmpty()) {
+                stickyHeader {
+                    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
+                        Column(Modifier.padding(16.dp, 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                LineKind.entries.forEach { kind ->
+                                    FilterChip(
+                                        selected = state.brush == kind,
+                                        onClick = { vm.setBrush(kind) },
+                                        label = { Text(kind.label, color = if (kind == LineKind.Ignore) Color.Unspecified else kindColor(kind)) },
+                                    )
+                                }
+                            }
+                            Text(
+                                "Zeile antippen: bekommt die gewählte Art. Lange drücken: alle Zeilen seit der zuletzt angetippten.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        HorizontalDivider()
+                    }
+                }
                 itemsIndexed(state.lines) { i, line ->
                     val kind = state.kinds[i]
                     if (i > 0 && line.page != state.lines[i - 1].page) {
@@ -170,23 +180,29 @@ fun PhotoImportScreen(onDraft: () -> Unit, onClose: () -> Unit) {
                         )
                     }
                 }
+                item {
+                    HorizontalDivider()
+                    // Optionales Rezeptbild: Foto vom fertigen Gericht.
+                    FlowRow(Modifier.padding(16.dp, 4.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            if (state.dish != null) "Gerichtfoto gewählt" else "Gerichtfoto (optional):",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        TextButton(onClick = { takePhoto(dish = true) }) { Text("Kamera") }
+                        TextButton(onClick = { dishPicker.launch(imagesOnly) }) { Text("Galerie") }
+                        if (state.dish != null) TextButton(onClick = { vm.setDish(null) }) { Text("Entfernen") }
+                    }
+                }
             }
+        }
+
+        if (state.lines.isNotEmpty()) {
             HorizontalDivider()
-            Column(Modifier.padding(16.dp, 4.dp, 16.dp, 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                // Optionales Rezeptbild: Foto vom fertigen Gericht.
-                FlowRow(itemVerticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        if (state.dish != null) "Gerichtfoto gewählt" else "Gerichtfoto (optional):",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    TextButton(onClick = { takePhoto(dish = true) }) { Text("Kamera") }
-                    TextButton(onClick = { dishPicker.launch(imagesOnly) }) { Text("Galerie") }
-                    if (state.dish != null) TextButton(onClick = { vm.setDish(null) }) { Text("Entfernen") }
-                }
-                Button(onClick = { vm.next(onDraft) }, enabled = state.busy == null, modifier = Modifier.fillMaxWidth()) {
-                    Text("Weiter zum Bearbeiten")
-                }
-            }
+            Button(
+                onClick = { vm.next(onDraft) },
+                enabled = state.busy == null,
+                modifier = Modifier.fillMaxWidth().padding(16.dp, 8.dp),
+            ) { Text("Weiter zum Bearbeiten") }
         }
     }
 

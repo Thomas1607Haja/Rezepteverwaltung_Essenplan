@@ -370,7 +370,7 @@
     display: block;
     margin-bottom: 0.5rem;
     padding: 0.5rem;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     user-select: all;
     background: var(--surface-hover);
     border-radius: calc(var(--radius) - 0.2rem);

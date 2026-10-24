@@ -172,10 +172,10 @@
     font-size: 0.85rem;
     font-weight: 600;
     line-height: 1.25;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

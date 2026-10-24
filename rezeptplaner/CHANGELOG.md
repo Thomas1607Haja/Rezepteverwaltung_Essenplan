@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.17.1
+
+- **Rezeptauswahl beim Planen (Weboberfläche):** Gang-Reiter und Suchfeld bleiben beim Scrollen oben stehen; das Suchfeld ist auf dem Handy wieder breit statt nur ein Lupen-Symbol.
+- Lange Rezepttitel brechen nur noch an Leerzeichen oder Bindestrichen um (nicht mehr mitten im Wort) und werden nach zwei Zeilen mit „…“ gekürzt – im Essensplan und in der Rezeptauswahl.
+- **App 0.17.1:** Die Rezeptauswahl („Gericht für …“) scrollt als Ganzes – vorher füllte der Bereich mit Mittag/Abend, Schnellauswahl und Filtern den Bildschirm, und die Rezepte waren nicht erreichbar. Suche und Gang-Reiter haften oben, wenn genug Platz ist; beim Tippen rückt die Suche nach oben, damit die Treffer über der Tastatur stehen. Höchstens drei zuletzt verwendete Freitexte in der Schnellauswahl, in einer Zeile zum Wischen. „Heute“ im Essensplan steht oben neben der Legende statt schwebend über den Karten. Foto-Import und Import-Vorschau scrollen ebenfalls als Ganzes.
+
 ## 0.17.0
 
 - **Gänge schnell von Hand zuordnen (Weboberfläche):** In der Rezeptübersicht gibt es den Reiter „Ohne Gang“ mit Anzahl – kombinierbar mit Suche, Kategorien und Favoriten. „Gang zuweisen“ schaltet in einen Auswahlmodus: Gang wählen, Rezepte anklicken (oder „Alle sichtbaren auswählen“), „Übernehmen“ – mit „Rückgängig“ für einige Sekunden. Der Modus bleibt offen für den nächsten Gang bis „Fertig“. Auch „Gang entfernen“ und jede andere Kategorie lassen sich so zuweisen oder entfernen. Die Kacheln zeigen ihren Gang.

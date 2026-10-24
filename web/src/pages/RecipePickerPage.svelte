@@ -255,13 +255,17 @@
   {/each}
 </div>
 
-<CourseTabs {tabs} value={course} onchange={(key) => (course = key)} />
-
-<div class="toolbar">
+<!-- Gang-Reiter und Suche haften beim Scrollen oben (die ganze Seite
+     scrollt, keine eigene Scrollbox für die Rezepte). -->
+<div class="finder">
+  <CourseTabs {tabs} value={course} onchange={(key) => (course = key)} />
   <label class="search">
     <Icon name="search" size={18} />
     <input type="search" placeholder="Rezept suchen" aria-label="Rezepte durchsuchen" bind:value={query} />
   </label>
+</div>
+
+<div class="toolbar">
   <button type="button" class="toggle" aria-expanded={showTags} onclick={() => (showTags = !showTags)}>
     <Icon name="filter" size={18} />{tagIds.length > 0 ? ` ${tagIds.length}` : ''}
   </button>
@@ -384,7 +388,7 @@
   }
 
   h1 {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .error {
@@ -465,15 +469,33 @@
     font-size: 0.85rem;
   }
 
+  .finder {
+    margin: 0 -0.25rem 0.5rem;
+    padding: 0 0.25rem 0.5rem;
+    background: var(--bg);
+  }
+
+  /* Nur haften, wenn darunter genug Platz für Rezepte bleibt. */
+  @media (min-height: 34rem) {
+    .finder {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+  }
+
   .toolbar {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 0.75rem;
   }
 
+  .toolbar select {
+    flex: 1;
+  }
+
   .search {
     position: relative;
-    flex: 1;
     display: flex;
     align-items: center;
     color: var(--text-muted);
@@ -561,7 +583,13 @@
 
   .title {
     font-weight: 600;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    /* Lange Titel nach zwei Zeilen mit „…“ abschneiden */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .status {

@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.ui.plan
 
+import io.github.thomas1607haja.rezeptplaner.ui.wrapTitle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -94,7 +95,7 @@ fun PlanPreviewSheet(
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.navigationBarsPadding().padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
-            Text(recipe.title, style = MaterialTheme.typography.titleLarge)
+            Text(wrapTitle(recipe.title), style = MaterialTheme.typography.titleLarge)
             Row(
                 Modifier.padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,

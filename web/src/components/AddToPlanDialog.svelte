@@ -262,7 +262,7 @@
   }
 
   .dish {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .free {

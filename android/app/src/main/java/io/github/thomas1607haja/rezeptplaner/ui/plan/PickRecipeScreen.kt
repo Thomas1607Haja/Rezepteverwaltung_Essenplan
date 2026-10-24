@@ -60,9 +60,10 @@ val quickNotes = listOf("Essen gehen", "Reste", "Pizza bestellen")
 /**
  * Die zuletzt verwendeten Texte von Einträgen ohne Rezept (neueste zuerst,
  * ohne die Schnellauswahl). Die App kennt den Plan ab plan_from (14 Tage
- * zurück) und alles Geplante; das reicht für „zuletzt“.
+ * zurück) und alles Geplante; das reicht für „zuletzt“. Höchstens drei,
+ * ältere fallen aus der Schnellauswahl heraus.
  */
-fun recentNotes(entries: List<MealPlanEntry>, limit: Int = 5): List<String> =
+fun recentNotes(entries: List<MealPlanEntry>, limit: Int = 3): List<String> =
     entries.asSequence()
         .filter { it.recipeId == null && it.note.isNotBlank() }
         .sortedByDescending { it.date }
@@ -241,8 +242,8 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit, onMenu: (menuId
                         )
                         Button(onClick = { chooseNote(note) }, enabled = note.isNotBlank() && !busy) { Text("Eintragen") }
                     }
-                    val chipRow = if (menuMode) Modifier.horizontalScroll(rememberScrollState()) else Modifier
-                    FlowRow(chipRow, horizontalArrangement = Arrangement.spacedBy(8.dp), maxLines = if (menuMode) 1 else Int.MAX_VALUE) {
+                    // Eine Zeile zum Wischen, damit der Bereich nicht mit jedem Freitext wächst.
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         (quickNotes + recent).forEach { text ->
                             AssistChip(onClick = { chooseNote(text) }, label = { Text(text) }, enabled = !busy)
                         }
@@ -254,6 +255,7 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit, onMenu: (menuId
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
             },
+            // Kopf, Suche und Rezepte scrollen zusammen (RecipesScreen).
             modifier = Modifier.weight(1f),
         )
     }

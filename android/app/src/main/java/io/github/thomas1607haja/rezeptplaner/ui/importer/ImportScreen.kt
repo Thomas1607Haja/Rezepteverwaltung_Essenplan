@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.ui.importer
 
+import io.github.thomas1607haja.rezeptplaner.ui.wrapTitle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -162,15 +163,22 @@ private fun Preview(
                     UnknownCategories(s.preview.unknownCategories, s.categories, tagGroups, enabled = !s.importing, onChoose = onChoose)
                 }
             }
+            // Am Ende der Liste statt fest unten: Im Querformat blieb für die
+            // Vorschau sonst kaum Platz.
+            item {
+                OutlinedButton(onClick = onOther, enabled = !s.importing, modifier = Modifier.fillMaxWidth()) { Text("Andere Datei") }
+            }
         }
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            s.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            if (s.preview.recipes.isNotEmpty()) {
-                Button(onClick = onImport, enabled = count > 0 && !s.importing, modifier = Modifier.fillMaxWidth()) {
-                    Text(if (s.importing) "Importiert …" else if (count == 1) "1 Rezept importieren" else "$count Rezepte importieren")
+        // Fest bleibt nur, was zum Abschluss gebraucht wird.
+        if (s.error != null || s.preview.recipes.isNotEmpty()) {
+            Column(Modifier.fillMaxWidth().padding(16.dp, 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                s.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                if (s.preview.recipes.isNotEmpty()) {
+                    Button(onClick = onImport, enabled = count > 0 && !s.importing, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (s.importing) "Importiert …" else if (count == 1) "1 Rezept importieren" else "$count Rezepte importieren")
+                    }
                 }
             }
-            OutlinedButton(onClick = onOther, enabled = !s.importing, modifier = Modifier.fillMaxWidth()) { Text("Andere Datei") }
         }
     }
 }
@@ -195,7 +203,7 @@ private fun CandidateCard(
                 image?.let { AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(r.title.ifEmpty { "(ohne Titel)" }, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(wrapTitle(r.title).ifEmpty { "(ohne Titel)" }, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val details = buildList {
                     add(amountText(r.baseServings, r.yieldUnit))
                     add(if (r.ingredients.size == 1) "1 Zutat" else "${r.ingredients.size} Zutaten")

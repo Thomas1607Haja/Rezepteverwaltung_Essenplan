@@ -39,4 +39,11 @@ class FormatTest {
         assertEquals("kasespatzle mit soße".replace("ß", "ss"), fold("Käsespätzle mit Soße"))
         assertEquals("Fr 23.10.", dayLabel("2026-10-23"))
     }
+
+    @Test
+    fun wrapTitleAllowsBreakAfterHyphen() {
+        assertEquals("Romanesco-\u200BTomaten-\u200BPasta", wrapTitle("Romanesco-Tomaten-Pasta"))
+        // Zahlen und Gedankenstriche bleiben unverändert.
+        assertEquals("Pizza 2-3 Personen – schnell", wrapTitle("Pizza 2-3 Personen – schnell"))
+    }
 }

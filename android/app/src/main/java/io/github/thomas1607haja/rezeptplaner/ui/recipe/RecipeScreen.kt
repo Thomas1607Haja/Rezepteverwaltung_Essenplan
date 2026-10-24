@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.ui.recipe
 
+import io.github.thomas1607haja.rezeptplaner.ui.wrapTitle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -203,7 +204,7 @@ private fun RecipeContent(
         }
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.Top) {
-                Text(recipe.title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+                Text(wrapTitle(recipe.title), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
                 IconButton(onClick = actions.onToggleFavorite, enabled = !actions.busy) {
                     Icon(
                         painterResource(if (recipe.isFavorite) R.drawable.ic_heart_filled else R.drawable.ic_heart),
@@ -343,7 +344,7 @@ private fun FamilyStrip(family: List<Recipe>, origin: Long, onOpen: (Long) -> Un
                 Row(Modifier.padding(6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     RecipeImage(r.thumbnail, Modifier.size(40.dp).clip(MaterialTheme.shapes.small))
                     Column {
-                        Text(r.title, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text(wrapTitle(r.title), style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Text(
                             if (r.id == origin) "Ursprungsrezept" else "Variante",
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,

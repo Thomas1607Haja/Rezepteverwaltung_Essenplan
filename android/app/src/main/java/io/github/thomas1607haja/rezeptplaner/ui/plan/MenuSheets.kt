@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.ui.plan
 
+import io.github.thomas1607haja.rezeptplaner.ui.wrapTitle
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -311,7 +312,7 @@ fun MenuSheet(
                     CourseImage(e, 40)
                     Column(Modifier.weight(1f)) {
                         Text(
-                            entryTitle(e), maxLines = 2, overflow = TextOverflow.Ellipsis,
+                            wrapTitle(entryTitle(e)), maxLines = 2, overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.clickable { onOpenCourse(e) },
                             color = if (e.recipeId != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         )
@@ -507,7 +508,7 @@ fun MenuScreen(menuId: Long, onBack: () -> Unit, onOpenCourse: (recipeId: Long, 
                         courseName(courses, e.courseTagId).takeIf { it.isNotEmpty() }?.let {
                             Text(it.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                         }
-                        Text(entryTitle(e), style = MaterialTheme.typography.titleMedium)
+                        Text(wrapTitle(entryTitle(e)), style = MaterialTheme.typography.titleMedium)
                         if (e.recipe != null) {
                             Text(
                                 amountText(e.servings, e.recipe.yieldUnit) + if (e.note.isNotEmpty()) " · ${e.note}" else "",

@@ -118,3 +118,11 @@ fun amountText(n: Int, unit: String) = if (unit.isEmpty()) portions(n) else "$n 
 
 /** Vorschläge für die Ergebnis-Einheit im Editor (wie im Web). */
 val yieldUnits = listOf("Stück", "Kuchen", "Blech", "Springform 26 cm", "Kastenform", "Laib")
+
+/**
+ * Titel für mehrzeilige Anzeige: Android bricht zusammengesetzte Wörter
+ * nicht am Bindestrich um, sondern mitten im Wort („Romanesco-Tomaten-Pa“ /
+ * „sta“). Ein unsichtbares Leerzeichen (U+200B) nach dem Bindestrich erlaubt
+ * dort den Umbruch.
+ */
+fun wrapTitle(title: String): String = title.replace(Regex("-(?=\\p{L})"), "-\u200B")

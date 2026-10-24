@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.ui.plan
 
+import io.github.thomas1607haja.rezeptplaner.ui.wrapTitle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -24,8 +25,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -118,7 +119,14 @@ fun MealPlanScreen(
     Column(Modifier.fillMaxSize()) {
         OfflineBanner(sync.log)
         // Fest über dem Plan, damit sie beim Öffnen auf „heute“ sichtbar ist.
-        if (periods != null) Legend(periods)
+        // „Heute“ steht daneben statt schwebend über den Karten – ein
+        // schwebender Knopf verdeckte das ⋮ der untersten Karte.
+        Row(Modifier.fillMaxWidth().padding(end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.weight(1f)) { if (periods != null) Legend(periods) }
+            if (days.isNotEmpty()) {
+                TextButton(onClick = { scope.launch { listState.animateScrollToItem(todayIndex) } }) { Text("Heute") }
+            }
+        }
         PullToRefreshBox(
             isRefreshing = sync.running,
             onRefresh = { scope.launch { app.syncRepository.sync(SyncTrigger.Pull) } },
@@ -132,7 +140,7 @@ fun MealPlanScreen(
                     )
                 }
             } else {
-                LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 80.dp), modifier = Modifier.fillMaxSize()) {
+                LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 16.dp), modifier = Modifier.fillMaxSize()) {
                     items(days, key = { it.date }) { day ->
                         val shading = when {
                             periods == null -> null
@@ -149,10 +157,6 @@ fun MealPlanScreen(
                         )
                     }
                 }
-                SmallFloatingActionButton(
-                    onClick = { scope.launch { listState.animateScrollToItem(todayIndex) } },
-                    modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-                ) { Text("Heute", Modifier.padding(horizontal = 12.dp)) }
             }
         }
     }
@@ -295,7 +299,7 @@ private fun EntryCard(entry: MealPlanEntry, onOpenRecipe: (Long, Long) -> Unit, 
             Column(Modifier.weight(1f)) {
                 val title = entry.recipe?.title ?: entry.note
                 Text(
-                    slotPrefix(entry.slot) + title,
+                    slotPrefix(entry.slot) + wrapTitle(title),
                     style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 )
                 val details = buildList {

@@ -244,7 +244,7 @@
   h2 {
     margin: 0;
     font-size: 1.15rem;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .icon-button {

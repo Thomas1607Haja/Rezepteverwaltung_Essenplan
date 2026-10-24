@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.ui.plan
 
+import io.github.thomas1607haja.rezeptplaner.ui.wrapTitle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -281,7 +282,7 @@ fun EntrySheet(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(entryTitle(entry), style = MaterialTheme.typography.titleMedium)
+                    Text(wrapTitle(entryTitle(entry)), style = MaterialTheme.typography.titleMedium)
                     Text(
                         slotLabel(entry.slot) + " am ${dayLabel(entry.date)}",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
