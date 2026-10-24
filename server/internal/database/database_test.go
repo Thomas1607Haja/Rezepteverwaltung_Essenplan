@@ -28,8 +28,8 @@ func TestMigrateCreatesSchemaAndTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Migrate: %v", err)
 	}
-	if version != 11 {
-		t.Errorf("version = %d, erwartet 11", version)
+	if version != 12 {
+		t.Errorf("version = %d, erwartet 12", version)
 	}
 
 	// 8 Hauptzutat + 2 Geschmack + 8 Art + 5 Eigenschaften
@@ -55,8 +55,8 @@ func TestMigrateTwiceChangesNothing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("zweite Migration: %v", err)
 	}
-	if version != 11 {
-		t.Errorf("version = %d, erwartet 11", version)
+	if version != 12 {
+		t.Errorf("version = %d, erwartet 12", version)
 	}
 }
 

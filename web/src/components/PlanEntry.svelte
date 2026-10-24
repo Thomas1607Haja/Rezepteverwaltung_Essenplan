@@ -45,6 +45,11 @@
       {#if extra}<span class="extra">{extra}</span>{/if}
       <span class="meta">
         {#if entry.recipe}<span>{entry.servings} P.</span>{/if}
+        {#if entry.excluded_ingredients?.length}
+          <span class="excluded" title="Abgewählt, weil noch im Haus">
+            {entry.excluded_ingredients.length === 1 ? '1 Zutat' : `${entry.excluded_ingredients.length} Zutaten`} vorhanden
+          </span>
+        {/if}
         {#if entry.recipe?.is_favorite}
           <span class="favorite" title="Favorit"><Icon name="heart" size={13} filled /></span>
         {/if}
@@ -186,6 +191,10 @@
     gap: 0.4rem;
     font-size: 0.75rem;
     color: var(--text-muted);
+  }
+
+  .excluded {
+    color: var(--accent);
   }
 
   .favorite,

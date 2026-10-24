@@ -5,6 +5,8 @@
   import { dayLabel, planStatus } from '../lib/format.js';
   import Icon from '../components/Icon.svelte';
   import TagFilter from '../components/TagFilter.svelte';
+  import PlanPreview from '../components/PlanPreview.svelte';
+  import { previewEnabled, createWithChoice, replaceWithChoice } from '../lib/planPreview.js';
 
   // Zwei Arten, die Seite zu öffnen:
   //   #/plan/add/2026-10-24     neues Gericht für diesen Tag
@@ -31,6 +33,8 @@
   let tagGroups = $state([]);
   let recipes = $state(null);
   let note = $state('');
+  // Rezept in der Kurzvorschau (Schritt 8.E), null = keine offen
+  let previewId = $state(null);
 
   if (replaceId) {
     api
@@ -72,24 +76,36 @@
     return `${l.weekday} ${l.date}`;
   });
 
-  /** Trägt ein Rezept (recipeId) bzw. eine Notiz ein und geht zurück zum Plan. */
-  async function choose(recipeId, noteText = '') {
+  /** Rezept gewählt: erst die Kurzvorschau (falls eingeschaltet), dann eintragen. */
+  async function pick(recipeId) {
+    if (saving) return;
+    if (await previewEnabled()) previewId = recipeId;
+    else choose(recipeId);
+  }
+
+  /**
+   * Trägt ein Rezept (recipeId) bzw. eine Notiz ein und geht zurück zum
+   * Plan. choice: Ergebnis der Kurzvorschau ({ servings, excluded,
+   * allAvailable }) oder null.
+   */
+  async function choose(recipeId, noteText = '', choice = null) {
     if (saving) return;
     saving = true;
     error = '';
     try {
-      if (replaceId) {
+      if (replaceId && recipeId === null) {
         await api.updateEntry(replaceId, {
-          recipe_id: recipeId,
+          recipe_id: null,
           servings: entry.servings,
-          // Ohne bisheriges Rezept war die Notiz der Titel – sie entfällt
-          // dann. Eine Zusatznotiz zum Rezept („mit Salat“) bleibt.
-          note: recipeId === null ? noteText : entry.recipe_id ? entry.note : '',
-          // „Zutaten vorhanden“ galt für das alte Gericht.
+          note: noteText,
           status: entry.status === 'have_ingredients' ? 'planned' : entry.status,
         });
+      } else if (replaceId) {
+        await replaceWithChoice(entry, recipeId, choice);
+      } else if (recipeId === null) {
+        await api.createEntry({ date: targetDate, slot, recipe_id: null, note: noteText });
       } else {
-        await api.createEntry({ date: targetDate, slot, recipe_id: recipeId, note: noteText });
+        await createWithChoice(targetDate, slot, recipeId, choice);
       }
       focusPlanOn(targetDate);
       navigate('/');
@@ -170,7 +186,7 @@
   <ul class="list">
     {#each recipes as recipe (recipe.id)}
       <li>
-        <button type="button" class="row" disabled={saving} onclick={() => choose(recipe.id)}>
+        <button type="button" class="row" disabled={saving} onclick={() => pick(recipe.id)}>
           <span class="thumb">
             {#if recipe.thumbnail}
               <img src={imageUrl(recipe.thumbnail)} alt="" loading="lazy" />
@@ -187,6 +203,17 @@
       </li>
     {/each}
   </ul>
+{/if}
+
+{#if previewId}
+  <PlanPreview
+    recipeId={previewId}
+    servings={replaceId ? entry?.servings : null}
+    confirmLabel={replaceId ? 'Ersetzen' : 'Hinzufügen'}
+    busy={saving}
+    onconfirm={(choice) => choose(previewId, '', choice)}
+    onclose={() => (previewId = null)}
+  />
 {/if}
 
 <style>

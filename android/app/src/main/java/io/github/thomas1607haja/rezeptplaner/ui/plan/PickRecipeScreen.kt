@@ -82,6 +82,8 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit) {
     var note by rememberSaveable { mutableStateOf("") }
     val replacing = remember(route) { app.localStore.snapshot.value.entries.firstOrNull { it.id == route.replaceEntryId } }
     val recent = remember(snapshot.entries) { recentNotes(snapshot.entries) }
+    // Rezept in der Kurzvorschau (Schritt 8.E), null = keine offen
+    var previewId by remember { mutableStateOf<Long?>(null) }
     val date = replacing?.date ?: route.date
 
     fun run(title: String, action: suspend () -> String?) {
@@ -120,10 +122,15 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit) {
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 16.dp)) }
         RecipesScreen(
             onOpen = { recipeId ->
-                val title = snapshot.recipes.firstOrNull { it.id == recipeId }?.title.orEmpty()
-                run(title) {
-                    if (replacing != null) app.planRepository.replace(replacing, recipeId)
-                    else app.planRepository.add(route.date, slot, recipeId)
+                val recipe = snapshot.recipes.firstOrNull { it.id == recipeId }
+                if (wantsPreview(snapshot, recipe)) {
+                    error = null
+                    previewId = recipeId
+                } else {
+                    run(recipe?.title.orEmpty()) {
+                        if (replacing != null) app.planRepository.replace(replacing, recipeId)
+                        else app.planRepository.add(route.date, slot, recipeId)
+                    }
                 }
             },
             // Eigener Filter, damit die Suche der Rezeptübersicht unberührt bleibt.
@@ -155,6 +162,25 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit) {
                 }
             },
             modifier = Modifier.weight(1f),
+        )
+    }
+
+    previewId?.let { id ->
+        val recipe = snapshot.recipes.firstOrNull { it.id == id } ?: return@let
+        PlanPreviewSheet(
+            recipe = recipe,
+            servings = replacing?.servings ?: snapshot.settings.familySize,
+            excluded = emptyList(),
+            confirmLabel = if (replacing != null) "Ersetzen" else "Hinzufügen",
+            busy = busy,
+            error = error,
+            onConfirm = { choice ->
+                run(recipe.title) {
+                    if (replacing != null) app.planRepository.replace(replacing, id, choice)
+                    else app.planRepository.add(route.date, slot, id, choice)
+                }
+            },
+            onDismiss = { previewId = null },
         )
     }
 }

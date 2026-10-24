@@ -69,6 +69,7 @@
         family_size: Number(household.family_size),
         shopping_day: household.shopping_day,
         shopping_time: household.shopping_time,
+        plan_preview: household.plan_preview,
         bring_entity: household.bring_entity,
       });
       saved = JSON.stringify(household);
@@ -126,6 +127,11 @@
         {:else}
           <small>To-do-Liste in Home Assistant, an die die Einkaufsliste geht</small>
         {/if}
+      </label>
+      <label class="toggle">
+        <input type="checkbox" bind:checked={household.plan_preview} onchange={() => (message = '')} />
+        <span>Kurzvorschau beim Einplanen</span>
+        <small>Beim Hinzufügen zum Essensplan Portionen wählen und Zutaten abwählen, die noch im Haus sind</small>
       </label>
       <div class="save">
         <button type="submit" class="primary" disabled={!changed || saving}>{saving ? 'Speichert …' : 'Speichern'}</button>
@@ -240,6 +246,23 @@
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-muted);
+  }
+
+  .household label.toggle {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .household label.toggle input {
+    width: 1.1rem;
+    height: 1.1rem;
+    padding: 0;
+  }
+
+  .household label.toggle small {
+    flex-basis: 100%;
   }
 
   .household small {

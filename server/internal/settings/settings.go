@@ -36,10 +36,13 @@ type Settings struct {
 	// Der Server kann sie nicht selbst kennen; sie steht im QR-Code beim
 	// Anlegen eines API-Schlüssels. Leer = noch nicht eingetragen.
 	AppURL string `json:"app_url"`
+	// PlanPreview: Beim Einplanen eines Rezepts erst die Kurzvorschau
+	// zeigen (Portionen, Zutaten abwählen). Standard an.
+	PlanPreview bool `json:"plan_preview"`
 }
 
 // Defaults gelten, solange nichts gespeichert ist.
-var Defaults = Settings{FamilySize: 4, ShoppingDay: "saturday", ShoppingTime: "00:00"}
+var Defaults = Settings{FamilySize: 4, ShoppingDay: "saturday", ShoppingTime: "00:00", PlanPreview: true}
 
 // shoppingTime prüft die Uhrzeit, z. B. "18:00".
 var shoppingTime = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
@@ -142,6 +145,8 @@ func (s *Store) Get(ctx context.Context) (Settings, error) {
 			if shoppingTime.MatchString(value) {
 				result.ShoppingTime = value
 			}
+		case "plan_preview":
+			result.PlanPreview = value != "false"
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -174,6 +179,7 @@ func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
 		"bring_entity":  in.BringEntity,
 		"app_url":       in.AppURL,
 		"shopping_time": in.ShoppingTime,
+		"plan_preview":  strconv.FormatBool(in.PlanPreview),
 	}
 	for key, value := range values {
 		// "Upsert": neu anlegen oder, falls der Schlüssel schon existiert,

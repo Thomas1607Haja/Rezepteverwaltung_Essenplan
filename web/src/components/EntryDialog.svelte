@@ -4,6 +4,7 @@
   import { navigate } from '../lib/router.svelte.js';
   import { dayLabel } from '../lib/format.js';
   import Icon from './Icon.svelte';
+  import PlanPreview from './PlanPreview.svelte';
 
   // entry: der Planeintrag. onsaved(entry) meldet den neuen Stand,
   // ondeleted(id) das Entfernen, onmove(entry, date) den Wunsch, den
@@ -24,6 +25,7 @@
   let moveDate = $state(entry.date);
   let error = $state('');
   let busy = $state(false);
+  let showPreview = $state(false);
 
   let dialog;
   // showModal öffnet den Dialog über der Seite; Esc schließt ihn.
@@ -49,6 +51,27 @@
         note: note.trim(),
         status,
       });
+      onsaved(saved);
+    } catch (e) {
+      error = e.message;
+      busy = false;
+    }
+  }
+
+  /** Abwahl aus der Kurzvorschau speichern (Portionen und Notiz gleich mit). */
+  async function saveChoice(choice) {
+    busy = true;
+    error = '';
+    try {
+      let status = transferred ? 'transferred' : choice.allAvailable ? 'have_ingredients' : 'planned';
+      const saved = await api.updateEntry(entry.id, {
+        recipe_id: entry.recipe_id,
+        servings: choice.servings,
+        note: note.trim(),
+        status,
+        excluded_ingredients: choice.excluded,
+      });
+      showPreview = false;
       onsaved(saved);
     } catch (e) {
       error = e.message;
@@ -123,6 +146,13 @@
           Zutaten sind vorhanden (nicht einkaufen)
         </label>
       {/if}
+      <p class="hint">
+        {#if entry.excluded_ingredients?.length}
+          {entry.excluded_ingredients.length === 1 ? '1 Zutat' : `${entry.excluded_ingredients.length} Zutaten`} vorhanden.
+        {/if}
+        <button type="button" class="link" onclick={() => (showPreview = true)}>Zutaten vorhanden …</button>
+        {#if transferred}<small>(schon an Bring gesendet – Änderungen erscheinen im Einkauf als Differenz)</small>{/if}
+      </p>
     {/if}
 
     <div class="move">
@@ -159,6 +189,18 @@
     </footer>
   </form>
 </dialog>
+
+{#if showPreview}
+  <PlanPreview
+    recipeId={entry.recipe_id}
+    {servings}
+    excluded={entry.excluded_ingredients ?? []}
+    confirmLabel="Übernehmen"
+    {busy}
+    onconfirm={saveChoice}
+    onclose={() => (showPreview = false)}
+  />
+{/if}
 
 <style>
   dialog {

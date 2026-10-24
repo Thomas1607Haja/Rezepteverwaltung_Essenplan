@@ -57,6 +57,9 @@ type Ingredient struct {
 	Name             string   `json:"name"`
 	Note             string   `json:"note"`
 	ShoppingRelevant bool     `json:"shopping_relevant"`
+	// ItemKey: Schlüssel der Zutat für Einkaufsliste und abgewählte Zutaten
+	// eines Planeintrags (Paket itemkey); nur lesbar, beim Speichern ignoriert.
+	ItemKey string `json:"item_key"`
 }
 
 // Step ist ein Zubereitungsschritt.

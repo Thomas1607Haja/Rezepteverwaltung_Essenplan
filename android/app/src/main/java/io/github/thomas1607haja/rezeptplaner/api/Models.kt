@@ -1,5 +1,7 @@
 package io.github.thomas1607haja.rezeptplaner.api
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -41,6 +43,8 @@ data class Ingredient(
     val name: String,
     val note: String = "",
     @SerialName("shopping_relevant") val shoppingRelevant: Boolean = true,
+    /** Schlüssel für Einkaufsliste und abgewählte Zutaten (vom Server, beim Speichern ignoriert). */
+    @OptIn(ExperimentalSerializationApi::class) @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("item_key") val itemKey: String = "",
 )
 
 @Serializable
@@ -72,6 +76,8 @@ data class MealPlanEntry(
     val servings: Int,
     val status: String = "planned",
     val note: String = "",
+    /** Abgewählte Zutaten („habe ich noch“) als item_key; nur für diesen Eintrag. */
+    @SerialName("excluded_ingredients") val excludedIngredients: List<String> = emptyList(),
 )
 
 @Serializable
@@ -86,6 +92,8 @@ data class HouseholdSettings(
     @SerialName("shopping_day") val shoppingDay: String = "saturday",
     /** Ab dieser Uhrzeit gilt am Einkaufstag eingekauft ("18:00"). */
     @SerialName("shopping_time") val shoppingTime: String = "00:00",
+    /** Kurzvorschau beim Einplanen zeigen (Einstellung der Weboberfläche). */
+    @SerialName("plan_preview") val planPreview: Boolean = true,
 )
 
 @Serializable
@@ -117,6 +125,7 @@ data class NewEntry(
     @SerialName("recipe_id") val recipeId: Long? = null,
     val servings: Int? = null,
     val note: String = "",
+    @OptIn(ExperimentalSerializationApi::class) @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("excluded_ingredients") val excludedIngredients: List<String> = emptyList(),
 )
 
 /** PUT /api/v1/meal-plan/{id}: ersetzt diese Felder. */
@@ -126,6 +135,8 @@ data class EntryChanges(
     val servings: Int,
     val note: String,
     val status: String,
+    /** null = unverändert lassen; beim Ersetzen verfällt die Abwahl ohne neue Angabe. */
+    @OptIn(ExperimentalSerializationApi::class) @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("excluded_ingredients") val excludedIngredients: List<String>? = null,
 )
 
 /** POST /api/v1/meal-plan/{id}/move. */

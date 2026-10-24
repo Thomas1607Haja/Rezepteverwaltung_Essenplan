@@ -4,6 +4,8 @@
   import { navigate } from '../lib/router.svelte.js';
   import { focusPlanOn } from '../lib/planFocus.svelte.js';
   import { addDays, dayLabel, todayString } from '../lib/format.js';
+  import PlanPreview from './PlanPreview.svelte';
+  import { previewEnabled, createWithChoice, replaceWithChoice } from '../lib/planPreview.js';
 
   // recipe: das Rezept der Kochansicht. onadded() meldet, dass es
   // eingeplant wurde (die Kochansicht aktualisiert dann ihren Hinweis).
@@ -16,6 +18,8 @@
   let error = $state('');
   let busy = $state(false);
   let done = $state(null); // Tag, an dem eingeplant wurde
+  // Offene Kurzvorschau: { date } zum Hinzufügen bzw. { entry } zum Ersetzen
+  let pending = $state(null);
 
   let dialog;
   onMount(() => dialog.showModal());
@@ -39,22 +43,28 @@
   const entriesIn = (day) => day.entries.filter((e) => e.slot === slot);
   const label = (e) => e.recipe?.title ?? e.note;
 
-  /** Als (weiteres) Gericht an date einplanen. */
+  /** Als (weiteres) Gericht an date einplanen – mit Kurzvorschau, falls eingeschaltet. */
   async function add(date) {
-    await run(date, () => api.createEntry({ date, slot, recipe_id: recipe.id }));
+    if (await previewEnabled()) pending = { date };
+    else await run(date, () => createWithChoice(date, slot, recipe.id, null));
   }
 
   /** Das Gericht entry durch dieses Rezept ersetzen. */
   async function replace(entry) {
+    if (await previewEnabled()) {
+      pending = { entry };
+      return;
+    }
     if (!confirm(`„${label(entry)}“ durch „${recipe.title}“ ersetzen?`)) return;
-    await run(entry.date, () =>
-      api.updateEntry(entry.id, {
-        recipe_id: recipe.id,
-        servings: entry.servings,
-        note: entry.recipe_id ? entry.note : '',
-        status: entry.status === 'have_ingredients' ? 'planned' : entry.status,
-      }),
-    );
+    await run(entry.date, () => replaceWithChoice(entry, recipe.id, null));
+  }
+
+  /** Ergebnis der Kurzvorschau übernehmen. */
+  async function confirmPreview(choice) {
+    const p = pending;
+    if (p.entry) await run(p.entry.date, () => replaceWithChoice(p.entry, recipe.id, choice));
+    else await run(p.date, () => createWithChoice(p.date, slot, recipe.id, choice));
+    pending = null;
   }
 
   async function run(date, action) {
@@ -129,6 +139,17 @@
     {/if}
   </div>
 </dialog>
+
+{#if pending}
+  <PlanPreview
+    recipeId={recipe.id}
+    servings={pending.entry ? pending.entry.servings : null}
+    confirmLabel={pending.entry ? 'Ersetzen' : 'Hinzufügen'}
+    {busy}
+    onconfirm={confirmPreview}
+    onclose={() => (pending = null)}
+  />
+{/if}
 
 <style>
   dialog {

@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.MealPlanEntry
 import io.github.thomas1607haja.rezeptplaner.api.MoveWarning
@@ -140,6 +141,11 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var replacing by remember { mutableStateOf<MealPlanEntry?>(null) }
+    // Kurzvorschau: Tag zum Hinzufügen bzw. Eintrag zum Ersetzen
+    var previewDate by remember { mutableStateOf<String?>(null) }
+    var previewReplace by remember { mutableStateOf<MealPlanEntry?>(null) }
+    val recipe = snapshot.recipes.firstOrNull { it.id == recipeId }
+    val preview = wantsPreview(snapshot, recipe)
 
     fun run(date: String, action: suspend () -> String?) {
         busy = true
@@ -163,10 +169,33 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
             }
             DayChooser(
                 days = upcomingDays(snapshot, today, 14), slot = slot, exclude = null, entryAction = "Ersetzen",
-                onAppend = { date -> if (!busy) run(date) { app.planRepository.add(date, slot, recipeId) } },
-                onEntry = { e -> replacing = e },
+                onAppend = { date ->
+                    when {
+                        busy -> {}
+                        preview -> { error = null; previewDate = date }
+                        else -> run(date) { app.planRepository.add(date, slot, recipeId) }
+                    }
+                },
+                onEntry = { e -> if (preview) { error = null; previewReplace = e } else replacing = e },
             )
         }
+    }
+
+    if (recipe != null && (previewDate != null || previewReplace != null)) {
+        val target = previewReplace
+        PlanPreviewSheet(
+            recipe = recipe,
+            servings = target?.servings ?: snapshot.settings.familySize,
+            excluded = emptyList(),
+            confirmLabel = if (target != null) "Ersetzen" else "Hinzufügen",
+            busy = busy,
+            error = error,
+            onConfirm = { choice ->
+                if (target != null) run(target.date) { app.planRepository.replace(target, recipeId, choice) }
+                else previewDate?.let { date -> run(date) { app.planRepository.add(date, slot, recipeId, choice) } }
+            },
+            onDismiss = { previewDate = null; previewReplace = null },
+        )
     }
 
     replacing?.let { e ->
@@ -198,6 +227,9 @@ fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Uni
     var error by remember { mutableStateOf<String?>(null) }
     var confirmDelete by remember { mutableStateOf(false) }
     var favorite by remember(entry.id) { mutableStateOf(entry.recipe?.isFavorite == true) }
+    var showPreview by remember { mutableStateOf(false) }
+    val snapshot by app.localStore.snapshot.collectAsStateWithLifecycle()
+    val recipe = snapshot.recipes.firstOrNull { it.id == entry.recipeId }
     val transferred = entry.status == "transferred"
     val changed = servings != entry.servings || note.trim() != entry.note ||
         haveIngredients != (entry.status == "have_ingredients")
@@ -270,6 +302,21 @@ fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Uni
                     Switch(checked = haveIngredients, onCheckedChange = { haveIngredients = it }, enabled = !transferred)
                 }
             }
+            // „Zutaten vorhanden …“: dieselbe Kurzvorschau wie beim Einplanen.
+            if (recipe != null && recipe.ingredients.filter { it.shoppingRelevant }.all { it.itemKey.isNotEmpty() }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    excludedLabel(entry.excludedIngredients.size)?.let {
+                        Text(it, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
+                    }
+                    TextButton(onClick = { showPreview = true }, enabled = !busy) { Text("Zutaten vorhanden …") }
+                }
+                if (transferred) {
+                    Text(
+                        "Schon an Bring gesendet – Änderungen erscheinen im Einkauf als Differenz.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             Button(
                 onClick = { run { app.planRepository.update(entry, servings, note, haveIngredients) } },
@@ -287,6 +334,19 @@ fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Uni
                 }
             }
         }
+    }
+
+    if (showPreview && recipe != null) {
+        PlanPreviewSheet(
+            recipe = recipe,
+            servings = servings,
+            excluded = entry.excludedIngredients,
+            confirmLabel = "Übernehmen",
+            busy = busy,
+            error = error,
+            onConfirm = { choice -> run { app.planRepository.setChoice(entry, choice) } },
+            onDismiss = { showPreview = false },
+        )
     }
 
     if (confirmDelete) {

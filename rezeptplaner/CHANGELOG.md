@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.11.0
+
+- **Kurzvorschau beim Einplanen** (Weboberfläche und App ab 0.12.0): Beim Hinzufügen eines Rezepts zum Essensplan erscheinen Portionen und Zutaten. Häkchen entfernen, was noch im Haus ist (z. B. im Tiefkühler) – diese Zutaten kommen nicht auf die Einkaufsliste und nicht an Bring. „Alles vorhanden“ markiert gleich das ganze Gericht. Die Abwahl gilt nur für diesen Eintrag, wandert beim Verschieben und Tauschen mit und verfällt beim Ersetzen.
+- Nachträglich über „Zutaten vorhanden …“ im Menü des Eintrags; ist schon an Bring gesendet, erscheint die Änderung im Einkauf als Differenz.
+- Im Essensplan zeigt der Eintrag z. B. „2 Zutaten vorhanden“.
+- Neue Einstellung **Kurzvorschau beim Einplanen** (Einstellungen → Haushalt, Standard an).
+- Beim ersten Start gelten alle Rezepte einmal als geändert, damit die App sie mit den neuen Angaben abgleicht.
+
 ## 0.10.0
 
 - **Statistik** (neuer Bereich in der Navigation, auch in der App ab 0.11.0): Anzahl der Rezepte, wie viele schon bzw. noch nie eingeplant waren (mit Link auf die Rezeptliste), Rezepte mit Illustration, die 20 am häufigsten gegessenen Rezepte der letzten 3 Monate, des letzten Jahres oder insgesamt, Einträge ohne Rezept („2× Essen gehen“), Lieblingsgerichte, die lange nicht dran waren, zuletzt hinzugefügte Rezepte und die Verteilung auf die Kategorien.

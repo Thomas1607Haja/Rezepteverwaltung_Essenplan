@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/itemkey"
 )
 
 // Store liest und schreibt Rezepte in der Datenbank.
@@ -334,6 +335,7 @@ func (s *Store) loadIngredients(ctx context.Context, recipeID int64) ([]Ingredie
 			&ing.Name, &ing.Note, &ing.ShoppingRelevant); err != nil {
 			return nil, fmt.Errorf("zutaten laden: %w", err)
 		}
+		ing.ItemKey = itemkey.Of(ing.Name)
 		ingredients = append(ingredients, ing)
 	}
 	// rows.Err meldet Fehler, die während der Schleife aufgetreten sind.

@@ -6,14 +6,15 @@ package shopping
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
-	"regexp"
 	"slices"
 	"strings"
 	"sync"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/itemkey"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/settings"
 )
@@ -170,7 +171,7 @@ func (n need) key() string { return nameKey(cleanName(n.Name)) }
 // status von from bis to und rechnet sie auf die Portionen um.
 func (s *Store) loadNeeds(ctx context.Context, from, to, status string) ([]need, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT e.id, r.title, e.servings, r.base_servings, i.quantity, i.unit, i.name
+		SELECT e.id, r.title, e.servings, r.base_servings, i.quantity, i.unit, i.name, e.excluded_ingredients
 		FROM meal_plan_entries e
 		JOIN recipes r ON r.id = e.recipe_id
 		JOIN recipe_ingredients i ON i.recipe_id = r.id AND i.shopping_relevant = 1
@@ -183,11 +184,27 @@ func (s *Store) loadNeeds(ctx context.Context, from, to, status string) ([]need,
 	defer rows.Close()
 
 	needs := []need{}
+	// Abgewählte Zutaten je Eintrag („habe ich noch“), einmal gelesen.
+	excluded := map[int64]map[string]bool{}
 	for rows.Next() {
 		var n need
 		var servings, baseServings int
-		if err := rows.Scan(&n.EntryID, &n.Recipe, &servings, &baseServings, &n.Quantity, &n.Unit, &n.Name); err != nil {
+		var excludedJSON string
+		if err := rows.Scan(&n.EntryID, &n.Recipe, &servings, &baseServings, &n.Quantity, &n.Unit, &n.Name, &excludedJSON); err != nil {
 			return nil, fmt.Errorf("einkaufsliste: zutaten lesen: %w", err)
+		}
+		skip, ok := excluded[n.EntryID]
+		if !ok {
+			var keys []string
+			json.Unmarshal([]byte(excludedJSON), &keys) // unlesbar = nichts abgewählt
+			skip = map[string]bool{}
+			for _, k := range keys {
+				skip[k] = true
+			}
+			excluded[n.EntryID] = skip
+		}
+		if skip[n.key()] {
+			continue
 		}
 		if n.Quantity != nil {
 			scaled := *n.Quantity * float64(servings) / float64(baseServings)
@@ -280,44 +297,15 @@ func (c *collector) items() []Item {
 	return result
 }
 
-// parenthesized trifft Klammerzusätze wie in "Zwiebel(n)" oder
-// "Tomaten (aus der Dose)".
-var parenthesized = regexp.MustCompile(`\s*\([^)]*\)`)
+// cleanName und nameKey: siehe Paket itemkey (gemeinsam mit den Rezepten
+// und den abgewählten Zutaten eines Planeintrags).
+func cleanName(name string) string { return itemkey.Clean(name) }
 
-// cleanName entfernt Klammerzusätze und doppelte Leerzeichen.
-func cleanName(name string) string {
-	return strings.Join(strings.Fields(parenthesized.ReplaceAllString(name, "")), " ")
-}
+func nameKey(name string) string { return itemkey.NameKey(name) }
 
 // unitKey bildet den Vergleichsschlüssel einer Einheit ("Zehen" = "Zehe").
 func unitKey(unit string) string {
 	return stem(database.Fold(strings.TrimSuffix(strings.TrimSpace(unit), ".")))
 }
 
-// nameKey bildet den Vergleichsschlüssel eines Zutatennamens: gefaltet und
-// das letzte Wort ohne Pluralendung, damit "Zwiebel" und "Zwiebeln" oder
-// "Ei" und "Eier" zusammenfallen.
-func nameKey(name string) string {
-	words := strings.Fields(database.Fold(name))
-	if len(words) == 0 {
-		return ""
-	}
-	words[len(words)-1] = stem(words[len(words)-1])
-	return strings.Join(words, " ")
-}
-
-// pluralEndings in der Reihenfolge, in der sie geprüft werden.
-var pluralEndings = []string{"en", "er", "n", "e", "s"}
-
-// stem entfernt eine typische Pluralendung, wenn danach noch mindestens
-// zwei Buchstaben übrig bleiben ("eier" → "ei", "tomaten" → "tomat",
-// "tomate" → "tomat"). Das ist bewusst grob: Es geht nur darum, dass
-// Singular und Plural denselben Schlüssel bekommen.
-func stem(word string) string {
-	for _, end := range pluralEndings {
-		if rest, ok := strings.CutSuffix(word, end); ok && len([]rune(rest)) >= 2 {
-			return rest
-		}
-	}
-	return word
-}
+func stem(word string) string { return itemkey.Stem(word) }

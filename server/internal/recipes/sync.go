@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/itemkey"
 )
 
 // ChangedSince lädt alle Rezepte, deren updated_at nicht vor since liegt
@@ -78,6 +79,7 @@ func (s *Store) ChangedSince(ctx context.Context, since string) ([]Recipe, error
 			&ing.Name, &ing.Note, &ing.ShoppingRelevant); err != nil {
 			return nil, fmt.Errorf("zutaten für den abgleich laden: %w", err)
 		}
+		ing.ItemKey = itemkey.Of(ing.Name)
 		if r := byID[recipeID]; r != nil {
 			r.Ingredients = append(r.Ingredients, ing)
 		}

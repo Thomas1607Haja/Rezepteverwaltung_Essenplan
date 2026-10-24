@@ -13,6 +13,12 @@ import kotlinx.coroutines.flow.first
 typealias PlanError = String?
 
 /**
+ * Ergebnis der Kurzvorschau beim Einplanen (Schritt 8.E): Portionen,
+ * abgewählte Zutaten (item_key) oder „Alles vorhanden“.
+ */
+data class PlanChoice(val servings: Int, val excluded: List<String>, val allAvailable: Boolean)
+
+/**
  * Ändert den Essensplan. Jede Änderung geht direkt an den Server (die App
  * hat keine Warteschlange und damit keine Konflikte); danach gleicht sie
  * ab, damit der Plan auf dem Handy stimmt. Siehe docs/PLANUNG.md, Abschnitt 7.
@@ -22,8 +28,19 @@ class PlanRepository(
     private val api: ApiClient,
     private val sync: SyncRepository,
 ) {
-    suspend fun add(date: String, slot: String, recipeId: Long): PlanError =
-        write { api.createEntry(it, NewEntry(date = date, slot = slot, recipeId = recipeId)) }
+    suspend fun add(date: String, slot: String, recipeId: Long, choice: PlanChoice? = null): PlanError = write {
+        val entry = api.createEntry(
+            it,
+            NewEntry(
+                date = date, slot = slot, recipeId = recipeId, servings = choice?.servings,
+                excludedIngredients = choice?.excluded.orEmpty(),
+            ),
+        )
+        // Anlegen kennt nur geplante Einträge; „Alles vorhanden“ danach setzen.
+        if (choice?.allAvailable == true) {
+            api.updateEntry(it, entry.id, EntryChanges(recipeId, entry.servings, entry.note, "have_ingredients", emptyList()))
+        }
+    }
 
     /** Eintrag ohne Rezept, z. B. „Essen gehen“; der Text steht in note. */
     suspend fun addNote(date: String, slot: String, note: String): PlanError =
@@ -35,18 +52,34 @@ class PlanRepository(
         api.updateEntry(it, entry.id, EntryChanges(null, entry.servings, note.trim(), status))
     }
 
-    /** Ersetzt das Gericht eines Eintrags durch [recipeId] (Portionen bleiben). */
-    suspend fun replace(entry: MealPlanEntry, recipeId: Long): PlanError = write {
+    /**
+     * Ersetzt das Gericht eines Eintrags durch [recipeId]. Ohne [choice]
+     * bleiben die Portionen, und die alte Abwahl verfällt auf dem Server.
+     */
+    suspend fun replace(entry: MealPlanEntry, recipeId: Long, choice: PlanChoice? = null): PlanError = write {
+        var status = if (entry.status == "have_ingredients") "planned" else entry.status
+        if (choice?.allAvailable == true && status != "transferred") status = "have_ingredients"
         api.updateEntry(
             it, entry.id,
             EntryChanges(
                 recipeId = recipeId,
-                servings = entry.servings,
+                servings = choice?.servings ?: entry.servings,
                 // Bei einem Eintrag ohne Rezept war die Notiz der Titel.
                 note = if (entry.recipeId != null) entry.note else "",
-                status = if (entry.status == "have_ingredients") "planned" else entry.status,
+                status = status,
+                excludedIngredients = choice?.excluded,
             ),
         )
+    }
+
+    /** „Zutaten vorhanden …“ im Menü des Eintrags: Abwahl und Portionen speichern. */
+    suspend fun setChoice(entry: MealPlanEntry, choice: PlanChoice): PlanError = write {
+        val status = when {
+            entry.status == "transferred" -> "transferred"
+            choice.allAvailable -> "have_ingredients"
+            else -> "planned"
+        }
+        api.updateEntry(it, entry.id, EntryChanges(entry.recipeId, choice.servings, entry.note, status, choice.excluded))
     }
 
     suspend fun update(entry: MealPlanEntry, servings: Int, note: String, haveIngredients: Boolean): PlanError = write {

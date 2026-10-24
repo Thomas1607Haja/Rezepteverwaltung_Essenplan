@@ -257,6 +257,7 @@ private fun EntryCard(entry: MealPlanEntry, onOpenRecipe: (Long, Long) -> Unit, 
                 )
                 val details = buildList {
                     if (entry.recipe != null) add(portions(entry.servings))
+                    excludedLabel(entry.excludedIngredients.size)?.let(::add)
                     if (entry.recipe != null && entry.note.isNotEmpty()) add(entry.note)
                     when (entry.status) {
                         "transferred" -> add("an Bring gesendet")

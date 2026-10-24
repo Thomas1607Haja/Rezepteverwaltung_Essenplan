@@ -3,6 +3,7 @@ package mealplan
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -59,7 +60,7 @@ func (s *Store) CurrentPeriod(ctx context.Context) (Period, error) {
 const selectEntry = `
 	SELECT e.id, e.date, e.slot, e.position, e.recipe_id, e.servings, e.status,
 	       e.transferred_at, e.note, e.created_at, e.updated_at,
-	       r.title, r.thumbnail, r.is_favorite
+	       r.title, r.thumbnail, r.is_favorite, e.excluded_ingredients
 	FROM meal_plan_entries e
 	LEFT JOIN recipes r ON r.id = e.recipe_id`
 
@@ -73,12 +74,15 @@ func scanEntry(row scanner) (Entry, error) {
 	var e Entry
 	var transferredAt, title, thumbnail sql.NullString
 	var isFavorite sql.NullBool
-	var createdAt, updatedAt string
+	var createdAt, updatedAt, excluded string
 	err := row.Scan(&e.ID, &e.Date, &e.Slot, &e.Position, &e.RecipeID, &e.Servings, &e.Status,
 		&transferredAt, &e.Note, &createdAt, &updatedAt,
-		&title, &thumbnail, &isFavorite)
+		&title, &thumbnail, &isFavorite, &excluded)
 	if err != nil {
 		return Entry{}, err
+	}
+	if err := json.Unmarshal([]byte(excluded), &e.ExcludedIngredients); err != nil || e.ExcludedIngredients == nil {
+		e.ExcludedIngredients = []string{} // unlesbar (von Hand geändert) = nichts abgewählt
 	}
 	if e.CreatedAt, err = database.ParseTime(createdAt); err != nil {
 		return Entry{}, err
@@ -246,6 +250,14 @@ func (s *Store) Create(ctx context.Context, in NewEntry) (Entry, error) {
 	if servings < 1 || servings > 50 {
 		return Entry{}, &ValidationError{"servings", "muss zwischen 1 und 50 liegen"}
 	}
+	excluded, err := normalizeExcluded(in.ExcludedIngredients)
+	if err != nil {
+		return Entry{}, err
+	}
+	if in.RecipeID == nil {
+		excluded = []string{} // ohne Rezept gibt es keine Zutaten
+	}
+	excludedJSON, _ := json.Marshal(excluded)
 
 	now := database.FormatTime(s.now())
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -262,9 +274,10 @@ func (s *Store) Create(ctx context.Context, in NewEntry) (Entry, error) {
 		return Entry{}, err
 	}
 	res, err := tx.ExecContext(ctx, `
-		INSERT INTO meal_plan_entries (date, slot, position, recipe_id, servings, note, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		in.Date, in.Slot, pos, in.RecipeID, servings, note, now, now)
+		INSERT INTO meal_plan_entries (date, slot, position, recipe_id, servings, note,
+		                               excluded_ingredients, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		in.Date, in.Slot, pos, in.RecipeID, servings, note, string(excludedJSON), now, now)
 	if err != nil {
 		return Entry{}, fmt.Errorf("eintrag anlegen: %w", err)
 	}
@@ -297,8 +310,10 @@ func (s *Store) Update(ctx context.Context, id int64, c Changes) (Entry, error) 
 	}
 	defer tx.Rollback()
 
-	var oldStatus string
-	err = tx.QueryRowContext(ctx, "SELECT status FROM meal_plan_entries WHERE id = ?", id).Scan(&oldStatus)
+	var oldStatus, oldExcluded string
+	var oldRecipe *int64
+	err = tx.QueryRowContext(ctx, "SELECT status, recipe_id, excluded_ingredients FROM meal_plan_entries WHERE id = ?", id).
+		Scan(&oldStatus, &oldRecipe, &oldExcluded)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Entry{}, ErrNotFound
 	}
@@ -320,14 +335,33 @@ func (s *Store) Update(ctx context.Context, id int64, c Changes) (Entry, error) 
 		return Entry{}, err
 	}
 
+	// Abgewählte Zutaten: neu mitgeschickt, sonst unverändert – außer der
+	// Eintrag bekommt ein anderes Rezept (Ersetzen), dann verfallen sie.
+	excludedJSON := oldExcluded
+	sameRecipe := (oldRecipe == nil && c.RecipeID == nil) ||
+		(oldRecipe != nil && c.RecipeID != nil && *oldRecipe == *c.RecipeID)
+	switch {
+	case c.RecipeID == nil:
+		excludedJSON = "[]"
+	case c.ExcludedIngredients != nil:
+		excluded, err := normalizeExcluded(*c.ExcludedIngredients)
+		if err != nil {
+			return Entry{}, err
+		}
+		data, _ := json.Marshal(excluded)
+		excludedJSON = string(data)
+	case !sameRecipe:
+		excludedJSON = "[]"
+	}
+
 	// Wer den Status zurücksetzt, löscht auch den Zeitpunkt der Übertragung.
 	_, err = tx.ExecContext(ctx, `
 		UPDATE meal_plan_entries
-		SET recipe_id = ?, servings = ?, note = ?, status = ?,
+		SET recipe_id = ?, servings = ?, note = ?, status = ?, excluded_ingredients = ?,
 		    transferred_at = CASE WHEN ? = 'transferred' THEN transferred_at END,
 		    updated_at = ?
 		WHERE id = ?`,
-		c.RecipeID, c.Servings, note, c.Status, c.Status, database.FormatTime(s.now()), id)
+		c.RecipeID, c.Servings, note, c.Status, excludedJSON, c.Status, database.FormatTime(s.now()), id)
 	if err != nil {
 		return Entry{}, fmt.Errorf("eintrag %d ändern: %w", id, err)
 	}
