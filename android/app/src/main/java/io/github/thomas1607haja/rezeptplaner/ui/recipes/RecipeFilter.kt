@@ -23,6 +23,9 @@ data class RecipeFilter(
     val sort: RecipeSort = RecipeSort.Name,
 ) {
     val isActive: Boolean get() = query.isNotBlank() || tagIds.isNotEmpty() || favoritesOnly || illustrationsOnly
+
+    /** Suche und Filter zurücksetzen, die Sortierung bleibt (wie resetFilter im Web). */
+    fun reset() = RecipeFilter(sort = sort)
 }
 
 /** Ein Rezept in der Liste mit seinen Terminen. */

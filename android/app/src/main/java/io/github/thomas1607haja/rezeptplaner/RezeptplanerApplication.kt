@@ -10,6 +10,8 @@ import io.github.thomas1607haja.rezeptplaner.data.PlanRepository
 import io.github.thomas1607haja.rezeptplaner.data.RecipeRepository
 import io.github.thomas1607haja.rezeptplaner.data.ShoppingRepository
 import io.github.thomas1607haja.rezeptplaner.data.SyncRepository
+import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipeFilter
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
 
 /**
@@ -29,6 +31,13 @@ class RezeptplanerApplication : Application() {
     val shoppingRepository by lazy { ShoppingRepository(configRepository, apiClient, syncRepository) }
     val recipeRepository by lazy { RecipeRepository(configRepository, apiClient, syncRepository) }
     val importRepository by lazy { ImportRepository(contentResolver, configRepository, apiClient, syncRepository) }
+
+    /**
+     * Filter der Rezeptübersicht, solange die App läuft (wie recipeFilter im
+     * Web). Hier statt im ViewModel, damit z. B. ein Kategorie-Chip in der
+     * Kochansicht die Übersicht gefiltert öffnen kann.
+     */
+    val recipeFilter = MutableStateFlow(RecipeFilter())
 
     override fun onCreate() {
         super.onCreate()

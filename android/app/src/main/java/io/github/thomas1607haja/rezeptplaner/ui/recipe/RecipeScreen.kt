@@ -61,6 +61,7 @@ import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
 import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
 import io.github.thomas1607haja.rezeptplaner.ui.formatQuantity
 import io.github.thomas1607haja.rezeptplaner.ui.planStatus
@@ -70,8 +71,9 @@ import java.net.URI
 import java.time.LocalDate
 
 /**
- * Kochansicht. [planServings] > 0: geöffnet aus dem Essensplan, die
- * Portionen kommen aus dem Eintrag.
+ * Kochansicht. [entryId] > 0: geöffnet aus dem Essensplan – Portionen, Tag
+ * und Notiz kommen aus dem Eintrag. [planServings] > 0: Portionen aus dem
+ * Einkauf.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -80,6 +82,9 @@ fun RecipeScreen(
     planServings: Int,
     onBack: () -> Unit,
     onOpen: (Long) -> Unit,
+    entryId: Long = 0,
+    /** Kategorie antippen: Rezeptübersicht mit dieser Kategorie. */
+    onTag: (Long) -> Unit = {},
     onEdit: () -> Unit = {},
     onVariantCreated: (Long) -> Unit = {},
 ) {
@@ -112,10 +117,20 @@ fun RecipeScreen(
         }
         val today = snapshot.today.takeIf(String::isNotEmpty)?.let(LocalDate::parse) ?: LocalDate.now()
         var adding by remember { mutableStateOf(false) }
+        // Nur, solange der Eintrag noch dieses Rezept hat (wie im Web).
+        val entry = snapshot.entries.firstOrNull { it.id == entryId && it.recipeId == recipe.id }
         RecipeContent(
-            recipe, planServings, snapshot.recipes,
+            recipe, entry?.servings ?: planServings, snapshot.recipes,
             planStatus(snapshot.planInfo.firstOrNull { it.recipeId == recipe.id }, today),
             onOpen, onAddToPlan = { adding = true },
+            planContext = entry?.let {
+                buildList {
+                    add("Im Essensplan: ${dayLabel(it.date)}" + if (it.slot == "lunch") " mittags" else "")
+                    add(portions(it.servings))
+                    if (it.note.isNotEmpty()) add(it.note)
+                }.joinToString(" · ")
+            },
+            onTag = onTag,
             actions = RecipeActions(
                 busy = busy,
                 onToggleFavorite = {
@@ -153,6 +168,8 @@ private fun RecipeContent(
     onOpen: (Long) -> Unit,
     onAddToPlan: () -> Unit,
     actions: RecipeActions,
+    planContext: String? = null,
+    onTag: (Long) -> Unit = {},
 ) {
     var servings by rememberSaveable(recipe.id) { mutableIntStateOf(if (planServings > 0) planServings else recipe.baseServings) }
     val factor = servings.toDouble() / recipe.baseServings
@@ -203,11 +220,20 @@ private fun RecipeContent(
                 }
             }
             if (family.isNotEmpty()) FamilyStrip(family, origin, onOpen)
+            planContext?.let {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(
+                        painterResource(R.drawable.ic_nav_calendar), contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp),
+                    )
+                    Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                }
+            }
             if (recipe.description.isNotEmpty()) Text(recipe.description)
             Meta(recipe, status) { url -> runCatching { uri.openUri(url) } }
             if (recipe.tags.isNotEmpty()) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    recipe.tags.forEach { AssistChip(onClick = {}, label = { Text(it.name) }) }
+                    recipe.tags.forEach { tag -> AssistChip(onClick = { onTag(tag.id) }, label = { Text(tag.name) }) }
                 }
             }
             Button(onClick = onAddToPlan) {

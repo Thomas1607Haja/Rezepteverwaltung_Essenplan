@@ -25,6 +25,14 @@ class ShoppingRepository(
         call { api.sendShopping(it, ShoppingSend(if (next) "next" else "current", deselected.toList(), missing)) }
             .also { if (it is Outcome.Ok) sync.sync(SyncTrigger.Manual) }
 
+    /**
+     * Sendet nur die Zutaten der Gerichte [entryIds] aus dem eingekauften
+     * Zeitraum, z. B. direkt nach dem Verschieben in diesen Zeitraum.
+     */
+    suspend fun sendEntries(entryIds: List<Long>): Outcome<SendResult> =
+        call { api.sendShopping(it, ShoppingSend("current", emptyList(), entries = entryIds)) }
+            .also { if (it is Outcome.Ok) sync.sync(SyncTrigger.Manual) }
+
     /** To-do-Listen aus Home Assistant (für die Wahl der Bring-Liste). */
     suspend fun lists(): Outcome<List<TodoList>> = when (val r = call { api.homeAssistantStatus(it) }) {
         is Outcome.Error -> r

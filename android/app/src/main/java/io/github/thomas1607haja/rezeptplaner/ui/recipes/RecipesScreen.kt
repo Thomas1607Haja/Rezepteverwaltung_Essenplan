@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
@@ -47,7 +48,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.isIllustrated
 import io.github.thomas1607haja.rezeptplaner.data.SyncTrigger
@@ -60,7 +60,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-/** Hält den Filter, solange die App läuft (wie recipeFilter im Web). */
+/** Eigener Filter für die Rezeptauswahl beim Planen (die Übersicht nutzt RezeptplanerApplication.recipeFilter). */
 class RecipesViewModel : ViewModel() {
     val filter = MutableStateFlow(RecipeFilter())
 }
@@ -75,12 +75,16 @@ fun RecipesScreen(
     onNew: () -> Unit = {},
     onFromUrl: () -> Unit = {},
     onFromPhoto: () -> Unit = {},
-    viewModel: RecipesViewModel = viewModel(),
+    /** Filter dieser Liste; null = der Filter der Rezeptübersicht. */
+    filterState: MutableStateFlow<RecipeFilter>? = null,
+    /** Inhalt über der Suche, z. B. „Eintrag ohne Rezept“ in der Rezeptauswahl. */
+    header: @Composable () -> Unit = {},
 ) {
     val app = app()
     val snapshot by app.localStore.snapshot.collectAsStateWithLifecycle()
     val sync by app.syncRepository.state.collectAsStateWithLifecycle()
-    val filter by viewModel.filter.collectAsStateWithLifecycle()
+    val state = filterState ?: app.recipeFilter
+    val filter by state.collectAsStateWithLifecycle()
     val items = remember(snapshot, filter) { filterRecipes(snapshot, filter) }
     val today = remember(snapshot.today) { snapshot.today.takeIf { it.isNotEmpty() }?.let(LocalDate::parse) ?: LocalDate.now() }
     val scope = rememberCoroutineScope()
@@ -89,10 +93,11 @@ fun RecipesScreen(
 
     Column(modifier.fillMaxSize()) {
         OfflineBanner(sync.log)
+        header()
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = filter.query,
-                onValueChange = { q -> viewModel.filter.value = filter.copy(query = q) },
+                onValueChange = { q -> state.value = filter.copy(query = q) },
                 placeholder = { Text("Suchen nach Titel oder Zutat") },
                 leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },
                 singleLine = true,
@@ -108,7 +113,7 @@ fun RecipesScreen(
                 )
                 FilterChip(
                     selected = filter.favoritesOnly,
-                    onClick = { viewModel.filter.value = filter.copy(favoritesOnly = !filter.favoritesOnly) },
+                    onClick = { state.value = filter.copy(favoritesOnly = !filter.favoritesOnly) },
                     label = { Text("Favoriten") },
                     leadingIcon = { Icon(painterResource(R.drawable.ic_heart), contentDescription = null, Modifier.size(18.dp)) },
                 )
@@ -116,7 +121,7 @@ fun RecipesScreen(
                 if (filter.illustrationsOnly || snapshot.recipes.any { it.isIllustrated }) {
                     FilterChip(
                         selected = filter.illustrationsOnly,
-                        onClick = { viewModel.filter.value = filter.copy(illustrationsOnly = !filter.illustrationsOnly) },
+                        onClick = { state.value = filter.copy(illustrationsOnly = !filter.illustrationsOnly) },
                         label = { Text("Illustrationen") },
                     )
                 }
@@ -125,7 +130,7 @@ fun RecipesScreen(
                     DropdownMenu(expanded = showSort, onDismissRequest = { showSort = false }) {
                         RecipeSort.entries.forEach { sort ->
                             DropdownMenuItem(text = { Text(sort.label) }, onClick = {
-                                viewModel.filter.value = filter.copy(sort = sort)
+                                state.value = filter.copy(sort = sort)
                                 showSort = false
                             })
                         }
@@ -141,7 +146,10 @@ fun RecipesScreen(
         ) {
             when {
                 snapshot.isEmpty -> Message(if (sync.running) "Rezepte werden geladen …" else "Noch keine Daten – nach unten ziehen zum Laden.")
-                items.isEmpty() -> Message(if (filter.isActive) "Keine Rezepte zu dieser Suche." else "Noch keine Rezepte.")
+                items.isEmpty() -> Message(
+                    if (filter.isActive) "Keine Rezepte zu dieser Suche." else "Noch keine Rezepte.",
+                    onReset = if (filter.isActive) ({ state.value = filter.reset() }) else null,
+                )
                 else -> LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 160.dp),
                     contentPadding = PaddingValues(16.dp),
@@ -149,6 +157,14 @@ fun RecipesScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
+                    // Trefferzahl wie im Web, über die ganze Breite.
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text(
+                            if (items.size == 1) "1 Rezept" else "${items.size} Rezepte",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     items(items, key = { it.recipe.id }) { item -> RecipeTile(item, today) { onOpen(item.recipe.id) } }
                 }
             }
@@ -185,7 +201,7 @@ fun RecipesScreen(
                                 selected = selected,
                                 onClick = {
                                     val ids = if (selected) filter.tagIds - tag.id else filter.tagIds + tag.id
-                                    viewModel.filter.value = filter.copy(tagIds = ids)
+                                    state.value = filter.copy(tagIds = ids)
                                 },
                                 label = { Text(tag.name) },
                             )
@@ -193,7 +209,7 @@ fun RecipesScreen(
                     }
                 }
                 Row {
-                    TextButton(onClick = { viewModel.filter.value = filter.copy(tagIds = emptySet()) }) { Text("Zurücksetzen") }
+                    TextButton(onClick = { state.value = filter.copy(tagIds = emptySet()) }) { Text("Zurücksetzen") }
                     TextButton(onClick = { showTags = false }) { Text("Fertig") }
                 }
             }
@@ -240,9 +256,10 @@ private fun RecipeTile(item: RecipeItem, today: LocalDate, onClick: () -> Unit) 
 }
 
 @Composable
-private fun Message(text: String) {
+private fun Message(text: String, onReset: (() -> Unit)? = null) {
     // In einer scrollbaren Spalte, damit Herunterziehen auch hier lädt.
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp)) {
         Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (onReset != null) TextButton(onClick = onReset) { Text("Filter zurücksetzen") }
     }
 }

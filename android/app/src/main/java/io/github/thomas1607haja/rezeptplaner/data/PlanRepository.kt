@@ -25,6 +25,16 @@ class PlanRepository(
     suspend fun add(date: String, slot: String, recipeId: Long): PlanError =
         write { api.createEntry(it, NewEntry(date = date, slot = slot, recipeId = recipeId)) }
 
+    /** Eintrag ohne Rezept, z. B. „Essen gehen“; der Text steht in note. */
+    suspend fun addNote(date: String, slot: String, note: String): PlanError =
+        write { api.createEntry(it, NewEntry(date = date, slot = slot, note = note.trim())) }
+
+    /** Macht aus [entry] einen Eintrag ohne Rezept mit dem Text [note]. */
+    suspend fun replaceWithNote(entry: MealPlanEntry, note: String): PlanError = write {
+        val status = if (entry.status == "have_ingredients") "planned" else entry.status
+        api.updateEntry(it, entry.id, EntryChanges(null, entry.servings, note.trim(), status))
+    }
+
     /** Ersetzt das Gericht eines Eintrags durch [recipeId] (Portionen bleiben). */
     suspend fun replace(entry: MealPlanEntry, recipeId: Long): PlanError = write {
         api.updateEntry(

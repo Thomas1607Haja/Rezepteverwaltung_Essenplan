@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -74,6 +75,8 @@ fun RecipeEditScreen(
     onSaved: (Long, String?) -> Unit,
     onCancel: () -> Unit,
     onDeleted: () -> Unit,
+    /** Vorhandenes Rezept öffnen (Dubletten beim URL-Import). */
+    onOpenRecipe: (Long) -> Unit = {},
 ) {
     val app = app()
     val vm = viewModel(key = "edit-$recipeId-$fromDraft") { RecipeEditViewModel(app, recipeId, fromDraft) }
@@ -120,7 +123,14 @@ fun RecipeEditScreen(
         ) {
             message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             if (vm.duplicates.isNotEmpty()) {
-                Text("Gibt es schon: " + vm.duplicates.joinToString(", ") { it.title }, color = MaterialTheme.colorScheme.tertiary)
+                // Wie im Web: Antippen öffnet das vorhandene Rezept, der Entwurf bleibt erhalten.
+                Text("Gibt es schon:", color = MaterialTheme.colorScheme.tertiary)
+                vm.duplicates.forEach { d ->
+                    Text(
+                        d.title, color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { onOpenRecipe(d.id) }.padding(vertical = 2.dp),
+                    )
+                }
             }
 
             Field("Titel", form.title, errors["title"]) { v -> vm.update { it.copy(title = v) } }

@@ -51,6 +51,7 @@ import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.plan.MealPlanScreen
 import io.github.thomas1607haja.rezeptplaner.ui.plan.PickRecipeScreen
 import io.github.thomas1607haja.rezeptplaner.ui.recipe.RecipeScreen
+import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipeFilter
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipesScreen
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.RezeptplanerApplication
@@ -88,8 +89,11 @@ import kotlinx.serialization.Serializable
 /** Datei-Import (Teilen, „Öffnen mit“, Dateiauswahl). */
 @Serializable data object ImportRoute
 
-/** Kochansicht; planServings > 0 = aus dem Essensplan geöffnet. */
-@Serializable data class RecipeRoute(val id: Long, val planServings: Int = 0)
+/**
+ * Kochansicht. Aus dem Essensplan mit [entryId] (Portionen, Tag und Notiz
+ * des Eintrags), aus dem Einkauf mit [planServings] > 0.
+ */
+@Serializable data class RecipeRoute(val id: Long, val planServings: Int = 0, val entryId: Long = 0)
 
 /** Die vier Hauptbereiche in der unteren Leiste, wie in der Weboberfläche. */
 private enum class Section(val route: Any, @StringRes val label: Int, @DrawableRes val icon: Int) {
@@ -250,7 +254,7 @@ internal fun MainScaffold(
         ) {
             composable<MealPlanRoute> {
                 MealPlanScreen(
-                    onOpenRecipe = { id, servings -> navController.navigate(RecipeRoute(id, servings)) },
+                    onOpenRecipe = { id, entryId -> navController.navigate(RecipeRoute(id, entryId = entryId)) },
                     onAdd = { date -> navController.navigate(PickRecipeRoute(date)) },
                     onReplace = { e -> navController.navigate(PickRecipeRoute(e.date, e.slot, e.id)) },
                 )
@@ -303,6 +307,7 @@ internal fun MainScaffold(
                         scope.launch { snackbar.showSnackbar(warning ?: "Gespeichert") }
                     },
                     onCancel = { navController.popBackStack() },
+                    onOpenRecipe = { id -> navController.navigate(RecipeRoute(id)) },
                     onDeleted = {
                         // Verworfene Variante: zurück zum Original. Sonst vor die (gelöschte)
                         // Kochansicht, egal über welchen Weg sie geöffnet wurde.
@@ -321,7 +326,18 @@ internal fun MainScaffold(
                 RecipeScreen(
                     recipeId = route.id,
                     planServings = route.planServings,
+                    entryId = route.entryId,
                     onBack = { navController.popBackStack() },
+                    onTag = { tagId ->
+                        // Wie im Web: Rezeptübersicht nur mit dieser Kategorie. Die Kochansicht
+                        // wird dabei verlassen (nicht gespeichert), damit der Essensplan-Reiter
+                        // danach wieder den Plan zeigt.
+                        app.recipeFilter.value = RecipeFilter(tagIds = setOf(tagId), sort = app.recipeFilter.value.sort)
+                        navController.navigate(RecipesRoute) {
+                            popUpTo(navController.graph.findStartDestination().id)
+                            launchSingleTop = true
+                        }
+                    },
                     onOpen = { id -> navController.navigate(RecipeRoute(id)) },
                     onEdit = { navController.navigate(EditRecipeRoute(route.id)) },
                     onVariantCreated = { id -> navController.navigate(EditRecipeRoute(id, freshVariant = true)) },

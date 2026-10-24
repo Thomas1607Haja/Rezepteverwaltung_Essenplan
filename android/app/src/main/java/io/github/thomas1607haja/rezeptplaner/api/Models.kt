@@ -260,6 +260,8 @@ data class ShoppingSend(
     val period: String,
     val deselected: List<String>,
     val missing: Boolean = false,
+    /** Nur diese Gerichte senden; leer = alle des Zeitraums. */
+    val entries: List<Long> = emptyList(),
 )
 
 @Serializable

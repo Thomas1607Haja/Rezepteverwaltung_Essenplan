@@ -13,8 +13,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -26,6 +30,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -36,17 +41,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.MealPlanEntry
 import io.github.thomas1607haja.rezeptplaner.api.MoveWarning
+import io.github.thomas1607haja.rezeptplaner.data.Outcome
 import io.github.thomas1607haja.rezeptplaner.data.Snapshot
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import io.github.thomas1607haja.rezeptplaner.ui.portions
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 
 // Blätter zum Ändern des Essensplans. Alles geht direkt an den Server
 // (PlanRepository); ohne Verbindung erscheint eine Meldung.
@@ -64,7 +74,7 @@ fun upcomingDays(snapshot: Snapshot, today: LocalDate, count: Int): List<PlanDay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SlotChooser(slot: String, onChange: (String) -> Unit) {
+internal fun SlotChooser(slot: String, onChange: (String) -> Unit) {
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         listOf("dinner" to "Abendessen", "lunch" to "Mittagessen").forEachIndexed { i, (value, label) ->
             SegmentedButton(
@@ -175,7 +185,7 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
     }
 }
 
-/** Langes Drücken auf einen Eintrag: Portionen, Notiz, Status, Ersetzen, Verschieben, Entfernen. */
+/** Langes Drücken auf einen Eintrag: Portionen, Notiz, Status, Favorit, Ersetzen, Verschieben, Entfernen. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Unit, onMove: () -> Unit) {
@@ -187,6 +197,7 @@ fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Uni
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var favorite by remember(entry.id) { mutableStateOf(entry.recipe?.isFavorite == true) }
     val transferred = entry.status == "transferred"
     val changed = servings != entry.servings || note.trim() != entry.note ||
         haveIngredients != (entry.status == "have_ingredients")
@@ -205,11 +216,36 @@ fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Uni
             Modifier.navigationBarsPadding().padding(horizontal = 16.dp).padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(entryTitle(entry), style = MaterialTheme.typography.titleMedium)
-            Text(
-                (if (entry.slot == "lunch") "Mittagessen" else "Abendessen") + " am ${dayLabel(entry.date)}",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(entryTitle(entry), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        (if (entry.slot == "lunch") "Mittagessen" else "Abendessen") + " am ${dayLabel(entry.date)}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                // Favorit direkt im Plan umschalten, wie im Web (EntryDialog).
+                val recipeId = entry.recipeId
+                if (recipeId != null && entry.recipe != null) {
+                    IconButton(
+                        onClick = {
+                            busy = true
+                            scope.launch {
+                                error = (app.recipeRepository.setFavorite(recipeId, !favorite) as? Outcome.Error)?.message
+                                if (error == null) favorite = !favorite
+                                busy = false
+                            }
+                        },
+                        enabled = !busy,
+                    ) {
+                        Icon(
+                            painterResource(if (favorite) R.drawable.ic_heart_filled else R.drawable.ic_heart),
+                            contentDescription = if (favorite) "Favorit entfernen" else "Als Favorit merken",
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            }
             if (entry.recipeId != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedIconButton(onClick = { if (servings > 1) servings-- }, enabled = servings > 1) { Text("−") }
@@ -241,7 +277,10 @@ fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Uni
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(if (busy) "Speichert …" else "Speichern") }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (entry.recipeId != null) OutlinedButton(onClick = onReplace, enabled = !busy) { Text("Ersetzen") }
+                // Ohne Rezept: „Rezept wählen“ macht daraus ein Gericht (wie im Web).
+                OutlinedButton(onClick = onReplace, enabled = !busy) {
+                    Text(if (entry.recipeId != null) "Ersetzen" else "Rezept wählen")
+                }
                 OutlinedButton(onClick = onMove, enabled = !busy) { Text("Verschieben") }
                 OutlinedButton(onClick = { confirmDelete = true }, enabled = !busy) {
                     Text("Entfernen", color = MaterialTheme.colorScheme.error)
@@ -279,19 +318,38 @@ fun MoveSheet(entry: MealPlanEntry, snapshot: Snapshot, today: LocalDate, onDism
     var error by remember { mutableStateOf<String?>(null) }
     // Angefragte Verschiebung, die noch bestätigt werden muss.
     var pending by remember { mutableStateOf<Triple<String, Long?, List<MoveWarning>>?>(null) }
+    var pickDate by remember { mutableStateOf(false) }
 
-    fun move(date: String, swapWith: Long?, confirm: Boolean, have: List<Long> = emptyList()) {
+    /** [sendEntries]: danach die Zutaten dieser Gerichte an Bring senden. */
+    fun move(
+        date: String,
+        swapWith: Long?,
+        confirm: Boolean,
+        have: List<Long> = emptyList(),
+        sendEntries: List<Long> = emptyList(),
+    ) {
         busy = true
         scope.launch {
             val (result, err) = app.planRepository.move(entry, date, slot, swapWith, confirm, have)
-            busy = false
             error = err
             when {
-                err != null -> {}
-                result != null && !result.applied -> pending = Triple(date, swapWith, result.warnings)
+                err != null -> busy = false
+                result != null && !result.applied -> {
+                    busy = false
+                    pending = Triple(date, swapWith, result.warnings)
+                }
                 else -> {
+                    var message = "„${entryTitle(entry)}“ ist jetzt am ${dayLabel(date)}"
+                    if (sendEntries.isNotEmpty()) {
+                        message = when (val sent = app.shoppingRepository.sendEntries(sendEntries)) {
+                            is Outcome.Error -> "Verschoben, aber Senden an Bring fehlgeschlagen: ${sent.message}"
+                            is Outcome.Ok -> "Verschoben, ${sent.value.sent.size} Artikel an Bring gesendet" +
+                                if (sent.value.failed.isNotEmpty()) " (${sent.value.failed.size} nicht angekommen, siehe Einkauf)" else ""
+                        }
+                    }
+                    busy = false
                     onDismiss()
-                    snackbar.showSnackbar("„${entryTitle(entry)}“ ist jetzt am ${dayLabel(date)}")
+                    snackbar.showSnackbar(message)
                 }
             }
         }
@@ -302,6 +360,8 @@ fun MoveSheet(entry: MealPlanEntry, snapshot: Snapshot, today: LocalDate, onDism
             Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("„${entryTitle(entry)}“ verschieben", style = MaterialTheme.typography.titleMedium)
                 SlotChooser(slot) { slot = it }
+                // Die Liste zeigt vier Wochen; jedes andere Datum über den Kalender (wie im Web).
+                TextButton(onClick = { pickDate = true }, enabled = !busy) { Text("Anderes Datum wählen …") }
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 if (busy) CircularProgressIndicator(Modifier.size(24.dp))
             }
@@ -323,15 +383,42 @@ fun MoveSheet(entry: MealPlanEntry, snapshot: Snapshot, today: LocalDate, onDism
                 Column(horizontalAlignment = Alignment.End) {
                     TextButton(onClick = { pending = null; move(date, swapWith, confirm = true) }) { Text("Trotzdem verschieben") }
                     if (canMarkAvailable) {
+                        val ids = warnings.filter { it.type == "planned_into_period" }.map { it.entryId }
                         TextButton(onClick = {
                             pending = null
-                            val ids = warnings.filter { it.type == "planned_into_period" }.map { it.entryId }
                             move(date, swapWith, confirm = true, have = ids)
                         }) { Text("Zutaten sind vorhanden") }
+                        TextButton(onClick = {
+                            pending = null
+                            move(date, swapWith, confirm = true, sendEntries = ids)
+                        }) { Text("Zutaten an Bring senden") }
                     }
                     TextButton(onClick = { pending = null }) { Text("Abbrechen") }
                 }
             },
         )
+    }
+
+    if (pickDate) {
+        // Der DatePicker rechnet in UTC-Millisekunden.
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = LocalDate.parse(entry.date).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+        )
+        DatePickerDialog(
+            onDismissRequest = { pickDate = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pickDate = false
+                        state.selectedDateMillis?.let { millis ->
+                            val date = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate().toString()
+                            if (!busy) move(date, null, confirm = false)
+                        }
+                    },
+                    enabled = state.selectedDateMillis != null,
+                ) { Text("Verschieben") }
+            },
+            dismissButton = { TextButton(onClick = { pickDate = false }) { Text("Abbrechen") } },
+        ) { DatePicker(state) }
     }
 }

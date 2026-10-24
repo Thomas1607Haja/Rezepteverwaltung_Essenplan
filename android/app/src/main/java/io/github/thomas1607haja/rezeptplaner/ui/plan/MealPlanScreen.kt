@@ -83,7 +83,7 @@ fun planDays(snapshot: Snapshot, today: LocalDate): List<PlanDay> {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MealPlanScreen(
-    onOpenRecipe: (recipeId: Long, servings: Int) -> Unit,
+    onOpenRecipe: (recipeId: Long, entryId: Long) -> Unit,
     onAdd: (date: String) -> Unit,
     onReplace: (MealPlanEntry) -> Unit,
 ) {
@@ -187,7 +187,7 @@ private fun DayRow(
     isToday: Boolean,
     shading: Shading?,
     canAdd: Boolean,
-    onOpenRecipe: (Long, Int) -> Unit,
+    onOpenRecipe: (Long, Long) -> Unit,
     onAdd: () -> Unit,
     onEdit: (MealPlanEntry) -> Unit,
 ) {
@@ -224,19 +224,30 @@ private fun DayRow(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun EntryCard(entry: MealPlanEntry, onOpenRecipe: (Long, Int) -> Unit, onEdit: (MealPlanEntry) -> Unit) {
+private fun EntryCard(entry: MealPlanEntry, onOpenRecipe: (Long, Long) -> Unit, onEdit: (MealPlanEntry) -> Unit) {
     val recipeId = entry.recipeId
     Card(
         // Antippen: Kochansicht; langes Drücken (oder ⋮): bearbeiten.
         Modifier.fillMaxWidth().combinedClickable(
-            onClick = { if (recipeId != null) onOpenRecipe(recipeId, entry.servings) else onEdit(entry) },
+            onClick = { if (recipeId != null) onOpenRecipe(recipeId, entry.id) else onEdit(entry) },
             onLongClick = { onEdit(entry) },
         ),
         border = CardDefaults.outlinedCardBorder(),
     ) {
         Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box {
+            if (recipeId != null) {
                 RecipeImage(entry.recipe?.thumbnail.orEmpty(), Modifier.size(56.dp).clip(MaterialTheme.shapes.small))
+            } else {
+                // Eintrag ohne Rezept (z. B. „Essen gehen“): Besteck statt Bild.
+                Box(
+                    Modifier.size(56.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.secondaryContainer),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_utensils), contentDescription = "Ohne Rezept",
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
             }
             Column(Modifier.weight(1f)) {
                 val title = entry.recipe?.title ?: entry.note
