@@ -108,6 +108,18 @@ export function planStatus(recipe, today = todayString()) {
   return 'noch nie eingeplant';
 }
 
+/**
+ * Menge mit Ergebnis-Einheit (Schritt 9.2): „4 Portionen“, „1 Portion“,
+ * bei Backrezepten „1 Springform 26 cm“, „12 Stück“.
+ */
+export function amountText(n, unit = '') {
+  if (!unit) return n === 1 ? '1 Portion' : `${n} Portionen`;
+  return `${n} ${unit}`;
+}
+
+/** Vorschläge für die Ergebnis-Einheit im Editor. */
+export const YIELD_UNITS = ['Stück', 'Kuchen', 'Blech', 'Springform 26 cm', 'Kastenform', 'Laib'];
+
 /** Tag date ("2026-10-21") plus n Tage, wieder als "2026-10-21". */
 export function addDays(date, n) {
   const d = new Date(Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10)) + n));

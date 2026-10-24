@@ -1,4 +1,4 @@
-# Importformat „rezeptplaner-import“, Version 2
+# Importformat „rezeptplaner-import“, Version 3
 
 Mit diesem Format kommen Rezepte aus Dateien in den Rezeptplaner – vor allem
 aus der Claude-Skill [`skills/rezeptplaner-import/`](../skills/rezeptplaner-import/SKILL.md),
@@ -30,8 +30,8 @@ Zeichensatz UTF-8 (ein BOM am Anfang wird ignoriert).
 ```json
 {
   "format": "rezeptplaner-import",
-  "version": 2,
-  "generator": "claude-skill rezeptplaner-import 2.0",
+  "version": 3,
+  "generator": "claude-skill rezeptplaner-import 2.3",
   "recipes": [ { … }, { … } ]
 }
 ```
@@ -39,7 +39,7 @@ Zeichensatz UTF-8 (ein BOM am Anfang wird ignoriert).
 | Feld | Pflicht | Bedeutung |
 |---|---|---|
 | `format` | ja | immer `"rezeptplaner-import"` |
-| `version` | ja | `2`; Dateien der Version `1` (ohne `image_kind`) nimmt der Server weiter an. Andere Versionen lehnt er mit Meldung ab |
+| `version` | ja | `3`; Dateien der Versionen `1` und `2` (ohne `image_kind` bzw. `yield_unit`) nimmt der Server weiter an. Andere Versionen lehnt er mit Meldung ab |
 | `generator` | nein | wer die Datei erzeugt hat (nur zur Information) |
 | `recipes` | ja | 1 bis 100 Rezepte |
 
@@ -51,7 +51,8 @@ statt `"ingredients"` fällt so auf, statt dass die Zutaten fehlen.
 | Feld | Pflicht | Typ | Bedeutung |
 |---|---|---|---|
 | `title` | ja | Text, 1–200 Zeichen | |
-| `base_servings` | ja | Ganzzahl 1–100 | Grundportionen, auf die sich die Mengen beziehen |
+| `base_servings` | ja | Ganzzahl 1–100 | Grundmenge, auf die sich die Mengen beziehen (Portionen oder, mit `yield_unit`, z. B. 1 Kuchen) |
+| `yield_unit` | nein | Text ≤ 40 | ab Version 3: Einheit von `base_servings` bei Backrezepten u. Ä., z. B. „Stück“, „Kuchen“, „Blech“, „Springform 26 cm“, „Laib“; leer = Portionen. Umgerechnet wird linear |
 | `description` | nein | Text ≤ 2000 | kurze Beschreibung |
 | `prep_minutes` | nein | Ganzzahl oder `null` | Vorbereitungszeit |
 | `total_minutes` | nein | Ganzzahl oder `null` | Gesamtzeit |
@@ -162,6 +163,7 @@ Feld“. Ältere Versionen nimmt der Server weiter an.
 |---|---|
 | 1 | erste Fassung |
 | 2 | `image_kind` (Foto oder Illustration) |
+| 3 | `yield_unit` (Ergebnis-Einheit für Kuchen, Brot, Gebäck) |
 
 ## Beispiel
 

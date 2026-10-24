@@ -44,7 +44,9 @@ type Entry struct {
 	RecipeID *int64 `json:"recipe_id"` // nil = Eintrag ohne Rezept
 	Title    string `json:"title"`     // Rezepttitel oder Notiz
 	Servings int    `json:"servings"`
-	Status   string `json:"status"`
+	// YieldUnit: Einheit der Portionen (z. B. "Kuchen"), leer = Portionen.
+	YieldUnit string `json:"yield_unit"`
+	Status    string `json:"status"`
 	// Included: Die Zutaten dieses Eintrags stehen auf der Liste. Nein bei
 	// Einträgen ohne Rezept, nicht mehr "planned" oder vor heute.
 	Included bool `json:"included"`
@@ -129,7 +131,8 @@ const slotOrder = `CASE e.slot WHEN 'lunch' THEN 0 ELSE 1 END`
 
 func (s *Store) loadEntries(ctx context.Context, period mealplan.Period, today string) ([]Entry, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT e.id, e.date, e.slot, e.recipe_id, coalesce(r.title, e.note), e.servings, e.status
+		SELECT e.id, e.date, e.slot, e.recipe_id, coalesce(r.title, e.note), e.servings, e.status,
+		       coalesce(r.yield_unit, '')
 		FROM meal_plan_entries e LEFT JOIN recipes r ON r.id = e.recipe_id
 		WHERE e.date BETWEEN ? AND ?
 		ORDER BY e.date, `+slotOrder+`, e.position, e.id`,
@@ -142,7 +145,7 @@ func (s *Store) loadEntries(ctx context.Context, period mealplan.Period, today s
 	entries := []Entry{}
 	for rows.Next() {
 		var e Entry
-		if err := rows.Scan(&e.ID, &e.Date, &e.Slot, &e.RecipeID, &e.Title, &e.Servings, &e.Status); err != nil {
+		if err := rows.Scan(&e.ID, &e.Date, &e.Slot, &e.RecipeID, &e.Title, &e.Servings, &e.Status, &e.YieldUnit); err != nil {
 			return nil, fmt.Errorf("einkaufsliste: gerichte lesen: %w", err)
 		}
 		e.Included = e.RecipeID != nil && e.Status == mealplan.StatusPlanned && e.Date >= today

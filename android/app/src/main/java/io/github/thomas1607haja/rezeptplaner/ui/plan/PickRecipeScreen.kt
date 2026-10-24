@@ -169,7 +169,7 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit) {
         val recipe = snapshot.recipes.firstOrNull { it.id == id } ?: return@let
         PlanPreviewSheet(
             recipe = recipe,
-            servings = replacing?.servings ?: snapshot.settings.familySize,
+            servings = replacing?.servings ?: if (recipe.yieldUnit.isNotEmpty()) recipe.baseServings else snapshot.settings.familySize,
             excluded = emptyList(),
             confirmLabel = if (replacing != null) "Ersetzen" else "Hinzufügen",
             busy = busy,

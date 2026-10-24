@@ -55,8 +55,8 @@ from pathlib import Path
 SKILL_DIR = Path(__file__).resolve().parent.parent
 SCHEMA_PATH = SKILL_DIR / "schema.json"
 CATEGORIES_PATH = SKILL_DIR / "categories.md"
-GENERATOR = "claude-skill rezeptplaner-import 2.2"
-FORMAT_VERSION = 2
+GENERATOR = "claude-skill rezeptplaner-import 2.3"
+FORMAT_VERSION = 3
 
 MAX_SIDE = 1600       # längste Bildkante in Pixeln
 JPEG_QUALITY = 85
@@ -330,7 +330,7 @@ def cmd_build(args) -> int:
         print(f"WARNUNG: größer als {MAX_ZIP_BYTES >> 20} MB – der Rezeptplaner lehnt die Datei ab. Auf mehrere Dateien aufteilen.")
     for r in out_recipes:
         picture = {"photo": "mit Foto", "illustration": "mit Illustration"}.get(r.get("image_kind"), "ohne Bild")
-        print(f"  - {r['title']} ({r['base_servings']} Portionen, {len(r.get('ingredients', []))} Zutaten, "
+        print(f"  - {r['title']} ({r['base_servings']} {r.get('yield_unit') or 'Portionen'}, {len(r.get('ingredients', []))} Zutaten, "
               f"{len(r.get('steps', []))} Schritte, {picture})")
     for w in warnings:
         print("HINWEIS:", w)

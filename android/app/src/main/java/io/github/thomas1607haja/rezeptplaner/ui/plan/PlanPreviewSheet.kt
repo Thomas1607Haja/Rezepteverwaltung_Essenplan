@@ -38,7 +38,7 @@ import io.github.thomas1607haja.rezeptplaner.api.Recipe
 import io.github.thomas1607haja.rezeptplaner.data.PlanChoice
 import io.github.thomas1607haja.rezeptplaner.data.Snapshot
 import io.github.thomas1607haja.rezeptplaner.ui.formatQuantity
-import io.github.thomas1607haja.rezeptplaner.ui.portions
+import io.github.thomas1607haja.rezeptplaner.ui.amountText
 
 /**
  * Soll vor dem Einplanen die Kurzvorschau kommen? Abgeschaltet in den
@@ -101,7 +101,7 @@ fun PlanPreviewSheet(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 OutlinedIconButton(onClick = { if (portions > 1) portions-- }, enabled = portions > 1) { Text("−") }
-                Text(portions(portions), style = MaterialTheme.typography.titleMedium)
+                Text(amountText(portions, recipe.yieldUnit), style = MaterialTheme.typography.titleMedium)
                 OutlinedIconButton(onClick = { if (portions < 50) portions++ }, enabled = portions < 50) { Text("+") }
             }
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {

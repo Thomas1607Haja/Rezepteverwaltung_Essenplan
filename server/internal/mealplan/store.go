@@ -60,7 +60,7 @@ func (s *Store) CurrentPeriod(ctx context.Context) (Period, error) {
 const selectEntry = `
 	SELECT e.id, e.date, e.slot, e.position, e.recipe_id, e.servings, e.status,
 	       e.transferred_at, e.note, e.created_at, e.updated_at,
-	       r.title, r.thumbnail, r.is_favorite, e.excluded_ingredients
+	       r.title, r.thumbnail, r.is_favorite, e.excluded_ingredients, r.yield_unit
 	FROM meal_plan_entries e
 	LEFT JOIN recipes r ON r.id = e.recipe_id`
 
@@ -72,12 +72,12 @@ type scanner interface {
 
 func scanEntry(row scanner) (Entry, error) {
 	var e Entry
-	var transferredAt, title, thumbnail sql.NullString
+	var transferredAt, title, thumbnail, yieldUnit sql.NullString
 	var isFavorite sql.NullBool
 	var createdAt, updatedAt, excluded string
 	err := row.Scan(&e.ID, &e.Date, &e.Slot, &e.Position, &e.RecipeID, &e.Servings, &e.Status,
 		&transferredAt, &e.Note, &createdAt, &updatedAt,
-		&title, &thumbnail, &isFavorite, &excluded)
+		&title, &thumbnail, &isFavorite, &excluded, &yieldUnit)
 	if err != nil {
 		return Entry{}, err
 	}
@@ -98,7 +98,7 @@ func scanEntry(row scanner) (Entry, error) {
 		e.TransferredAt = &t
 	}
 	if title.Valid {
-		e.Recipe = &RecipeInfo{Title: title.String, Thumbnail: thumbnail.String, IsFavorite: isFavorite.Bool}
+		e.Recipe = &RecipeInfo{Title: title.String, Thumbnail: thumbnail.String, IsFavorite: isFavorite.Bool, YieldUnit: yieldUnit.String}
 	}
 	return e, nil
 }
@@ -246,6 +246,16 @@ func (s *Store) Create(ctx context.Context, in NewEntry) (Entry, error) {
 			return Entry{}, err
 		}
 		servings = st.FamilySize
+		// Kuchen, Brot usw. (Ergebnis-Einheit gesetzt): die Grundmenge des
+		// Rezepts statt der Familiengröße – ein Kuchen, nicht vier.
+		if in.RecipeID != nil {
+			var base int
+			var unit string
+			err := s.db.QueryRowContext(ctx, "SELECT base_servings, yield_unit FROM recipes WHERE id = ?", *in.RecipeID).Scan(&base, &unit)
+			if err == nil && unit != "" {
+				servings = base
+			}
+		}
 	}
 	if servings < 1 || servings > 50 {
 		return Entry{}, &ValidationError{"servings", "muss zwischen 1 und 50 liegen"}

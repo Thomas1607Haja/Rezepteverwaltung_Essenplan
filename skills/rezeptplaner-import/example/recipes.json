@@ -1,7 +1,7 @@
 {
   "format": "rezeptplaner-import",
-  "version": 2,
-  "generator": "claude-skill rezeptplaner-import 2.2",
+  "version": 3,
+  "generator": "claude-skill rezeptplaner-import 2.3",
   "recipes": [
     {
       "title": "Gnocchi-Pfanne mit Spinat und Tomaten",

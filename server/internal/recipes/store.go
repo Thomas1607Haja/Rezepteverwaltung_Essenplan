@@ -46,10 +46,10 @@ func (s *Store) Create(ctx context.Context, r Recipe) (Recipe, error) {
 	defer tx.Rollback()
 
 	res, err := tx.ExecContext(ctx, `
-		INSERT INTO recipes (title, description, base_servings, prep_minutes, total_minutes,
+		INSERT INTO recipes (title, description, base_servings, yield_unit, prep_minutes, total_minutes,
 		                     source_url, source_name, is_favorite, notes, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		r.Title, r.Description, r.BaseServings, r.PrepMinutes, r.TotalMinutes,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		r.Title, r.Description, r.BaseServings, r.YieldUnit, r.PrepMinutes, r.TotalMinutes,
 		r.SourceURL, r.SourceName, r.IsFavorite, r.Notes, now, now)
 	if err != nil {
 		return Recipe{}, fmt.Errorf("rezept anlegen: %w", err)
@@ -89,10 +89,10 @@ func (s *Store) Update(ctx context.Context, id int64, r Recipe) (Recipe, error) 
 
 	res, err := tx.ExecContext(ctx, `
 		UPDATE recipes
-		SET title = ?, description = ?, base_servings = ?, prep_minutes = ?, total_minutes = ?,
+		SET title = ?, description = ?, base_servings = ?, yield_unit = ?, prep_minutes = ?, total_minutes = ?,
 		    source_url = ?, source_name = ?, is_favorite = ?, notes = ?, updated_at = ?
 		WHERE id = ?`,
-		r.Title, r.Description, r.BaseServings, r.PrepMinutes, r.TotalMinutes,
+		r.Title, r.Description, r.BaseServings, r.YieldUnit, r.PrepMinutes, r.TotalMinutes,
 		r.SourceURL, r.SourceName, r.IsFavorite, r.Notes, now, id)
 	if err != nil {
 		return Recipe{}, fmt.Errorf("rezept %d ändern: %w", id, err)
@@ -281,12 +281,12 @@ func (s *Store) Get(ctx context.Context, id int64) (Recipe, error) {
 	var r Recipe
 	var createdAt, updatedAt string
 	err := s.db.QueryRowContext(ctx, `
-		SELECT id, title, description, base_servings, prep_minutes, total_minutes,
+		SELECT id, title, description, base_servings, yield_unit, prep_minutes, total_minutes,
 		       source_url, source_name, image, thumbnail, image_kind, is_favorite, notes, created_at, updated_at,
 		       parent_recipe_id,`+
 		planInfoColumns+`
 		FROM recipes r WHERE id = ?`, append(planInfoArgs(s.today()), id)...).Scan(
-		&r.ID, &r.Title, &r.Description, &r.BaseServings, &r.PrepMinutes, &r.TotalMinutes,
+		&r.ID, &r.Title, &r.Description, &r.BaseServings, &r.YieldUnit, &r.PrepMinutes, &r.TotalMinutes,
 		&r.SourceURL, &r.SourceName, &r.Image, &r.Thumbnail, &r.ImageKind, &r.IsFavorite, &r.Notes, &createdAt, &updatedAt,
 		&r.ParentRecipeID,
 		&r.NextPlanned, &r.LastPlanned, &r.PlanCount)

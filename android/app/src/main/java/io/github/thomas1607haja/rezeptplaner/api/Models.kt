@@ -14,6 +14,8 @@ data class Recipe(
     val title: String,
     val description: String = "",
     @SerialName("base_servings") val baseServings: Int,
+    /** Einheit der Grundmenge, z. B. "Springform 26 cm"; leer = Portionen. */
+    @SerialName("yield_unit") val yieldUnit: String = "",
     @SerialName("prep_minutes") val prepMinutes: Int? = null,
     @SerialName("total_minutes") val totalMinutes: Int? = null,
     @SerialName("source_url") val sourceUrl: String = "",
@@ -81,7 +83,12 @@ data class MealPlanEntry(
 )
 
 @Serializable
-data class EntryRecipe(val title: String, val thumbnail: String = "", @SerialName("is_favorite") val isFavorite: Boolean = false)
+data class EntryRecipe(
+    val title: String,
+    val thumbnail: String = "",
+    @SerialName("is_favorite") val isFavorite: Boolean = false,
+    @SerialName("yield_unit") val yieldUnit: String = "",
+)
 
 @Serializable
 data class Period(val from: String, val to: String)
@@ -226,6 +233,8 @@ data class RecipeInput(
     val title: String,
     val description: String,
     @SerialName("base_servings") val baseServings: Int,
+    // Nur geschickt, wenn gesetzt: ältere Server kennen das Feld nicht.
+    @OptIn(ExperimentalSerializationApi::class) @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("yield_unit") val yieldUnit: String = "",
     @SerialName("prep_minutes") val prepMinutes: Int?,
     @SerialName("total_minutes") val totalMinutes: Int?,
     @SerialName("source_url") val sourceUrl: String,
@@ -271,6 +280,7 @@ data class ShoppingEntry(
     @SerialName("recipe_id") val recipeId: Long? = null,
     val title: String,
     val servings: Int = 0,
+    @SerialName("yield_unit") val yieldUnit: String = "",
     val status: String = "",
     /** Die Zutaten stehen auf der Liste. */
     val included: Boolean = false,

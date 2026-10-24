@@ -6,8 +6,8 @@ description: Erfasst Rezepte aus Fotos (Rezeptkarten wie HelloFresh mit Vorder- 
 # Rezeptplaner-Import
 
 Du erfasst Rezepte aus Fotos und lieferst **eine ZIP-Datei** im Format
-„rezeptplaner-import“, Version 2 (Skill-Version 2.2; braucht Rezeptplaner
-0.7.0 oder neuer – ältere melden „Formatversion 2 wird nicht unterstützt“; das
+„rezeptplaner-import“, Version 3 (Skill-Version 2.3; braucht Rezeptplaner
+0.14.0 oder neuer – ältere melden „Formatversion 3 wird nicht unterstützt“; das
 Foto aus dem gefundenen Link übernimmt der Rezeptplaner ab 0.8.0). Der Nutzer schickt sie per Teilen an die
 Rezeptplaner-App (oder lädt sie in der Weboberfläche hoch); dort erscheint
 eine Vorschau, erst danach wird gespeichert.
@@ -72,6 +72,14 @@ sonst leer lassen. Nichts dazudichten.
 (z. B. für 2, 3 und 4 Personen), übernimm **die Spalte für 2 Personen** und
 setze `base_servings` auf 2. Sonst die angegebene Personenzahl. Fehlt jede
 Angabe, nimm 4 und vermerke das in `notes`.
+
+**Backrezepte und Ähnliches (`yield_unit`):** Gibt die Vorlage statt
+Personen eine Form oder Stückzahl an, setze `yield_unit` und
+`base_servings` passend – „für eine Springform (26 cm)“ → `1` und
+`"Springform 26 cm"`, „für 1 Blech“ → `1` und `"Blech"`, „ergibt 12 Stück“
+→ `12` und `"Stück"`, „1 Kastenform“ → `1` und `"Kastenform"`, „1 Laib“ →
+`1` und `"Laib"`, eine Torte ohne Formangabe → `1` und `"Kuchen"`. Bei
+normalen Gerichten `yield_unit` weglassen (= Portionen).
 
 **Zeiten:** `total_minutes` = Gesamt- bzw. Zubereitungszeit der Vorlage,
 `prep_minutes` = Vorbereitungs-/Arbeitszeit, nur wenn ausdrücklich genannt.

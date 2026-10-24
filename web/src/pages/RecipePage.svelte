@@ -3,7 +3,7 @@
   import { api, imageUrl } from '../lib/api.js';
   import { navigate } from '../lib/router.svelte.js';
   import { filterByTag } from '../lib/recipeFilter.svelte.js';
-  import { dayLabel, formatMinutes, formatQuantity, planStatus } from '../lib/format.js';
+  import { dayLabel, formatMinutes, formatQuantity, planStatus, amountText } from '../lib/format.js';
   import { keepScreenOn } from '../lib/wakeLock.js';
   import { focusPlanOn } from '../lib/planFocus.svelte.js';
   import { markFreshVariant } from '../lib/freshVariant.js';
@@ -226,8 +226,9 @@
         {@const l = dayLabel(planEntry.date)}
         <p class="from-plan">
           <Icon name="calendar" size={16} />
-          Im Essensplan: {l.weekday} {l.date}, {planEntry.servings}
-          {planEntry.servings === 1 ? 'Portion' : 'Portionen'}{planEntry.note ? ` · ${planEntry.note}` : ''}
+          Im Essensplan: {l.weekday} {l.date}, {amountText(planEntry.servings, recipe.yield_unit)}{planEntry.note
+            ? ` · ${planEntry.note}`
+            : ''}
         </p>
       {/if}
 
@@ -280,17 +281,13 @@
               disabled={servings <= 1}
               onclick={() => servings--}>−</button
             >
-            <span class="servings-value">
-              {servings}
-              {servings === 1 ? 'Portion' : 'Portionen'}
-            </span>
+            <span class="servings-value">{amountText(servings, recipe.yield_unit)}</span>
             <button type="button" class="icon-button" aria-label="Eine Portion mehr" onclick={() => servings++}>+</button>
           </div>
         </div>
         {#if servings !== recipe.base_servings}
           <p class="hint">
-            Umgerechnet von {recipe.base_servings}
-            {recipe.base_servings === 1 ? 'Portion' : 'Portionen'} ·
+            Umgerechnet von {amountText(recipe.base_servings, recipe.yield_unit)} ·
             <button type="button" class="link" onclick={() => (servings = recipe.base_servings)}>zurücksetzen</button>
           </p>
         {/if}

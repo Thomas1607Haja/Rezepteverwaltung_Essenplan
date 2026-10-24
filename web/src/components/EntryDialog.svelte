@@ -123,7 +123,7 @@
 
     {#if entry.recipe_id}
       <div class="row">
-        <span>Portionen</span>
+        <span>{entry.recipe?.yield_unit || 'Portionen'}</span>
         <div class="stepper">
           <button type="button" aria-label="Weniger" disabled={servings <= 1} onclick={() => servings--}>−</button>
           <output>{servings}</output>

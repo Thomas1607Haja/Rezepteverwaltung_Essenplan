@@ -68,3 +68,20 @@ class CourseTabsTest {
         assertEquals(listOf("Apfelkuchen"), baking.map { it.recipe.title })
     }
 }
+
+class YieldUnitTest {
+    @Test
+    fun amountsAndCompatibility() {
+        assertEquals("1 Portion", amountText(1, ""))
+        assertEquals("1 Springform 26 cm", amountText(1, "Springform 26 cm"))
+        val json = kotlinx.serialization.json.Json { encodeDefaults = true }
+        val input = io.github.thomas1607haja.rezeptplaner.api.RecipeInput(
+            title = "A", description = "", baseServings = 4, prepMinutes = null, totalMinutes = null,
+            sourceUrl = "", sourceName = "", isFavorite = false, notes = "",
+            ingredients = emptyList(), steps = emptyList(), tags = emptyList(),
+        )
+        // Ohne Einheit nicht mitschicken (ältere Server lehnen unbekannte Felder ab).
+        org.junit.Assert.assertFalse("yield_unit" in json.encodeToString(input))
+        org.junit.Assert.assertTrue("\"yield_unit\":\"Kuchen\"" in json.encodeToString(input.copy(yieldUnit = "Kuchen")))
+    }
+}

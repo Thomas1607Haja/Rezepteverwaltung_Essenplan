@@ -44,7 +44,7 @@
       <span class="title">{title}</span>
       {#if extra}<span class="extra">{extra}</span>{/if}
       <span class="meta">
-        {#if entry.recipe}<span>{entry.servings} P.</span>{/if}
+        {#if entry.recipe}<span>{entry.recipe.yield_unit ? `${entry.servings} ${entry.recipe.yield_unit}` : `${entry.servings} P.`}</span>{/if}
         {#if entry.excluded_ingredients?.length}
           <span class="excluded" title="Abgewählt, weil noch im Haus">
             {entry.excluded_ingredients.length === 1 ? '1 Zutat' : `${entry.excluded_ingredients.length} Zutaten`} vorhanden

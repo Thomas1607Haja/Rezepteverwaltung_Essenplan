@@ -1,6 +1,6 @@
 <script>
   import { api } from '../lib/api.js';
-  import { formatMinutes } from '../lib/format.js';
+  import { amountText, formatMinutes } from '../lib/format.js';
 
   // Datei-Import (ZIP oder JSON, z. B. von der Claude-Skill). Ablauf:
   // Dateien wählen → Server prüft und liefert eine Vorschau (noch nichts
@@ -89,7 +89,7 @@
 
   function amounts(r) {
     const parts = [
-      count(r.recipe.base_servings, 'Portion', 'Portionen'),
+      amountText(r.recipe.base_servings, r.recipe.yield_unit),
       count(r.recipe.ingredients.length, 'Zutat', 'Zutaten'),
       count(r.recipe.steps.length, 'Schritt', 'Schritte'),
     ];

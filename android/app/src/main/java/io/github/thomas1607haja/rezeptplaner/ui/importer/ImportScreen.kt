@@ -56,7 +56,7 @@ import io.github.thomas1607haja.rezeptplaner.api.TagGroup
 import io.github.thomas1607haja.rezeptplaner.data.ImportState
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
-import io.github.thomas1607haja.rezeptplaner.ui.portions
+import io.github.thomas1607haja.rezeptplaner.ui.amountText
 import kotlinx.coroutines.launch
 
 /**
@@ -197,7 +197,7 @@ private fun CandidateCard(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(r.title.ifEmpty { "(ohne Titel)" }, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val details = buildList {
-                    add(portions(r.baseServings))
+                    add(amountText(r.baseServings, r.yieldUnit))
                     add(if (r.ingredients.size == 1) "1 Zutat" else "${r.ingredients.size} Zutaten")
                     add(if (r.steps.size == 1) "1 Schritt" else "${r.steps.size} Schritte")
                     formatMinutes(r.totalMinutes).takeIf { it.isNotEmpty() }?.let(::add)

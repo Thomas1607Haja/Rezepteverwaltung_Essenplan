@@ -53,7 +53,7 @@ import io.github.thomas1607haja.rezeptplaner.data.Snapshot
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
-import io.github.thomas1607haja.rezeptplaner.ui.portions
+import io.github.thomas1607haja.rezeptplaner.ui.amountText
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -185,7 +185,7 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
         val target = previewReplace
         PlanPreviewSheet(
             recipe = recipe,
-            servings = target?.servings ?: snapshot.settings.familySize,
+            servings = target?.servings ?: if (recipe.yieldUnit.isNotEmpty()) recipe.baseServings else snapshot.settings.familySize,
             excluded = emptyList(),
             confirmLabel = if (target != null) "Ersetzen" else "Hinzufügen",
             busy = busy,
@@ -281,7 +281,7 @@ fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Uni
             if (entry.recipeId != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedIconButton(onClick = { if (servings > 1) servings-- }, enabled = servings > 1) { Text("−") }
-                    Text(portions(servings), style = MaterialTheme.typography.titleMedium)
+                    Text(amountText(servings, entry.recipe?.yieldUnit.orEmpty()), style = MaterialTheme.typography.titleMedium)
                     OutlinedIconButton(onClick = { servings++ }) { Text("+") }
                 }
             }

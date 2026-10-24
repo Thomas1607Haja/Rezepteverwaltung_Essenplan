@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { api } from '../lib/api.js';
-  import { formatQuantity } from '../lib/format.js';
+  import { amountText, formatQuantity } from '../lib/format.js';
 
   // Kurzvorschau beim Einplanen (Schritt 8.E): Portionen und Zutaten, die
   // man noch hat, abwählen. Gilt nur für diesen Planeintrag.
@@ -29,7 +29,8 @@
   Promise.all([api.getRecipe(recipeId), portions == null ? api.getSettings() : null])
     .then(([r, settings]) => {
       recipe = r;
-      if (portions == null) portions = settings.family_size;
+      // Kuchen & Co.: die Grundmenge des Rezepts statt der Familiengröße.
+      if (portions == null) portions = r.yield_unit ? r.base_servings : settings.family_size;
     })
     .catch((e) => (error = e.message));
 
@@ -73,7 +74,7 @@
       <h2 id="preview-title">{recipe.title}</h2>
       <div class="portions">
         <button type="button" aria-label="Weniger Portionen" disabled={portions <= 1} onclick={() => portions--}>−</button>
-        <span>{portions} {portions === 1 ? 'Portion' : 'Portionen'}</span>
+        <span>{amountText(portions, recipe.yield_unit)}</span>
         <button type="button" aria-label="Mehr Portionen" disabled={portions >= 50} onclick={() => portions++}>+</button>
       </div>
 

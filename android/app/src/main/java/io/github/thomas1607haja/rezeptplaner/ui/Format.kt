@@ -84,3 +84,9 @@ fun fold(s: String): String =
     s.lowercase(Locale.GERMAN).replace("ä", "a").replace("ö", "o").replace("ü", "u").replace("ß", "ss")
 
 fun portions(n: Int) = if (n == 1) "1 Portion" else "$n Portionen"
+
+/** Menge mit Ergebnis-Einheit (Schritt 9.2): „4 Portionen“ bzw. „1 Springform 26 cm“, „12 Stück“. */
+fun amountText(n: Int, unit: String) = if (unit.isEmpty()) portions(n) else "$n $unit"
+
+/** Vorschläge für die Ergebnis-Einheit im Editor (wie im Web). */
+val yieldUnits = listOf("Stück", "Kuchen", "Blech", "Springform 26 cm", "Kastenform", "Laib")

@@ -19,7 +19,7 @@ import (
 // aus parent_recipe_id.
 func (s *Store) ChangedSince(ctx context.Context, since string) ([]Recipe, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, title, description, base_servings, prep_minutes, total_minutes,
+		SELECT id, title, description, base_servings, yield_unit, prep_minutes, total_minutes,
 		       source_url, source_name, image, thumbnail, image_kind, is_favorite, notes,
 		       created_at, updated_at, parent_recipe_id
 		FROM recipes WHERE updated_at >= ? ORDER BY id`, since)
@@ -35,7 +35,7 @@ func (s *Store) ChangedSince(ctx context.Context, since string) ([]Recipe, error
 	for rows.Next() {
 		var r Recipe
 		var createdAt, updatedAt string
-		if err := rows.Scan(&r.ID, &r.Title, &r.Description, &r.BaseServings, &r.PrepMinutes, &r.TotalMinutes,
+		if err := rows.Scan(&r.ID, &r.Title, &r.Description, &r.BaseServings, &r.YieldUnit, &r.PrepMinutes, &r.TotalMinutes,
 			&r.SourceURL, &r.SourceName, &r.Image, &r.Thumbnail, &r.ImageKind, &r.IsFavorite, &r.Notes,
 			&createdAt, &updatedAt, &r.ParentRecipeID); err != nil {
 			return nil, fmt.Errorf("rezepte für den abgleich laden: %w", err)

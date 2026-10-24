@@ -50,7 +50,7 @@ import io.github.thomas1607haja.rezeptplaner.ui.common.OfflineBanner
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
-import io.github.thomas1607haja.rezeptplaner.ui.portions
+import io.github.thomas1607haja.rezeptplaner.ui.amountText
 import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.api.Period
 import io.github.thomas1607haja.rezeptplaner.ui.theme.nextShoppingColor
@@ -256,7 +256,7 @@ private fun EntryCard(entry: MealPlanEntry, onOpenRecipe: (Long, Long) -> Unit, 
                     style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 )
                 val details = buildList {
-                    if (entry.recipe != null) add(portions(entry.servings))
+                    if (entry.recipe != null) add(amountText(entry.servings, entry.recipe.yieldUnit))
                     excludedLabel(entry.excludedIngredients.size)?.let(::add)
                     if (entry.recipe != null && entry.note.isNotEmpty()) add(entry.note)
                     when (entry.status) {

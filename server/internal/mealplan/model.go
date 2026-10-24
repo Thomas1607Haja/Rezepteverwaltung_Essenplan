@@ -48,6 +48,8 @@ type RecipeInfo struct {
 	Title      string `json:"title"`
 	Thumbnail  string `json:"thumbnail"`
 	IsFavorite bool   `json:"is_favorite"`
+	// YieldUnit: Einheit der Portionen, z. B. "Kuchen"; leer = Portionen.
+	YieldUnit string `json:"yield_unit"`
 }
 
 // NewEntry sind die Angaben zum Anlegen eines Eintrags. Fehlt Slot, gilt

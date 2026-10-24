@@ -92,7 +92,7 @@ class BuildImportTest(unittest.TestCase):
     def test_illustration_sets_kind_and_version(self):
         doc, names = self.build({"title": "Spaghetti mit Tomatensoße", "base_servings": 2,
                                  "illustration": {k: v for k, v in PASTA.items() if k != "title"}})
-        self.assertEqual(doc["version"], 2)
+        self.assertEqual(doc["version"], 3)
         r = doc["recipes"][0]
         self.assertEqual(r["image_kind"], "illustration")
         self.assertIn(r["image"], names)
@@ -118,10 +118,10 @@ class BuildImportTest(unittest.TestCase):
 
     def test_generator_is_skill_version(self):
         doc, _ = self.build({"title": "Brot", "base_servings": 1})
-        self.assertEqual(doc["generator"], "claude-skill rezeptplaner-import 2.2")
+        self.assertEqual(doc["generator"], "claude-skill rezeptplaner-import 2.3")
 
     def test_schema_checks_version_and_image_kind(self):
-        doc = {"format": "rezeptplaner-import", "version": 3, "recipes": [
+        doc = {"format": "rezeptplaner-import", "version": 4, "recipes": [
             {"title": "A", "base_servings": 1, "image": "images/a.jpg", "image_kind": "gemalt"}]}
         errors, _ = build_import.check_document(doc)
         joined = " | ".join(errors)

@@ -65,7 +65,7 @@ import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
 import io.github.thomas1607haja.rezeptplaner.ui.formatQuantity
 import io.github.thomas1607haja.rezeptplaner.ui.planStatus
-import io.github.thomas1607haja.rezeptplaner.ui.portions
+import io.github.thomas1607haja.rezeptplaner.ui.amountText
 import io.github.thomas1607haja.rezeptplaner.ui.plan.AddToPlanSheet
 import java.net.URI
 import java.time.LocalDate
@@ -126,7 +126,7 @@ fun RecipeScreen(
             planContext = entry?.let {
                 buildList {
                     add("Im Essensplan: ${dayLabel(it.date)}" + if (it.slot == "lunch") " mittags" else "")
-                    add(portions(it.servings))
+                    add(amountText(it.servings, recipe.yieldUnit))
                     if (it.note.isNotEmpty()) add(it.note)
                 }.joinToString(" · ")
             },
@@ -250,13 +250,13 @@ private fun RecipeContent(
         SectionCard("Zutaten") {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedIconButton(onClick = { if (servings > 1) servings-- }, enabled = servings > 1) { Text("−") }
-                Text(portions(servings), style = MaterialTheme.typography.titleMedium)
+                Text(amountText(servings, recipe.yieldUnit), style = MaterialTheme.typography.titleMedium)
                 OutlinedIconButton(onClick = { servings++ }) { Text("+") }
             }
             if (servings != recipe.baseServings) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "Umgerechnet von ${portions(recipe.baseServings)}",
+                        "Umgerechnet von ${amountText(recipe.baseServings, recipe.yieldUnit)}",
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     TextButton(onClick = { servings = recipe.baseServings }) { Text("zurücksetzen") }

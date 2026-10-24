@@ -237,7 +237,7 @@ func TestSingleJSONAndContentDetection(t *testing.T) {
 		namedFile{"content://irgendwas/1234", []byte("\xef\xbb\xbf  " + one)},
 		namedFile{"fremd.json", []byte(`{"name": "kein Rezept"}`)},
 		namedFile{"notiz.txt", []byte("Hallo")},
-		namedFile{"neu.json", []byte(`{"format":"rezeptplaner-import","version":3,"recipes":[]}`)},
+		namedFile{"neu.json", []byte(`{"format":"rezeptplaner-import","version":4,"recipes":[]}`)},
 	)
 	if code != http.StatusOK || len(p.Recipes) != 1 || len(p.FileErrors) != 3 {
 		t.Fatalf("%d %s", code, body)
@@ -248,7 +248,7 @@ func TestSingleJSONAndContentDetection(t *testing.T) {
 	if !strings.Contains(strings.Join(p.Recipes[0].Warnings, "|"), "nur in ZIP") {
 		t.Errorf("Hinweis zum Bild fehlt: %v", p.Recipes[0].Warnings)
 	}
-	want := []string{"Formatkennung", "Weder ZIP", "Formatversion 3"}
+	want := []string{"Formatkennung", "Weder ZIP", "Formatversion 4"}
 	for i, fe := range p.FileErrors {
 		if !strings.Contains(fe.Error, want[i]) {
 			t.Errorf("Dateifehler %d: %q, erwartet %q", i, fe.Error, want[i])
@@ -375,5 +375,24 @@ func TestUploadTooLarge(t *testing.T) {
 	code, _, body := f.upload(t, namedFile{"gross.zip", make([]byte, maxUploadBytes+10)})
 	if code != http.StatusRequestEntityTooLarge {
 		t.Errorf("%d %s", code, body)
+	}
+}
+
+// Version 3: Ergebnis-Einheit für Backrezepte.
+func TestYieldUnitVersion3(t *testing.T) {
+	f := newFixture(t)
+	doc := `{"format":"rezeptplaner-import","version":3,"recipes":[
+		{"title":"Apfelkuchen","base_servings":1,"yield_unit":"  Springform   26 cm "}]}`
+	code, p, body := f.upload(t, namedFile{"k.json", []byte(doc)})
+	if code != http.StatusOK || len(p.Recipes) != 1 {
+		t.Fatalf("%d %s", code, body)
+	}
+	if u := p.Recipes[0].Recipe.YieldUnit; u != "Springform 26 cm" {
+		t.Errorf("yield_unit = %q", u)
+	}
+	_, result := f.confirm(t, p.Token, 0)
+	saved, _ := f.recipes.Get(context.Background(), result.Created[0].ID)
+	if saved.YieldUnit != "Springform 26 cm" || saved.BaseServings != 1 {
+		t.Errorf("gespeichert: %q %d", saved.YieldUnit, saved.BaseServings)
 	}
 }

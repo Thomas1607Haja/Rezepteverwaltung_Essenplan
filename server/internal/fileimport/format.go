@@ -20,11 +20,11 @@ import (
 )
 
 // Kennung und Versionen des Formats, siehe docs/importformat.schema.json.
-// Version 2 ergänzt image_kind; Dateien der Version 1 bleiben gültig.
+// Version 2 ergänzt image_kind, Version 3 yield_unit; ältere Dateien bleiben gültig.
 const (
 	formatID         = "rezeptplaner-import"
 	formatVersionMin = 1
-	formatVersion    = 2
+	formatVersion    = 3
 )
 
 // document ist der Inhalt von recipes.json. Die Rezepte bleiben zunächst
@@ -43,6 +43,7 @@ type recipeJSON struct {
 	Title        string           `json:"title"`
 	Description  string           `json:"description"`
 	BaseServings *int             `json:"base_servings"`
+	YieldUnit    string           `json:"yield_unit"` // ab Version 3, z. B. "Springform 26 cm"
 	PrepMinutes  *int             `json:"prep_minutes"`
 	TotalMinutes *int             `json:"total_minutes"`
 	Source       *sourceJSON      `json:"source"`
@@ -211,6 +212,10 @@ func parseRecipe(raw json.RawMessage) parsedRecipe {
 		fail("Grundportionen fehlen oder liegen nicht zwischen 1 und 100")
 	} else {
 		r.BaseServings = *in.BaseServings
+	}
+	r.YieldUnit = strings.Join(strings.Fields(in.YieldUnit), " ")
+	if utf8.RuneCountInString(r.YieldUnit) > recipes.MaxYieldUnitLength {
+		fail("Ergebnis-Einheit ist länger als %d Zeichen", recipes.MaxYieldUnitLength)
 	}
 	for _, m := range []struct {
 		name  string

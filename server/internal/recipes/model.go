@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // Recipe ist ein Rezept mit allen Bestandteilen. Es wird immer als Ganzes
@@ -14,10 +15,13 @@ import (
 //
 // Die Angaben in `json:"..."` legen fest, wie ein Feld in JSON heißt.
 type Recipe struct {
-	ID           int64        `json:"id"`
-	Title        string       `json:"title"`
-	Description  string       `json:"description"`
-	BaseServings int          `json:"base_servings"`
+	ID           int64  `json:"id"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	BaseServings int    `json:"base_servings"`
+	// YieldUnit: Einheit von BaseServings, z. B. "Stück" oder "Springform
+	// 26 cm"; leer = Portionen.
+	YieldUnit    string       `json:"yield_unit"`
 	PrepMinutes  *int         `json:"prep_minutes"`  // nil = keine Angabe
 	TotalMinutes *int         `json:"total_minutes"` // nil = keine Angabe
 	SourceURL    string       `json:"source_url"`
@@ -110,6 +114,9 @@ func (r *Recipe) normalize() {
 	}
 }
 
+// MaxYieldUnitLength begrenzt die Ergebnis-Einheit („Springform 26 cm“).
+const MaxYieldUnitLength = 40
+
 // validate prüft die fachlichen Regeln und liefert den ersten Verstoß.
 func (r *Recipe) validate() error {
 	if r.Title == "" {
@@ -117,6 +124,10 @@ func (r *Recipe) validate() error {
 	}
 	if r.BaseServings <= 0 {
 		return &ValidationError{"base_servings", "muss größer als 0 sein"}
+	}
+	r.YieldUnit = strings.Join(strings.Fields(r.YieldUnit), " ")
+	if utf8.RuneCountInString(r.YieldUnit) > MaxYieldUnitLength {
+		return &ValidationError{"yield_unit", fmt.Sprintf("höchstens %d zeichen", MaxYieldUnitLength)}
 	}
 	if r.PrepMinutes != nil && *r.PrepMinutes < 0 {
 		return &ValidationError{"prep_minutes", "darf nicht negativ sein"}

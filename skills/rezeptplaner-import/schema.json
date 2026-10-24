@@ -9,8 +9,8 @@
   "properties": {
     "format": { "const": "rezeptplaner-import" },
     "version": {
-      "description": "2 = aktuell (mit image_kind); Dateien der Version 1 nimmt der Server weiter an.",
-      "enum": [1, 2]
+      "description": "3 = aktuell (mit yield_unit); Dateien der Versionen 1 und 2 nimmt der Server weiter an.",
+      "enum": [1, 2, 3]
     },
     "generator": {
       "description": "Wer die Datei erzeugt hat, z. B. \"claude-skill rezeptplaner-import 2.0\". Nur zur Information.",
@@ -33,10 +33,15 @@
         "title": { "type": "string", "minLength": 1, "maxLength": 200 },
         "description": { "type": "string", "maxLength": 2000 },
         "base_servings": {
-          "description": "Grundportionen, auf die sich die Mengen beziehen.",
+          "description": "Grundmenge, auf die sich die Mengen beziehen – Portionen oder, mit yield_unit, z. B. 1 Kuchen, 12 Stück.",
           "type": "integer",
           "minimum": 1,
           "maximum": 100
+        },
+        "yield_unit": {
+          "description": "Ab Version 3: Einheit von base_servings, z. B. \"Stück\", \"Kuchen\", \"Blech\", \"Springform 26 cm\", \"Laib\". Leer oder fehlend = Portionen.",
+          "type": "string",
+          "maxLength": 40
         },
         "prep_minutes": { "type": ["integer", "null"], "minimum": 0, "maximum": 10080 },
         "total_minutes": { "type": ["integer", "null"], "minimum": 0, "maximum": 10080 },

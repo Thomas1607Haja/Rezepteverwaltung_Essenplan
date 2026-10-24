@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.14.0
+
+- **Kuchen, Brot und Gebäck:** Rezepte haben jetzt eine Einheit für die Menge (Editor: „Einheit“, z. B. „Springform 26 cm“, „Blech“, „Stück“, „Kuchen“; leer = Portionen). Angezeigt wird „1 Springform 26 cm“ statt „1 Portion“; Mengen werden wie gewohnt umgerechnet. Beim Einplanen gilt dann die Menge des Rezepts statt der Familiengröße.
+- Importformat **Version 3** (Feld `yield_unit`); ältere Dateien werden weiter angenommen. Die Claude-Skill 2.3 liest Form und Stückzahl aus – sie braucht diese Version des Rezeptplaners.
+
 ## 0.13.0
 
 - **Gang:** Neue Kategoriegruppe „Gang“ (Vorspeise, Suppe/Eintopf, Salat, Hauptgericht, Beilage, Nachspeise, Kuchen & Torten, Gebäck, Brot, Snack). „Suppe/Eintopf“ und „Salat“ wandern dafür aus „Art“; ihre Zuordnungen bleiben. In der Kategorienverwaltung lässt sich festlegen, welche Gruppe die Gänge enthält.

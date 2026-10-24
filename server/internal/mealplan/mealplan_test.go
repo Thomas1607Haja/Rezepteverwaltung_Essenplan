@@ -264,3 +264,21 @@ func TestHandlers(t *testing.T) {
 		t.Errorf("GET nach DELETE: %d", rec.Code)
 	}
 }
+
+// Kuchen & Co. (Ergebnis-Einheit gesetzt): Ohne Angabe gilt die Grundmenge
+// des Rezepts statt der Familiengröße.
+func TestCreateUsesBaseForYieldUnit(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+	if _, err := s.db.Exec(`INSERT INTO recipes (id, title, base_servings, yield_unit, created_at, updated_at)
+		VALUES (77, 'Apfelkuchen', 1, 'Kuchen', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z')`); err != nil {
+		t.Fatal(err)
+	}
+	e, err := s.Create(ctx, NewEntry{Date: "2026-10-25", RecipeID: ptr(int64(77))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e.Servings != 1 || e.Recipe == nil || e.Recipe.YieldUnit != "Kuchen" {
+		t.Errorf("Eintrag: %d %+v", e.Servings, e.Recipe)
+	}
+}

@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.AssistChip
+import io.github.thomas1607haja.rezeptplaner.ui.yieldUnits
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
@@ -136,9 +138,17 @@ fun RecipeEditScreen(
             Field("Titel", form.title, errors["title"]) { v -> vm.update { it.copy(title = v) } }
             Field("Beschreibung", form.description, null, singleLine = false) { v -> vm.update { it.copy(description = v) } }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Field("Portionen", form.baseServings, errors["baseServings"], Modifier.weight(1f), number = true) { v -> vm.update { it.copy(baseServings = v) } }
+                Field(if (form.yieldUnit.isBlank()) "Portionen" else "Menge", form.baseServings, errors["baseServings"], Modifier.weight(1f), number = true) { v -> vm.update { it.copy(baseServings = v) } }
                 Field("Vorb. (Min.)", form.prepMinutes, errors["prepMinutes"], Modifier.weight(1f), number = true) { v -> vm.update { it.copy(prepMinutes = v) } }
                 Field("Gesamt (Min.)", form.totalMinutes, errors["totalMinutes"], Modifier.weight(1f), number = true) { v -> vm.update { it.copy(totalMinutes = v) } }
+            }
+
+            // Ergebnis-Einheit (Kuchen & Co.): leer = Portionen; Vorschläge als Chips.
+            Field("Einheit (leer = Portionen)", form.yieldUnit, null) { v -> vm.update { it.copy(yieldUnit = v) } }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                yieldUnits.forEach { u ->
+                    AssistChip(onClick = { vm.update { it.copy(yieldUnit = u) } }, label = { Text(u) })
+                }
             }
 
             Section("Bild")

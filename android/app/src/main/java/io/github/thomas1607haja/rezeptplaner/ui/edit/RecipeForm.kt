@@ -33,6 +33,8 @@ data class RecipeForm(
     val title: String = "",
     val description: String = "",
     val baseServings: String = "4",
+    /** Ergebnis-Einheit, leer = Portionen. */
+    val yieldUnit: String = "",
     val prepMinutes: String = "",
     val totalMinutes: String = "",
     val sourceUrl: String = "",
@@ -59,7 +61,7 @@ fun Recipe.toForm(): RecipeForm {
         )
     }
     return RecipeForm(
-        title = title, description = description, baseServings = baseServings.toString(),
+        title = title, description = description, baseServings = baseServings.toString(), yieldUnit = yieldUnit,
         prepMinutes = prepMinutes?.toString().orEmpty(), totalMinutes = totalMinutes?.toString().orEmpty(),
         sourceUrl = sourceUrl, sourceName = sourceName, notes = notes, isFavorite = isFavorite,
         tagIds = tags.map { it.id }.toSet(),
@@ -136,6 +138,7 @@ fun RecipeForm.toInput(): Pair<RecipeInput?, Map<String, String>> {
     if (errors.isNotEmpty()) return null to errors
     return RecipeInput(
         title = title.trim(), description = description.trim(), baseServings = servings!!,
+        yieldUnit = yieldUnit.trim().replace(Regex("\\s+"), " ").take(40),
         prepMinutes = prep, totalMinutes = total, sourceUrl = url, sourceName = sourceName.trim(),
         isFavorite = isFavorite, notes = notes.trim(), ingredients = ingredients,
         steps = steps.map { it.text.trim() }.filter { it.isNotEmpty() }.map { Step(it) },

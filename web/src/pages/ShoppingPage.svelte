@@ -140,7 +140,7 @@
                 {entry.title}
               {/if}
             </span>
-            <span class="servings">{entry.recipe_id != null ? `${entry.servings} Port.` : ''}</span>
+            <span class="servings">{entry.recipe_id != null ? `${entry.servings} ${entry.yield_unit || 'Port.'}` : ''}</span>
             {#if !entry.included}<span class="reason">{reason(entry)}</span>{/if}
           </li>
         {/each}

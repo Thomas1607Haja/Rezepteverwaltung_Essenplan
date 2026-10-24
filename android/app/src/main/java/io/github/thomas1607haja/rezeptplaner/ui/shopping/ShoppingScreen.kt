@@ -150,7 +150,7 @@ private fun LazyListScope.entries(ui: ShoppingUi, onOpenRecipe: (Long, Int) -> U
             Column(Modifier.weight(1f)) {
                 Text(entry.title, color = muted)
                 val details = listOfNotNull(
-                    if (entry.recipeId != null) "${entry.servings} Port." else null,
+                    if (entry.recipeId != null) "${entry.servings} ${entry.yieldUnit.ifEmpty { "Port." }}" else null,
                     reason.ifEmpty { null },
                 )
                 if (details.isNotEmpty()) {
