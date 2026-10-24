@@ -683,6 +683,18 @@ Rezepteverwaltung_Essenplan/
 
 **Bewusst nicht in der App:** API-Schlüssel und verbundene Geräte, Adresse für die App, „App installieren“, Kategorien verwalten. **Nie geplant:** Plan weiter als 14 Tage zurück in der App, Ziehen mit dem Finger im Plan der App (Tagesauswahl genügt).
 
+### Phase 9: Gang, Kuchen und Menüs (entschieden 2026-10-24)
+
+Ziel: Rezepte nach Gang finden, Kuchen und Backwaren sauber planen und an Wochenenden oder bei Besuch Menüs aus mehreren Rezepten zusammenstellen, die im Plan als ein Eintrag erscheinen. Entscheidungen: Gang als markierte Kategoriegruppe (1-C), fester Slot „Kaffee & Kuchen“ (2a-A), Ergebnis-Einheit am Rezept (2b-B), Menü als Klammer um normale Planeinträge (3-A).
+
+| Schritt | Inhalt |
+|---|---|
+| 9.1 | **Gang:** Kategoriegruppe „Gang“ mit Kennzeichen `role = course` an `tag_groups` (Migration; genau eine Gruppe kann Gang-Gruppe sein, umschaltbar in der Kategorienverwaltung). Startliste: Vorspeise, Suppe/Eintopf und Salat (beide aus „Art“ verschoben, Zuordnungen bleiben), Hauptgericht, Beilage, Nachspeise, Kuchen & Torten, Gebäck, Brot, Snack. Schnellfilter-Reiter in Rezeptübersicht und Rezeptauswahl (Web und App): Alle \| Hauptgerichte \| Vorspeisen, Suppen & Salate \| Nachspeisen \| Backen (Kuchen & Torten, Gebäck, Brot). Seite „Gänge zuordnen“ (nur Web): Vorschläge nach Titel, Zutaten und Kategorien für Rezepte ohne Gang, gesammelt übernehmen. Skill: genau einen Gang vergeben (von Hand dürfen es mehrere sein) |
+| 9.2 | **Ergebnis-Einheit** `yield_unit` am Rezept (leer = Portionen; freier Text mit Vorschlägen Stück, Kuchen, Blech, Springform 26 cm, Laib). Anzeige „1 Springform 26 cm“ statt „1 Portion“; Mengen werden weiter linear umgerechnet. Beim Einplanen gilt bei gesetzter Einheit die Grundmenge des Rezepts statt der Familiengröße. Importformat Version 3, Skill liest „für eine Springform …“, „ergibt 12 Stück“ aus. Umrechnung nach Formgröße später |
+| 9.3 | **Slot „Kaffee & Kuchen“** (`coffee`) zwischen Mittag und Abend (Migration mit Tabellenumbau wegen CHECK), abschaltbar in den Einstellungen (Standard an). Rezeptauswahl im Kaffee-Slot wählt den Reiter „Backen“ vor. Uhrzeiten für den Home-Assistant-Kalender in den Einstellungen: Mittag 12:00, Kaffee 15:30, Abend 18:30. Karte und Kalender zeigen „Kaffee:“ |
+| 9.4 | **Menüs:** Tabelle `meal_plan_menus` (Tag, Slot, Titel, Notiz, Portionen); jedes Gericht bleibt ein eigener Planeintrag mit `menu_id` und Gang. Plan: eine Karte „Menü: <Titel> · 4 Gänge“, ausklappbar; Titel standardmäßig das Hauptgericht, frei überschreibbar. Anlegen über Plus → „Menü zusammenstellen“ oder „Zu einem Menü erweitern“ am Eintrag; auch Einträge ohne Rezept erlaubt. Portionen am Menü, beim Ändern auf alle Gänge übertragbar, Abweichung je Gang möglich. Verschieben und Tauschen als ganzer Block (Warnregeln für alle Gänge zusammengefasst); „Aus Menü lösen“ für einen einzelnen Gang. Kurzvorschau mit einem Abschnitt je Gang. Einkauf, Bring, Differenzen und Abwahl unverändert pro Gericht. Kochansicht „Menü“ mit Notiz und allen Gängen. Home Assistant: ein Kalendertermin je Menü, Karte kompakt. Statistik zählt jedes Gericht einzeln plus „x Menüs im Zeitraum“ |
+| 9.5 | (später) Menü-Vorlagen („Weihnachtsmenü“): speichern und wieder einplanen |
+
 ---
 
 ## 11. Offene Punkte
