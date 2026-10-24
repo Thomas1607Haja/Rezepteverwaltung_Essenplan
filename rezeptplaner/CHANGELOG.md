@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.12.0
+
+- **Rezept per QR-Code:** Beim neuen Rezept gibt es neben dem Adressfeld den Knopf „QR-Code“, wenn der Browser QR-Codes mit der Kamera lesen kann (z. B. Chrome auf Android); die gescannte Adresse wird sofort eingelesen. In der Android-App (ab 0.13.0): Rezepte → Plus → „Rezept aus QR-Code“ und ein Scan-Knopf bei „Rezept aus Internetadresse“.
+
 ## 0.11.0
 
 - **Kurzvorschau beim Einplanen** (Weboberfläche und App ab 0.12.0): Beim Hinzufügen eines Rezepts zum Essensplan erscheinen Portionen und Zutaten. Häkchen entfernen, was noch im Haus ist (z. B. im Tiefkühler) – diese Zutaten kommen nicht auf die Einkaufsliste und nicht an Bring. „Alles vorhanden“ markiert gleich das ganze Gericht. Die Abwahl gilt nur für diesen Eintrag, wandert beim Verschieben und Tauschen mit und verfällt beim Ersetzen.

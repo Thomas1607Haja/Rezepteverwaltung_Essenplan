@@ -29,3 +29,16 @@ class PlanNotesTest {
         assertEquals(RecipeFilter(sort = RecipeSort.Newest), f.reset())
     }
 }
+
+class QrUrlTest {
+    @Test
+    fun onlyHttpAddresses() {
+        org.junit.Assert.assertEquals(
+            "https://www.chefkoch.de/rezepte/123/Gulasch.html",
+            io.github.thomas1607haja.rezeptplaner.ui.edit.urlFromQr(" https://www.chefkoch.de/rezepte/123/Gulasch.html\n"),
+        )
+        org.junit.Assert.assertEquals("http://x.de/a", io.github.thomas1607haja.rezeptplaner.ui.edit.urlFromQr("Rezept: http://x.de/a."))
+        org.junit.Assert.assertEquals(null, io.github.thomas1607haja.rezeptplaner.ui.edit.urlFromQr("WIFI:S:Zuhause;T:WPA;P:geheim;;"))
+        org.junit.Assert.assertEquals(null, io.github.thomas1607haja.rezeptplaner.ui.edit.urlFromQr("rezeptplaner://setup?url=x"))
+    }
+}

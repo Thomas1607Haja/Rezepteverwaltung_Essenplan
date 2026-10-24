@@ -8,6 +8,7 @@
   import IngredientEditor from '../components/IngredientEditor.svelte';
   import StepEditor from '../components/StepEditor.svelte';
   import ImagePicker from '../components/ImagePicker.svelte';
+  import QrScanDialog, { qrScanSupported } from '../components/QrScanDialog.svelte';
 
   // id fehlt bei #/recipes/new, sonst kommt es aus #/recipes/:id/edit.
   let { id = null } = $props();
@@ -39,6 +40,22 @@
 
   // URL-Import (nur bei neuen Rezepten)
   let importAddress = $state('');
+  // QR-Scanner (nur wenn der Browser ihn kann, siehe QrScanDialog)
+  let canScan = $state(false);
+  let scanning = $state(false);
+  qrScanSupported().then((ok) => (canScan = ok));
+
+  /** Inhalt des QR-Codes: nur eine http(s)-Adresse wird übernommen und gleich eingelesen. */
+  function onScanned(text) {
+    scanning = false;
+    const match = text.trim().match(/https?:\/\/\S+/i);
+    if (!match) {
+      importError = `Der QR-Code enthält keine Webadresse (http/https): „${text.slice(0, 80)}“`;
+      return;
+    }
+    importAddress = match[0];
+    importRecipe(new Event('submit'));
+  }
   let importing = $state(false);
   let importError = $state('');
   let duplicates = $state([]);
@@ -189,10 +206,19 @@
           class:invalid={importError}
           disabled={importing}
         />
+        {#if canScan}
+          <button type="button" class="secondary" disabled={importing} onclick={() => (scanning = true)} title="QR-Code mit der Kamera scannen">
+            QR-Code
+          </button>
+        {/if}
         <button type="submit" class="primary" disabled={importing}>{importing ? 'Lädt …' : 'Übernehmen'}</button>
       </div>
       {#if importError}<p class="error">{importError}</p>{/if}
     </form>
+  {/if}
+
+  {#if scanning}
+    <QrScanDialog onresult={onScanned} onclose={() => (scanning = false)} />
   {/if}
 
   {#if duplicates.length > 0}

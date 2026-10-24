@@ -82,8 +82,8 @@ import kotlinx.serialization.Serializable
 /** Rezept bearbeiten bzw. anlegen (id 0); fromDraft: Entwurf aus dem URL-Import. */
 @Serializable data class EditRecipeRoute(val id: Long = 0, val fromDraft: Boolean = false, val freshVariant: Boolean = false)
 
-/** Rezept aus einer Webadresse (geteilt oder eingegeben). */
-@Serializable data class UrlImportRoute(val url: String = "")
+/** Rezept aus einer Webadresse (geteilt, eingegeben oder per QR-Code mit [scan]). */
+@Serializable data class UrlImportRoute(val url: String = "", val scan: Boolean = false)
 
 /** Rezept aus Fotos (Texterkennung auf dem Handy). */
 @Serializable data object PhotoImportRoute
@@ -272,6 +272,7 @@ internal fun MainScaffold(
                     onImport = { navController.navigate(ImportRoute) },
                     onNew = { navController.navigate(EditRecipeRoute()) },
                     onFromUrl = { navController.navigate(UrlImportRoute()) },
+                    onFromQr = { navController.navigate(UrlImportRoute(scan = true)) },
                     onFromPhoto = { navController.navigate(PhotoImportRoute) },
                 )
             }
@@ -286,8 +287,10 @@ internal fun MainScaffold(
                 )
             }
             composable<UrlImportRoute> { entry ->
+                val route = entry.toRoute<UrlImportRoute>()
                 UrlImportScreen(
-                    initialUrl = entry.toRoute<UrlImportRoute>().url,
+                    initialUrl = route.url,
+                    scan = route.scan,
                     onDraft = {
                         navController.navigate(EditRecipeRoute(fromDraft = true)) {
                             popUpTo<UrlImportRoute> { inclusive = true }

@@ -75,6 +75,7 @@ fun RecipesScreen(
     onNew: () -> Unit = {},
     onFromUrl: () -> Unit = {},
     onFromPhoto: () -> Unit = {},
+    onFromQr: () -> Unit = {},
     /** Filter dieser Liste; null = der Filter der Rezeptübersicht. */
     filterState: MutableStateFlow<RecipeFilter>? = null,
     /** Inhalt über der Suche, z. B. „Eintrag ohne Rezept“ in der Rezeptauswahl. */
@@ -183,6 +184,7 @@ fun RecipesScreen(
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         DropdownMenuItem(text = { Text("Neues Rezept") }, onClick = { menu = false; onNew() })
                         DropdownMenuItem(text = { Text("Rezept aus Internetadresse") }, onClick = { menu = false; onFromUrl() })
+                        DropdownMenuItem(text = { Text("Rezept aus QR-Code") }, onClick = { menu = false; onFromQr() })
                         DropdownMenuItem(text = { Text("Rezept aus Foto") }, onClick = { menu = false; onFromPhoto() })
                         DropdownMenuItem(text = { Text("Datei importieren") }, onClick = { menu = false; onImport() })
                     }

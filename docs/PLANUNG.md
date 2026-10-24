@@ -488,6 +488,8 @@ Familiengröße, Einkaufstag, Bring-Liste, Vorratsliste, Kategorien, API-Schlüs
 
 ### A. Import per URL
 
+**Per QR-Code (Schritt 8.F):** Viele Ausdrucke (z. B. Chefkoch) tragen die Adresse als QR-Code. App: Rezepte → Plus → „Rezept aus QR-Code“ öffnet direkt den Google-Code-Scanner (Play-Dienste, ohne Kamera-Berechtigung, wie bei der Einrichtung); dazu ein Scan-Knopf im Adressfeld von „Rezept aus Internetadresse“. Nach dem Scan startet der URL-Import sofort. Enthält der Code keine http(s)-Adresse, erscheint eine Meldung; fehlt das Scanner-Modul der Play-Dienste noch, stößt die App das Nachladen an und meldet „wird nachgeladen, gleich erneut versuchen“. Weboberfläche: Knopf „QR-Code“ neben dem Adressfeld, nur wenn der Browser QR-Erkennung (BarcodeDetector) und Kamera bietet (z. B. Chrome auf Android über https); sonst ausgeblendet. In der Home-Assistant-App ist die Kamera im Ingress-Fenster oft gesperrt – dann erklärt eine Meldung, die Adresse einzufügen.
+
 1. URL einfügen oder auf dem Handy über „Teilen“ aus Browser/Chefkoch-App an die App senden.
 2. Server lädt die Seite, liest die schema.org-Rezeptdaten, lädt das Bild, zerlegt Zutaten, gleicht mit der Vorratsliste ab.
 3. Dublettenhinweis bei bekannter Quell-URL.
@@ -675,6 +677,7 @@ Rezepteverwaltung_Essenplan/
 | 8.A | (umgesetzt, App 0.9.0) App gleichwertig zum Web beim Planen: Rezeptauswahl mit Mittag/Abend, „Eintrag ohne Rezept“ (Freitext bis 200 Zeichen, Schnellauswahl „Essen gehen“, „Reste“, „Pizza bestellen“ wie im Web, dazu die bis zu fünf zuletzt verwendeten eigenen Texte aus den Daten auf dem Handy), Besteck-Symbol statt Bild, „Rezept wählen“ für Einträge ohne Rezept und umgekehrt Text statt Rezept beim Ersetzen. Dazu die kleinen Lücken: Favorit im Eintrags-Menü, Verschieben auf ein beliebiges Datum (Kalender), „Zutaten an Bring senden“ im Warnhinweis beim Verschieben, Kochansicht aus dem Plan mit „Im Essensplan: Tag · Portionen · Notiz“, Kategorie in der Kochansicht öffnet die gefilterte Rezeptübersicht, Trefferzahl und „Filter zurücksetzen“, Dubletten beim URL-Import als Link. Verschieben bleibt bei der Tagesauswahl (kein Ziehen) |
 | 8.B | (umgesetzt, Server 0.8.0, Skill 2.1) Skill 2.1 sucht per Websuche den Originallink (`source.url`, nur bei eindeutigem Treffer); der Server lädt beim Datei-Import das Foto von dieser Seite, wenn das Rezept kein Bild oder nur eine Illustration hat (nie ein echtes Foto ersetzen), Vorschau zeigt es. Format bleibt Version 2. Grenzen: höchstens 20 s für alle Seiten einer Vorschau, zwei gleichzeitig, sonst wie der URL-Import (SSRF-Sperre, 5 MB Seite, 20 MB Bild); das Bild liegt bis zum Bestätigen im Upload-Ordner. Die Skill kann außerdem eine im Chat eingefügte Kategorieliste statt `categories.md` verwenden (`--categories`) |
 | 8.C | (umgesetzt, Server 0.9.0, App 0.10.0) Kategorien und Gruppen verwalten (nur Weboberfläche): Tabelle `tag_groups` (Migration 011), Namen über alle Gruppen eindeutig (ohne Rücksicht auf Groß-/Kleinschreibung und Umlaute), Zusammenführen, Abgleich über `updated_at` der betroffenen Rezepte; Kategorieliste für die Claude-Skill kopieren; unbekannte Kategorien in der Import-Vorschau zuordnen, neu anlegen oder weglassen (Web und App) |
+| 8.F | (umgesetzt, Server 0.12.0, App 0.13.0) QR-Code-Scanner beim URL-Import, siehe Abschnitt 6 A |
 | 8.E | (umgesetzt, Server 0.11.0, App 0.12.0) Kurzvorschau beim Einplanen mit Zutaten-Abwahl je Eintrag, siehe „Einkaufsliste und Bring“. Migration 012 markiert alle Rezepte einmal als geändert, damit die App die neuen `item_key` beim Abgleich erhält. Die App schickt die neuen Felder nur mit, wenn sie gefüllt sind (ältere Server lehnen unbekannte Felder ab) |
 | 8.D | (umgesetzt, Server 0.10.0, App 0.11.0) Statistik in Web und App (eigener Bereich „Statistik“ in der Navigation) (App offline aus den lokalen Daten, Zeitraum nur online); gezählt werden Planeinträge bis einschließlich heute – ebenso `plan_count` und die Sortierung „Am häufigsten eingeplant“; Filter „Noch nie eingeplant“ |
 
@@ -692,7 +695,7 @@ Rezepteverwaltung_Essenplan/
 
 ## 12. Mögliche spätere Erweiterungen
 
-- **Ideen aus dem Alltag (2026-10-23), zurückgestellt:** QR-Code-Scanner beim URL-Import, Vorratsliste auf alle Rezepte anwenden (mit Ausnahmen; dazu in der App „Vorrat auf alle Rezepte übertragen“, das das Web schon hat), Bildersuche beim Bearbeiten, Online-Abgleich beim Foto-Import (Originalrezept suchen)
+- **Ideen aus dem Alltag (2026-10-23), zurückgestellt:** ~~QR-Code-Scanner beim URL-Import~~ (umgesetzt als 8.F), Vorratsliste auf alle Rezepte anwenden (mit Ausnahmen; dazu in der App „Vorrat auf alle Rezepte übertragen“, das das Web schon hat), Bildersuche beim Bearbeiten, Online-Abgleich beim Foto-Import (Originalrezept suchen)
 - **App, später:** Haushalt-Einstellungen (Familiengröße, Einkaufstag, Uhrzeit, Bring-Liste) und Vorratsliste in der App bearbeiten, Systeminfo (Speicher, Datenbankgröße) in den Einstellungen der App
 - Optionale KI-Strukturierung beim Foto-Import
 - Umrechnung unterschiedlicher Einheiten derselben Zutat
