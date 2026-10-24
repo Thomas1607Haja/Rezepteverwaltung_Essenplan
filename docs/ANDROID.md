@@ -151,7 +151,7 @@ Quellen: [Android Developers Blog](https://developer.android.com/blog/posts/andr
 
 ## 7. Was die App kann und welche Daten auf dem Handy liegen
 
-**Funktionen (App 0.15):**
+**Funktionen (App 0.16):**
 
 | Bereich | Offline | Online |
 |---|---|---|

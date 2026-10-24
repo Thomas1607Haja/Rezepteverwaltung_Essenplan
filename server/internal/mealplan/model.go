@@ -16,6 +16,7 @@ const dateLayout = "2006-01-02"
 const (
 	SlotDinner = "dinner"
 	SlotLunch  = "lunch"
+	SlotCoffee = "coffee" // Kaffee & Kuchen, zwischen Mittag und Abend (Schritt 9.3)
 
 	StatusPlanned         = "planned"
 	StatusTransferred     = "transferred"
@@ -109,8 +110,14 @@ func parseDate(field, s string) (time.Time, error) {
 }
 
 func validSlot(slot string) bool {
-	return slot == SlotDinner || slot == SlotLunch
+	return slot == SlotDinner || slot == SlotLunch || slot == SlotCoffee
 }
+
+// SlotOrder sortiert Einträge e eines Tages: Mittag, Kaffee, Abend.
+const SlotOrder = `CASE e.slot WHEN 'lunch' THEN 0 WHEN 'coffee' THEN 1 ELSE 2 END`
+
+// slotError ist die Meldung für einen unbekannten Slot.
+const slotError = "muss dinner, lunch oder coffee sein"
 
 // maxExcluded begrenzt die abgewählten Zutaten eines Eintrags.
 const maxExcluded = 200

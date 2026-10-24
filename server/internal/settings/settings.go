@@ -39,10 +39,19 @@ type Settings struct {
 	// PlanPreview: Beim Einplanen eines Rezepts erst die Kurzvorschau
 	// zeigen (Portionen, Zutaten abwählen). Standard an.
 	PlanPreview bool `json:"plan_preview"`
+	// CoffeeSlot: Slot „Kaffee & Kuchen“ anbieten (Schritt 9.3). Standard an.
+	CoffeeSlot bool `json:"coffee_slot"`
+	// Uhrzeiten der Slots für den Kalender in Home Assistant ("12:00").
+	LunchTime  string `json:"lunch_time"`
+	CoffeeTime string `json:"coffee_time"`
+	DinnerTime string `json:"dinner_time"`
 }
 
 // Defaults gelten, solange nichts gespeichert ist.
-var Defaults = Settings{FamilySize: 4, ShoppingDay: "saturday", ShoppingTime: "00:00", PlanPreview: true}
+var Defaults = Settings{
+	FamilySize: 4, ShoppingDay: "saturday", ShoppingTime: "00:00", PlanPreview: true,
+	CoffeeSlot: true, LunchTime: "12:00", CoffeeTime: "15:30", DinnerTime: "18:30",
+}
 
 // shoppingTime prüft die Uhrzeit, z. B. "18:00".
 var shoppingTime = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
@@ -86,8 +95,12 @@ func (s Settings) validate() error {
 	if _, ok := weekdays[s.ShoppingDay]; !ok {
 		return &ValidationError{"shopping_day", "muss ein englischer wochentag sein, z. b. saturday"}
 	}
-	if !shoppingTime.MatchString(s.ShoppingTime) {
-		return &ValidationError{"shopping_time", "muss eine uhrzeit wie 18:00 sein"}
+	for field, value := range map[string]string{
+		"shopping_time": s.ShoppingTime, "lunch_time": s.LunchTime, "coffee_time": s.CoffeeTime, "dinner_time": s.DinnerTime,
+	} {
+		if !shoppingTime.MatchString(value) {
+			return &ValidationError{field, "muss eine uhrzeit wie 18:00 sein"}
+		}
 	}
 	if s.AppURL != "" {
 		u, err := url.Parse(s.AppURL)
@@ -147,6 +160,20 @@ func (s *Store) Get(ctx context.Context) (Settings, error) {
 			}
 		case "plan_preview":
 			result.PlanPreview = value != "false"
+		case "coffee_slot":
+			result.CoffeeSlot = value != "false"
+		case "lunch_time":
+			if shoppingTime.MatchString(value) {
+				result.LunchTime = value
+			}
+		case "coffee_time":
+			if shoppingTime.MatchString(value) {
+				result.CoffeeTime = value
+			}
+		case "dinner_time":
+			if shoppingTime.MatchString(value) {
+				result.DinnerTime = value
+			}
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -159,8 +186,17 @@ func (s *Store) Get(ctx context.Context) (Settings, error) {
 func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
 	// Ohne Schrägstrich am Ende, damit die App einfach "/api/v1/…" anhängt.
 	in.AppURL = strings.TrimRight(strings.TrimSpace(in.AppURL), "/")
-	if in.ShoppingTime == "" {
-		in.ShoppingTime = Defaults.ShoppingTime
+	// Fehlende Uhrzeiten (ältere Oberflächen) bekommen den Standard.
+	for _, t := range []struct {
+		value *string
+		def   string
+	}{
+		{&in.ShoppingTime, Defaults.ShoppingTime}, {&in.LunchTime, Defaults.LunchTime},
+		{&in.CoffeeTime, Defaults.CoffeeTime}, {&in.DinnerTime, Defaults.DinnerTime},
+	} {
+		if *t.value == "" {
+			*t.value = t.def
+		}
 	}
 	if err := in.validate(); err != nil {
 		return Settings{}, err
@@ -180,6 +216,10 @@ func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
 		"app_url":       in.AppURL,
 		"shopping_time": in.ShoppingTime,
 		"plan_preview":  strconv.FormatBool(in.PlanPreview),
+		"coffee_slot":   strconv.FormatBool(in.CoffeeSlot),
+		"lunch_time":    in.LunchTime,
+		"coffee_time":   in.CoffeeTime,
+		"dinner_time":   in.DinnerTime,
 	}
 	for key, value := range values {
 		// "Upsert": neu anlegen oder, falls der Schlüssel schon existiert,

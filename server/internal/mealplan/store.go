@@ -124,7 +124,7 @@ func (s *Store) List(ctx context.Context, from, to string) ([]Entry, error) {
 	// "lunch" < "dinner" gilt alphabetisch nicht, daher die CASE-Sortierung.
 	rows, err := s.db.QueryContext(ctx, selectEntry+`
 		WHERE e.date BETWEEN ? AND ?
-		ORDER BY e.date, CASE e.slot WHEN 'lunch' THEN 0 ELSE 1 END, e.position, e.id`,
+		ORDER BY e.date, `+SlotOrder+`, e.position, e.id`,
 		from, to)
 	if err != nil {
 		return nil, fmt.Errorf("essensplan lesen: %w", err)
@@ -151,7 +151,7 @@ func (s *Store) List(ctx context.Context, from, to string) ([]Entry, error) {
 func (s *Store) ChangedSince(ctx context.Context, from, since string) ([]Entry, error) {
 	rows, err := s.db.QueryContext(ctx, selectEntry+`
 		WHERE e.date >= ? AND e.updated_at >= ?
-		ORDER BY e.date, CASE e.slot WHEN 'lunch' THEN 0 ELSE 1 END, e.position, e.id`,
+		ORDER BY e.date, `+SlotOrder+`, e.position, e.id`,
 		from, since)
 	if err != nil {
 		return nil, fmt.Errorf("essensplan für den abgleich lesen: %w", err)
@@ -227,7 +227,7 @@ func (s *Store) Create(ctx context.Context, in NewEntry) (Entry, error) {
 		in.Slot = SlotDinner
 	}
 	if !validSlot(in.Slot) {
-		return Entry{}, &ValidationError{"slot", "muss dinner oder lunch sein"}
+		return Entry{}, &ValidationError{"slot", slotError}
 	}
 	note, err := normalizeNote(in.Note)
 	if err != nil {

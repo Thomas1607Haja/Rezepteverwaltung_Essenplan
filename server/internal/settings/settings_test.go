@@ -38,7 +38,8 @@ func TestDefaultsAndUpdate(t *testing.T) {
 		t.Errorf("leere Datenbank: %+v, erwartet Standardwerte %+v", got, Defaults)
 	}
 
-	want := Settings{FamilySize: 3, ShoppingDay: "friday", BringEntity: "todo.zuhause", ShoppingTime: "00:00"}
+	want := Settings{FamilySize: 3, ShoppingDay: "friday", BringEntity: "todo.zuhause", ShoppingTime: "00:00",
+		LunchTime: "12:00", CoffeeTime: "15:30", DinnerTime: "18:30"}
 	got, err = store.Update(ctx, want)
 	if err != nil {
 		t.Fatal(err)

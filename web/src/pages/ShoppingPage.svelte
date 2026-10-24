@@ -131,7 +131,7 @@
           <li class:excluded={!entry.included}>
             <span class="day">
               {day(entry.date)}
-              {#if entry.slot === 'lunch'}<small>mittags</small>{/if}
+              {#if entry.slot === 'lunch'}<small>mittags</small>{:else if entry.slot === 'coffee'}<small>nachmittags</small>{/if}
             </span>
             <span class="title">
               {#if entry.recipe_id != null}

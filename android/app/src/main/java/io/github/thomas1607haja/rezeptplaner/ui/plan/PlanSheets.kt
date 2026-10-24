@@ -53,6 +53,7 @@ import io.github.thomas1607haja.rezeptplaner.data.Snapshot
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
+import io.github.thomas1607haja.rezeptplaner.ui.slotLabel
 import io.github.thomas1607haja.rezeptplaner.ui.amountText
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -76,12 +77,19 @@ fun upcomingDays(snapshot: Snapshot, today: LocalDate, count: Int): List<PlanDay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SlotChooser(slot: String, onChange: (String) -> Unit) {
+    // Kaffee nur, wenn in den Einstellungen eingeschaltet (oder schon gewählt).
+    val coffee = app().localStore.snapshot.collectAsStateWithLifecycle().value.settings.coffeeSlot || slot == "coffee"
+    val options = buildList {
+        add("dinner" to "Abend")
+        add("lunch" to "Mittag")
+        if (coffee) add("coffee" to "Kaffee")
+    }
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        listOf("dinner" to "Abendessen", "lunch" to "Mittagessen").forEachIndexed { i, (value, label) ->
+        options.forEachIndexed { i, (value, label) ->
             SegmentedButton(
                 selected = slot == value,
                 onClick = { onChange(value) },
-                shape = SegmentedButtonDefaults.itemShape(i, 2),
+                shape = SegmentedButtonDefaults.itemShape(i, options.size),
             ) { Text(label) }
         }
     }
@@ -252,7 +260,7 @@ fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Uni
                 Column(Modifier.weight(1f)) {
                     Text(entryTitle(entry), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        (if (entry.slot == "lunch") "Mittagessen" else "Abendessen") + " am ${dayLabel(entry.date)}",
+                        slotLabel(entry.slot) + " am ${dayLabel(entry.date)}",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }

@@ -101,6 +101,8 @@ data class HouseholdSettings(
     @SerialName("shopping_time") val shoppingTime: String = "00:00",
     /** Kurzvorschau beim Einplanen zeigen (Einstellung der Weboberfläche). */
     @SerialName("plan_preview") val planPreview: Boolean = true,
+    /** Slot „Kaffee & Kuchen“ anbieten (Schritt 9.3). */
+    @SerialName("coffee_slot") val coffeeSlot: Boolean = true,
 )
 
 @Serializable

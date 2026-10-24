@@ -282,3 +282,28 @@ func TestCreateUsesBaseForYieldUnit(t *testing.T) {
 		t.Errorf("Eintrag: %d %+v", e.Servings, e.Recipe)
 	}
 }
+
+// Slot „Kaffee & Kuchen“ (Migration 015): zwischen Mittag und Abend sortiert.
+func TestCoffeeSlotOrder(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+	for _, slot := range []string{SlotDinner, SlotCoffee, SlotLunch} {
+		if _, err := s.Create(ctx, NewEntry{Date: "2026-10-25", Slot: slot, RecipeID: ptr(int64(1))}); err != nil {
+			t.Fatalf("%s: %v", slot, err)
+		}
+	}
+	list, err := s.List(ctx, "2026-10-25", "2026-10-25")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, e := range list {
+		got = append(got, e.Slot)
+	}
+	if strings.Join(got, ",") != "lunch,coffee,dinner" {
+		t.Errorf("Reihenfolge = %v", got)
+	}
+	if _, err := s.Create(ctx, NewEntry{Date: "2026-10-25", Slot: "breakfast", RecipeID: ptr(int64(1))}); err == nil {
+		t.Error("unbekannter Slot ohne Fehler")
+	}
+}

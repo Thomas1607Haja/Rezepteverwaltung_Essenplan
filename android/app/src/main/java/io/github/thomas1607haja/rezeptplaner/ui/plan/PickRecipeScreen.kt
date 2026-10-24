@@ -44,6 +44,7 @@ import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipesScreen
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipesViewModel
+import io.github.thomas1607haja.rezeptplaner.ui.recipes.courseTabs
 import kotlinx.coroutines.launch
 
 /** Schnellauswahl für Einträge ohne Rezept – dieselbe wie im Web (RecipePickerPage). */
@@ -82,6 +83,7 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit) {
     var note by rememberSaveable { mutableStateOf("") }
     val replacing = remember(route) { app.localStore.snapshot.value.entries.firstOrNull { it.id == route.replaceEntryId } }
     val recent = remember(snapshot.entries) { recentNotes(snapshot.entries) }
+    val pickerFilter = viewModel<RecipesViewModel>(key = "picker").filter
     // Rezept in der Kurzvorschau (Schritt 8.E), null = keine offen
     var previewId by remember { mutableStateOf<Long?>(null) }
     val date = replacing?.date ?: route.date
@@ -134,14 +136,22 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit) {
                 }
             },
             // Eigener Filter, damit die Suche der Rezeptübersicht unberührt bleibt.
-            filterState = viewModel<RecipesViewModel>(key = "picker").filter,
+            filterState = pickerFilter,
             header = {
                 Column(
                     Modifier.padding(horizontal = 16.dp).padding(top = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     // Beim Ersetzen bleibt der Eintrag, wo er ist.
-                    if (replacing == null) SlotChooser(slot) { slot = it }
+                    if (replacing == null) {
+                        SlotChooser(slot) {
+                            slot = it
+                            // Kaffee & Kuchen: gleich die Backrezepte zeigen.
+                            if (it == "coffee" && courseTabs(snapshot.tagGroups).any { t -> t.key == "baking" }) {
+                                pickerFilter.value = pickerFilter.value.copy(course = "baking")
+                            }
+                        }
+                    }
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             note, { if (it.length <= 200) note = it },

@@ -8,6 +8,7 @@
   import PlanPreview from '../components/PlanPreview.svelte';
   import CourseTabs from '../components/CourseTabs.svelte';
   import { courseTabs } from '../lib/courseTabs.js';
+  import { slotChoices } from '../lib/slots.js';
   import { previewEnabled, createWithChoice, replaceWithChoice } from '../lib/planPreview.js';
 
   // Zwei Arten, die Seite zu öffnen:
@@ -34,6 +35,14 @@
   let showTags = $state(false);
   let tagGroups = $state([]);
   let course = $state('all');
+  let coffeeSlot = $state(true);
+  api.getSettings().then((s) => (coffeeSlot = s.coffee_slot)).catch(() => {});
+
+  /** Slot wählen; beim Kaffee gleich den Reiter „Backen“ zeigen. */
+  function chooseSlot(value) {
+    slot = value;
+    if (value === 'coffee' && tabs.some((t) => t.key === 'baking')) course = 'baking';
+  }
   const tabs = $derived(courseTabs(tagGroups));
   let recipes = $state(null);
   let note = $state('');
@@ -151,8 +160,9 @@
 
 {#if !replaceId}
   <div class="slot-switch" role="group" aria-label="Mahlzeit">
-    <button type="button" aria-pressed={slot === 'dinner'} onclick={() => (slot = 'dinner')}>Abendessen</button>
-    <button type="button" aria-pressed={slot === 'lunch'} onclick={() => (slot = 'lunch')}>Mittagessen</button>
+    {#each slotChoices(coffeeSlot, slot) as s (s.value)}
+      <button type="button" aria-pressed={slot === s.value} onclick={() => chooseSlot(s.value)}>{s.label}</button>
+    {/each}
   </div>
 {/if}
 

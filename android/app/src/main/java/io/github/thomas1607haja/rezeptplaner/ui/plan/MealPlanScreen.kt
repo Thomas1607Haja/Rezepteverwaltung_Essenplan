@@ -50,6 +50,7 @@ import io.github.thomas1607haja.rezeptplaner.ui.common.OfflineBanner
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
+import io.github.thomas1607haja.rezeptplaner.ui.slotPrefix
 import io.github.thomas1607haja.rezeptplaner.ui.amountText
 import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.api.Period
@@ -252,7 +253,7 @@ private fun EntryCard(entry: MealPlanEntry, onOpenRecipe: (Long, Long) -> Unit, 
             Column(Modifier.weight(1f)) {
                 val title = entry.recipe?.title ?: entry.note
                 Text(
-                    (if (entry.slot == "lunch") "Mittag: " else "") + title,
+                    slotPrefix(entry.slot) + title,
                     style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 )
                 val details = buildList {

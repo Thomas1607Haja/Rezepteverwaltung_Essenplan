@@ -83,6 +83,34 @@ fun dayLabel(date: String): String {
 fun fold(s: String): String =
     s.lowercase(Locale.GERMAN).replace("ä", "a").replace("ö", "o").replace("ü", "u").replace("ß", "ss")
 
+/** Mahlzeiten eines Tages (Schritt 9.3), wie web/src/lib/slots.js. */
+fun slotLabel(slot: String) = when (slot) {
+    "lunch" -> "Mittagessen"
+    "coffee" -> "Kaffee & Kuchen"
+    else -> "Abendessen"
+}
+
+/** Vorsatz im Plan: „Mittag: “, „Kaffee: “; Abendessen ohne. */
+fun slotPrefix(slot: String) = when (slot) {
+    "lunch" -> "Mittag: "
+    "coffee" -> "Kaffee: "
+    else -> ""
+}
+
+/** „mittags“, „nachmittags“ bzw. leer fürs Abendessen. */
+fun slotWhen(slot: String) = when (slot) {
+    "lunch" -> "mittags"
+    "coffee" -> "nachmittags"
+    else -> ""
+}
+
+/** Reihenfolge der Slots an einem Tag: Mittag, Kaffee, Abend. */
+fun slotOrder(slot: String) = when (slot) {
+    "lunch" -> 0
+    "coffee" -> 1
+    else -> 2
+}
+
 fun portions(n: Int) = if (n == 1) "1 Portion" else "$n Portionen"
 
 /** Menge mit Ergebnis-Einheit (Schritt 9.2): „4 Portionen“ bzw. „1 Springform 26 cm“, „12 Stück“. */

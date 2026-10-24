@@ -85,3 +85,12 @@ class YieldUnitTest {
         org.junit.Assert.assertTrue("\"yield_unit\":\"Kuchen\"" in json.encodeToString(input.copy(yieldUnit = "Kuchen")))
     }
 }
+
+class SlotTest {
+    @Test
+    fun coffeeBetweenLunchAndDinner() {
+        assertEquals(listOf("lunch", "coffee", "dinner"), listOf("dinner", "coffee", "lunch").sortedBy { slotOrder(it) })
+        assertEquals("Kaffee: ", slotPrefix("coffee"))
+        assertEquals("Kaffee & Kuchen", slotLabel("coffee"))
+    }
+}

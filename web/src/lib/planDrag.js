@@ -8,7 +8,7 @@
 // Erwartete Markierungen im HTML:
 //   data-entry-id, data-date, data-slot  an jedem Eintrag
 //   data-date                            an jeder Tagesspalte
-//   data-slot-zone="lunch" | "dinner"    an den Bereichen Mittag/Abend
+//   data-slot-zone="lunch" | "coffee" | "dinner"    an den Bereichen Mittag/Kaffee/Abend
 //
 // Optionen: { ondrop(entryId, target), ontarget(target | null) }, wobei
 // target = { type: 'swap', id, date, slot } oder { type: 'append', date, slot }.

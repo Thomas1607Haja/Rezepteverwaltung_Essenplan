@@ -5,6 +5,7 @@
   import { focusPlanOn } from '../lib/planFocus.svelte.js';
   import { addDays, dayLabel, todayString } from '../lib/format.js';
   import PlanPreview from './PlanPreview.svelte';
+  import { slotChoices } from '../lib/slots.js';
   import { previewEnabled, createWithChoice, replaceWithChoice } from '../lib/planPreview.js';
 
   // recipe: das Rezept der Kochansicht. onadded() meldet, dass es
@@ -20,6 +21,8 @@
   let done = $state(null); // Tag, an dem eingeplant wurde
   // Offene Kurzvorschau: { date } zum Hinzufügen bzw. { entry } zum Ersetzen
   let pending = $state(null);
+  let coffeeSlot = $state(true);
+  api.getSettings().then((s) => (coffeeSlot = s.coffee_slot)).catch(() => {});
 
   let dialog;
   onMount(() => dialog.showModal());
@@ -108,8 +111,9 @@
       </footer>
     {:else}
       <div class="slot-switch" role="group" aria-label="Mahlzeit">
-        <button type="button" aria-pressed={slot === 'dinner'} onclick={() => (slot = 'dinner')}>Abendessen</button>
-        <button type="button" aria-pressed={slot === 'lunch'} onclick={() => (slot = 'lunch')}>Mittagessen</button>
+        {#each slotChoices(coffeeSlot, slot) as s (s.value)}
+          <button type="button" aria-pressed={slot === s.value} onclick={() => (slot = s.value)}>{s.label}</button>
+        {/each}
       </div>
 
       {#if error}<p class="error">{error}</p>{/if}

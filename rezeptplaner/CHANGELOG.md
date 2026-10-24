@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.15.0
+
+- **Kaffee & Kuchen:** Neuer Slot zwischen Mittag- und Abendessen, z. B. für Kuchen am Wochenende. Beim Einplanen für den Kaffee zeigt die Rezeptauswahl gleich die Backrezepte. Abschaltbar unter Einstellungen → Haushalt.
+- **Uhrzeiten für den Kalender:** Mittag, Kaffee und Abend (Standard 12:00, 15:30, 18:30) unter Einstellungen → Haushalt. Die Home-Assistant-Integration ab 0.5.0 zeigt die Gerichte damit als Termine zu diesen Uhrzeiten statt ganztägig; Karte und Sensor kennen den Kaffee-Slot und zeigen Kuchen als „1 Springform 26 cm“.
+- Die Datenbank wird beim ersten Start umgestellt; alle Planeinträge bleiben erhalten.
+
 ## 0.14.0
 
 - **Kuchen, Brot und Gebäck:** Rezepte haben jetzt eine Einheit für die Menge (Editor: „Einheit“, z. B. „Springform 26 cm“, „Blech“, „Stück“, „Kuchen“; leer = Portionen). Angezeigt wird „1 Springform 26 cm“ statt „1 Portion“; Mengen werden wie gewohnt umgerechnet. Beim Einplanen gilt dann die Menge des Rezepts statt der Familiengröße.

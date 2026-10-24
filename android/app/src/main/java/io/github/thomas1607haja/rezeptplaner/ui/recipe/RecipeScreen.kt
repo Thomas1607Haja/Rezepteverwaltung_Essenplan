@@ -62,6 +62,7 @@ import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
 import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
+import io.github.thomas1607haja.rezeptplaner.ui.slotWhen
 import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
 import io.github.thomas1607haja.rezeptplaner.ui.formatQuantity
 import io.github.thomas1607haja.rezeptplaner.ui.planStatus
@@ -125,7 +126,7 @@ fun RecipeScreen(
             onOpen, onAddToPlan = { adding = true },
             planContext = entry?.let {
                 buildList {
-                    add("Im Essensplan: ${dayLabel(it.date)}" + if (it.slot == "lunch") " mittags" else "")
+                    add("Im Essensplan: ${dayLabel(it.date)}" + slotWhen(it.slot).let { w -> if (w.isEmpty()) "" else " $w" })
                     add(amountText(it.servings, recipe.yieldUnit))
                     if (it.note.isNotEmpty()) add(it.note)
                 }.joinToString(" · ")

@@ -5,6 +5,7 @@
   import { dayLabel } from '../lib/format.js';
   import Icon from './Icon.svelte';
   import PlanPreview from './PlanPreview.svelte';
+  import { slotLabel } from '../lib/slots.js';
 
   // entry: der Planeintrag. onsaved(entry) meldet den neuen Stand,
   // ondeleted(id) das Entfernen, onmove(entry, date) den Wunsch, den
@@ -115,7 +116,7 @@
   <form onsubmit={save}>
     <header>
       <div>
-        <p class="when">{label.weekday} {label.date} · {entry.slot === 'lunch' ? 'Mittagessen' : 'Abendessen'}</p>
+        <p class="when">{label.weekday} {label.date} · {slotLabel(entry.slot)}</p>
         <h2 id="entry-title">{title}</h2>
       </div>
       <button type="button" class="icon-button" title="Schließen" onclick={onclose}>✕</button>

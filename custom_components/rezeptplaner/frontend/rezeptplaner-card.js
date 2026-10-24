@@ -24,6 +24,12 @@ const FRACTIONS = [
   [3 / 4, '¾'],
 ];
 
+// „4 Portionen“ bzw. mit Ergebnis-Einheit „1 Springform 26 cm“ (Rezeptplaner 0.14).
+function amountText(n, unit) {
+  if (unit) return `${n} ${unit}`;
+  return n === 1 ? '1 Portion' : `${n} Portionen`;
+}
+
 function formatDecimal(value, digits) {
   return value.toLocaleString('de-DE', { maximumFractionDigits: digits });
 }
@@ -263,7 +269,8 @@ function createCardClass() {
           if (dishes.length === 0) body += '<span class="muted">–</span>';
           for (const e of dishes) {
             const name = e.recipe ? e.recipe.title : e.note;
-            const info = [e.slot === 'lunch' ? 'Mittag' : '', e.recipe ? `${e.servings} Portionen` : ''].filter(Boolean).join(' · ');
+            const slot = { lunch: 'Mittag', coffee: 'Kaffee' }[e.slot] ?? '';
+            const info = [slot, e.recipe ? amountText(e.servings, e.recipe.yield_unit) : ''].filter(Boolean).join(' · ');
             body += `<button class="dish" data-id="${e.id}" ${e.recipe_id ? '' : 'disabled'}>
               ${this._img(e.recipe?.thumbnail, 'thumb')}
               <span class="title">${esc(name)}${info ? `<small>${esc(info)}</small>` : ''}</span></button>`;
@@ -318,7 +325,7 @@ function createCardClass() {
       return `<div class="sheet">
         <header><h2>${esc(recipe.title)}</h2><button class="close" aria-label="Schließen">×</button></header>
         ${recipe.image && this._signed.get(recipe.image) ? this._img(recipe.image, 'hero') : ''}
-        <p class="servings">Für ${servings} ${servings === 1 ? 'Portion' : 'Portionen'}${servings !== recipe.base_servings ? ` (Rezept: ${recipe.base_servings})` : ''}</p>
+        <p class="servings">Für ${amountText(servings, recipe.yield_unit)}${servings !== recipe.base_servings ? ` (Rezept: ${recipe.base_servings})` : ''}</p>
         ${recipe.ingredients.length ? `<h3>Zutaten</h3><ul class="ingredients">${ingredients}</ul>` : ''}
         ${steps ? `<h3>Zubereitung</h3><ol>${steps}</ol>` : ''}
       </div>`;

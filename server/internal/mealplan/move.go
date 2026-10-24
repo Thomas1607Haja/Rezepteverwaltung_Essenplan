@@ -76,7 +76,7 @@ func (s *Store) Move(ctx context.Context, id int64, m Move) (MoveResult, error) 
 		m.Slot = SlotDinner
 	}
 	if !validSlot(m.Slot) {
-		return MoveResult{}, &ValidationError{"slot", "muss dinner oder lunch sein"}
+		return MoveResult{}, &ValidationError{"slot", slotError}
 	}
 	if m.SwapWith != nil && *m.SwapWith == id {
 		return MoveResult{}, &ValidationError{"swap_with", "ein eintrag kann nicht mit sich selbst tauschen"}

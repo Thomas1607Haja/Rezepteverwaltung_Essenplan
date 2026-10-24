@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import io.github.thomas1607haja.rezeptplaner.ui.slotOrder
 import java.io.File
 
 /**
@@ -70,7 +71,7 @@ fun Snapshot.merge(response: SyncResponse, serverUrl: String): Snapshot {
         planInfo = response.planInfo,
         // Ältere Tage als plan_from braucht die App nicht mehr.
         entries = entries.values.filter { it.date >= response.planFrom }
-            .sortedWith(compareBy({ it.date }, { if (it.slot == "lunch") 0 else 1 }, { it.position }, { it.id })),
+            .sortedWith(compareBy({ it.date }, { slotOrder(it.slot) }, { it.position }, { it.id })),
         tagGroups = response.tagGroups,
         settings = response.settings,
     )

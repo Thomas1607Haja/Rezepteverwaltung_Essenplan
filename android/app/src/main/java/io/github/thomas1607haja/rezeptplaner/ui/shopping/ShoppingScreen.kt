@@ -36,6 +36,7 @@ import io.github.thomas1607haja.rezeptplaner.api.ShoppingItem
 import io.github.thomas1607haja.rezeptplaner.ui.common.OfflineBanner
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
+import io.github.thomas1607haja.rezeptplaner.ui.slotWhen
 
 /**
  * Einkauf (7.8): Liste der eingekauften Woche bzw. des nächsten Einkaufs,
@@ -142,7 +143,7 @@ private fun LazyListScope.entries(ui: ShoppingUi, onOpenRecipe: (Long, Int) -> U
             verticalAlignment = Alignment.Top,
         ) {
             Text(
-                dayLabel(entry.date) + if (entry.slot == "lunch") "\nmittags" else "",
+                dayLabel(entry.date) + slotWhen(entry.slot).let { w -> if (w.isEmpty()) "" else "\n$w" },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.width(76.dp),

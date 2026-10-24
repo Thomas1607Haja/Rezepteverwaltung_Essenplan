@@ -32,7 +32,7 @@ class TodaySensor(RezeptplanerEntity, SensorEntity):
 
     @property
     def native_value(self) -> str | None:
-        dinner = [entry_title(e) for e in self._today() if e.get("slot") != "lunch"]
+        dinner = [entry_title(e) for e in self._today() if e.get("slot", "dinner") == "dinner"]
         # Zustände dürfen höchstens 255 Zeichen lang sein.
         return ", ".join(dinner)[:255] if dinner else None
 
@@ -41,6 +41,7 @@ class TodaySensor(RezeptplanerEntity, SensorEntity):
         entries = self._today()
         return {
             "lunch": [entry_title(e) for e in entries if e.get("slot") == "lunch"],
+            "coffee": [entry_title(e) for e in entries if e.get("slot") == "coffee"],
             "dishes": [
                 {
                     "title": entry_title(e),

@@ -233,6 +233,7 @@
   const inNext = (date) => nextPeriod && date >= nextPeriod.from && date <= nextPeriod.to;
   const range = (p) => `${dayLabel(p.from).weekday} ${dayLabel(p.from).date}–${dayLabel(p.to).weekday} ${dayLabel(p.to).date}`;
   const lunch = (date) => entriesByDate[date]?.filter((e) => e.slot === 'lunch') ?? [];
+  const coffee = (date) => entriesByDate[date]?.filter((e) => e.slot === 'coffee') ?? [];
   const dinner = (date) => entriesByDate[date]?.filter((e) => e.slot === 'dinner') ?? [];
 </script>
 
@@ -268,6 +269,7 @@
   {#each days as date (date)}
     {@const label = dayLabel(date)}
     {@const lunchEntries = lunch(date)}
+    {@const coffeeEntries = coffee(date)}
     <section class="day" class:today={date === today} class:period={inPeriod(date)} class:next={inNext(date)} class:past={date < today} data-date={date}>
       <header class="day-head">
         <span class="weekday">{label.weekday}</span>
@@ -284,8 +286,16 @@
             {/each}
           </div>
         {/if}
+        {#if coffeeEntries.length > 0}
+          <div class="zone" data-slot-zone="coffee" class:drop-target={isDropTarget(date, 'coffee')}>
+            <span class="slot">Kaffee</span>
+            {#each coffeeEntries as entry (entry.id)}
+              <PlanEntry {entry} onmenu={(e) => (menuEntry = e)} dropTarget={dropTarget?.id === entry.id} />
+            {/each}
+          </div>
+        {/if}
         <div class="zone dinner" data-slot-zone="dinner" class:drop-target={isDropTarget(date, 'dinner')}>
-          {#if lunchEntries.length > 0}<span class="slot">Abend</span>{/if}
+          {#if lunchEntries.length > 0 || coffeeEntries.length > 0}<span class="slot">Abend</span>{/if}
           {#each dinner(date) as entry (entry.id)}
             <PlanEntry {entry} onmenu={(e) => (menuEntry = e)} dropTarget={dropTarget?.id === entry.id} />
           {/each}

@@ -70,6 +70,10 @@
         shopping_day: household.shopping_day,
         shopping_time: household.shopping_time,
         plan_preview: household.plan_preview,
+        coffee_slot: household.coffee_slot,
+        lunch_time: household.lunch_time,
+        coffee_time: household.coffee_time,
+        dinner_time: household.dinner_time,
         bring_entity: household.bring_entity,
       });
       saved = JSON.stringify(household);
@@ -133,6 +137,19 @@
         <span>Kurzvorschau beim Einplanen</span>
         <small>Beim Hinzufügen zum Essensplan Portionen wählen und Zutaten abwählen, die noch im Haus sind</small>
       </label>
+      <label class="toggle">
+        <input type="checkbox" bind:checked={household.coffee_slot} onchange={() => (message = '')} />
+        <span>Slot „Kaffee & Kuchen“</span>
+        <small>Zwischen Mittag- und Abendessen, z. B. für Kuchen am Wochenende</small>
+      </label>
+      <fieldset class="times">
+        <legend>Uhrzeiten im Home-Assistant-Kalender</legend>
+        <label><span>Mittag</span><input type="time" step="60" bind:value={household.lunch_time} oninput={() => (message = '')} /></label>
+        {#if household.coffee_slot}
+          <label><span>Kaffee</span><input type="time" step="60" bind:value={household.coffee_time} oninput={() => (message = '')} /></label>
+        {/if}
+        <label><span>Abend</span><input type="time" step="60" bind:value={household.dinner_time} oninput={() => (message = '')} /></label>
+      </fieldset>
       <div class="save">
         <button type="submit" class="primary" disabled={!changed || saving}>{saving ? 'Speichert …' : 'Speichern'}</button>
         {#if message}<span class:error={messageIsError} class:ok={!messageIsError}>{message}</span>{/if}
@@ -243,6 +260,23 @@
   }
 
   .household label span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .times legend {
+    padding: 0 0.25rem;
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-muted);

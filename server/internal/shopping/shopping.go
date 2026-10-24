@@ -127,7 +127,7 @@ func (s *Store) period(ctx context.Context, next bool) (mealplan.Period, string,
 }
 
 // slotOrder sortiert Mittag- vor Abendessen (alphabetisch wäre es umgekehrt).
-const slotOrder = `CASE e.slot WHEN 'lunch' THEN 0 ELSE 1 END`
+const slotOrder = mealplan.SlotOrder
 
 func (s *Store) loadEntries(ctx context.Context, period mealplan.Period, today string) ([]Entry, error) {
 	rows, err := s.db.QueryContext(ctx, `

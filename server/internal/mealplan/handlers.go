@@ -35,6 +35,9 @@ type listResponse struct {
 	Today              string  `json:"today"`
 	ShoppingPeriod     Period  `json:"shopping_period"`
 	NextShoppingPeriod Period  `json:"next_shopping_period"`
+	// SlotTimes: Uhrzeiten der Slots ("lunch": "12:00", …) für den
+	// Kalender der Home-Assistant-Integration (Schritt 9.3).
+	SlotTimes map[string]string `json:"slot_times"`
 }
 
 // list liefert die Einträge eines Zeitraums: ?from=2026-10-17&to=2026-10-23.
@@ -55,11 +58,17 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, r, err)
 		return
 	}
+	st, err := h.store.settings.Get(r.Context())
+	if err != nil {
+		httpx.WriteInternalError(w, r, err)
+		return
+	}
 	httpx.WriteJSON(w, http.StatusOK, listResponse{
 		Entries:            entries,
 		Today:              h.store.Today().Format(dateLayout),
 		ShoppingPeriod:     period,
 		NextShoppingPeriod: period.Next(),
+		SlotTimes:          map[string]string{SlotLunch: st.LunchTime, SlotCoffee: st.CoffeeTime, SlotDinner: st.DinnerTime},
 	})
 }
 
