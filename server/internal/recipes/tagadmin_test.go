@@ -70,7 +70,9 @@ func TestTagAdminNamesAreUniqueAcrossGroups(t *testing.T) {
 func TestTagAdminChangesReachTheApp(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
-	clock := time.Date(2026, 10, 24, 10, 0, 0, 0, time.UTC)
+	// Später als die echte Uhrzeit, mit der Create die Rezepte anlegt – sonst
+	// hinge der Test von der Tageszeit ab.
+	clock := time.Now().Add(time.Hour).Truncate(time.Second)
 	s.now = func() time.Time { return clock }
 	created, err := s.Create(ctx, lasagne(t, s)) // Hackfleisch, Auflauf/Ofen
 	if err != nil {
