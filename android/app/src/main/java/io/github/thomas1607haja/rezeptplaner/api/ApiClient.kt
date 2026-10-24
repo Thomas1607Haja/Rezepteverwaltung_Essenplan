@@ -86,6 +86,9 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
     // Einkauf und Bring
 
     /** Einkaufsliste der eingekauften Woche bzw. mit [next] des nächsten Einkaufs. */
+    suspend fun statistics(config: ServerConfig, period: String): Statistics =
+        get(config, "/api/v1/statistics?period=$period")
+
     suspend fun shoppingPreview(config: ServerConfig, next: Boolean): ShoppingPreview =
         get(config, "/api/v1/shopping/preview?period=" + if (next) "next" else "current")
 

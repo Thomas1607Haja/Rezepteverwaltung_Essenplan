@@ -31,7 +31,10 @@ type ListFilter struct {
 	// IllustrationsOnly: nur Rezepte mit gezeichnetem Bild (zum Ersetzen
 	// durch ein echtes Foto).
 	IllustrationsOnly bool
-	Sort              string // eine der Sort-Konstanten oder leer (= SortName)
+	// NeverPlanned: nur Rezepte ohne jeden Planeintrag – auch ohne einen
+	// zukünftigen (Ideen für Neues; Link aus der Statistik).
+	NeverPlanned bool
+	Sort         string // eine der Sort-Konstanten oder leer (= SortName)
 }
 
 // Summary ist die Kurzfassung eines Rezepts für Listen und Kacheln.
@@ -56,16 +59,21 @@ type Summary struct {
 type PlanInfo struct {
 	NextPlanned *string `json:"next_planned"` // nächster Termin ab heute, z. B. "2026-10-24"
 	LastPlanned *string `json:"last_planned"` // letzter Termin vor heute
-	PlanCount   int     `json:"plan_count"`   // wie oft insgesamt eingeplant
+	// PlanCount: wie oft eingeplant, bis einschließlich heute – Geplantes
+	// zählt erst, wenn der Tag da ist (wie in der Statistik).
+	PlanCount int `json:"plan_count"`
 }
 
-// planInfoColumns berechnet PlanInfo je Rezept r. Die beiden Platzhalter
-// sind jeweils der heutige Tag. Der Index meal_plan_entries_recipe
-// (recipe_id, date) macht die Unterabfragen schnell.
+// planInfoColumns berechnet PlanInfo je Rezept r. Die drei Platzhalter
+// sind jeweils der heutige Tag (planInfoArgs). Der Index
+// meal_plan_entries_recipe (recipe_id, date) macht die Unterabfragen schnell.
 const planInfoColumns = `
 	(SELECT MIN(date) FROM meal_plan_entries WHERE recipe_id = r.id AND date >= ?) AS next_planned,
 	(SELECT MAX(date) FROM meal_plan_entries WHERE recipe_id = r.id AND date < ?) AS last_planned,
-	(SELECT COUNT(*) FROM meal_plan_entries WHERE recipe_id = r.id) AS plan_count`
+	(SELECT COUNT(*) FROM meal_plan_entries WHERE recipe_id = r.id AND date <= ?) AS plan_count`
+
+// planInfoArgs liefert die Werte für die Platzhalter von planInfoColumns.
+func planInfoArgs(today string) []any { return []any{today, today, today} }
 
 // List liefert die Rezepte, die zum Filter f passen.
 func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
@@ -89,7 +97,7 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 	// Reihenfolge.
 	var where []string
 	today := s.today()
-	args := []any{today, today} // für planInfoColumns, die im SELECT zuerst kommen
+	args := planInfoArgs(today) // für planInfoColumns, die im SELECT zuerst kommen
 
 	for _, word := range strings.Fields(database.Fold(f.Query)) {
 		pattern := "%" + escapeLike(word) + "%"
@@ -105,6 +113,9 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 	}
 	if f.IllustrationsOnly {
 		where = append(where, "r.image_kind = 'illustration'")
+	}
+	if f.NeverPlanned {
+		where = append(where, "NOT EXISTS (SELECT 1 FROM meal_plan_entries e WHERE e.recipe_id = r.id)")
 	}
 
 	groups, err := s.tagIDsByGroup(ctx, f.TagIDs)

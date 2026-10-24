@@ -57,6 +57,7 @@ import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.RezeptplanerApplication
 import io.github.thomas1607haja.rezeptplaner.data.ServerConfig
 import io.github.thomas1607haja.rezeptplaner.ui.settings.SettingsScreen
+import io.github.thomas1607haja.rezeptplaner.ui.stats.StatisticsScreen
 import io.github.thomas1607haja.rezeptplaner.ui.settings.SettingsViewModel
 import io.github.thomas1607haja.rezeptplaner.ui.setup.SetupScreen
 import io.github.thomas1607haja.rezeptplaner.ui.setup.SetupViewModel
@@ -69,6 +70,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object MealPlanRoute
 @Serializable data object RecipesRoute
 @Serializable data object ShoppingRoute
+@Serializable data object StatisticsRoute
 @Serializable data object SettingsRoute
 
 /**
@@ -95,11 +97,12 @@ import kotlinx.serialization.Serializable
  */
 @Serializable data class RecipeRoute(val id: Long, val planServings: Int = 0, val entryId: Long = 0)
 
-/** Die vier Hauptbereiche in der unteren Leiste, wie in der Weboberfläche. */
+/** Die Hauptbereiche in der unteren Leiste, wie in der Weboberfläche. */
 private enum class Section(val route: Any, @StringRes val label: Int, @DrawableRes val icon: Int) {
     MealPlan(MealPlanRoute, R.string.nav_meal_plan, R.drawable.ic_nav_calendar),
     Recipes(RecipesRoute, R.string.nav_recipes, R.drawable.ic_nav_book),
     Shopping(ShoppingRoute, R.string.nav_shopping, R.drawable.ic_nav_cart),
+    Statistics(StatisticsRoute, R.string.nav_statistics, R.drawable.ic_nav_chart),
     Settings(SettingsRoute, R.string.nav_settings, R.drawable.ic_nav_gear),
 }
 
@@ -240,7 +243,8 @@ internal fun MainScaffold(
                             }
                         },
                         icon = { Icon(painterResource(section.icon), contentDescription = null) },
-                        label = { Text(stringResource(section.label)) },
+                        // Fünf Bereiche: kleinere Schrift, damit „Einstellungen“ in eine Zeile passt.
+                        label = { Text(stringResource(section.label), style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false) },
                     )
                 }
             }
@@ -345,6 +349,18 @@ internal fun MainScaffold(
             }
             composable<ShoppingRoute> {
                 ShoppingScreen(onOpenRecipe = { id, servings -> navController.navigate(RecipeRoute(id, servings)) })
+            }
+            composable<StatisticsRoute> {
+                StatisticsScreen(
+                    onRecipes = { filter ->
+                        app.recipeFilter.value = filter.copy(sort = app.recipeFilter.value.sort)
+                        navController.navigate(RecipesRoute) {
+                            popUpTo(navController.graph.findStartDestination().id)
+                            launchSingleTop = true
+                        }
+                    },
+                    onOpen = { id -> navController.navigate(RecipeRoute(id)) },
+                )
             }
             composable<SettingsRoute> {
                 SettingsScreen(

@@ -39,6 +39,7 @@
       tagIds: [...recipeFilter.tagIds],
       favoritesOnly: recipeFilter.favoritesOnly,
       illustrationsOnly: recipeFilter.illustrationsOnly,
+      neverPlanned: recipeFilter.neverPlanned,
       sort: recipeFilter.sort,
     };
     // Beim Tippen kurz warten, damit nicht jeder Buchstabe eine Anfrage
@@ -104,6 +105,17 @@
     >
       <Icon name="brush" size={18} />
       <span class="label-wide">Illustrationen</span>
+    </button>
+
+    <button
+      type="button"
+      class="toggle"
+      aria-pressed={recipeFilter.neverPlanned}
+      title="Nur Rezepte, die noch nie im Essensplan standen"
+      onclick={() => (recipeFilter.neverPlanned = !recipeFilter.neverPlanned)}
+    >
+      <Icon name="sparkle" size={18} />
+      <span class="label-wide">Nie eingeplant</span>
     </button>
 
     <select bind:value={recipeFilter.sort} aria-label="Sortierung">

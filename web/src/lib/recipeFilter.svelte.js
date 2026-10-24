@@ -7,6 +7,7 @@ export const recipeFilter = $state({
   tagIds: [],
   favoritesOnly: false,
   illustrationsOnly: false, // nur gezeichnete Bilder (zum Ersetzen durch Fotos)
+  neverPlanned: false, // nur Rezepte ohne jeden Planeintrag (Link aus der Statistik)
   sort: 'name', // 'name', 'newest', 'last_planned' oder 'most_planned'
 });
 
@@ -29,10 +30,11 @@ export function resetFilter() {
   recipeFilter.tagIds = [];
   recipeFilter.favoritesOnly = false;
   recipeFilter.illustrationsOnly = false;
+  recipeFilter.neverPlanned = false;
 }
 
 /** Ist irgendein Filter aktiv? */
 export function hasActiveFilter() {
   return recipeFilter.query.trim() !== '' || recipeFilter.tagIds.length > 0 || recipeFilter.favoritesOnly ||
-    recipeFilter.illustrationsOnly;
+    recipeFilter.illustrationsOnly || recipeFilter.neverPlanned;
 }

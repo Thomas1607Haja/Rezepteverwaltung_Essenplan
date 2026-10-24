@@ -284,7 +284,7 @@ func (s *Store) Get(ctx context.Context, id int64) (Recipe, error) {
 		       source_url, source_name, image, thumbnail, image_kind, is_favorite, notes, created_at, updated_at,
 		       parent_recipe_id,`+
 		planInfoColumns+`
-		FROM recipes r WHERE id = ?`, s.today(), s.today(), id).Scan(
+		FROM recipes r WHERE id = ?`, append(planInfoArgs(s.today()), id)...).Scan(
 		&r.ID, &r.Title, &r.Description, &r.BaseServings, &r.PrepMinutes, &r.TotalMinutes,
 		&r.SourceURL, &r.SourceName, &r.Image, &r.Thumbnail, &r.ImageKind, &r.IsFavorite, &r.Notes, &createdAt, &updatedAt,
 		&r.ParentRecipeID,

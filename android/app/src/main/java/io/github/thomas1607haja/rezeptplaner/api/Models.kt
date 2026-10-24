@@ -303,3 +303,45 @@ data class TodoList(@SerialName("entity_id") val entityId: String, val name: Str
 
 @Serializable
 data class HomeAssistantStatus(val mode: String = "", val lists: List<TodoList> = emptyList(), val error: String = "")
+
+// Statistik (server/internal/recipes/stats.go): Häufigkeiten zählen
+// Planeinträge bis einschließlich heute.
+
+@Serializable
+data class StatRecipe(
+    val id: Long,
+    val title: String,
+    val thumbnail: String = "",
+    val count: Int = 0,
+    @SerialName("last_planned") val lastPlanned: String? = null,
+    @SerialName("created_at") val createdAt: String = "",
+)
+
+@Serializable
+data class StatTag(val id: Long, val name: String, val count: Int = 0)
+
+@Serializable
+data class StatGroup(val name: String, val tags: List<StatTag> = emptyList())
+
+@Serializable
+data class StatNote(val note: String, val count: Int)
+
+/** GET /api/v1/statistics?period=3m|12m|all */
+@Serializable
+data class Statistics(
+    val period: String = "all",
+    val from: String? = null,
+    val today: String = "",
+    val recipes: Int = 0,
+    val planned: Int = 0,
+    @SerialName("never_planned") val neverPlanned: Int = 0,
+    val illustrated: Int = 0,
+    val favorites: Int = 0,
+    val entries: Int = 0,
+    val top: List<StatRecipe> = emptyList(),
+    @SerialName("favorites_waiting") val favoritesWaiting: List<StatRecipe> = emptyList(),
+    @SerialName("recently_added") val recentlyAdded: List<StatRecipe> = emptyList(),
+    val categories: List<StatGroup> = emptyList(),
+    @SerialName("without_category") val withoutCategory: Int = 0,
+    @SerialName("without_recipe") val withoutRecipe: List<StatNote> = emptyList(),
+)

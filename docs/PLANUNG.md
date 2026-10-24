@@ -264,7 +264,9 @@ Es wird nicht ausgelesen, was in Bring tatsächlich abgehakt wurde.
 
 ### Statistik und Statushinweis
 
-- Statistik: am häufigsten eingeplante Rezepte, filterbar nach Zeitraum (z. B. letzte 3 Monate, gesamt).
+- Statistik (eigene Seite in Web und App, Schritt 8.D): Anzahl Rezepte; schon eingeplant bzw. noch nie eingeplant (Anzahl, Prozent, Link auf den Filter „Nie eingeplant“); mit Illustration (Link auf den Filter); Favoriten; Top 20 der am häufigsten gegessenen Rezepte (letzte 3 Monate, letztes Jahr, gesamt); Einträge ohne Rezept im Zeitraum („2× Essen gehen“); Lieblingsgerichte, die lange nicht dran waren (Favoriten ohne Termin in den letzten 8 Wochen und ohne geplanten Termin); zuletzt hinzugefügt (5); Rezepte je Kategorie und ohne Kategorie.
+- **Zählregeln:** Häufigkeiten zählen Planeinträge bis einschließlich heute – Geplantes zählt erst, wenn der Tag da ist. Dieselbe Regel gilt für `plan_count` und die Sortierung „Am häufigsten eingeplant“. „Noch nie eingeplant“ heißt: kein einziger Eintrag, auch kein zukünftiger. Varianten zählen als eigene Rezepte, Einträge ohne Rezept nicht als Rezept. Alles wird bei Bedarf berechnet, nichts gespeichert.
+- Die App zeigt die Statistik online vom Server; ohne Verbindung rechnet sie „gesamt“ aus den Daten des Abgleichs (`plan_info`), ohne Zeitraum und ohne Einträge ohne Rezept.
 - Statushinweis an jedem Rezept:
   - „eingeplant in 5 Tagen“, wenn es in der Zukunft eingeplant ist (hat Vorrang)
   - sonst „zuletzt vor 2 Wochen“
@@ -589,7 +591,7 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App-Zugang
 | Einkauf | Vorschau der Einkaufsliste (aktueller oder folgender Einkaufszeitraum), An Bring senden, Differenz nachsenden |
 | Stammdaten | Kategorien (`GET /tags`), Vorratsliste (inkl. Prüfung, ob Zutatennamen im Vorrat sind), Einstellungen |
 | Kategorien verwalten | nur über Ingress: `GET/POST /tag-groups`, `PUT /tag-groups/order`, `PUT/DELETE /tag-groups/{id}` (`?move_to=` oder `?with_tags=true`), `PUT /tag-groups/{id}/tags` (Inhalt und Reihenfolge), `POST /tags`, `PUT/DELETE /tags/{id}`, `POST /tags/{id}/merge` |
-| Statistik | Häufigkeiten nach Zeitraum |
+| Statistik | `GET /statistics?period=3m\|12m\|all` (bei Bedarf berechnet); Rezeptliste mit `planned=never` |
 | Abgleich | `GET /sync?since=…`: Änderungen seit Zeitpunkt X (Rezepte vollständig, Planeinträge im Zeitfenster, Vorrat, Kategorien, Einstellungen, Löschungen) und die Serverzeit als nächster Startpunkt; Rezepte mit `parent_recipe_id` (beim Umhängen nach dem Löschen eines Ursprungsrezepts ändert sich `updated_at` der Varianten) |
 | Verwaltung | API-Schlüssel anlegen (mit QR-Code), sperren – nur über Ingress, nicht über den App-Zugang |
 | Bilder | Bild und Vorschaubild abrufen |
@@ -671,7 +673,7 @@ Rezepteverwaltung_Essenplan/
 | 8.A | (umgesetzt, App 0.9.0) App gleichwertig zum Web beim Planen: Rezeptauswahl mit Mittag/Abend, „Eintrag ohne Rezept“ (Freitext bis 200 Zeichen, Schnellauswahl „Essen gehen“, „Reste“, „Pizza bestellen“ wie im Web, dazu die bis zu fünf zuletzt verwendeten eigenen Texte aus den Daten auf dem Handy), Besteck-Symbol statt Bild, „Rezept wählen“ für Einträge ohne Rezept und umgekehrt Text statt Rezept beim Ersetzen. Dazu die kleinen Lücken: Favorit im Eintrags-Menü, Verschieben auf ein beliebiges Datum (Kalender), „Zutaten an Bring senden“ im Warnhinweis beim Verschieben, Kochansicht aus dem Plan mit „Im Essensplan: Tag · Portionen · Notiz“, Kategorie in der Kochansicht öffnet die gefilterte Rezeptübersicht, Trefferzahl und „Filter zurücksetzen“, Dubletten beim URL-Import als Link. Verschieben bleibt bei der Tagesauswahl (kein Ziehen) |
 | 8.B | (umgesetzt, Server 0.8.0, Skill 2.1) Skill 2.1 sucht per Websuche den Originallink (`source.url`, nur bei eindeutigem Treffer); der Server lädt beim Datei-Import das Foto von dieser Seite, wenn das Rezept kein Bild oder nur eine Illustration hat (nie ein echtes Foto ersetzen), Vorschau zeigt es. Format bleibt Version 2. Grenzen: höchstens 20 s für alle Seiten einer Vorschau, zwei gleichzeitig, sonst wie der URL-Import (SSRF-Sperre, 5 MB Seite, 20 MB Bild); das Bild liegt bis zum Bestätigen im Upload-Ordner. Die Skill kann außerdem eine im Chat eingefügte Kategorieliste statt `categories.md` verwenden (`--categories`) |
 | 8.C | (umgesetzt, Server 0.9.0, App 0.10.0) Kategorien und Gruppen verwalten (nur Weboberfläche): Tabelle `tag_groups` (Migration 011), Namen über alle Gruppen eindeutig (ohne Rücksicht auf Groß-/Kleinschreibung und Umlaute), Zusammenführen, Abgleich über `updated_at` der betroffenen Rezepte; Kategorieliste für die Claude-Skill kopieren; unbekannte Kategorien in der Import-Vorschau zuordnen, neu anlegen oder weglassen (Web und App) |
-| 8.D | (App 0.11.0) Statistik in Web und App (App offline aus den lokalen Daten, Zeitraum nur online); gezählt werden Planeinträge bis einschließlich heute – ebenso `plan_count` und die Sortierung „Am häufigsten eingeplant“; Filter „Noch nie eingeplant“ |
+| 8.D | (umgesetzt, Server 0.10.0, App 0.11.0) Statistik in Web und App (eigener Bereich „Statistik“ in der Navigation) (App offline aus den lokalen Daten, Zeitraum nur online); gezählt werden Planeinträge bis einschließlich heute – ebenso `plan_count` und die Sortierung „Am häufigsten eingeplant“; Filter „Noch nie eingeplant“ |
 
 **Bewusst nicht in der App:** API-Schlüssel und verbundene Geräte, Adresse für die App, „App installieren“, Kategorien verwalten. **Nie geplant:** Plan weiter als 14 Tage zurück in der App, Ziehen mit dem Finger im Plan der App (Tagesauswahl genügt).
 

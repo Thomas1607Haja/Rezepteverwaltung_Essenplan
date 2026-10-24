@@ -6,13 +6,15 @@
   import RecipePage from './pages/RecipePage.svelte';
   import ShoppingPage from './pages/ShoppingPage.svelte';
   import SettingsPage from './pages/SettingsPage.svelte';
+  import StatisticsPage from './pages/StatisticsPage.svelte';
   import NotFoundPage from './pages/NotFoundPage.svelte';
 
-  // Die vier Hauptbereiche (docs/PLANUNG.md, Abschnitt 5).
+  // Die Hauptbereiche (docs/PLANUNG.md, Abschnitt 5).
   const sections = [
     { path: '/', label: 'Essensplan', icon: 'calendar' },
     { path: '/recipes', label: 'Rezepte', icon: 'book' },
     { path: '/shopping', label: 'Einkauf', icon: 'cart' },
+    { path: '/statistics', label: 'Statistik', icon: 'chart' },
     { path: '/settings', label: 'Einstellungen', icon: 'gear' },
   ];
 
@@ -40,6 +42,7 @@
     { pattern: '/plan/add/:date', section: '/', load: loadRecipePickerPage },
     { pattern: '/plan/replace/:entryId', section: '/', load: loadRecipePickerPage },
     { pattern: '/shopping', section: '/shopping', page: ShoppingPage },
+    { pattern: '/statistics', section: '/statistics', page: StatisticsPage },
     { pattern: '/settings', section: '/settings', page: SettingsPage },
   ];
 

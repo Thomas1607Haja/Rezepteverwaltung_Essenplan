@@ -150,9 +150,9 @@ func (s *Store) PlanInfos(ctx context.Context) ([]RecipePlanInfo, error) {
 		SELECT recipe_id,
 		       MIN(CASE WHEN date >= ? THEN date END),
 		       MAX(CASE WHEN date < ? THEN date END),
-		       COUNT(*)
+		       COUNT(CASE WHEN date <= ? THEN 1 END)
 		FROM meal_plan_entries WHERE recipe_id IS NOT NULL
-		GROUP BY recipe_id ORDER BY recipe_id`, today, today)
+		GROUP BY recipe_id ORDER BY recipe_id`, today, today, today)
 	if err != nil {
 		return nil, fmt.Errorf("termine laden: %w", err)
 	}

@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.10.0
+
+- **Statistik** (neuer Bereich in der Navigation, auch in der App ab 0.11.0): Anzahl der Rezepte, wie viele schon bzw. noch nie eingeplant waren (mit Link auf die Rezeptliste), Rezepte mit Illustration, die 20 am häufigsten gegessenen Rezepte der letzten 3 Monate, des letzten Jahres oder insgesamt, Einträge ohne Rezept („2× Essen gehen“), Lieblingsgerichte, die lange nicht dran waren, zuletzt hinzugefügte Rezepte und die Verteilung auf die Kategorien.
+- **Gezählt wird bis heute:** Geplante Gerichte zählen erst, wenn ihr Tag da ist – in der Statistik und bei der Sortierung „Am häufigsten eingeplant“.
+- Neuer Filter **Nie eingeplant** in der Rezeptübersicht.
+
 ## 0.9.0
 
 - **Kategorien verwalten** (Einstellungen → Kategorien): Gruppen und Kategorien anlegen, umbenennen, per Ziehen sortieren – Kategorien auch in eine andere Gruppe –, zusammenführen (z. B. „Hähnchen“ in „Geflügel“) und löschen. Beim Löschen zeigt der Rezeptplaner, wie vielen Rezepten die Kategorie zugeordnet ist; die Rezepte bleiben, nur die Zuordnung fällt weg. Eine Gruppe mit Kategorien lässt sich löschen, indem man die Kategorien verschiebt oder mitlöscht. Namen gibt es nur einmal (Groß-/Kleinschreibung und Umlaute zählen nicht). Änderungen kommen mit dem nächsten Abgleich in die App.

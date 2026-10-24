@@ -57,7 +57,7 @@ export const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
 /**
  * Baut die Parameter für die Rezeptliste. Leere Werte werden weggelassen.
- * filter: { query, tagIds, favoritesOnly, illustrationsOnly, sort }
+ * filter: { query, tagIds, favoritesOnly, illustrationsOnly, neverPlanned, sort }
  */
 function listParams(filter) {
   const params = new URLSearchParams();
@@ -65,6 +65,7 @@ function listParams(filter) {
   for (const id of filter.tagIds ?? []) params.append('tag', id);
   if (filter.favoritesOnly) params.set('favorite', 'true');
   if (filter.illustrationsOnly) params.set('image', 'illustration');
+  if (filter.neverPlanned) params.set('planned', 'never');
   if (filter.sort) params.set('sort', filter.sort);
   const text = params.toString();
   return text ? '?' + text : '';
@@ -213,6 +214,9 @@ export const api = {
 
   /** Kategorien nach Gruppen: [{ name, tags: [{ id, name, ... }] }]. */
   listTagGroups: async () => (await request('GET', '/tags')).groups,
+
+  /** Statistik für period '3m', '12m' oder 'all' (bei Bedarf berechnet). */
+  statistics: (period) => request('GET', `/statistics?period=${period}`),
 
   // Kategorien verwalten (nur Weboberfläche, Einstellungen → Kategorien).
   /** Alle Gruppen, auch leere: [{ id, name, position, tags: [{ id, name, position, recipe_count }] }]. */

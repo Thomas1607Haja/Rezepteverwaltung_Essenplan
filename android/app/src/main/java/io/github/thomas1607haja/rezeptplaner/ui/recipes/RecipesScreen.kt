@@ -117,6 +117,11 @@ fun RecipesScreen(
                     label = { Text("Favoriten") },
                     leadingIcon = { Icon(painterResource(R.drawable.ic_heart), contentDescription = null, Modifier.size(18.dp)) },
                 )
+                FilterChip(
+                    selected = filter.neverPlanned,
+                    onClick = { state.value = filter.copy(neverPlanned = !filter.neverPlanned) },
+                    label = { Text("Nie eingeplant") },
+                )
                 // Nur anbieten, wenn es gezeichnete Bilder gibt.
                 if (filter.illustrationsOnly || snapshot.recipes.any { it.isIllustrated }) {
                     FilterChip(

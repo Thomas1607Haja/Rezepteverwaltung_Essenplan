@@ -9,6 +9,7 @@ import io.github.thomas1607haja.rezeptplaner.data.LocalStore
 import io.github.thomas1607haja.rezeptplaner.data.PlanRepository
 import io.github.thomas1607haja.rezeptplaner.data.RecipeRepository
 import io.github.thomas1607haja.rezeptplaner.data.ShoppingRepository
+import io.github.thomas1607haja.rezeptplaner.data.StatisticsRepository
 import io.github.thomas1607haja.rezeptplaner.data.SyncRepository
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipeFilter
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,7 @@ class RezeptplanerApplication : Application() {
     val planRepository by lazy { PlanRepository(configRepository, apiClient, syncRepository) }
     val shoppingRepository by lazy { ShoppingRepository(configRepository, apiClient, syncRepository) }
     val recipeRepository by lazy { RecipeRepository(configRepository, apiClient, syncRepository) }
+    val statisticsRepository by lazy { StatisticsRepository(configRepository, apiClient) }
     val importRepository by lazy { ImportRepository(contentResolver, configRepository, apiClient, syncRepository) }
 
     /**

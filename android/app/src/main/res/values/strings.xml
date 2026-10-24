@@ -4,5 +4,6 @@
     <string name="nav_meal_plan">Essensplan</string>
     <string name="nav_recipes">Rezepte</string>
     <string name="nav_shopping">Einkauf</string>
+    <string name="nav_statistics">Statistik</string>
     <string name="nav_settings">Einstellungen</string>
 </resources>

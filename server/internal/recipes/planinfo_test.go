@@ -58,7 +58,7 @@ func TestPlanInfo(t *testing.T) {
 		count      int
 	}{
 		"Spaghetti Napoli":    {"2026-10-21", "2026-10-10", 3}, // heute zählt als nächster Termin
-		"Pilzrisotto":         {"2026-10-26", "2026-03-01", 2},
+		"Pilzrisotto":         {"2026-10-26", "2026-03-01", 1}, // Geplantes zählt erst, wenn der Tag da ist
 		"Steak mit Tomaten":   {"-", "2026-10-20", 1},
 		"Äpfel im Schlafrock": {"-", "-", 0},
 	}
@@ -79,8 +79,14 @@ func TestPlanInfo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if str(r.NextPlanned) != "2026-10-26" || r.PlanCount != 2 {
+	if str(r.NextPlanned) != "2026-10-26" || r.PlanCount != 1 {
 		t.Errorf("Get: next=%s count=%d", str(r.NextPlanned), r.PlanCount)
+	}
+
+	// Noch nie eingeplant: Risotto steht nur zukünftig drin und zählt nicht dazu.
+	never, err := s.List(ctx, ListFilter{NeverPlanned: true})
+	if err != nil || len(never) != 1 || never[0].Title != "Äpfel im Schlafrock" {
+		t.Errorf("NeverPlanned: %+v %v", never, err)
 	}
 
 	sorts := map[string][]string{

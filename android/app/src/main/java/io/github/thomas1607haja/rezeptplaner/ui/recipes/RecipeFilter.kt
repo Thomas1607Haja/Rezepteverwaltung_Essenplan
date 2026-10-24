@@ -20,9 +20,11 @@ data class RecipeFilter(
     val favoritesOnly: Boolean = false,
     /** Nur gezeichnete Bilder – zum Ersetzen durch ein Foto. */
     val illustrationsOnly: Boolean = false,
+    /** Nur Rezepte ohne jeden Planeintrag, auch ohne zukünftigen (Link aus der Statistik). */
+    val neverPlanned: Boolean = false,
     val sort: RecipeSort = RecipeSort.Name,
 ) {
-    val isActive: Boolean get() = query.isNotBlank() || tagIds.isNotEmpty() || favoritesOnly || illustrationsOnly
+    val isActive: Boolean get() = query.isNotBlank() || tagIds.isNotEmpty() || favoritesOnly || illustrationsOnly || neverPlanned
 
     /** Suche und Filter zurücksetzen, die Sortierung bleibt (wie resetFilter im Web). */
     fun reset() = RecipeFilter(sort = sort)
@@ -47,6 +49,8 @@ fun filterRecipes(snapshot: Snapshot, filter: RecipeFilter): List<RecipeItem> {
     val items = snapshot.recipes.asSequence()
         .filter { !filter.favoritesOnly || it.isFavorite }
         .filter { !filter.illustrationsOnly || it.isIllustrated }
+        // plan_info gibt es für jedes Rezept mit mindestens einem Eintrag.
+        .filter { !filter.neverPlanned || it.id !in info }
         .filter { r ->
             if (words.isEmpty()) return@filter true
             val text = fold(r.title + " " + r.description + " " + r.ingredients.joinToString(" ") { it.name })

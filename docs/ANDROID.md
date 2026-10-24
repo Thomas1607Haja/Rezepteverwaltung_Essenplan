@@ -151,7 +151,7 @@ Quellen: [Android Developers Blog](https://developer.android.com/blog/posts/andr
 
 ## 7. Was die App kann und welche Daten auf dem Handy liegen
 
-**Funktionen (App 0.10):**
+**Funktionen (App 0.11):**
 
 | Bereich | Offline | Online |
 |---|---|---|
@@ -159,6 +159,7 @@ Quellen: [Android Developers Blog](https://developer.android.com/blog/posts/andr
 | Rezepte | suchen, filtern, Kochansicht mit Portionsrechner | anlegen, bearbeiten, Variante, Favorit, löschen |
 | Import | – | Link teilen (Browser, Chefkoch-App), Foto einer Seite (Texterkennung), Datei der Claude-Skill (Teilen, „Öffnen mit“, Dateiauswahl, WhatsApp) mit Vorschau; unbekannte Kategorien zuordnen, neu anlegen oder weglassen |
 | Einkauf | – | Liste der eingekauften Woche / des nächsten Einkaufs, an Bring senden, Differenz nachsenden |
+| Statistik | „gesamt“ aus den Daten des Abgleichs | jeder Zeitraum, Einträge ohne Rezept (vom Server) |
 
 Geändert wird nur online und direkt beim Server; danach gleicht die App ab. Es gibt keine Warteschlange und damit keine Konflikte (PLANUNG.md, Abschnitt 7).
 

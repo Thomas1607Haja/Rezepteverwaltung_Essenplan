@@ -40,6 +40,7 @@ func (h *Handler) Register(mux httpx.Router) {
 	mux.Handle("GET /api/v1/images/{name}", h.images)
 	mux.HandleFunc("GET /api/v1/tags", h.listTags)
 	h.registerTagAdmin(mux)
+	mux.HandleFunc("GET /api/v1/statistics", h.statistics)
 }
 
 // listResponse ist die Antwort der Rezeptliste. Das umschließende Objekt
@@ -90,6 +91,17 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	default:
 		httpx.WriteJSON(w, http.StatusBadRequest,
 			httpx.ErrorResponse{Error: "erwartet image=illustration", Field: "image"})
+		return
+	}
+
+	// planned=never: nur Rezepte, die noch nie im Essensplan standen.
+	switch value := params.Get("planned"); value {
+	case "":
+	case "never":
+		filter.NeverPlanned = true
+	default:
+		httpx.WriteJSON(w, http.StatusBadRequest,
+			httpx.ErrorResponse{Error: "erwartet planned=never", Field: "planned"})
 		return
 	}
 
@@ -262,4 +274,18 @@ func writeStoreError(w http.ResponseWriter, r *http.Request, err error) {
 	default:
 		httpx.WriteInternalError(w, r, err)
 	}
+}
+
+// statistics liefert die Statistik, ?period=3m|12m|all (Standard all).
+func (h *Handler) statistics(w http.ResponseWriter, r *http.Request) {
+	period := r.URL.Query().Get("period")
+	if period == "" {
+		period = PeriodAll
+	}
+	st, err := h.store.Statistics(r.Context(), period)
+	if err != nil {
+		writeStoreError(w, r, err)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, st)
 }
