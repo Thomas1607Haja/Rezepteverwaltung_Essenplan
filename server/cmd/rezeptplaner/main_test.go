@@ -135,7 +135,8 @@ func TestAppAccessWithValidKey(t *testing.T) {
 		{"POST /api/v1/tags/{id}/merge", http.StatusForbidden},
 		{"GET /api/v1/courses/suggestions", http.StatusForbidden},
 		{"POST /api/v1/courses/assign", http.StatusForbidden},
-		{"GET /", http.StatusNotFound}, // keine Weboberfläche
+		{"POST /api/v1/tags/bulk", http.StatusForbidden}, // Zuweisungsmodus nur im Web
+		{"GET /", http.StatusNotFound},                   // keine Weboberfläche
 		{"GET /index.html", http.StatusNotFound},
 	}
 	for _, tt := range tests {

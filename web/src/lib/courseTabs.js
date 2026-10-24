@@ -12,8 +12,11 @@ const TABS = [
 
 const fold = (s) => s.toLocaleLowerCase('de').replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ß/g, 'ss');
 
-/** Reiter mit den IDs ihrer Gänge: [{ key, label, ids }], vorn „Alle“. */
-export function courseTabs(groups) {
+/**
+ * Reiter mit den IDs ihrer Gänge: [{ key, label, ids }], vorn „Alle“.
+ * withNone: hinten „Ohne Gang“ (key 'none', nur Rezeptübersicht im Web).
+ */
+export function courseTabs(groups, withNone = false) {
   const course = groups.find((g) => g.role === 'course');
   const tabs = [{ key: 'all', label: 'Alle', ids: [] }];
   if (!course) return tabs;
@@ -21,5 +24,6 @@ export function courseTabs(groups) {
     const ids = course.tags.filter((t) => tab.names.some((n) => fold(n) === fold(t.name))).map((t) => t.id);
     if (ids.length > 0) tabs.push({ ...tab, ids });
   }
+  if (withNone) tabs.push({ key: 'none', label: 'Ohne Gang', ids: [] });
   return tabs;
 }

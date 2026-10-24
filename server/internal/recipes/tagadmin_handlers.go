@@ -24,6 +24,7 @@ func (h *Handler) registerTagAdmin(mux httpx.Router) {
 	mux.HandleFunc("PUT /api/v1/tags/{id}", h.updateTag)
 	mux.HandleFunc("DELETE /api/v1/tags/{id}", h.deleteTag)
 	mux.HandleFunc("POST /api/v1/tags/{id}/merge", h.mergeTag)
+	mux.HandleFunc("POST /api/v1/tags/bulk", h.bulkTags)
 }
 
 // writeTagError übersetzt Fehler der Verwaltung in HTTP-Antworten.

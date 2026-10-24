@@ -54,6 +54,7 @@ type listResponse struct {
 //	q=Nudeln%20Tomate   Suchtext
 //	tag=3&tag=11        Kategorie-IDs (mehrfach möglich)
 //	course=41&course=42 Schnellfilter-Reiter: einer dieser Gänge
+//	course=none         nur Rezepte ohne Gang
 //	favorite=true       nur Favoriten
 //	sort=name|newest    Sortierung (Standard: name)
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
@@ -74,6 +75,10 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		filter.TagIDs = append(filter.TagIDs, id)
 	}
 	for _, value := range params["course"] {
+		if value == "none" {
+			filter.WithoutCourse = true
+			continue
+		}
 		id, err := strconv.ParseInt(value, 10, 64)
 		if err != nil || id <= 0 {
 			httpx.WriteJSON(w, http.StatusBadRequest,

@@ -8,7 +8,7 @@ export const recipeFilter = $state({
   favoritesOnly: false,
   illustrationsOnly: false, // nur gezeichnete Bilder (zum Ersetzen durch Fotos)
   neverPlanned: false, // nur Rezepte ohne jeden Planeintrag (Link aus der Statistik)
-  course: 'all', // Schnellfilter-Reiter nach Gang (lib/courseTabs.js)
+  course: 'all', // Schnellfilter-Reiter nach Gang (lib/courseTabs.js); 'none' = ohne Gang
   sort: 'name', // 'name', 'newest', 'last_planned' oder 'most_planned'
 });
 
@@ -38,5 +38,11 @@ export function resetFilter() {
 /** Ist irgendein Filter aktiv? */
 export function hasActiveFilter() {
   return recipeFilter.query.trim() !== '' || recipeFilter.tagIds.length > 0 || recipeFilter.favoritesOnly ||
-    recipeFilter.illustrationsOnly || recipeFilter.neverPlanned;
+    recipeFilter.illustrationsOnly || recipeFilter.neverPlanned || recipeFilter.course !== 'all';
 }
+
+/**
+ * Zuweisungsmodus mit Vorauswahl öffnen (aus Einstellungen → Gänge):
+ * { tagId, ids } – die Rezeptübersicht übernimmt es einmal beim Öffnen.
+ */
+export const assignPreset = $state({ tagId: 0, ids: [] });

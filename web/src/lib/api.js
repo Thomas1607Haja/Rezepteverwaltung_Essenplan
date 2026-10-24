@@ -57,7 +57,7 @@ export const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
 /**
  * Baut die Parameter für die Rezeptliste. Leere Werte werden weggelassen.
- * filter: { query, tagIds, favoritesOnly, illustrationsOnly, neverPlanned, courseIds, sort }
+ * filter: { query, tagIds, favoritesOnly, illustrationsOnly, neverPlanned, courseIds, withoutCourse, sort }
  */
 function listParams(filter) {
   const params = new URLSearchParams();
@@ -67,6 +67,7 @@ function listParams(filter) {
   if (filter.illustrationsOnly) params.set('image', 'illustration');
   if (filter.neverPlanned) params.set('planned', 'never');
   for (const id of filter.courseIds ?? []) params.append('course', id);
+  if (filter.withoutCourse) params.append('course', 'none');
   if (filter.sort) params.set('sort', filter.sort);
   const text = params.toString();
   return text ? '?' + text : '';
@@ -244,6 +245,11 @@ export const api = {
   courseSuggestions: async () => (await request('GET', '/courses/suggestions')).suggestions,
   /** Gänge zuordnen: [{ recipe_id, tag_id }] → { assigned }. */
   assignCourses: (assignments) => request('POST', '/courses/assign', { assignments }),
+  /**
+   * Kategorien gesammelt ändern (Zuweisungsmodus): add/remove [{ recipe_id, tag_id }]
+   * → { added, removed, recipes }. Mit vertauschten Listen zurück = rückgängig.
+   */
+  bulkTags: (add, remove = []) => request('POST', '/tags/bulk', { add, remove }),
   renameTagGroup: (id, name) => request('PUT', `/tag-groups/${id}`, { name }),
   orderTagGroups: (ids) => request('PUT', '/tag-groups/order', { ids }),
   /** Löscht eine Gruppe; ihre Kategorien kommen nach moveTo oder werden mit gelöscht (withTags). */

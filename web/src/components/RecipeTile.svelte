@@ -4,12 +4,15 @@
   import { imageUrl } from '../lib/api.js';
 
   // recipe ist eine Kurzfassung aus der Rezeptliste.
-  let { recipe } = $props();
+  //   courses   Namen der Gänge des Rezepts (Etikett auf der Kachel)
+  //   onselect  gesetzt = Zuweisungsmodus: Klick wählt aus statt zu öffnen
+  //   selected  im Zuweisungsmodus ausgewählt
+  let { recipe, courses = [], onselect = null, selected = false } = $props();
 
   const minutes = $derived(recipe.total_minutes ?? recipe.prep_minutes);
 </script>
 
-<a class="tile" href={'#/recipes/' + recipe.id}>
+{#snippet content()}
   <div class="image">
     {#if recipe.thumbnail}
       <!-- loading="lazy": Bilder weiter unten lädt der Browser erst beim Scrollen. -->
@@ -22,6 +25,11 @@
     {/if}
   </div>
   <div class="body">
+    {#if courses.length > 0}
+      <span class="courses">{courses.join(' · ')}</span>
+    {:else if onselect}
+      <span class="courses none">ohne Gang</span>
+    {/if}
     <h2 class="title">{recipe.title}</h2>
     {#if recipe.parent_recipe_id != null}<span class="variant-badge">Variante</span>{/if}
     <p class="status" class:upcoming={recipe.next_planned}>{planStatus(recipe)}</p>
@@ -34,7 +42,30 @@
       {/if}
     </div>
   </div>
-</a>
+{/snippet}
+
+{#if onselect}
+  <!-- div statt button: Überschrift und Blöcke sind in einem button nicht erlaubt. -->
+  <div
+    class="tile selectable"
+    class:selected
+    role="checkbox"
+    aria-checked={selected}
+    tabindex="0"
+    onclick={() => onselect(recipe)}
+    onkeydown={(e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        onselect(recipe);
+      }
+    }}
+  >
+    <span class="check" aria-hidden="true">{selected ? '✓' : ''}</span>
+    {@render content()}
+  </div>
+{:else}
+  <a class="tile" href={'#/recipes/' + recipe.id}>{@render content()}</a>
+{/if}
 
 <style>
   .tile {
@@ -47,6 +78,54 @@
     color: inherit;
     text-decoration: none;
     transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .tile.selectable {
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .tile.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .check {
+    position: absolute;
+    z-index: 1;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border: 2px solid var(--accent);
+    border-radius: 0.35rem;
+    background: var(--surface);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .tile.selected .check {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .courses {
+    align-self: flex-start;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  .courses.none {
+    background: var(--surface-hover);
+    color: var(--text-muted);
+    font-weight: 400;
   }
 
   .tile:hover {

@@ -2,8 +2,10 @@ package recipes
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
@@ -37,7 +39,10 @@ type ListFilter struct {
 	// CourseTagIDs: Schnellfilter-Reiter (z. B. „Backen“ = Kuchen, Gebäck,
 	// Brot) – mindestens einer davon; zusätzlich zu TagIDs.
 	CourseTagIDs []int64
-	Sort         string // eine der Sort-Konstanten oder leer (= SortName)
+	// WithoutCourse: nur Rezepte ohne Kategorie der Gang-Gruppe (zum
+	// Nachtragen von Hand, Weboberfläche).
+	WithoutCourse bool
+	Sort          string // eine der Sort-Konstanten oder leer (= SortName)
 }
 
 // Summary ist die Kurzfassung eines Rezepts für Listen und Kacheln.
@@ -51,6 +56,9 @@ type Summary struct {
 	IsFavorite   bool   `json:"is_favorite"`
 	// Gesetzt bei einer Variante (Kennzeichen in der Übersicht).
 	ParentRecipeID *int64 `json:"parent_recipe_id"`
+	// TagIDs: Kategorien des Rezepts, z. B. für das Gang-Etikett auf der
+	// Kachel und den Zuweisungsmodus der Weboberfläche.
+	TagIDs []int64 `json:"tag_ids"`
 	// Eingebettetes Struct: Seine Felder erscheinen im JSON direkt neben
 	// den anderen (next_planned, last_planned, plan_count).
 	PlanInfo
@@ -126,6 +134,11 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 			args = append(args, id)
 		}
 	}
+	if f.WithoutCourse {
+		where = append(where, `NOT EXISTS (SELECT 1 FROM recipe_tags rt
+			JOIN tags t ON t.id = rt.tag_id JOIN tag_groups g ON g.id = t.group_id
+			WHERE rt.recipe_id = r.id AND g.role = '`+RoleCourse+`')`)
+	}
 	if f.NeverPlanned {
 		where = append(where, "NOT EXISTS (SELECT 1 FROM meal_plan_entries e WHERE e.recipe_id = r.id)")
 	}
@@ -143,7 +156,7 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 	}
 
 	query := `SELECT r.id, r.title, r.prep_minutes, r.total_minutes, r.thumbnail, r.image_kind, r.is_favorite,
-		r.parent_recipe_id,` +
+		r.parent_recipe_id, (SELECT group_concat(tag_id) FROM recipe_tags WHERE recipe_id = r.id),` +
 		planInfoColumns + ` FROM recipes r`
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")
@@ -160,11 +173,19 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 	list := []Summary{}
 	for rows.Next() {
 		var sum Summary
+		var tagIDs sql.NullString
 		if err := rows.Scan(&sum.ID, &sum.Title, &sum.PrepMinutes, &sum.TotalMinutes,
-			&sum.Thumbnail, &sum.ImageKind, &sum.IsFavorite, &sum.ParentRecipeID,
+			&sum.Thumbnail, &sum.ImageKind, &sum.IsFavorite, &sum.ParentRecipeID, &tagIDs,
 			&sum.NextPlanned, &sum.LastPlanned, &sum.PlanCount); err != nil {
 			return nil, fmt.Errorf("rezeptliste laden: %w", err)
 		}
+		sum.TagIDs = []int64{}
+		for _, part := range strings.Split(tagIDs.String, ",") {
+			if id, err := strconv.ParseInt(part, 10, 64); err == nil {
+				sum.TagIDs = append(sum.TagIDs, id)
+			}
+		}
+		slices.Sort(sum.TagIDs)
 		list = append(list, sum)
 	}
 	if err := rows.Err(); err != nil {

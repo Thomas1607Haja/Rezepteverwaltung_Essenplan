@@ -1,5 +1,7 @@
 <script>
   import { api, imageUrl } from '../lib/api.js';
+  import { navigate } from '../lib/router.svelte.js';
+  import { assignPreset, resetFilter, recipeFilter } from '../lib/recipeFilter.svelte.js';
 
   // Gänge zuordnen (Schritt 9.1): Der Server schlägt für jedes Rezept ohne
   // Gang einen vor. Häkchen und Auswahl prüfen, dann gesammelt übernehmen.
@@ -24,6 +26,22 @@
   load();
 
   const count = $derived(Object.values(chosen).filter((id) => id > 0).length);
+
+  // Vorschläge je Gang, für „Vorschläge für … prüfen“.
+  const byCourse = $derived(
+    courses
+      .map((c) => ({ ...c, ids: (suggestions ?? []).filter((s) => s.tag_id === c.id).map((s) => s.recipe_id) }))
+      .filter((c) => c.ids.length > 0),
+  );
+
+  /** Zuweisungsmodus der Rezeptübersicht mit den Vorschlägen als Auswahl öffnen. */
+  function review(course) {
+    resetFilter();
+    recipeFilter.course = 'none';
+    assignPreset.tagId = course.id;
+    assignPreset.ids = course.ids;
+    navigate('/recipes');
+  }
 
   async function apply() {
     busy = true;
@@ -53,6 +71,17 @@
 {#if error}<p class="error">{error}</p>{/if}
 {#if message}<p class="ok">{message}</p>{/if}
 
+{#if byCourse.length > 0}
+  <div class="review">
+    <p class="hint">
+      Oder in der Rezeptübersicht mit Bildern prüfen – die Vorschläge sind dort schon ausgewählt (Zuweisungsmodus):
+    </p>
+    {#each byCourse as c (c.id)}
+      <button type="button" onclick={() => review(c)}>Vorschläge für {c.name} prüfen ({c.ids.length})</button>
+    {/each}
+  </div>
+{/if}
+
 {#if suggestions === null && !error}
   <p>Lädt …</p>
 {:else if suggestions?.length === 0}
@@ -81,6 +110,28 @@
 {/if}
 
 <style>
+  .review {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .review .hint {
+    flex-basis: 100%;
+    margin: 0;
+  }
+
+  .review button {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--accent);
+    font: inherit;
+    cursor: pointer;
+  }
+
   .hint {
     color: var(--text-muted);
     font-size: 0.9rem;

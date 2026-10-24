@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.17.0
+
+- **Gänge schnell von Hand zuordnen (Weboberfläche):** In der Rezeptübersicht gibt es den Reiter „Ohne Gang“ mit Anzahl – kombinierbar mit Suche, Kategorien und Favoriten. „Gang zuweisen“ schaltet in einen Auswahlmodus: Gang wählen, Rezepte anklicken (oder „Alle sichtbaren auswählen“), „Übernehmen“ – mit „Rückgängig“ für einige Sekunden. Der Modus bleibt offen für den nächsten Gang bis „Fertig“. Auch „Gang entfernen“ und jede andere Kategorie lassen sich so zuweisen oder entfernen. Die Kacheln zeigen ihren Gang.
+- Unter Einstellungen → Gänge öffnet „Vorschläge für … prüfen“ diesen Modus mit den Vorschlägen bereits ausgewählt.
+- Die App erhält die neuen Zuordnungen beim nächsten Abgleich; eine neue App-Version ist nicht nötig.
+
 ## 0.16.0
 
 - **Menüs:** Mehrere Gänge an einem Abend, z. B. Suppe, Hauptgericht und Nachtisch. Anlegen über Plus → „Menü zusammenstellen …“ oder am Eintrag „Zu einem Menü erweitern“. Jeder Gang bleibt ein eigenes Gericht im Plan (Einkauf, Bring und abgewählte Zutaten wie bisher); das Menü hat einen Titel (automatisch das Hauptgericht), eine Notiz und die Personenzahl, die sich auf alle Gänge übertragen lässt. Verschieben und Tauschen nur als ganzes Menü, ein einzelner Gang lässt sich lösen. „Zutaten vorhanden …“ für alle Gänge auf einmal, Kochansicht mit allen Gängen. Die Statistik zählt jedes Gericht und zusätzlich die Menüs.
