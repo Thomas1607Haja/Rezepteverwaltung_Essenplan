@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.9.0
+
+- **Kategorien verwalten** (Einstellungen → Kategorien): Gruppen und Kategorien anlegen, umbenennen, per Ziehen sortieren – Kategorien auch in eine andere Gruppe –, zusammenführen (z. B. „Hähnchen“ in „Geflügel“) und löschen. Beim Löschen zeigt der Rezeptplaner, wie vielen Rezepten die Kategorie zugeordnet ist; die Rezepte bleiben, nur die Zuordnung fällt weg. Eine Gruppe mit Kategorien lässt sich löschen, indem man die Kategorien verschiebt oder mitlöscht. Namen gibt es nur einmal (Groß-/Kleinschreibung und Umlaute zählen nicht). Änderungen kommen mit dem nächsten Abgleich in die App.
+- **Kategorieliste für Claude kopieren:** Text für den Chat mit der Claude-Skill, damit sie die eigenen Kategorien kennt.
+- **Unbekannte Kategorien beim Datei-Import** (Weboberfläche und App ab 0.10.0): einer vorhandenen Kategorie zuordnen, neu anlegen oder weglassen.
+- Die Datenbank bekommt beim ersten Start eine eigene Tabelle für die Gruppen; vorhandene Kategorien und Zuordnungen bleiben erhalten.
+
 ## 0.8.0
 
 - **Foto aus dem Rezeptlink beim Datei-Import:** Hat ein importiertes Rezept eine Webadresse, aber kein Foto (oder nur eine Illustration), holt der Rezeptplaner das Rezeptbild von dieser Seite. Die Vorschau zeigt es mit „Foto von … wird übernommen“; ein Foto aus der Datei wird nie ersetzt, und von der Seite kommt nur das Bild. Die Claude-Skill (Version 2.1) sucht dafür das Originalrezept per Websuche und trägt den Link nur bei eindeutigem Treffer ein.

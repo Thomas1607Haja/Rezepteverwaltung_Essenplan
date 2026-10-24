@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -26,8 +28,8 @@ func TestMigrateCreatesSchemaAndTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Migrate: %v", err)
 	}
-	if version != 10 {
-		t.Errorf("version = %d, erwartet 10", version)
+	if version != 11 {
+		t.Errorf("version = %d, erwartet 11", version)
 	}
 
 	// 8 Hauptzutat + 2 Geschmack + 8 Art + 5 Eigenschaften
@@ -53,8 +55,8 @@ func TestMigrateTwiceChangesNothing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("zweite Migration: %v", err)
 	}
-	if version != 10 {
-		t.Errorf("version = %d, erwartet 10", version)
+	if version != 11 {
+		t.Errorf("version = %d, erwartet 11", version)
 	}
 }
 
@@ -264,5 +266,57 @@ func TestAutoincrementMigrationKeepsDataAndIDs(t *testing.T) {
 	}
 	if got := count("SELECT count(*) FROM recipes WHERE id = 2 AND parent_recipe_id IS NULL"); got != 1 {
 		t.Error("ON DELETE SET NULL für parent_recipe_id wirkt nicht")
+	}
+}
+
+func TestTagGroupsMigrationKeepsTagsOrderAndCounter(t *testing.T) {
+	ctx := context.Background()
+	db := openTestDB(t)
+	if _, err := migrateTo(ctx, db, 10); err != nil {
+		t.Fatalf("Migration bis 10: %v", err)
+	}
+	now := "2026-10-24T10:00:00.000Z"
+	for _, q := range []string{
+		`INSERT INTO recipes (id, title, base_servings, created_at, updated_at) VALUES (1, 'Lasagne', 4, '` + now + `', '` + now + `')`,
+		`INSERT INTO recipe_tags (recipe_id, tag_id, updated_at) VALUES (1, 11, '` + now + `')`,
+		// Kategorie 24 war die neueste und ist gelöscht.
+		`INSERT INTO tags (id, name, tag_group, position, updated_at) VALUES (24, 'Weg', 'Art', 9, '` + now + `')`,
+		`DELETE FROM tags WHERE id = 24`,
+	} {
+		if _, err := db.ExecContext(ctx, q); err != nil {
+			t.Fatalf("%s: %v", q, err)
+		}
+	}
+	if _, err := Migrate(ctx, db); err != nil {
+		t.Fatalf("Migration 11: %v", err)
+	}
+
+	rows, err := db.QueryContext(ctx, `SELECT name, position FROM tag_groups ORDER BY position`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var groups []string
+	for rows.Next() {
+		var name string
+		var pos int
+		rows.Scan(&name, &pos)
+		groups = append(groups, fmt.Sprintf("%d:%s", pos, name))
+	}
+	rows.Close()
+	if got := strings.Join(groups, ","); got != "1:Hauptzutat,2:Geschmack,3:Art,4:Eigenschaften" {
+		t.Errorf("Gruppen = %s", got)
+	}
+	var tagName, groupName string
+	err = db.QueryRowContext(ctx, `SELECT t.name, g.name FROM recipe_tags rt JOIN tags t ON t.id = rt.tag_id
+		JOIN tag_groups g ON g.id = t.group_id WHERE rt.recipe_id = 1`).Scan(&tagName, &groupName)
+	if err != nil || tagName != "Pasta" || groupName != "Art" {
+		t.Errorf("Zuordnung: %q %q %v", tagName, groupName, err)
+	}
+	res, err := db.ExecContext(ctx, `INSERT INTO tags (name, group_id, position, updated_at) VALUES ('Neu', 1, 9, ?)`, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id, _ := res.LastInsertId(); id != 25 {
+		t.Errorf("neue Kategorie hat ID %d, erwartet 25 (24 war gelöscht)", id)
 	}
 }

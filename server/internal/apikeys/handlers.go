@@ -117,6 +117,13 @@ func Require(store *Store, next http.Handler) http.Handler {
 			httpx.WriteError(w, http.StatusForbidden, "schlüssel nur über die weboberfläche verwalten")
 			return
 		}
+		// Kategorien verwalten nur in der Weboberfläche (Schritt 8.C); lesen
+		// (GET /api/v1/tags) darf die App.
+		if path == "/api/v1/tag-groups" || strings.HasPrefix(path, "/api/v1/tag-groups/") ||
+			(r.Method != http.MethodGet && (path == "/api/v1/tags" || strings.HasPrefix(path, "/api/v1/tags/"))) {
+			httpx.WriteError(w, http.StatusForbidden, "kategorien nur über die weboberfläche verwalten")
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }

@@ -12,6 +12,10 @@
   let result = $state(null);
   let dragging = $state(false);
   let input = $state();
+  // Unbekannte Kategorien: Wahl je Name ('' = weglassen, 'tag:7' = zuordnen,
+  // 'new:3' = in Gruppe 3 neu anlegen) und die Gruppen zur Auswahl.
+  let categoryChoice = $state({});
+  let tagGroups = $state([]);
 
   const importable = (r) => r.errors.length === 0;
 
@@ -21,6 +25,8 @@
     step = 'uploading';
     try {
       preview = await api.importFiles([...files]);
+      categoryChoice = Object.fromEntries(preview.unknown_categories.map((name) => [name, '']));
+      if (preview.unknown_categories.length > 0) tagGroups = await api.adminTagGroups();
       // Vorauswahl: alles Importierbare außer Dubletten.
       selected = new Set(
         preview.recipes.filter((r) => importable(r) && r.duplicates.length === 0).map((r) => r.index),
@@ -43,7 +49,7 @@
     error = '';
     step = 'importing';
     try {
-      result = await api.confirmImport(preview.token, [...selected].sort((a, b) => a - b));
+      result = await api.confirmImport(preview.token, [...selected].sort((a, b) => a - b), categoryChoices());
       step = 'done';
     } catch (e) {
       error = e.message;
@@ -51,6 +57,20 @@
       step = e.status === 404 ? 'choose' : 'preview';
     }
   }
+
+  /** Wahl für den Server: { Name: { tag_id } | { new_in_group } }; Weglassen fehlt. */
+  function categoryChoices() {
+    const out = {};
+    for (const [name, value] of Object.entries(categoryChoice)) {
+      const [kind, id] = value.split(':');
+      if (kind === 'tag') out[name] = { tag_id: Number(id) };
+      if (kind === 'new') out[name] = { new_in_group: Number(id) };
+    }
+    return out;
+  }
+
+  // Hinweise zu unbekannten Kategorien stehen gesammelt im eigenen Abschnitt.
+  const isCategoryHint = (w) => w.startsWith('Kategorie „') && w.includes('gibt es nicht');
 
   function restart() {
     preview = null;
@@ -178,7 +198,10 @@
               Foto von <a href={r.recipe.source_url} target="_blank" rel="noopener noreferrer">{r.web_image}</a> wird übernommen
             </p>
           {/if}
-          {#each r.warnings.filter((w) => !(r.web_image && w.startsWith('Foto von '))) as msg, i (i)}<p class="warning">
+          {#if r.unknown_categories.length > 0}
+            <p class="warning">Unbekannte Kategorien: {r.unknown_categories.join(', ')} (siehe unten)</p>
+          {/if}
+          {#each r.warnings.filter((w) => !(r.web_image && w.startsWith('Foto von ')) && !isCategoryHint(w)) as msg, i (i)}<p class="warning">
               {msg}
             </p>{/each}
           {#if importable(r)}
@@ -207,6 +230,31 @@
     {/each}
   </ul>
 
+  {#if preview.unknown_categories.length > 0}
+    <section class="unknown">
+      <h2>Unbekannte Kategorien</h2>
+      <p class="hint">Diese Kategorien gibt es im Rezeptplaner nicht. Einer vorhandenen zuordnen, neu anlegen oder weglassen.</p>
+      {#each preview.unknown_categories as name (name)}
+        <label class="mapping">
+          <span>„{name}“</span>
+          <select bind:value={categoryChoice[name]} disabled={step === 'importing'}>
+            <option value="">Weglassen</option>
+            {#each tagGroups as g (g.id)}
+              {#if g.tags.length > 0}
+                <optgroup label="Zuordnen – {g.name}">
+                  {#each g.tags as t (t.id)}<option value="tag:{t.id}">{t.name}</option>{/each}
+                </optgroup>
+              {/if}
+            {/each}
+            <optgroup label="Neu anlegen in Gruppe">
+              {#each tagGroups as g (g.id)}<option value="new:{g.id}">„{name}“ in {g.name}</option>{/each}
+            </optgroup>
+          </select>
+        </label>
+      {/each}
+    </section>
+  {/if}
+
   <div class="actions">
     <button type="button" class="primary" disabled={selected.size === 0 || step === 'importing'} onclick={confirmImport}>
       {step === 'importing'
@@ -230,6 +278,7 @@
         {/each}
       </ul>
     {/if}
+    {#each result.warnings ?? [] as w, i (i)}<p class="warning">{w}</p>{/each}
     {#if result.failed.length > 0}
       <h2>Nicht importiert</h2>
       <ul>
@@ -446,6 +495,50 @@
 
   .from-web {
     color: var(--accent);
+  }
+
+  .unknown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .unknown h2 {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+
+  .unknown .hint {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .mapping {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .mapping span {
+    min-width: 9rem;
+    font-weight: 600;
+  }
+
+  .mapping select {
+    flex: 1;
+    min-width: 12rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 0.2rem);
+    background: var(--surface);
+    font: inherit;
   }
 
   .sr-only {

@@ -171,6 +171,10 @@ func (im *Importer) handleThumbnail(w http.ResponseWriter, r *http.Request) {
 func (im *Importer) handleConfirm(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Selected []int `json:"selected"`
+		// Categories: was mit unbekannten Kategorien geschieht (Name aus
+		// unknown_categories der Vorschau → Wahl); fehlt ein Name, wird
+		// die Kategorie weggelassen.
+		Categories map[string]CategoryChoice `json:"categories"`
 	}
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, err.Error())
@@ -183,7 +187,7 @@ func (im *Importer) handleConfirm(w http.ResponseWriter, r *http.Request) {
 
 	im.mu.Lock()
 	defer im.mu.Unlock()
-	result, err := im.confirm(r.Context(), r.PathValue("token"), in.Selected)
+	result, err := im.confirm(r.Context(), r.PathValue("token"), in.Selected, in.Categories)
 	switch {
 	case errors.Is(err, errExpired):
 		httpx.WriteError(w, http.StatusNotFound, err.Error())

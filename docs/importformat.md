@@ -84,8 +84,13 @@ statt `"ingredients"` fällt so auf, statt dass die Zutaten fehlen.
    - **Dublette:** gleicher Titel (ohne Rücksicht auf Groß-/Kleinschreibung
      und Umlaute) oder gleiche `source.url` wie ein vorhandenes Rezept.
      Die Weboberfläche wählt Dubletten nicht vor.
-   - **Unbekannte Kategorie:** wird **nicht** angelegt, sondern weggelassen.
-     Groß-/Kleinschreibung spielt keine Rolle.
+   - **Unbekannte Kategorie:** Groß-/Kleinschreibung und Umlaute spielen
+     keine Rolle. Die Vorschau nennt unbekannte Kategorien je Rezept und
+     gesammelt (`unknown_categories`, jeder Name einmal). Beim Bestätigen
+     lässt sich je Name wählen (ab Rezeptplaner 0.9.0, Web und App): einer
+     vorhandenen Kategorie zuordnen (`{"tag_id": 7}`), in einer Gruppe neu
+     anlegen (`{"new_in_group": 3}`) oder weglassen (Name fehlt in
+     `categories`, das ist der Standard).
    - **Vorrat:** Zutaten, die auf der Vorratsliste stehen (auch über
      Synonyme), werden wie beim URL-Import auf `shopping_relevant: false`
      gesetzt. Umgekehrt wird nie etwas auf `true` gesetzt.
@@ -108,7 +113,8 @@ statt `"ingredients"` fällt so auf, statt dass die Zutaten fehlen.
      gezeichnete Bilder, um sie durch Fotos zu ersetzen. Ein neu hochgeladenes
      oder von einer Webadresse geholtes Bild gilt immer als Foto.
 2. **Bestätigen** (`POST /api/v1/import/file/{token}` mit
-   `{"selected": [0, 2]}`): Die ausgewählten Rezepte werden angelegt. Die
+   `{"selected": [0, 2], "categories": {"Ofengericht": {"new_in_group": 3}}}`;
+   `categories` ist optional): Die ausgewählten Rezepte werden angelegt. Die
    hochgeladenen Dateien liegen bis dahin höchstens **1 Stunde** auf dem
    Server und werden danach (bzw. nach dem Bestätigen) gelöscht.
 
@@ -139,8 +145,10 @@ Vorschaubild eines Rezepts der Vorschau: `GET /api/v1/import/file/{token}/images
 Erlaubt sind die Namen der Kategorien im Rezeptplaner. Die Startkategorien
 stehen in `server/internal/database/migrations/002_tags.sql`; die Skill
 führt sie in `skills/rezeptplaner-import/categories.md` (ein Test vergleicht
-beide). Werden Kategorien im Rezeptplaner geändert, die Liste der Skill
-nachziehen.
+beide). Eigene Änderungen (Einstellungen → Kategorien) kennt die Skill nicht:
+Dort gibt es den Knopf „Kategorieliste für Claude kopieren“ – den Text im
+Chat einfügen, dann verwendet die Skill ihn statt `categories.md`. Was
+trotzdem unbekannt ist, lässt sich in der Vorschau zuordnen.
 
 ## Änderungen am Format
 

@@ -126,6 +126,13 @@ func TestAppAccessWithValidKey(t *testing.T) {
 		{"GET /api/v1/api-keys", http.StatusForbidden}, // Verwaltung nur über Ingress
 		{"POST /api/v1/api-keys", http.StatusForbidden},
 		{"DELETE /api/v1/api-keys/{id}", http.StatusForbidden},
+		{"GET /api/v1/tags", http.StatusOK}, // Kategorien lesen ja, verwalten nicht
+		{"GET /api/v1/tag-groups", http.StatusForbidden},
+		{"POST /api/v1/tag-groups", http.StatusForbidden},
+		{"PUT /api/v1/tag-groups/{id}/tags", http.StatusForbidden},
+		{"POST /api/v1/tags", http.StatusForbidden},
+		{"DELETE /api/v1/tags/{id}", http.StatusForbidden},
+		{"POST /api/v1/tags/{id}/merge", http.StatusForbidden},
 		{"GET /", http.StatusNotFound}, // keine Weboberfläche
 		{"GET /index.html", http.StatusNotFound},
 	}

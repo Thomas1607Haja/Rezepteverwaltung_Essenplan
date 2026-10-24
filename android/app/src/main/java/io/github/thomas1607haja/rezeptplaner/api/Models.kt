@@ -50,7 +50,7 @@ data class Step(val text: String)
 data class Tag(val id: Long, val name: String, val group: String = "", val position: Int = 0)
 
 @Serializable
-data class TagGroup(val name: String, val tags: List<Tag>)
+data class TagGroup(val name: String, val tags: List<Tag>, val id: Long = 0)
 
 /** Termine eines Rezepts im Essensplan (für den Statushinweis). */
 @Serializable
@@ -154,7 +154,24 @@ data class ImportPreview(
     val token: String = "",
     val recipes: List<ImportCandidate> = emptyList(),
     @SerialName("file_errors") val fileErrors: List<ImportFileError> = emptyList(),
+    /** Kategorien der Datei, die es nicht gibt – jede einmal (ab Server 0.9.0). */
+    @SerialName("unknown_categories") val unknownCategories: List<String> = emptyList(),
 )
+
+/**
+ * Was beim Bestätigen mit einer unbekannten Kategorie geschieht: [tagId] =
+ * dieser zuordnen, [newInGroup] = in dieser Gruppe neu anlegen. Fehlt der
+ * Name in der Anfrage, wird die Kategorie weggelassen.
+ */
+@Serializable
+data class CategoryChoice(
+    @SerialName("tag_id") val tagId: Long = 0,
+    @SerialName("new_in_group") val newInGroup: Long = 0,
+)
+
+/** POST /api/v1/import/file/{token} */
+@Serializable
+data class ImportConfirm(val selected: List<Int>, val categories: Map<String, CategoryChoice> = emptyMap())
 
 @Serializable
 data class ImportCandidate(
@@ -166,6 +183,7 @@ data class ImportCandidate(
     val errors: List<String> = emptyList(),
     val warnings: List<String> = emptyList(),
     val duplicates: List<DuplicateRecipe> = emptyList(),
+    @SerialName("unknown_categories") val unknownCategories: List<String> = emptyList(),
 ) {
     val importable: Boolean get() = errors.isEmpty()
 }
@@ -180,6 +198,7 @@ data class ImportFileError(val file: String, val error: String)
 data class ImportResult(
     val created: List<ImportCreated> = emptyList(),
     val failed: List<ImportFailed> = emptyList(),
+    val warnings: List<String> = emptyList(),
 )
 
 @Serializable

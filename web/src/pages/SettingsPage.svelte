@@ -3,6 +3,7 @@
   import { formatBytes, formatUptime } from '../lib/format.js';
   import PantryEditor from '../components/PantryEditor.svelte';
   import ApiKeysEditor from '../components/ApiKeysEditor.svelte';
+  import TagManager from '../components/TagManager.svelte';
 
   // Ein Promise direkt im Markup: {#await} zeigt je nach Zustand
   // "lädt", das Ergebnis oder den Fehler an. Neu zuweisen lädt neu.
@@ -139,6 +140,8 @@
 </section>
 
 <PantryEditor />
+
+<TagManager />
 
 <ApiKeysEditor />
 

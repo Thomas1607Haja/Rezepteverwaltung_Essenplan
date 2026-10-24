@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import io.github.thomas1607haja.rezeptplaner.api.ApiClient
 import io.github.thomas1607haja.rezeptplaner.api.ApiException
+import io.github.thomas1607haja.rezeptplaner.api.CategoryChoice
 import io.github.thomas1607haja.rezeptplaner.api.ImportPreview
 import io.github.thomas1607haja.rezeptplaner.api.ImportResult
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,8 @@ sealed interface ImportState {
         val preview: ImportPreview,
         val rejected: List<String>,
         val selected: Set<Int>,
+        /** Wahl je unbekannter Kategorie; fehlt ein Name, wird sie weggelassen. */
+        val categories: Map<String, CategoryChoice> = emptyMap(),
         val importing: Boolean = false,
         /** Fehler beim Bestätigen; die Vorschau bleibt, man kann es erneut versuchen. */
         val error: String? = null,
@@ -117,12 +120,18 @@ class ImportRepository(
         _state.value = p.copy(selected = if (index in p.selected) p.selected - index else p.selected + index)
     }
 
+    /** [choice] null = weglassen. */
+    fun choose(category: String, choice: CategoryChoice?) {
+        val p = _state.value as? ImportState.Preview ?: return
+        _state.value = p.copy(categories = if (choice == null) p.categories - category else p.categories + (category to choice))
+    }
+
     suspend fun confirm() {
         val p = _state.value as? ImportState.Preview ?: return
         val cfg = config.config.first() ?: return
         _state.value = p.copy(importing = true, error = null)
         _state.value = try {
-            val result = api.confirmImport(cfg, p.preview.token, p.selected.sorted())
+            val result = api.confirmImport(cfg, p.preview.token, p.selected.sorted(), p.categories)
             sync.sync(SyncTrigger.Manual)
             ImportState.Done(result)
         } catch (e: ApiException) {

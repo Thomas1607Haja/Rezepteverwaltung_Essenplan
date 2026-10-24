@@ -201,11 +201,33 @@ export const api = {
     for (const file of files) form.append('file', file, file.name);
     return request('POST', '/import/file', form);
   },
-  /** Legt die ausgewählten Rezepte der Vorschau an: { created, failed }. */
-  confirmImport: (token, selected) => request('POST', `/import/file/${token}`, { selected }),
+  /**
+   * Legt die ausgewählten Rezepte der Vorschau an: { created, failed, warnings }.
+   * categories: Wahl je unbekannter Kategorie, { Name: { tag_id } | { new_in_group } };
+   * fehlende Namen werden weggelassen.
+   */
+  confirmImport: (token, selected, categories = {}) =>
+    request('POST', `/import/file/${token}`, { selected, categories }),
   /** Vorschaubild eines Rezepts der Vorschau. */
   importThumbnailUrl: (token, index) => `api/v1/import/file/${token}/images/${index}`,
 
   /** Kategorien nach Gruppen: [{ name, tags: [{ id, name, ... }] }]. */
   listTagGroups: async () => (await request('GET', '/tags')).groups,
+
+  // Kategorien verwalten (nur Weboberfläche, Einstellungen → Kategorien).
+  /** Alle Gruppen, auch leere: [{ id, name, position, tags: [{ id, name, position, recipe_count }] }]. */
+  adminTagGroups: async () => (await request('GET', '/tag-groups')).groups,
+  createTagGroup: (name) => request('POST', '/tag-groups', { name }),
+  renameTagGroup: (id, name) => request('PUT', `/tag-groups/${id}`, { name }),
+  orderTagGroups: (ids) => request('PUT', '/tag-groups/order', { ids }),
+  /** Löscht eine Gruppe; ihre Kategorien kommen nach moveTo oder werden mit gelöscht (withTags). */
+  deleteTagGroup: (id, { moveTo = 0, withTags = false } = {}) =>
+    request('DELETE', `/tag-groups/${id}?` + (moveTo ? `move_to=${moveTo}` : withTags ? 'with_tags=true' : '')),
+  /** Inhalt und Reihenfolge einer Gruppe (auch Kategorien aus anderen Gruppen). */
+  orderTags: (groupId, ids) => request('PUT', `/tag-groups/${groupId}/tags`, { ids }),
+  createTag: (name, groupId) => request('POST', '/tags', { name, group_id: groupId }),
+  updateTag: (id, name, groupId) => request('PUT', `/tags/${id}`, { name, group_id: groupId }),
+  deleteTag: (id) => request('DELETE', `/tags/${id}`),
+  /** Rezepte von id bekommen into, danach wird id gelöscht. */
+  mergeTag: (id, into) => request('POST', `/tags/${id}/merge`, { into }),
 };

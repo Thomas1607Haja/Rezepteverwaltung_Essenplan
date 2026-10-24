@@ -321,16 +321,26 @@ Die einzeln abgeglichenen Tabellen (`recipes`, `meal_plan_entries`, `pantry_item
 | position | Integer |
 | text | Text |
 
-### `tags` und `recipe_tags`
+### `tag_groups`, `tags` und `recipe_tags`
+
+| `tag_groups` | Typ | Bemerkung |
+|---|---|---|
+| id | Integer | AUTOINCREMENT (seit Migration 011) |
+| name | Text | z. B. „Hauptzutat“ |
+| position | Integer | Reihenfolge der Gruppen |
+| updated_at | Zeitstempel | |
 
 | `tags` | Typ | Bemerkung |
 |---|---|---|
-| id | Integer | |
-| name | Text | |
-| tag_group | Text | Gruppe für die Filteranzeige |
+| id | Integer | AUTOINCREMENT |
+| name | Text | über alle Gruppen eindeutig, ohne Rücksicht auf Groß-/Kleinschreibung und Umlaute (prüft der Server) |
+| group_id | Integer | Gruppe (bis Migration 010 Text `tag_group`) |
 | position | Integer | Reihenfolge in der Gruppe |
+| updated_at | Zeitstempel | |
 
 `recipe_tags`: `recipe_id`, `tag_id` (Verknüpfungstabelle)
+
+Verwaltet werden Gruppen und Kategorien nur in der Weboberfläche (Einstellungen → Kategorien, Schritt 8.C). Die App liest sie beim Abgleich vollständig (leere Gruppen fehlen dort). Weil die Rezepte ihre Kategorien mit Name und Gruppe mitbringen, bekommen alle betroffenen Rezepte bei Umbenennen, Verschieben in eine andere Gruppe, Löschen und Zusammenführen ein neues `updated_at`; gelöschte Kategorien stehen zusätzlich in `deletions`. Reines Umsortieren ändert die Rezepte nicht.
 
 **Startkategorien:**
 
@@ -574,10 +584,11 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App-Zugang
 | Bereich | Funktionen |
 |---|---|
 | Rezepte | Liste mit Suche/Filtern, Einzelabruf (mit `parent_recipe_id` und `family`), Anlegen, Ändern, Löschen, Favorit setzen, Bild hochladen, Variante anlegen (`POST /recipes/{id}/variants`, der Server kopiert) |
-| Import | URL einlesen (liefert Entwurf, Bildadresse und Dubletten), Zutatenzeilen zerlegen; Bild der Quellseite beim Speichern übernehmen; Datei-Import: `POST /import/file` (eine oder mehrere Dateien, liefert Vorschau und Kennung), `POST /import/file/{kennung}` (ausgewählte Rezepte speichern) |
+| Import | URL einlesen (liefert Entwurf, Bildadresse und Dubletten), Zutatenzeilen zerlegen; Bild der Quellseite beim Speichern übernehmen; Datei-Import: `POST /import/file` (eine oder mehrere Dateien, liefert Vorschau, Kennung und `unknown_categories`), `POST /import/file/{kennung}` (ausgewählte Rezepte speichern; `categories` ordnet unbekannte Kategorien zu oder legt sie an) |
 | Essensplan | Einträge eines Zeitraums, Anlegen, Ändern, Löschen, Verschieben/Tauschen mit Warnprüfung (erst prüfen, dann bestätigen) |
 | Einkauf | Vorschau der Einkaufsliste (aktueller oder folgender Einkaufszeitraum), An Bring senden, Differenz nachsenden |
-| Stammdaten | Kategorien, Vorratsliste (inkl. Prüfung, ob Zutatennamen im Vorrat sind), Einstellungen |
+| Stammdaten | Kategorien (`GET /tags`), Vorratsliste (inkl. Prüfung, ob Zutatennamen im Vorrat sind), Einstellungen |
+| Kategorien verwalten | nur über Ingress: `GET/POST /tag-groups`, `PUT /tag-groups/order`, `PUT/DELETE /tag-groups/{id}` (`?move_to=` oder `?with_tags=true`), `PUT /tag-groups/{id}/tags` (Inhalt und Reihenfolge), `POST /tags`, `PUT/DELETE /tags/{id}`, `POST /tags/{id}/merge` |
 | Statistik | Häufigkeiten nach Zeitraum |
 | Abgleich | `GET /sync?since=…`: Änderungen seit Zeitpunkt X (Rezepte vollständig, Planeinträge im Zeitfenster, Vorrat, Kategorien, Einstellungen, Löschungen) und die Serverzeit als nächster Startpunkt; Rezepte mit `parent_recipe_id` (beim Umhängen nach dem Löschen eines Ursprungsrezepts ändert sich `updated_at` der Varianten) |
 | Verwaltung | API-Schlüssel anlegen (mit QR-Code), sperren – nur über Ingress, nicht über den App-Zugang |
@@ -659,8 +670,8 @@ Rezepteverwaltung_Essenplan/
 |---|---|
 | 8.A | (umgesetzt, App 0.9.0) App gleichwertig zum Web beim Planen: Rezeptauswahl mit Mittag/Abend, „Eintrag ohne Rezept“ (Freitext bis 200 Zeichen, Schnellauswahl „Essen gehen“, „Reste“, „Pizza bestellen“ wie im Web, dazu die bis zu fünf zuletzt verwendeten eigenen Texte aus den Daten auf dem Handy), Besteck-Symbol statt Bild, „Rezept wählen“ für Einträge ohne Rezept und umgekehrt Text statt Rezept beim Ersetzen. Dazu die kleinen Lücken: Favorit im Eintrags-Menü, Verschieben auf ein beliebiges Datum (Kalender), „Zutaten an Bring senden“ im Warnhinweis beim Verschieben, Kochansicht aus dem Plan mit „Im Essensplan: Tag · Portionen · Notiz“, Kategorie in der Kochansicht öffnet die gefilterte Rezeptübersicht, Trefferzahl und „Filter zurücksetzen“, Dubletten beim URL-Import als Link. Verschieben bleibt bei der Tagesauswahl (kein Ziehen) |
 | 8.B | (umgesetzt, Server 0.8.0, Skill 2.1) Skill 2.1 sucht per Websuche den Originallink (`source.url`, nur bei eindeutigem Treffer); der Server lädt beim Datei-Import das Foto von dieser Seite, wenn das Rezept kein Bild oder nur eine Illustration hat (nie ein echtes Foto ersetzen), Vorschau zeigt es. Format bleibt Version 2. Grenzen: höchstens 20 s für alle Seiten einer Vorschau, zwei gleichzeitig, sonst wie der URL-Import (SSRF-Sperre, 5 MB Seite, 20 MB Bild); das Bild liegt bis zum Bestätigen im Upload-Ordner. Die Skill kann außerdem eine im Chat eingefügte Kategorieliste statt `categories.md` verwenden (`--categories`) |
-| 8.C | Kategorien und Gruppen verwalten (nur Weboberfläche): Tabelle `tag_groups` (Migration 011), Namen über alle Gruppen eindeutig (ohne Rücksicht auf Groß-/Kleinschreibung und Umlaute), Zusammenführen, Abgleich über `updated_at` der betroffenen Rezepte; Kategorieliste für die Claude-Skill kopieren; unbekannte Kategorien in der Import-Vorschau zuordnen, neu anlegen oder weglassen (Web und App) |
-| 8.D | Statistik in Web und App (App offline aus den lokalen Daten, Zeitraum nur online); gezählt werden Planeinträge bis einschließlich heute – ebenso `plan_count` und die Sortierung „Am häufigsten eingeplant“; Filter „Noch nie eingeplant“ |
+| 8.C | (umgesetzt, Server 0.9.0, App 0.10.0) Kategorien und Gruppen verwalten (nur Weboberfläche): Tabelle `tag_groups` (Migration 011), Namen über alle Gruppen eindeutig (ohne Rücksicht auf Groß-/Kleinschreibung und Umlaute), Zusammenführen, Abgleich über `updated_at` der betroffenen Rezepte; Kategorieliste für die Claude-Skill kopieren; unbekannte Kategorien in der Import-Vorschau zuordnen, neu anlegen oder weglassen (Web und App) |
+| 8.D | (App 0.11.0) Statistik in Web und App (App offline aus den lokalen Daten, Zeitraum nur online); gezählt werden Planeinträge bis einschließlich heute – ebenso `plan_count` und die Sortierung „Am häufigsten eingeplant“; Filter „Noch nie eingeplant“ |
 
 **Bewusst nicht in der App:** API-Schlüssel und verbundene Geräte, Adresse für die App, „App installieren“, Kategorien verwalten. **Nie geplant:** Plan weiter als 14 Tage zurück in der App, Ziehen mit dem Finger im Plan der App (Tagesauswahl genügt).
 

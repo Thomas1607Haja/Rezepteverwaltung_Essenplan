@@ -152,7 +152,7 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 
 // tagIDsByGroup ordnet die Kategorie-IDs ihren Gruppen zu. Unbekannte IDs
 // sind ein Eingabefehler; doppelte IDs werden zusammengefasst.
-func (s *Store) tagIDsByGroup(ctx context.Context, tagIDs []int64) (map[string][]int64, error) {
+func (s *Store) tagIDsByGroup(ctx context.Context, tagIDs []int64) (map[int64][]int64, error) {
 	if len(tagIDs) == 0 {
 		return nil, nil
 	}
@@ -167,17 +167,17 @@ func (s *Store) tagIDsByGroup(ctx context.Context, tagIDs []int64) (map[string][
 		args[i] = id
 	}
 	rows, err := s.db.QueryContext(ctx,
-		"SELECT id, tag_group FROM tags WHERE id IN ("+placeholders(len(ids))+")", args...)
+		"SELECT id, group_id FROM tags WHERE id IN ("+placeholders(len(ids))+")", args...)
 	if err != nil {
 		return nil, fmt.Errorf("kategorien laden: %w", err)
 	}
 	defer rows.Close()
 
-	groups := make(map[string][]int64)
+	groups := make(map[int64][]int64)
 	known := make(map[int64]bool)
 	for rows.Next() {
 		var id int64
-		var group string
+		var group int64
 		if err := rows.Scan(&id, &group); err != nil {
 			return nil, fmt.Errorf("kategorien laden: %w", err)
 		}

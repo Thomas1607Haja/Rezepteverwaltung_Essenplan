@@ -70,6 +70,7 @@ type Tag struct {
 	ID       int64  `json:"id"`
 	Name     string `json:"name"`
 	Group    string `json:"group"`
+	GroupID  int64  `json:"group_id"`
 	Position int    `json:"position"`
 }
 

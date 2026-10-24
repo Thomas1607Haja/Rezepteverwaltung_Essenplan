@@ -124,8 +124,13 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
         withContext(Dispatchers.IO) { execute(config, "/api/v1/import/file/$token/images/$index", "image/jpeg") }
 
     /** Legt die ausgewählten Rezepte der Vorschau an. */
-    suspend fun confirmImport(config: ServerConfig, token: String, selected: List<Int>): ImportResult =
-        send(config, "POST", "/api/v1/import/file/$token", json.encodeToString(mapOf("selected" to selected)))
+    suspend fun confirmImport(
+        config: ServerConfig,
+        token: String,
+        selected: List<Int>,
+        categories: Map<String, CategoryChoice> = emptyMap(),
+    ): ImportResult =
+        send(config, "POST", "/api/v1/import/file/$token", json.encodeToString(ImportConfirm(selected, categories)))
 
     // Rezepte ändern – nur online, danach gleicht die App ab.
 

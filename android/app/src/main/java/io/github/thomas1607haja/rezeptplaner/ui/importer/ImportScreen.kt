@@ -20,16 +20,23 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -43,7 +50,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import io.github.thomas1607haja.rezeptplaner.R
+import io.github.thomas1607haja.rezeptplaner.api.CategoryChoice
 import io.github.thomas1607haja.rezeptplaner.api.ImportCandidate
+import io.github.thomas1607haja.rezeptplaner.api.TagGroup
 import io.github.thomas1607haja.rezeptplaner.data.ImportState
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
@@ -61,6 +70,7 @@ fun ImportScreen(onClose: () -> Unit, onOpenRecipe: (Long) -> Unit) {
     val app = app()
     val repo = app.importRepository
     val state by repo.state.collectAsStateWithLifecycle()
+    val snapshot by app.localStore.snapshot.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     // Android-Dateiauswahl, mehrere Dateien; alle Typen, weil WhatsApp-
     // Dokumente oft einen allgemeinen Typ tragen – geprüft wird der Inhalt.
@@ -88,6 +98,8 @@ fun ImportScreen(onClose: () -> Unit, onOpenRecipe: (Long) -> Unit) {
                 s,
                 thumbnail = { index -> repo.thumbnail(s.preview.token, index) },
                 onToggle = repo::toggle,
+                tagGroups = snapshot.tagGroups,
+                onChoose = repo::choose,
                 onImport = { scope.launch { repo.confirm() } },
                 onOther = pick,
             )
@@ -131,6 +143,8 @@ private fun Preview(
     s: ImportState.Preview,
     thumbnail: suspend (Int) -> ByteArray?,
     onToggle: (Int) -> Unit,
+    tagGroups: List<TagGroup>,
+    onChoose: (String, CategoryChoice?) -> Unit,
     onImport: () -> Unit,
     onOther: () -> Unit,
 ) {
@@ -142,6 +156,11 @@ private fun Preview(
             if (s.preview.recipes.isEmpty()) item { Text("Keine Rezepte gefunden.") }
             items(s.preview.recipes, key = { it.index }) { c ->
                 CandidateCard(c, selected = c.index in s.selected, enabled = !s.importing, thumbnail = thumbnail, onToggle = { onToggle(c.index) })
+            }
+            if (s.preview.unknownCategories.isNotEmpty()) {
+                item {
+                    UnknownCategories(s.preview.unknownCategories, s.categories, tagGroups, enabled = !s.importing, onChoose = onChoose)
+                }
             }
         }
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -197,7 +216,80 @@ private fun CandidateCard(
                         color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall,
                     )
                 }
-                c.warnings.forEach { Text(it, color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall) }
+                if (c.unknownCategories.isNotEmpty()) {
+                    Text(
+                        "Unbekannte Kategorien: ${c.unknownCategories.joinToString(", ")} (siehe unten)",
+                        color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                // Hinweise zu unbekannten Kategorien stehen gesammelt unten.
+                c.warnings.filterNot { it.startsWith("Kategorie „") && "gibt es nicht" in it }.forEach {
+                    Text(it, color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+    }
+}
+
+/** Text der Wahl für eine unbekannte Kategorie. */
+private fun choiceLabel(name: String, choice: CategoryChoice?, groups: List<TagGroup>): String = when {
+    choice == null -> "Weglassen"
+    choice.tagId > 0 -> "Zuordnen: " + (groups.flatMap { it.tags }.firstOrNull { it.id == choice.tagId }?.name ?: "?")
+    else -> "Neu: „$name“ in " + (groups.firstOrNull { it.id == choice.newInGroup }?.name ?: "?")
+}
+
+/**
+ * Unbekannte Kategorien wie in der Weboberfläche: einer vorhandenen
+ * zuordnen, in einer Gruppe neu anlegen oder weglassen (Standard).
+ */
+@Composable
+private fun UnknownCategories(
+    names: List<String>,
+    choices: Map<String, CategoryChoice>,
+    groups: List<TagGroup>,
+    enabled: Boolean,
+    onChoose: (String, CategoryChoice?) -> Unit,
+) {
+    // Ohne Gruppen-IDs (Abgleich mit einem Server vor 0.9.0) lässt sich nichts neu anlegen.
+    val withIds = groups.filter { it.id > 0 }
+    Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Unbekannte Kategorien", style = MaterialTheme.typography.titleSmall)
+            Text(
+                "Gibt es im Rezeptplaner nicht. Einer vorhandenen zuordnen, neu anlegen oder weglassen.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            names.forEach { name ->
+                var open by remember(name) { mutableStateOf(false) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("„$name“", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                    Box {
+                        TextButton(onClick = { open = true }, enabled = enabled) { Text(choiceLabel(name, choices[name], groups)) }
+                        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                            DropdownMenuItem(text = { Text("Weglassen") }, onClick = { open = false; onChoose(name, null) })
+                            groups.filter { it.tags.isNotEmpty() }.forEach { g ->
+                                HorizontalDivider()
+                                Text(
+                                    "Zuordnen – ${g.name}", style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                )
+                                g.tags.forEach { t ->
+                                    DropdownMenuItem(text = { Text(t.name) }, onClick = { open = false; onChoose(name, CategoryChoice(tagId = t.id)) })
+                                }
+                            }
+                            if (withIds.isNotEmpty()) {
+                                HorizontalDivider()
+                                Text(
+                                    "Neu anlegen in Gruppe", style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                )
+                                withIds.forEach { g ->
+                                    DropdownMenuItem(text = { Text(g.name) }, onClick = { open = false; onChoose(name, CategoryChoice(newInGroup = g.id)) })
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -219,6 +311,7 @@ private fun Done(s: ImportState.Done, onOpenRecipe: (Long) -> Unit, onAgain: () 
                 c.warnings.forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary) }
             }
         }
+        items(s.result.warnings) { Text(it, color = MaterialTheme.colorScheme.tertiary) }
         if (s.result.failed.isNotEmpty()) {
             item { Text("Nicht importiert", style = MaterialTheme.typography.titleMedium) }
             items(s.result.failed, key = { "f${it.index}" }) { f ->

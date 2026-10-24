@@ -113,6 +113,10 @@ type Preview struct {
 	ExpiresAt  *time.Time      `json:"expires_at"`
 	Recipes    []PreviewRecipe `json:"recipes"`
 	FileErrors []FileError     `json:"file_errors"`
+	// UnknownCategories: alle unbekannten Kategorien des Uploads, jede nur
+	// einmal (ohne Rücksicht auf Groß-/Kleinschreibung und Umlaute) – so
+	// fragt die Oberfläche je Name nur einmal.
+	UnknownCategories []string `json:"unknown_categories"`
 }
 
 // PreviewRecipe ist ein Rezept der Vorschau. Mit Errors lässt es sich
@@ -132,6 +136,18 @@ type PreviewRecipe struct {
 	Errors     []string          `json:"errors"`
 	Warnings   []string          `json:"warnings"`
 	Duplicates []recipes.Summary `json:"duplicates"`
+	// UnknownCategories: Kategorien der Datei, die es im Rezeptplaner nicht
+	// gibt. Beim Bestätigen lassen sie sich zuordnen oder neu anlegen
+	// (CategoryChoice), sonst fallen sie weg.
+	UnknownCategories []string `json:"unknown_categories"`
+}
+
+// CategoryChoice sagt beim Bestätigen, was mit einer unbekannten Kategorie
+// geschieht: TagID > 0 = dieser vorhandenen zuordnen, NewInGroup > 0 = unter
+// ihrem Namen in dieser Gruppe neu anlegen, beides 0 = weglassen.
+type CategoryChoice struct {
+	TagID      int64 `json:"tag_id"`
+	NewInGroup int64 `json:"new_in_group"`
 }
 
 // FileError: Eine Datei ließ sich gar nicht lesen.
@@ -180,7 +196,7 @@ func (im *Importer) analyze(ctx context.Context, dir string, b *budget) (cands [
 			c := &candidate{src: src, image: p.image, PreviewRecipe: PreviewRecipe{
 				Index: len(cands), File: f.Name, Recipe: p.recipe,
 				Errors: append([]string{}, p.errors...), Warnings: append([]string{}, p.warnings...),
-				Duplicates: []recipes.Summary{},
+				Duplicates: []recipes.Summary{}, UnknownCategories: []string{},
 			}}
 			if len(cands) >= maxRecipesPerImport {
 				c.Errors = append(c.Errors, fmt.Sprintf("Mehr als %d Rezepte in einem Import", maxRecipesPerImport))
@@ -243,7 +259,8 @@ func (im *Importer) resolveCategories(ctx context.Context, c *candidate, names [
 		t, ok := byName[database.Fold(name)]
 		switch {
 		case !ok:
-			c.Warnings = append(c.Warnings, fmt.Sprintf("Kategorie „%s“ gibt es nicht, sie wird weggelassen", name))
+			c.Warnings = append(c.Warnings, fmt.Sprintf("Kategorie „%s“ gibt es nicht – zuordnen oder weglassen", name))
+			c.UnknownCategories = append(c.UnknownCategories, name)
 		case !slices.ContainsFunc(c.Recipe.Tags, func(x recipes.Tag) bool { return x.ID == t.ID }):
 			c.Recipe.Tags = append(c.Recipe.Tags, t)
 		}
@@ -266,7 +283,8 @@ func (im *Importer) preview(ctx context.Context, token, dir string) (Preview, er
 		return Preview{}, err
 	}
 
-	result := Preview{Recipes: []PreviewRecipe{}, FileErrors: fileErrors}
+	result := Preview{Recipes: []PreviewRecipe{}, FileErrors: fileErrors, UnknownCategories: []string{}}
+	seenUnknown := make(map[string]bool)
 	// Hinweise zum Bild erst nach dem Versuch mit der Quellseite.
 	imageWarnings := make(map[int]string)
 	var fromWeb []*candidate
@@ -303,6 +321,12 @@ func (im *Importer) preview(ctx context.Context, token, dir string) (Preview, er
 		}
 		if len(c.Errors) == 0 {
 			importable = true
+			for _, name := range c.UnknownCategories {
+				if key := database.Fold(name); !seenUnknown[key] {
+					seenUnknown[key] = true
+					result.UnknownCategories = append(result.UnknownCategories, name)
+				}
+			}
 		}
 		result.Recipes = append(result.Recipes, c.PreviewRecipe)
 	}
@@ -331,6 +355,63 @@ func (im *Importer) loadImage(c *candidate, b *budget) ([]byte, error) {
 type Result struct {
 	Created []CreatedRecipe `json:"created"`
 	Failed  []FailedRecipe  `json:"failed"`
+	// Warnings: z. B. eine Kategorie, die sich nicht anlegen ließ.
+	Warnings []string `json:"warnings"`
+}
+
+// applyCategoryChoices legt die gewünschten neuen Kategorien an und liefert
+// je unbekanntem Namen (Fold) die Kategorie, die die Rezepte bekommen.
+// Probleme werden Hinweise; die Rezepte kommen dann ohne diese Kategorie.
+func (im *Importer) applyCategoryChoices(ctx context.Context, choices map[string]CategoryChoice) (map[string]recipes.Tag, []string) {
+	mapped := make(map[string]recipes.Tag)
+	var warnings []string
+	if len(choices) == 0 {
+		return mapped, warnings
+	}
+	groups, err := im.recipes.ListTags(ctx)
+	if err != nil {
+		return mapped, []string{err.Error()}
+	}
+	byID := make(map[int64]recipes.Tag)
+	byName := make(map[string]recipes.Tag)
+	for _, g := range groups {
+		for _, t := range g.Tags {
+			byID[t.ID] = t
+			byName[database.Fold(t.Name)] = t
+		}
+	}
+	// Feste Reihenfolge, damit Hinweise und neue IDs nicht zufällig sind.
+	names := make([]string, 0, len(choices))
+	for name := range choices {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	for _, name := range names {
+		choice := choices[name]
+		key := database.Fold(name)
+		switch {
+		case choice.TagID > 0:
+			if t, ok := byID[choice.TagID]; ok {
+				mapped[key] = t
+			} else {
+				warnings = append(warnings, fmt.Sprintf("Kategorie %d für „%s“ gibt es nicht mehr – weggelassen", choice.TagID, name))
+			}
+		case choice.NewInGroup > 0:
+			// Inzwischen angelegt (z. B. zweimal bestätigt)? Dann diese nehmen.
+			if t, ok := byName[key]; ok {
+				mapped[key] = t
+				continue
+			}
+			t, err := im.recipes.CreateTag(ctx, name, choice.NewInGroup)
+			if err != nil {
+				warnings = append(warnings, fmt.Sprintf("Kategorie „%s“ nicht angelegt: %v", name, err))
+				continue
+			}
+			byName[key] = t
+			mapped[key] = t
+		}
+	}
+	return mapped, warnings
 }
 
 // CreatedRecipe ist ein angelegtes Rezept; Warnings z. B. bei einem Bild,
@@ -353,7 +434,8 @@ type FailedRecipe struct {
 var errExpired = errors.New("Import nicht gefunden oder abgelaufen – bitte die Datei erneut hochladen")
 
 // confirm legt die ausgewählten Rezepte an und räumt den Upload weg.
-func (im *Importer) confirm(ctx context.Context, token string, selected []int) (Result, error) {
+// choices sagt, was mit unbekannten Kategorien geschieht.
+func (im *Importer) confirm(ctx context.Context, token string, selected []int, choices map[string]CategoryChoice) (Result, error) {
 	dir := im.pendingDir(token)
 	if dir == "" {
 		return Result{}, errExpired
@@ -365,7 +447,9 @@ func (im *Importer) confirm(ctx context.Context, token string, selected []int) (
 		return Result{}, err
 	}
 
-	result := Result{Created: []CreatedRecipe{}, Failed: []FailedRecipe{}}
+	result := Result{Created: []CreatedRecipe{}, Failed: []FailedRecipe{}, Warnings: []string{}}
+	mapped, warnings := im.applyCategoryChoices(ctx, choices)
+	result.Warnings = append(result.Warnings, warnings...)
 	for _, index := range selected {
 		if index < 0 || index >= len(cands) {
 			result.Failed = append(result.Failed, FailedRecipe{Index: index, Error: "Kein solches Rezept in diesem Import"})
@@ -375,6 +459,12 @@ func (im *Importer) confirm(ctx context.Context, token string, selected []int) (
 		if len(c.Errors) > 0 {
 			result.Failed = append(result.Failed, FailedRecipe{Index: index, Title: c.Recipe.Title, Error: c.Errors[0]})
 			continue
+		}
+		for _, name := range c.UnknownCategories {
+			if tag, ok := mapped[database.Fold(name)]; ok &&
+				!slices.ContainsFunc(c.Recipe.Tags, func(x recipes.Tag) bool { return x.ID == tag.ID }) {
+				c.Recipe.Tags = append(c.Recipe.Tags, tag)
+			}
 		}
 		created, err := im.recipes.Create(ctx, c.Recipe)
 		if err != nil {

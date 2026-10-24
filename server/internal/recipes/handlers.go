@@ -39,6 +39,7 @@ func (h *Handler) Register(mux httpx.Router) {
 	mux.HandleFunc("POST /api/v1/recipes/{id}/image/fetch", h.fetchImage)
 	mux.Handle("GET /api/v1/images/{name}", h.images)
 	mux.HandleFunc("GET /api/v1/tags", h.listTags)
+	h.registerTagAdmin(mux)
 }
 
 // listResponse ist die Antwort der Rezeptliste. Das umschließende Objekt
