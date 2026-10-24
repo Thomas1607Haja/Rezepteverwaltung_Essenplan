@@ -4,11 +4,14 @@
   import Icon from '../components/Icon.svelte';
   import RecipeTile from '../components/RecipeTile.svelte';
   import TagFilter from '../components/TagFilter.svelte';
+  import CourseTabs from '../components/CourseTabs.svelte';
+  import { courseTabs } from '../lib/courseTabs.js';
 
   let recipes = $state(null); // null = noch nicht geladen
   let error = $state('');
   let tagGroups = $state([]);
   let showTags = $state(recipeFilter.tagIds.length > 0);
+  const tabs = $derived(courseTabs(tagGroups));
 
   // Die Kategorien ändern sich selten; einmal beim Öffnen laden genügt.
   api.listTagGroups().then((groups) => (tagGroups = groups)).catch(() => {});
@@ -40,6 +43,7 @@
       favoritesOnly: recipeFilter.favoritesOnly,
       illustrationsOnly: recipeFilter.illustrationsOnly,
       neverPlanned: recipeFilter.neverPlanned,
+      courseIds: tabs.find((t) => t.key === recipeFilter.course)?.ids ?? [],
       sort: recipeFilter.sort,
     };
     // Beim Tippen kurz warten, damit nicht jeder Buchstabe eine Anfrage
@@ -62,6 +66,8 @@
     <a class="new" href="#/recipes/new">+ Neues Rezept</a>
   </div>
 </div>
+
+<CourseTabs {tabs} value={recipeFilter.course} onchange={(key) => (recipeFilter.course = key)} />
 
 <div class="toolbar">
   <label class="search">

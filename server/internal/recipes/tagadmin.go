@@ -44,13 +44,14 @@ type AdminGroup struct {
 	ID       int64      `json:"id"`
 	Name     string     `json:"name"`
 	Position int        `json:"position"`
+	Role     string     `json:"role"`
 	Tags     []AdminTag `json:"tags"`
 }
 
 // AdminTags liefert alle Gruppen (auch leere) mit ihren Kategorien.
 func (s *Store) AdminTags(ctx context.Context) ([]AdminGroup, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT g.id, g.name, g.position, t.id, t.name, t.position,
+		SELECT g.id, g.name, g.position, g.role, t.id, t.name, t.position,
 		       (SELECT count(*) FROM recipe_tags rt WHERE rt.tag_id = t.id)
 		FROM tag_groups g LEFT JOIN tags t ON t.group_id = g.id
 		ORDER BY g.position, g.id, t.position, t.id`)
@@ -67,7 +68,7 @@ func (s *Store) AdminTags(ctx context.Context) ([]AdminGroup, error) {
 		var tagName sql.NullString
 		var tagPos sql.NullInt64
 		var count int
-		if err := rows.Scan(&g.ID, &g.Name, &g.Position, &tagID, &tagName, &tagPos, &count); err != nil {
+		if err := rows.Scan(&g.ID, &g.Name, &g.Position, &g.Role, &tagID, &tagName, &tagPos, &count); err != nil {
 			return nil, fmt.Errorf("kategorien laden: %w", err)
 		}
 		if len(groups) == 0 || groups[len(groups)-1].ID != g.ID {
@@ -181,7 +182,7 @@ func (s *Store) inTx(ctx context.Context, what string, fn func(tx *sql.Tx, now s
 	defer tx.Rollback()
 	if err := fn(tx, database.FormatTime(s.now())); err != nil {
 		var verr *ValidationError
-		if errors.As(err, &verr) || errors.Is(err, ErrTagNotFound) || errors.Is(err, ErrGroupNotEmpty) {
+		if errors.As(err, &verr) || errors.Is(err, ErrTagNotFound) || errors.Is(err, ErrGroupNotEmpty) || errors.Is(err, ErrNoCourseGroup) {
 			return err
 		}
 		return fmt.Errorf("%s: %w", what, err)
@@ -236,6 +237,27 @@ func (s *Store) RenameTagGroup(ctx context.Context, id int64, name string) error
 			return err
 		}
 		return touchRecipesWithTags(ctx, tx, now, ids...)
+	})
+}
+
+// SetCourseGroup macht die Gruppe id zur Gang-Gruppe (course = true) oder
+// nimmt ihr das Kennzeichen. Es gibt höchstens eine Gang-Gruppe.
+func (s *Store) SetCourseGroup(ctx context.Context, id int64, course bool) error {
+	return s.inTx(ctx, "gang-gruppe setzen", func(tx *sql.Tx, now string) error {
+		if err := exists(ctx, tx, "tag_groups", id); err != nil {
+			return err
+		}
+		if course {
+			if _, err := tx.ExecContext(ctx, "UPDATE tag_groups SET role = '', updated_at = ? WHERE role = ?", now, RoleCourse); err != nil {
+				return err
+			}
+		}
+		role := ""
+		if course {
+			role = RoleCourse
+		}
+		_, err := tx.ExecContext(ctx, "UPDATE tag_groups SET role = ?, updated_at = ? WHERE id = ?", role, now, id)
+		return err
 	})
 }
 

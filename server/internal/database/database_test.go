@@ -28,17 +28,17 @@ func TestMigrateCreatesSchemaAndTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Migrate: %v", err)
 	}
-	if version != 12 {
-		t.Errorf("version = %d, erwartet 12", version)
+	if version != 13 {
+		t.Errorf("version = %d, erwartet 13", version)
 	}
 
-	// 8 Hauptzutat + 2 Geschmack + 8 Art + 5 Eigenschaften
+	// 8 Hauptzutat + 2 Geschmack + 8 Art + 5 Eigenschaften + 8 neue Gänge (013)
 	var tagCount int
 	if err := db.QueryRowContext(ctx, "SELECT count(*) FROM tags").Scan(&tagCount); err != nil {
 		t.Fatalf("tags zählen: %v", err)
 	}
-	if tagCount != 23 {
-		t.Errorf("tags = %d, erwartet 23", tagCount)
+	if tagCount != 31 {
+		t.Errorf("tags = %d, erwartet 31", tagCount)
 	}
 }
 
@@ -55,8 +55,8 @@ func TestMigrateTwiceChangesNothing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("zweite Migration: %v", err)
 	}
-	if version != 12 {
-		t.Errorf("version = %d, erwartet 12", version)
+	if version != 13 {
+		t.Errorf("version = %d, erwartet 13", version)
 	}
 }
 
@@ -227,7 +227,7 @@ func TestAutoincrementMigrationKeepsDataAndIDs(t *testing.T) {
 		"SELECT count(*) FROM recipe_tags WHERE recipe_id = 1":               1,
 		"SELECT count(*) FROM meal_plan_entries WHERE recipe_id = 1":         1,
 		"SELECT count(*) FROM transferred_items WHERE entry_id = 1":          1,
-		"SELECT count(*) FROM tags":                                          23,
+		"SELECT count(*) FROM tags":                                          31,
 		"SELECT count(*) FROM pantry_items":                                  5,
 	}
 	for query, want := range checks {
@@ -287,7 +287,7 @@ func TestTagGroupsMigrationKeepsTagsOrderAndCounter(t *testing.T) {
 			t.Fatalf("%s: %v", q, err)
 		}
 	}
-	if _, err := Migrate(ctx, db); err != nil {
+	if _, err := migrateTo(ctx, db, 11); err != nil {
 		t.Fatalf("Migration 11: %v", err)
 	}
 

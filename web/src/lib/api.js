@@ -57,7 +57,7 @@ export const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
 /**
  * Baut die Parameter für die Rezeptliste. Leere Werte werden weggelassen.
- * filter: { query, tagIds, favoritesOnly, illustrationsOnly, neverPlanned, sort }
+ * filter: { query, tagIds, favoritesOnly, illustrationsOnly, neverPlanned, courseIds, sort }
  */
 function listParams(filter) {
   const params = new URLSearchParams();
@@ -66,6 +66,7 @@ function listParams(filter) {
   if (filter.favoritesOnly) params.set('favorite', 'true');
   if (filter.illustrationsOnly) params.set('image', 'illustration');
   if (filter.neverPlanned) params.set('planned', 'never');
+  for (const id of filter.courseIds ?? []) params.append('course', id);
   if (filter.sort) params.set('sort', filter.sort);
   const text = params.toString();
   return text ? '?' + text : '';
@@ -222,6 +223,12 @@ export const api = {
   /** Alle Gruppen, auch leere: [{ id, name, position, tags: [{ id, name, position, recipe_count }] }]. */
   adminTagGroups: async () => (await request('GET', '/tag-groups')).groups,
   createTagGroup: (name) => request('POST', '/tag-groups', { name }),
+  /** Macht die Gruppe zur Gang-Gruppe (bzw. nimmt das Kennzeichen weg). */
+  setCourseGroup: (id, course) => request('PUT', `/tag-groups/${id}/course`, { course }),
+  /** Vorschläge für Rezepte ohne Gang: [{ recipe_id, title, thumbnail, tag_id, course, reason }]. */
+  courseSuggestions: async () => (await request('GET', '/courses/suggestions')).suggestions,
+  /** Gänge zuordnen: [{ recipe_id, tag_id }] → { assigned }. */
+  assignCourses: (assignments) => request('POST', '/courses/assign', { assignments }),
   renameTagGroup: (id, name) => request('PUT', `/tag-groups/${id}`, { name }),
   orderTagGroups: (ids) => request('PUT', '/tag-groups/order', { ids }),
   /** Löscht eine Gruppe; ihre Kategorien kommen nach moveTo oder werden mit gelöscht (withTags). */

@@ -28,15 +28,19 @@ func TestListTags(t *testing.T) {
 			}
 		}
 	}
-	if want := []string{"Hauptzutat", "Geschmack", "Art", "Eigenschaften"}; !slices.Equal(names, want) {
+	if want := []string{"Gang", "Hauptzutat", "Geschmack", "Art", "Eigenschaften"}; !slices.Equal(names, want) {
 		t.Errorf("Gruppen = %q, erwartet %q", names, want)
 	}
-	if total != 23 {
-		t.Errorf("%d Kategorien, erwartet 23", total)
+	if total != 31 {
+		t.Errorf("%d Kategorien, erwartet 31", total)
+	}
+	// Die Gang-Gruppe ist gekennzeichnet (Migration 013).
+	if groups[0].Role != RoleCourse || groups[1].Role != "" || groups[0].Tags[0].Name != "Vorspeise" {
+		t.Errorf("Gang = %+v", groups[0])
 	}
 
 	// Innerhalb der Gruppe nach position.
-	first := groups[0].Tags
+	first := groups[1].Tags
 	if first[0].Name != "Vegetarisch" || first[len(first)-1].Name != "Meeresfrüchte" {
 		t.Errorf("Hauptzutat = %+v", first)
 	}
@@ -53,7 +57,7 @@ func TestListTagsOverHTTP(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("Antwort ist keine Kategorieliste: %v", err)
 	}
-	if len(resp.Groups) != 4 || resp.Groups[0].Tags[0].ID == 0 {
+	if len(resp.Groups) != 5 || resp.Groups[0].Tags[0].ID == 0 || resp.Groups[0].Role != RoleCourse {
 		t.Errorf("Antwort = %s", rec.Body)
 	}
 }

@@ -111,6 +111,11 @@
     }, `Gruppe „${name}“ angelegt.`);
   }
 
+  function toggleCourse(group) {
+    const on = group.role !== 'course';
+    run(() => api.setCourseGroup(group.id, on), on ? `„${group.name}“ ist jetzt die Gang-Gruppe.` : '');
+  }
+
   function startEditGroup(group) {
     editing = { kind: 'group', id: group.id };
     draft = { name: group.name, groupId: 0, mergeInto: 0 };
@@ -244,7 +249,13 @@
                 <button type="submit" class="primary" disabled={busy}>Speichern</button>
               </form>
             {:else}
-              <strong class="group-name">{group.name}</strong>
+              <strong class="group-name">
+                {group.name}
+                {#if group.role === 'course'}<span class="badge" title="Schnellfilter-Reiter und Gänge im Menü">Gang</span>{/if}
+              </strong>
+              <button type="button" onclick={() => toggleCourse(group)} disabled={busy}>
+                {group.role === 'course' ? 'Kein Gang' : 'Als Gang'}
+              </button>
               <button type="button" onclick={() => startEditGroup(group)} disabled={busy}>Umbenennen</button>
               <button type="button" class="remove" onclick={() => askDeleteGroup(group)} disabled={busy} aria-label="Gruppe {group.name} löschen">×</button>
             {/if}
@@ -309,6 +320,11 @@
       <input aria-label="Neue Gruppe" placeholder="Neue Gruppe, z. B. Anlass" bind:value={newGroup} maxlength="50" />
       <button type="submit" class="primary" disabled={busy || newGroup.trim() === ''}>Gruppe anlegen</button>
     </form>
+
+    <p class="hint">
+      Die Gang-Gruppe (Vorspeise, Hauptgericht, Kuchen …) steuert die Reiter in der Rezeptübersicht.
+      <a href="#/settings/courses">Gänge zuordnen</a> – Vorschläge für Rezepte ohne Gang.
+    </p>
 
     <div class="claude">
       <button type="button" onclick={copyForClaude} disabled={busy}>Kategorieliste für Claude kopieren</button>
@@ -403,6 +419,16 @@
 
   .group-name {
     flex: 1;
+  }
+
+  .badge {
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 600;
   }
 
   .tags {

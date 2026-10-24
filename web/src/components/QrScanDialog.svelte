@@ -23,7 +23,7 @@
   let { onresult, onclose } = $props();
 
   let dialog;
-  let video;
+  let video = $state();
   let error = $state('');
 
   onMount(() => {

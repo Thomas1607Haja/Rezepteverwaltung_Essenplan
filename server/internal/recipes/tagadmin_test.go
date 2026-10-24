@@ -78,7 +78,7 @@ func TestTagAdminChangesReachTheApp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	other, err := s.Create(ctx, Recipe{Title: "Salat", BaseServings: 2, Tags: []Tag{{ID: tagID(t, s, "Salat")}}})
+	other, err := s.Create(ctx, Recipe{Title: "Salat", BaseServings: 2, Tags: []Tag{{ID: tagID(t, s, "Pasta")}}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,14 +119,14 @@ func TestTagAdminChangesReachTheApp(t *testing.T) {
 		}
 		return s.OrderTagGroups(ctx, ids)
 	}, nil)
-	step("Zusammenführen", func() error { return s.MergeTag(ctx, ofen, tagID(t, s, "Salat")) }, []int64{created.ID})
+	step("Zusammenführen", func() error { return s.MergeTag(ctx, ofen, tagID(t, s, "Pasta")) }, []int64{created.ID})
 
 	got, _ := s.Get(ctx, created.ID)
 	names := []string{}
 	for _, tag := range got.Tags {
 		names = append(names, tag.Group+"/"+tag.Name)
 	}
-	if len(names) != 2 || names[0] != "Gerichtart/Salat" || names[1] != "Hauptzutat/Hack" {
+	if len(names) != 2 || names[0] != "Gerichtart/Pasta" || names[1] != "Hauptzutat/Hack" {
 		// Gruppen jetzt umgekehrt sortiert: Gerichtart vor Hauptzutat.
 		t.Errorf("Kategorien nach Zusammenführen: %v", names)
 	}

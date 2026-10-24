@@ -101,7 +101,7 @@ func TestSyncFullAndIncremental(t *testing.T) {
 		full.PlanInfo[0].NextPlanned == nil || *full.PlanInfo[0].NextPlanned != today {
 		t.Errorf("Plan: %+v, Termine: %+v", full.MealPlanEntries, full.PlanInfo)
 	}
-	if len(full.TagGroups) != 4 || len(full.PantryItems) != 5 || full.Settings.FamilySize != 4 {
+	if len(full.TagGroups) != 5 || len(full.PantryItems) != 5 || full.Settings.FamilySize != 4 {
 		t.Errorf("Stammdaten: %d Gruppen, %d Vorrat, Familie %d", len(full.TagGroups), len(full.PantryItems), full.Settings.FamilySize)
 	}
 	if full.ServerTime == "" || full.PlanFrom >= today || full.ShoppingPeriod.From == "" {

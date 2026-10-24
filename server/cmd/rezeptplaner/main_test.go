@@ -133,6 +133,8 @@ func TestAppAccessWithValidKey(t *testing.T) {
 		{"POST /api/v1/tags", http.StatusForbidden},
 		{"DELETE /api/v1/tags/{id}", http.StatusForbidden},
 		{"POST /api/v1/tags/{id}/merge", http.StatusForbidden},
+		{"GET /api/v1/courses/suggestions", http.StatusForbidden},
+		{"POST /api/v1/courses/assign", http.StatusForbidden},
 		{"GET /", http.StatusNotFound}, // keine Weboberfläche
 		{"GET /index.html", http.StatusNotFound},
 	}

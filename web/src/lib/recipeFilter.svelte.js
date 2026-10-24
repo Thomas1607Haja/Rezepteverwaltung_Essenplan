@@ -8,6 +8,7 @@ export const recipeFilter = $state({
   favoritesOnly: false,
   illustrationsOnly: false, // nur gezeichnete Bilder (zum Ersetzen durch Fotos)
   neverPlanned: false, // nur Rezepte ohne jeden Planeintrag (Link aus der Statistik)
+  course: 'all', // Schnellfilter-Reiter nach Gang (lib/courseTabs.js)
   sort: 'name', // 'name', 'newest', 'last_planned' oder 'most_planned'
 });
 
@@ -31,6 +32,7 @@ export function resetFilter() {
   recipeFilter.favoritesOnly = false;
   recipeFilter.illustrationsOnly = false;
   recipeFilter.neverPlanned = false;
+  recipeFilter.course = 'all';
 }
 
 /** Ist irgendein Filter aktiv? */

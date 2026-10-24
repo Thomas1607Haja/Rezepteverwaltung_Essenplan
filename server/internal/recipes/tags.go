@@ -12,10 +12,16 @@ const tagJoin = `JOIN tag_groups g ON g.id = t.group_id`
 // Reihenfolge, darin die Kategorien nach position. Erwartet tagJoin.
 const tagOrder = `g.position, g.id, t.position, t.id`
 
+// RoleCourse kennzeichnet die Gruppe der Gänge (Vorspeise, Hauptgericht,
+// Kuchen …), siehe docs/PLANUNG.md, Schritt 9.1.
+const RoleCourse = "course"
+
 // TagGroup ist eine Gruppe von Kategorien, z. B. "Hauptzutat".
 type TagGroup struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
+	// Role: RoleCourse für die Gang-Gruppe, sonst leer.
+	Role string `json:"role"`
 	Tags []Tag  `json:"tags"`
 }
 
@@ -23,7 +29,7 @@ type TagGroup struct {
 // fehlen – sie haben nur in der Verwaltung (AdminTags) eine Bedeutung.
 func (s *Store) ListTags(ctx context.Context) ([]TagGroup, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT t.id, t.name, g.id, g.name, t.position
+		SELECT t.id, t.name, g.id, g.name, t.position, g.role
 		FROM tags t `+tagJoin+`
 		ORDER BY `+tagOrder)
 	if err != nil {
@@ -34,13 +40,14 @@ func (s *Store) ListTags(ctx context.Context) ([]TagGroup, error) {
 	groups := []TagGroup{}
 	for rows.Next() {
 		var tag Tag
-		if err := rows.Scan(&tag.ID, &tag.Name, &tag.GroupID, &tag.Group, &tag.Position); err != nil {
+		var role string
+		if err := rows.Scan(&tag.ID, &tag.Name, &tag.GroupID, &tag.Group, &tag.Position, &role); err != nil {
 			return nil, fmt.Errorf("kategorien laden: %w", err)
 		}
 		// Die Zeilen kommen nach Gruppen sortiert: Eine neue Gruppe beginnt,
 		// sobald sich die Gruppe ändert.
 		if len(groups) == 0 || groups[len(groups)-1].ID != tag.GroupID {
-			groups = append(groups, TagGroup{ID: tag.GroupID, Name: tag.Group})
+			groups = append(groups, TagGroup{ID: tag.GroupID, Name: tag.Group, Role: role})
 		}
 		last := &groups[len(groups)-1] // Zeiger, damit append im Slice landet
 		last.Tags = append(last.Tags, tag)

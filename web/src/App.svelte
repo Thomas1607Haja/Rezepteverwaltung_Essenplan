@@ -24,6 +24,7 @@
   const loadRecipeEditPage = () => import('./pages/RecipeEditPage.svelte');
   const loadRecipePickerPage = () => import('./pages/RecipePickerPage.svelte');
   const loadImportFilePage = () => import('./pages/ImportFilePage.svelte');
+  const loadCourseAssignPage = () => import('./pages/CourseAssignPage.svelte');
 
   // Alle Seiten. section gibt an, welcher Bereich in der Navigation
   // hervorgehoben wird. page ist eine Komponente, load eine Funktion, die
@@ -44,6 +45,7 @@
     { pattern: '/shopping', section: '/shopping', page: ShoppingPage },
     { pattern: '/statistics', section: '/statistics', page: StatisticsPage },
     { pattern: '/settings', section: '/settings', page: SettingsPage },
+    { pattern: '/settings/courses', section: '/settings', load: loadCourseAssignPage },
   ];
 
   /** Sucht die Seite zu path samt Platzhalterwerten. */

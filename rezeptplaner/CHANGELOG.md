@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.13.0
+
+- **Gang:** Neue Kategoriegruppe „Gang“ (Vorspeise, Suppe/Eintopf, Salat, Hauptgericht, Beilage, Nachspeise, Kuchen & Torten, Gebäck, Brot, Snack). „Suppe/Eintopf“ und „Salat“ wandern dafür aus „Art“; ihre Zuordnungen bleiben. In der Kategorienverwaltung lässt sich festlegen, welche Gruppe die Gänge enthält.
+- **Reiter in Rezeptübersicht und Rezeptauswahl:** Alle | Hauptgerichte | Vorspeisen, Suppen & Salate | Nachspeisen | Backen (auch in der App ab 0.14.0).
+- **Gänge zuordnen** (Einstellungen → Kategorien → „Gänge zuordnen“): Vorschläge für alle Rezepte ohne Gang, prüfen und gesammelt übernehmen.
+- Die Claude-Skill (Version 2.2) vergibt beim Import immer einen Gang.
+
 ## 0.12.1
 
 - **Suche auch in der Zubereitung** (Weboberfläche): Die Rezeptsuche findet Wörter jetzt auch in den Zubereitungsschritten, z. B. „Ofen“ oder „über Nacht“.

@@ -118,7 +118,7 @@ class BuildImportTest(unittest.TestCase):
 
     def test_generator_is_skill_version(self):
         doc, _ = self.build({"title": "Brot", "base_servings": 1})
-        self.assertEqual(doc["generator"], "claude-skill rezeptplaner-import 2.1")
+        self.assertEqual(doc["generator"], "claude-skill rezeptplaner-import 2.2")
 
     def test_schema_checks_version_and_image_kind(self):
         doc = {"format": "rezeptplaner-import", "version": 3, "recipes": [

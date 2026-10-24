@@ -34,6 +34,9 @@ type ListFilter struct {
 	// NeverPlanned: nur Rezepte ohne jeden Planeintrag – auch ohne einen
 	// zukünftigen (Ideen für Neues; Link aus der Statistik).
 	NeverPlanned bool
+	// CourseTagIDs: Schnellfilter-Reiter (z. B. „Backen“ = Kuchen, Gebäck,
+	// Brot) – mindestens einer davon; zusätzlich zu TagIDs.
+	CourseTagIDs []int64
 	Sort         string // eine der Sort-Konstanten oder leer (= SortName)
 }
 
@@ -115,6 +118,13 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 	}
 	if f.IllustrationsOnly {
 		where = append(where, "r.image_kind = 'illustration'")
+	}
+	if len(f.CourseTagIDs) > 0 {
+		where = append(where, `EXISTS (SELECT 1 FROM recipe_tags rt
+			WHERE rt.recipe_id = r.id AND rt.tag_id IN (`+placeholders(len(f.CourseTagIDs))+`))`)
+		for _, id := range f.CourseTagIDs {
+			args = append(args, id)
+		}
 	}
 	if f.NeverPlanned {
 		where = append(where, "NOT EXISTS (SELECT 1 FROM meal_plan_entries e WHERE e.recipe_id = r.id)")

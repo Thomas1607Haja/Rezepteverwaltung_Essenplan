@@ -1,7 +1,7 @@
 {
   "format": "rezeptplaner-import",
   "version": 2,
-  "generator": "claude-skill rezeptplaner-import 2.1",
+  "generator": "claude-skill rezeptplaner-import 2.2",
   "recipes": [
     {
       "title": "Gnocchi-Pfanne mit Spinat und Tomaten",
@@ -11,7 +11,7 @@
       "total_minutes": 25,
       "source": { "name": "HelloFresh-Karte" },
       "notes": "Unsicher: Menge der Sahne auf der Karte schlecht lesbar (vermutlich 100 ml), daher ohne Menge erfasst.",
-      "categories": ["Vegetarisch", "Herzhaft", "Pfanne", "Schnell"],
+      "categories": ["Hauptgericht", "Vegetarisch", "Herzhaft", "Pfanne", "Schnell"],
       "image": "images/01-gnocchi-pfanne-mit-spinat-und-tomaten.jpg",
       "image_kind": "photo",
       "ingredients": [
@@ -40,7 +40,7 @@
       "total_minutes": null,
       "source": { "name": "Handschriftlich" },
       "notes": "Titel automatisch vergeben (Vorlage ohne Titel). Portionen nicht angegeben, 4 angenommen. Bild ist eine Illustration (kein Foto vom Gericht).",
-      "categories": ["Geflügel", "Herzhaft", "Reis", "Pfanne"],
+      "categories": ["Hauptgericht", "Geflügel", "Herzhaft", "Reis", "Pfanne"],
       "image": "images/02-haehnchen-curry-mit-kokosmilch-paprika.jpg",
       "image_kind": "illustration",
       "ingredients": [

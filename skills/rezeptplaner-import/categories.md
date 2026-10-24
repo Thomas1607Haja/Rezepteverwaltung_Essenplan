@@ -12,6 +12,18 @@
 Nur diese Namen (genau so geschrieben) in `categories` verwenden. Pro
 Rezept nur zutreffende Kategorien wählen, lieber zu wenige als falsche.
 
+## Gang
+- Vorspeise
+- Suppe/Eintopf
+- Salat
+- Hauptgericht
+- Beilage
+- Nachspeise
+- Kuchen & Torten
+- Gebäck
+- Brot
+- Snack
+
 ## Hauptzutat
 - Vegetarisch
 - Vegan
@@ -30,8 +42,6 @@ Rezept nur zutreffende Kategorien wählen, lieber zu wenige als falsche.
 - Pasta
 - Reis
 - Kartoffeln
-- Suppe/Eintopf
-- Salat
 - Auflauf/Ofen
 - Pfanne
 - Grill
@@ -44,6 +54,12 @@ Rezept nur zutreffende Kategorien wählen, lieber zu wenige als falsche.
 - Für Gäste
 
 ## Hinweise zur Auswahl
+- **Gang:** immer **genau einen** vergeben – der Gang, als der das Gericht
+  meistens gegessen wird (Rezeptplaner filtert danach: Hauptgerichte,
+  Nachspeisen, Backen …). Kuchen, Torten, Tartes → „Kuchen & Torten“;
+  Kekse, Muffins, Hefegebäck → „Gebäck“; Brot und Brötchen → „Brot“;
+  Desserts, Pudding, Mousse → „Nachspeise“; Eintöpfe zählen als
+  „Suppe/Eintopf“; Bowls und Hauptgericht-Salate als „Salat“.
 - **Vegetarisch:** kein Fleisch, kein Fisch. **Vegan** nur, wenn auch keine
   Milchprodukte, Eier oder Honig vorkommen (dann zusätzlich Vegetarisch).
 - **Hackfleisch** zusätzlich zu Rind/Schwein, wenn erkennbar (z. B.

@@ -42,3 +42,29 @@ class QrUrlTest {
         org.junit.Assert.assertEquals(null, io.github.thomas1607haja.rezeptplaner.ui.edit.urlFromQr("rezeptplaner://setup?url=x"))
     }
 }
+
+class CourseTabsTest {
+    @Test
+    fun tabsFromCourseGroup() {
+        val kuchen = io.github.thomas1607haja.rezeptplaner.api.Tag(31, "Kuchen & Torten", "Gang")
+        val haupt = io.github.thomas1607haja.rezeptplaner.api.Tag(28, "Hauptgericht", "Gang")
+        val groups = listOf(io.github.thomas1607haja.rezeptplaner.api.TagGroup("Gang", listOf(haupt, kuchen), id = 5, role = "course"))
+        val tabs = io.github.thomas1607haja.rezeptplaner.ui.recipes.courseTabs(groups)
+        assertEquals(listOf("all", "main", "baking"), tabs.map { it.key })
+        assertEquals(setOf(31L), tabs.last().ids)
+        // Ohne Gang-Gruppe nur „Alle“.
+        assertEquals(1, io.github.thomas1607haja.rezeptplaner.ui.recipes.courseTabs(emptyList()).size)
+
+        val snapshot = io.github.thomas1607haja.rezeptplaner.data.Snapshot(
+            serverTime = "x", tagGroups = groups,
+            recipes = listOf(
+                io.github.thomas1607haja.rezeptplaner.api.Recipe(1, "Apfelkuchen", baseServings = 12, tags = listOf(kuchen)),
+                io.github.thomas1607haja.rezeptplaner.api.Recipe(2, "Gulasch", baseServings = 4, tags = listOf(haupt)),
+            ),
+        )
+        val baking = io.github.thomas1607haja.rezeptplaner.ui.recipes.filterRecipes(
+            snapshot, io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipeFilter(course = "baking"),
+        )
+        assertEquals(listOf("Apfelkuchen"), baking.map { it.recipe.title })
+    }
+}

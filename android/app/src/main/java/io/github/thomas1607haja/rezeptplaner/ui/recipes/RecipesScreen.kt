@@ -2,6 +2,7 @@ package io.github.thomas1607haja.rezeptplaner.ui.recipes
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -96,6 +97,19 @@ fun RecipesScreen(
         OfflineBanner(sync.log)
         header()
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Schnellfilter nach Gang (Schritt 9.1), seitlich scrollbar.
+            val tabs = remember(snapshot.tagGroups) { courseTabs(snapshot.tagGroups) }
+            if (tabs.size > 1) {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    tabs.forEach { tab ->
+                        FilterChip(
+                            selected = filter.course == tab.key,
+                            onClick = { state.value = filter.copy(course = tab.key) },
+                            label = { Text(tab.label) },
+                        )
+                    }
+                }
+            }
             OutlinedTextField(
                 value = filter.query,
                 onValueChange = { q -> state.value = filter.copy(query = q) },

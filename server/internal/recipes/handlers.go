@@ -53,6 +53,7 @@ type listResponse struct {
 //
 //	q=Nudeln%20Tomate   Suchtext
 //	tag=3&tag=11        Kategorie-IDs (mehrfach möglich)
+//	course=41&course=42 Schnellfilter-Reiter: einer dieser Gänge
 //	favorite=true       nur Favoriten
 //	sort=name|newest    Sortierung (Standard: name)
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +72,15 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		filter.TagIDs = append(filter.TagIDs, id)
+	}
+	for _, value := range params["course"] {
+		id, err := strconv.ParseInt(value, 10, 64)
+		if err != nil || id <= 0 {
+			httpx.WriteJSON(w, http.StatusBadRequest,
+				httpx.ErrorResponse{Error: fmt.Sprintf("ungültige kategorie-id %q", value), Field: "course"})
+			return
+		}
+		filter.CourseTagIDs = append(filter.CourseTagIDs, id)
 	}
 
 	if value := params.Get("favorite"); value != "" {

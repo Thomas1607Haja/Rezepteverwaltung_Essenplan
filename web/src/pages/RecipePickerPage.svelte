@@ -6,6 +6,8 @@
   import Icon from '../components/Icon.svelte';
   import TagFilter from '../components/TagFilter.svelte';
   import PlanPreview from '../components/PlanPreview.svelte';
+  import CourseTabs from '../components/CourseTabs.svelte';
+  import { courseTabs } from '../lib/courseTabs.js';
   import { previewEnabled, createWithChoice, replaceWithChoice } from '../lib/planPreview.js';
 
   // Zwei Arten, die Seite zu öffnen:
@@ -31,6 +33,8 @@
   let sort = $state('name');
   let showTags = $state(false);
   let tagGroups = $state([]);
+  let course = $state('all');
+  const tabs = $derived(courseTabs(tagGroups));
   let recipes = $state(null);
   let note = $state('');
   // Rezept in der Kurzvorschau (Schritt 8.E), null = keine offen
@@ -51,7 +55,13 @@
   // Liste neu laden, wenn sich der Filter ändert (beim Tippen kurz warten).
   let requestCount = 0;
   $effect(() => {
-    const filter = { query, favoritesOnly, tagIds: [...tagIds], sort };
+    const filter = {
+      query,
+      favoritesOnly,
+      tagIds: [...tagIds],
+      sort,
+      courseIds: tabs.find((t) => t.key === course)?.ids ?? [],
+    };
     const id = ++requestCount;
     const timer = setTimeout(async () => {
       try {
@@ -155,6 +165,8 @@
     <button type="button" class="chip" disabled={saving} onclick={() => choose(null, text)}>{text}</button>
   {/each}
 </div>
+
+<CourseTabs {tabs} value={course} onchange={(key) => (course = key)} />
 
 <div class="toolbar">
   <label class="search">

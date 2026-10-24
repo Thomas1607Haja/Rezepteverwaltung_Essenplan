@@ -54,7 +54,7 @@ data class Step(val text: String)
 data class Tag(val id: Long, val name: String, val group: String = "", val position: Int = 0)
 
 @Serializable
-data class TagGroup(val name: String, val tags: List<Tag>, val id: Long = 0)
+data class TagGroup(val name: String, val tags: List<Tag>, val id: Long = 0, val role: String = "")
 
 /** Termine eines Rezepts im Essensplan (für den Statushinweis). */
 @Serializable

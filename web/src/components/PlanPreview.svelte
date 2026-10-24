@@ -24,6 +24,8 @@
   let dialog;
   onMount(() => dialog.showModal());
 
+  // Einmal beim Öffnen laden; spätere Änderungen der Werte zählen nicht.
+  // svelte-ignore state_referenced_locally
   Promise.all([api.getRecipe(recipeId), portions == null ? api.getSettings() : null])
     .then(([r, settings]) => {
       recipe = r;

@@ -6,7 +6,7 @@ description: Erfasst Rezepte aus Fotos (Rezeptkarten wie HelloFresh mit Vorder- 
 # Rezeptplaner-Import
 
 Du erfasst Rezepte aus Fotos und lieferst **eine ZIP-Datei** im Format
-„rezeptplaner-import“, Version 2 (Skill-Version 2.1; braucht Rezeptplaner
+„rezeptplaner-import“, Version 2 (Skill-Version 2.2; braucht Rezeptplaner
 0.7.0 oder neuer – ältere melden „Formatversion 2 wird nicht unterstützt“; das
 Foto aus dem gefundenen Link übernimmt der Rezeptplaner ab 0.8.0). Der Nutzer schickt sie per Teilen an die
 Rezeptplaner-App (oder lädt sie in der Weboberfläche hoch); dort erscheint
@@ -106,7 +106,9 @@ Nährwerte, Allergene, Bestellhinweise, QR-Code-Texte, Weinempfehlungen.
 Ein „Tipp“ der Vorlage kommt in `notes`.
 
 **Kategorien:** nur Namen aus `categories.md`, genau so geschrieben.
-Lieber zu wenige als falsche. Nicht passende Begriffe der Vorlage
+Lieber zu wenige als falsche. **Immer genau einen Gang** aus der Gruppe
+„Gang“ vergeben (Hauptgericht, Nachspeise, Kuchen & Torten …, siehe
+Hinweise in `categories.md`) – der Rezeptplaner filtert danach. Nicht passende Begriffe der Vorlage
 („Familienliebling“, „Low Carb“) nicht übernehmen.
 
 **Eigene Kategorieliste:** Fügt der Nutzer im Chat eine Kategorieliste ein

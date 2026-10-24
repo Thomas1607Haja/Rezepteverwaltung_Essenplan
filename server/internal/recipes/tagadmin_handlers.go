@@ -16,6 +16,9 @@ func (h *Handler) registerTagAdmin(mux httpx.Router) {
 	mux.HandleFunc("PUT /api/v1/tag-groups/order", h.orderTagGroups)
 	mux.HandleFunc("PUT /api/v1/tag-groups/{id}", h.renameTagGroup)
 	mux.HandleFunc("DELETE /api/v1/tag-groups/{id}", h.deleteTagGroup)
+	mux.HandleFunc("PUT /api/v1/tag-groups/{id}/course", h.setCourseGroup)
+	mux.HandleFunc("GET /api/v1/courses/suggestions", h.courseSuggestions)
+	mux.HandleFunc("POST /api/v1/courses/assign", h.assignCourses)
 	mux.HandleFunc("PUT /api/v1/tag-groups/{id}/tags", h.orderTags)
 	mux.HandleFunc("POST /api/v1/tags", h.createTag)
 	mux.HandleFunc("PUT /api/v1/tags/{id}", h.updateTag)
@@ -28,7 +31,7 @@ func writeTagError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, ErrTagNotFound):
 		httpx.WriteError(w, http.StatusNotFound, err.Error())
-	case errors.Is(err, ErrGroupNotEmpty):
+	case errors.Is(err, ErrGroupNotEmpty), errors.Is(err, ErrNoCourseGroup):
 		httpx.WriteError(w, http.StatusConflict, err.Error())
 	default:
 		writeStoreError(w, r, err)
@@ -98,6 +101,57 @@ func (h *Handler) renameTagGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// setCourseGroup: {"course": true} macht die Gruppe zur Gang-Gruppe.
+func (h *Handler) setCourseGroup(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
+	var in struct {
+		Course bool `json:"course"`
+	}
+	if err := httpx.ReadJSON(w, r, &in); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := h.store.SetCourseGroup(r.Context(), id, in.Course); err != nil {
+		writeTagError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// courseSuggestions: Vorschläge für Rezepte ohne Gang.
+func (h *Handler) courseSuggestions(w http.ResponseWriter, r *http.Request) {
+	list, err := h.store.CourseSuggestions(r.Context())
+	if err != nil {
+		writeTagError(w, r, err)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, struct {
+		Suggestions []CourseSuggestion `json:"suggestions"`
+	}{list})
+}
+
+// assignCourses: {"assignments": [{"recipe_id": 3, "tag_id": 41}]}
+func (h *Handler) assignCourses(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Assignments []CourseAssignment `json:"assignments"`
+	}
+	if err := httpx.ReadJSON(w, r, &in); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	n, err := h.store.AssignCourses(r.Context(), in.Assignments)
+	if err != nil {
+		writeTagError(w, r, err)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, struct {
+		Assigned int `json:"assigned"`
+	}{n})
 }
 
 // orderTagGroups: {"ids": [3, 1, 2]} – alle Gruppen in neuer Reihenfolge.
