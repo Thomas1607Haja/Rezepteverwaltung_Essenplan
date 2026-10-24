@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.MealPlanEntry
+import io.github.thomas1607haja.rezeptplaner.api.Menu
+import io.github.thomas1607haja.rezeptplaner.api.Tag
 import io.github.thomas1607haja.rezeptplaner.data.Snapshot
 import io.github.thomas1607haja.rezeptplaner.data.SyncTrigger
 import io.github.thomas1607haja.rezeptplaner.ui.common.OfflineBanner
@@ -59,8 +61,8 @@ import androidx.compose.ui.graphics.Color
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-/** Ein Tag im Plan mit seinen Einträgen (Mittag vor Abend). */
-data class PlanDay(val date: String, val entries: List<MealPlanEntry>)
+/** Ein Tag im Plan mit seinen Einträgen und Menüs (Mittag vor Abend). */
+data class PlanDay(val date: String, val entries: List<MealPlanEntry>, val menus: List<Menu> = emptyList())
 
 /**
  * Tage von plan_from bis mindestens zwei Wochen nach heute bzw. bis zum
@@ -69,13 +71,14 @@ data class PlanDay(val date: String, val entries: List<MealPlanEntry>)
 fun planDays(snapshot: Snapshot, today: LocalDate): List<PlanDay> {
     if (snapshot.planFrom.isEmpty()) return emptyList()
     val byDate = snapshot.entries.groupBy { it.date }
+    val menus = snapshot.menus.groupBy { it.date }
     var day = LocalDate.parse(snapshot.planFrom)
-    val lastPlanned = snapshot.entries.maxOfOrNull { it.date }?.let(LocalDate::parse) ?: today
+    val lastPlanned = (snapshot.entries.map { it.date } + snapshot.menus.map { it.date }).maxOrNull()?.let(LocalDate::parse) ?: today
     val end = maxOf(today.plusDays(13), lastPlanned)
     return buildList {
         while (!day.isAfter(end)) {
             val date = day.toString()
-            add(PlanDay(date, byDate[date].orEmpty()))
+            add(PlanDay(date, byDate[date].orEmpty(), menus[date].orEmpty()))
             day = day.plusDays(1)
         }
     }
@@ -87,6 +90,8 @@ fun MealPlanScreen(
     onOpenRecipe: (recipeId: Long, entryId: Long) -> Unit,
     onAdd: (date: String) -> Unit,
     onReplace: (MealPlanEntry) -> Unit,
+    onAddCourse: (Menu) -> Unit = {},
+    onCookMenu: (Menu) -> Unit = {},
 ) {
     val app = app()
     val snapshot by app.localStore.snapshot.collectAsStateWithLifecycle()
@@ -103,7 +108,9 @@ fun MealPlanScreen(
     }
     // Geöffnete Blätter: Eintrag bearbeiten bzw. verschieben.
     var editing by remember { mutableStateOf<MealPlanEntry?>(null) }
-    var moving by remember { mutableStateOf<MealPlanEntry?>(null) }
+    var moving by remember { mutableStateOf<PlanItem?>(null) }
+    var openMenu by remember { mutableStateOf<Long?>(null) }
+    val courses = courseTags(snapshot)
 
     // Beim ersten Anzeigen mit dem heutigen Tag oben beginnen.
     LaunchedEffect(days.isNotEmpty()) { if (days.isNotEmpty()) listState.scrollToItem(todayIndex) }
@@ -136,7 +143,9 @@ fun MealPlanScreen(
                         DayRow(
                             day, isToday = day.date == today.toString(), shading = shading,
                             canAdd = day.date >= today.toString(),
+                            courses = courses,
                             onOpenRecipe = onOpenRecipe, onAdd = { onAdd(day.date) }, onEdit = { editing = it },
+                            onOpenMenu = { openMenu = it.id },
                         )
                     }
                 }
@@ -153,10 +162,29 @@ fun MealPlanScreen(
             entry,
             onDismiss = { editing = null },
             onReplace = { editing = null; onReplace(entry) },
-            onMove = { editing = null; moving = entry },
+            onMove = {
+                editing = null
+                // Ein Gang wandert mit seinem ganzen Menü.
+                val menu = snapshot.menus.firstOrNull { it.id == entry.menuId }
+                moving = if (menu != null) PlanItem.MenuBlock(menu, snapshot.entries.filter { it.menuId == menu.id }) else PlanItem.Single(entry)
+            },
+            onMenu = { openMenu = it },
         )
     }
-    moving?.let { entry -> MoveSheet(entry, snapshot, today, onDismiss = { moving = null }) }
+    openMenu?.let { id ->
+        MenuSheet(
+            id,
+            onDismiss = { openMenu = null },
+            onAddCourse = { openMenu = null; onAddCourse(it) },
+            onMove = { openMenu = null; moving = it },
+            onCook = { openMenu = null; onCookMenu(it) },
+            onOpenCourse = { e ->
+                val recipeId = e.recipeId
+                if (recipeId != null) { openMenu = null; onOpenRecipe(recipeId, e.id) }
+            },
+        )
+    }
+    moving?.let { item -> MoveSheet(item, snapshot, today, onDismiss = { moving = null }) }
 }
 
 private enum class Shading { Bought, Next }
@@ -188,9 +216,11 @@ private fun DayRow(
     isToday: Boolean,
     shading: Shading?,
     canAdd: Boolean,
+    courses: List<Tag>,
     onOpenRecipe: (Long, Long) -> Unit,
     onAdd: () -> Unit,
     onEdit: (MealPlanEntry) -> Unit,
+    onOpenMenu: (Menu) -> Unit,
 ) {
     val background = when (shading) {
         Shading.Bought -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
@@ -216,10 +246,22 @@ private fun DayRow(
                 }
             }
         }
-        if (day.entries.isEmpty()) {
+        if (day.entries.isEmpty() && day.menus.isEmpty()) {
             Text("–", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        day.entries.forEach { entry -> EntryCard(entry, onOpenRecipe, onEdit) }
+        planItems(day.entries, day.menus).forEach { item ->
+            when (item) {
+                is PlanItem.Single -> EntryCard(item.entry, onOpenRecipe, onEdit)
+                is PlanItem.MenuBlock -> MenuCard(
+                    item, courses,
+                    onOpen = { onOpenMenu(item.menu) },
+                    onOpenCourse = { e ->
+                        val recipeId = e.recipeId
+                        if (recipeId != null) onOpenRecipe(recipeId, e.id) else onEdit(e)
+                    },
+                )
+            }
+        }
     }
 }
 

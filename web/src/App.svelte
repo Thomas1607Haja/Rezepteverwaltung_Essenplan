@@ -25,6 +25,7 @@
   const loadRecipePickerPage = () => import('./pages/RecipePickerPage.svelte');
   const loadImportFilePage = () => import('./pages/ImportFilePage.svelte');
   const loadCourseAssignPage = () => import('./pages/CourseAssignPage.svelte');
+  const loadMenuPage = () => import('./pages/MenuPage.svelte');
 
   // Alle Seiten. section gibt an, welcher Bereich in der Navigation
   // hervorgehoben wird. page ist eine Komponente, load eine Funktion, die
@@ -42,6 +43,8 @@
     // Rezeptauswahl beim Planen bzw. Ersetzen
     { pattern: '/plan/add/:date', section: '/', load: loadRecipePickerPage },
     { pattern: '/plan/replace/:entryId', section: '/', load: loadRecipePickerPage },
+    { pattern: '/plan/menu/:menuId', section: '/', load: loadRecipePickerPage },
+    { pattern: '/menus/:id', section: '/', load: loadMenuPage },
     { pattern: '/shopping', section: '/shopping', page: ShoppingPage },
     { pattern: '/statistics', section: '/statistics', page: StatisticsPage },
     { pattern: '/settings', section: '/settings', page: SettingsPage },

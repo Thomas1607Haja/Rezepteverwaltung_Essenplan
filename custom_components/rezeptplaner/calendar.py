@@ -61,6 +61,26 @@ def to_event(entry: dict[str, Any], slot_times: dict[str, str] | None = None) ->
                          description=description, uid=str(entry["id"]))
 
 
+def to_events(data: dict[str, Any]) -> list[CalendarEvent]:
+    """Alle Termine einer Antwort: Gerichte einzeln, ein Menü (Rezeptplaner
+    0.16) als ein Termin mit seinen Gängen und der Notiz in der Beschreibung."""
+    slot_times = data.get("slot_times")
+    entries = data.get("entries", [])
+    events = [to_event(e, slot_times) for e in entries if not e.get("menu_id")]
+    for menu in data.get("menus", []):
+        courses = [e for e in entries if e.get("menu_id") == menu["id"]]
+        lines = [f"• {entry_title(e)}" for e in courses]
+        if menu.get("note"):
+            lines.append("")
+            lines.append(menu["note"])
+        pseudo = {"id": f"menu-{menu['id']}", "date": menu["date"], "slot": menu.get("slot", "dinner"),
+                  "note": f"Menü: {menu.get('display_title') or 'Menü'}"}
+        event = to_event(pseudo, slot_times)
+        event.description = "\n".join(lines)
+        events.append(event)
+    return sorted(events, key=lambda ev: (str(ev.start), ev.summary))
+
+
 class MealPlanCalendar(RezeptplanerEntity, CalendarEntity):
     """Der Essensplan als Kalender."""
 
@@ -72,8 +92,8 @@ class MealPlanCalendar(RezeptplanerEntity, CalendarEntity):
         """Das heutige oder nächste geplante Gericht."""
         data = self.coordinator.data or {}
         today = data.get("today", "")
-        upcoming = [e for e in data.get("entries", []) if e["date"] >= today]
-        return to_event(upcoming[0], data.get("slot_times")) if upcoming else None
+        upcoming = [ev for ev in to_events(data) if str(ev.start)[:10] >= today]
+        return upcoming[0] if upcoming else None
 
     async def async_get_events(self, hass: HomeAssistant, start_date: datetime, end_date: datetime) -> list[CalendarEvent]:
         """Termine eines Zeitraums, direkt vom Server (die Kalenderansicht blättert frei)."""
@@ -85,4 +105,4 @@ class MealPlanCalendar(RezeptplanerEntity, CalendarEntity):
             data = await self.coordinator.client.meal_plan(first.isoformat(), last.isoformat())
         except RezeptplanerError as err:
             raise HomeAssistantError(str(err)) from err
-        return [to_event(e, data.get("slot_times")) for e in data.get("entries", [])]
+        return to_events(data)

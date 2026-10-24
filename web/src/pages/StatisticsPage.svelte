@@ -89,7 +89,9 @@
     </div>
     <p class="muted">
       {stats.entries} {stats.entries === 1 ? 'Gericht' : 'Gerichte'} im Essensplan
-      {stats.from ? `seit ${new Date(stats.from).toLocaleDateString('de-DE')}` : 'insgesamt'} (bis heute)
+      {stats.from ? `seit ${new Date(stats.from).toLocaleDateString('de-DE')}` : 'insgesamt'} (bis heute){stats.menus
+        ? `, davon ${stats.menus === 1 ? 'ein Menü' : `${stats.menus} Menüs`}`
+        : ''}
     </p>
     {#if stats.top.length === 0}
       <p class="muted">In diesem Zeitraum stand noch nichts im Essensplan.</p>

@@ -93,6 +93,21 @@ export const api = {
   /** Neuer Eintrag: { date, slot?, recipe_id?, servings?, note? }. */
   createEntry: (entry) => request('POST', '/meal-plan', entry),
 
+  // Menüs (Schritt 9.4): Klammer um Planeinträge.
+  /** Menü mit Gängen: { id, date, slot, title, display_title, note, servings, entries }. */
+  getMenu: (id) => request('GET', `/menus/${id}`),
+  createMenu: (menu) => request('POST', '/menus', menu),
+  /** { title, note, servings, apply_servings } */
+  updateMenu: (id, menu) => request('PUT', `/menus/${id}`, menu),
+  /** Ohne withEntries bleiben die Gänge als einzelne Einträge stehen. */
+  deleteMenu: (id, withEntries = false) => request('DELETE', `/menus/${id}${withEntries ? '?with_entries=true' : ''}`),
+  moveMenu: (id, move) => request('POST', `/menus/${id}/move`, move),
+  menuAllAvailable: (id) => request('POST', `/menus/${id}/all-available`),
+  /** Eintrag zu einem Menü erweitern: { title, note, course_tag_id } → Menü. */
+  toMenu: (entryId, data = {}) => request('POST', `/meal-plan/${entryId}/to-menu`, data),
+  /** Gang aus seinem Menü lösen. */
+  detachEntry: (entryId) => request('POST', `/meal-plan/${entryId}/detach`),
+
   /** Ändert { recipe_id, servings, note, status } eines Eintrags. */
   updateEntry: (id, changes) => request('PUT', `/meal-plan/${id}`, changes),
 

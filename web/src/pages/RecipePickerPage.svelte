@@ -14,7 +14,8 @@
   // Zwei Arten, die Seite zu öffnen:
   //   #/plan/add/2026-10-24     neues Gericht für diesen Tag
   //   #/plan/replace/17         Rezept von Eintrag 17 ersetzen
-  let { date = null, entryId = null } = $props();
+  //   #/plan/menu/5             Gang zu Menü 5 hinzufügen (Schritt 9.4)
+  let { date = null, entryId = null, menuId = null } = $props();
   // Die Seite wird bei jeder neuen Adresse neu aufgebaut; nur der
   // Anfangswert zählt.
   // svelte-ignore state_referenced_locally
@@ -48,6 +49,27 @@
   let note = $state('');
   // Rezept in der Kurzvorschau (Schritt 8.E), null = keine offen
   let previewId = $state(null);
+  // Menü-Modus: das Menü, der Gang für das nächste Gericht, zuletzt Hinzugefügtes
+  let menu = $state(null);
+  let courseTag = $state(0);
+  let added = $state('');
+  // svelte-ignore state_referenced_locally
+  if (menuId) {
+    api
+      .getMenu(menuId)
+      .then((m) => {
+        menu = m;
+        targetDate = m.date;
+        slot = m.slot;
+      })
+      .catch((e) => (error = e.status === 404 ? 'Dieses Menü gibt es nicht mehr.' : e.message));
+  }
+  const courseTags = $derived(tagGroups.find((g) => g.role === 'course')?.tags ?? []);
+  // Reiter und Gang passen zusammen: „Nachspeisen“ → Nachspeise usw.
+  $effect(() => {
+    const tab = tabs.find((t) => t.key === course);
+    if (menuId && tab && tab.ids.length === 1) courseTag = tab.ids[0];
+  });
 
   if (replaceId) {
     api
@@ -98,6 +120,10 @@
   /** Rezept gewählt: erst die Kurzvorschau (falls eingeschaltet), dann eintragen. */
   async function pick(recipeId) {
     if (saving) return;
+    if (menuId) {
+      addCourse(recipeId, '');
+      return;
+    }
     if (await previewEnabled()) previewId = recipeId;
     else choose(recipeId);
   }
@@ -137,7 +163,41 @@
   function chooseNote(event) {
     event.preventDefault();
     if (note.trim() === '') return;
-    choose(null, note.trim());
+    if (menuId) addCourse(null, note.trim());
+    else choose(null, note.trim());
+  }
+
+  /**
+   * Menü-Modus: Gericht (oder Text) als Gang anlegen und auf der Seite
+   * bleiben, damit gleich der nächste Gang folgen kann. Portionen kommen
+   * vom Menü; Zutaten abwählen geht danach im Menü für alle Gänge.
+   */
+  async function addCourse(recipeId, noteText) {
+    saving = true;
+    error = '';
+    try {
+      const entry = await api.createEntry({ menu_id: Number(menuId), recipe_id: recipeId, note: noteText, course_tag_id: Number(courseTag) || null });
+      const name = courseTags.find((t) => t.id === Number(courseTag))?.name;
+      added = `„${entry.recipe?.title ?? entry.note}“${name ? ` als ${name}` : ''} hinzugefügt.`;
+      note = '';
+      menu = await api.getMenu(menuId);
+    } catch (e) {
+      error = e.message;
+    } finally {
+      saving = false;
+    }
+  }
+
+  /** Plus → „Menü zusammenstellen“: leeres Menü anlegen, dann Gänge wählen. */
+  async function startMenu() {
+    saving = true;
+    try {
+      const m = await api.createMenu({ date: targetDate, slot });
+      navigate(`/plan/menu/${m.id}`);
+    } catch (e) {
+      error = e.message;
+      saving = false;
+    }
   }
 
   function back() {
@@ -149,7 +209,9 @@
 <p class="back"><button type="button" class="link" onclick={back}>← Essensplan</button></p>
 
 <h1>
-  {#if replaceId}
+  {#if menuId}
+    Gang für Menü{#if menu}: {menu.display_title}{/if}
+  {:else if replaceId}
     Ersetzen{#if entry}: {entry.recipe?.title ?? entry.note}{/if}
   {:else}
     Gericht für {heading}
@@ -158,12 +220,29 @@
 
 {#if error}<p class="error">{error}</p>{/if}
 
-{#if !replaceId}
+{#if menuId}
+  <div class="menu-bar">
+    <label>
+      Gang
+      <select bind:value={courseTag}>
+        <option value={0}>– keiner –</option>
+        {#each courseTags as t (t.id)}<option value={t.id}>{t.name}</option>{/each}
+      </select>
+    </label>
+    {#if menu}<span class="muted">{menu.entries.length === 1 ? '1 Gang' : `${menu.entries.length} Gänge`} im Menü</span>{/if}
+    <button type="button" class="primary" onclick={back}>Fertig</button>
+  </div>
+  {#if added}<p class="ok">{added} Weiteren Gang wählen oder „Fertig“.</p>{/if}
+{:else if !replaceId}
   <div class="slot-switch" role="group" aria-label="Mahlzeit">
     {#each slotChoices(coffeeSlot, slot) as s (s.value)}
       <button type="button" aria-pressed={slot === s.value} onclick={() => chooseSlot(s.value)}>{s.label}</button>
     {/each}
   </div>
+{/if}
+
+{#if !menuId && !replaceId}
+  <button type="button" class="secondary menu-start" disabled={saving} onclick={startMenu}>Menü zusammenstellen …</button>
 {/if}
 
 <form class="note-form" onsubmit={chooseNote}>
@@ -172,7 +251,7 @@
 </form>
 <div class="quick">
   {#each ['Essen gehen', 'Reste', 'Pizza bestellen'] as text (text)}
-    <button type="button" class="chip" disabled={saving} onclick={() => choose(null, text)}>{text}</button>
+    <button type="button" class="chip" disabled={saving} onclick={() => (menuId ? addCourse(null, text) : choose(null, text))}>{text}</button>
   {/each}
 </div>
 
@@ -239,6 +318,49 @@
 {/if}
 
 <style>
+  .menu-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .menu-bar select {
+    margin-left: 0.4rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 0.2rem);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+  }
+
+  .menu-bar .primary {
+    margin-left: auto;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--on-accent);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .muted {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .ok {
+    color: var(--accent);
+  }
+
+  .menu-start {
+    margin-bottom: 0.5rem;
+  }
+
   .variant-badge {
     margin-left: 0.4rem;
     padding: 0 0.4rem;

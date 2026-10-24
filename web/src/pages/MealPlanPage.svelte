@@ -5,6 +5,8 @@
   import { takePlanFocus } from '../lib/planFocus.svelte.js';
   import Icon from '../components/Icon.svelte';
   import PlanEntry from '../components/PlanEntry.svelte';
+  import MenuCard from '../components/MenuCard.svelte';
+  import MenuDialog from '../components/MenuDialog.svelte';
   import EntryDialog from '../components/EntryDialog.svelte';
   import MoveWarningDialog from '../components/MoveWarningDialog.svelte';
   import { planDrag } from '../lib/planDrag.js';
@@ -19,6 +21,15 @@
   let to = $state('');
   // Einträge je Tag: { "2026-10-21": [entry, …] }
   let entriesByDate = $state({});
+  // Menüs je Tag (Schritt 9.4); ihre Gänge stehen in entriesByDate.
+  let menusByDate = $state({});
+  // Gänge der Gang-Gruppe für Namen und Auswahl im Menü
+  let courses = $state([]);
+  api
+    .listTagGroups()
+    .then((groups) => (courses = groups.find((g) => g.role === 'course')?.tags ?? []))
+    .catch(() => {});
+  let openMenu = $state(null); // ID des Menüs, dessen Dialog offen ist
   // Heute, eingekaufte Woche und nächster Einkauf laut Server (Zeitzone
   // von Home Assistant, Einkaufstag und -uhrzeit aus den Einstellungen).
   let today = $state(todayString());
@@ -30,7 +41,7 @@
   let loading = false; // verhindert doppeltes Nachladen beim Scrollen
   let menuEntry = $state(null); // Eintrag, dessen Menü offen ist
   let dropTarget = $state(null); // Ziel beim Ziehen, zum Hervorheben
-  let pendingMove = $state(null); // { entry, move, warnings }, wartet auf Bestätigung
+  let pendingMove = $state(null); // { source, fromDate, move, warnings }, wartet auf Bestätigung
   // Tag, den der Plan zeigen soll, z. B. nach dem Einplanen; sonst heute.
   const focusDate = takePlanFocus();
 
@@ -47,8 +58,12 @@
     today = result.today;
     period = result.shopping_period;
     nextPeriod = result.next_shopping_period ?? null;
-    for (let d = start; d <= end; d = addDays(d, 1)) entriesByDate[d] = [];
+    for (let d = start; d <= end; d = addDays(d, 1)) {
+      entriesByDate[d] = [];
+      menusByDate[d] = [];
+    }
     for (const entry of result.entries) entriesByDate[entry.date].push(entry);
+    for (const menu of result.menus ?? []) menusByDate[menu.date]?.push(menu);
   }
 
   async function init() {
@@ -162,40 +177,94 @@
     return null;
   }
 
-  // Abgelegt: auf einem Gericht = tauschen, auf freier Fläche = anhängen.
-  function handleDrop(id, target) {
-    const entry = findEntry(id);
-    if (!entry) return;
-    runMove(entry, {
+  /** Sucht ein geladenes Menü anhand seiner ID. */
+  function findMenu(id) {
+    for (const list of Object.values(menusByDate)) {
+      const menu = list.find((m) => m.id === id);
+      if (menu) return menu;
+    }
+    return null;
+  }
+
+  // Abgelegt: auf einem Gericht oder Menü = tauschen, auf freier Fläche =
+  // anhängen. Menüs (und Gänge eines Menüs) wandern immer als Block.
+  function handleDrop(source, target) {
+    const from = source.kind === 'menu' ? findMenu(source.id) : findEntry(source.id);
+    if (!from) return;
+    runMove(source, from.date, {
       date: target.date,
       slot: target.slot,
-      swap_with: target.type === 'swap' ? target.id : null,
+      swap_with: target.type === 'swap' && target.kind === 'entry' ? target.id : null,
+      swap_with_menu: target.type === 'swap' && target.kind === 'menu' ? target.id : null,
     });
   }
 
   /** Schickt das Verschieben an den Server; bei Warnungen erst fragen. */
-  async function runMove(entry, move) {
+  async function runMove(source, fromDate, move) {
     try {
-      const result = await api.moveEntry(entry.id, move);
+      const result = source.kind === 'menu' ? await api.moveMenu(source.id, move) : await api.moveEntry(source.id, move);
       if (!result.applied) {
-        pendingMove = { entry, move, warnings: result.warnings };
+        pendingMove = { source, fromDate, move, warnings: result.warnings };
         return;
       }
-      await reloadDates([entry.date, ...result.entries.map((e) => e.date)]);
+      await reloadDates([fromDate, move.date, ...result.entries.map((e) => e.date)]);
     } catch (e) {
       alert(`Verschieben fehlgeschlagen: ${e.message}`);
-      await reloadDates([entry.date, move.date]);
+      await reloadDates([fromDate, move.date]);
     }
   }
 
   async function moveChoice(choice) {
-    const { entry, move, warnings } = pendingMove;
+    const { source, fromDate, move, warnings } = pendingMove;
     pendingMove = null;
     if (choice === 'cancel') return;
     const intoPeriod = warnings.filter((w) => w.type === 'planned_into_period').map((w) => w.entry_id);
     const haveIngredients = choice === 'have_ingredients' ? intoPeriod : [];
-    await runMove(entry, { ...move, confirm: true, have_ingredients: haveIngredients });
+    await runMove(source, fromDate, { ...move, confirm: true, have_ingredients: haveIngredients });
     if (choice === 'send') await sendToBring(intoPeriod);
+  }
+
+  // Einträge und Menüs eines Slots in Anzeigereihenfolge; Gänge eines
+  // Menüs stecken in seiner Karte.
+  function items(date, slot) {
+    const list = [
+      ...(menusByDate[date] ?? []).filter((m) => m.slot === slot).map((m) => ({ kind: 'menu', key: `m${m.id}`, position: m.position, menu: m })),
+      ...(entriesByDate[date] ?? [])
+        .filter((e) => e.slot === slot && !e.menu_id)
+        .map((e) => ({ kind: 'entry', key: `e${e.id}`, position: e.position, entry: e })),
+    ];
+    return list.sort((a, b) => a.position - b.position);
+  }
+
+  const menuEntries = (menu) => (entriesByDate[menu.date] ?? []).filter((e) => e.menu_id === menu.id).sort((a, b) => a.position - b.position);
+  const courseName = (id) => courses.find((c) => c.id === id)?.name ?? '';
+
+  // Eintrag zu einem Menü erweitern und gleich das Menü öffnen.
+  async function toMenu(entry) {
+    menuEntry = null;
+    try {
+      // Gang des Rezepts (z. B. Kuchen & Torten), sonst Hauptgericht.
+      let course = 0;
+      if (entry.recipe_id) {
+        const recipe = await api.getRecipe(entry.recipe_id);
+        const own = recipe.tags.find((t) => courses.some((c) => c.id === t.id));
+        course = own?.id ?? courses.find((c) => c.name.toLowerCase() === 'hauptgericht')?.id ?? 0;
+      }
+      const menu = await api.toMenu(entry.id, { course_tag_id: course });
+      await reloadDates([entry.date]);
+      openMenu = menu.id;
+    } catch (e) {
+      alert(`Menü nicht angelegt: ${e.message}`);
+    }
+  }
+
+  // Menü über seinen Dialog verschieben.
+  async function moveMenuTo(menu, date) {
+    openMenu = null;
+    await runMove({ kind: 'menu', id: menu.id }, menu.date, { date, slot: menu.slot });
+    await ensureLoaded(date);
+    await tick();
+    scrollToDay(date);
   }
 
   /** Sendet die Zutaten der Gerichte ids an Bring (nach dem Verschieben). */
@@ -220,7 +289,7 @@
   // Verschieben über das Menü (ohne Ziehen), z. B. per Tastatur.
   async function moveFromMenu(entry, date) {
     menuEntry = null;
-    await runMove(entry, { date, slot: entry.slot });
+    await runMove({ kind: 'entry', id: entry.id }, entry.date, { date, slot: entry.slot });
     await ensureLoaded(date);
     await tick();
     scrollToDay(date);
@@ -232,9 +301,7 @@
   const inPeriod = (date) => period && date >= period.from && date <= period.to;
   const inNext = (date) => nextPeriod && date >= nextPeriod.from && date <= nextPeriod.to;
   const range = (p) => `${dayLabel(p.from).weekday} ${dayLabel(p.from).date}–${dayLabel(p.to).weekday} ${dayLabel(p.to).date}`;
-  const lunch = (date) => entriesByDate[date]?.filter((e) => e.slot === 'lunch') ?? [];
-  const coffee = (date) => entriesByDate[date]?.filter((e) => e.slot === 'coffee') ?? [];
-  const dinner = (date) => entriesByDate[date]?.filter((e) => e.slot === 'dinner') ?? [];
+
 </script>
 
 <div class="head">
@@ -260,6 +327,24 @@
   <p class="error">Der Plan konnte nicht geladen werden: {error}</p>
 {/if}
 
+{#snippet planItem(item)}
+  {#if item.kind === 'menu'}
+    <MenuCard
+      menu={item.menu}
+      entries={menuEntries(item.menu)}
+      {courseName}
+      onopen={(m) => (openMenu = m.id)}
+      dropTarget={dropTarget?.kind === 'menu' && dropTarget?.id === item.menu.id}
+    />
+  {:else}
+    <PlanEntry
+      entry={item.entry}
+      onmenu={(e) => (menuEntry = e)}
+      dropTarget={dropTarget?.kind === 'entry' && dropTarget?.id === item.entry.id}
+    />
+  {/if}
+{/snippet}
+
 <div
   class="strip"
   bind:this={strip}
@@ -268,8 +353,8 @@
 >
   {#each days as date (date)}
     {@const label = dayLabel(date)}
-    {@const lunchEntries = lunch(date)}
-    {@const coffeeEntries = coffee(date)}
+    {@const lunchEntries = items(date, 'lunch')}
+    {@const coffeeEntries = items(date, 'coffee')}
     <section class="day" class:today={date === today} class:period={inPeriod(date)} class:next={inNext(date)} class:past={date < today} data-date={date}>
       <header class="day-head">
         <span class="weekday">{label.weekday}</span>
@@ -281,24 +366,18 @@
         {#if lunchEntries.length > 0}
           <div class="zone" data-slot-zone="lunch" class:drop-target={isDropTarget(date, 'lunch')}>
             <span class="slot">Mittag</span>
-            {#each lunchEntries as entry (entry.id)}
-              <PlanEntry {entry} onmenu={(e) => (menuEntry = e)} dropTarget={dropTarget?.id === entry.id} />
-            {/each}
+            {#each lunchEntries as item (item.key)}{@render planItem(item)}{/each}
           </div>
         {/if}
         {#if coffeeEntries.length > 0}
           <div class="zone" data-slot-zone="coffee" class:drop-target={isDropTarget(date, 'coffee')}>
             <span class="slot">Kaffee</span>
-            {#each coffeeEntries as entry (entry.id)}
-              <PlanEntry {entry} onmenu={(e) => (menuEntry = e)} dropTarget={dropTarget?.id === entry.id} />
-            {/each}
+            {#each coffeeEntries as item (item.key)}{@render planItem(item)}{/each}
           </div>
         {/if}
         <div class="zone dinner" data-slot-zone="dinner" class:drop-target={isDropTarget(date, 'dinner')}>
           {#if lunchEntries.length > 0 || coffeeEntries.length > 0}<span class="slot">Abend</span>{/if}
-          {#each dinner(date) as entry (entry.id)}
-            <PlanEntry {entry} onmenu={(e) => (menuEntry = e)} dropTarget={dropTarget?.id === entry.id} />
-          {/each}
+          {#each items(date, 'dinner') as item (item.key)}{@render planItem(item)}{/each}
           <!-- Leerer Tag: großes Plus; belegter Tag: kleines Plus für ein
                weiteres Gericht -->
           <a
@@ -321,7 +400,18 @@
     onsaved={entrySaved}
     ondeleted={entryDeleted}
     onmove={moveFromMenu}
+    ontomenu={toMenu}
     onclose={() => (menuEntry = null)}
+  />
+{/if}
+
+{#if openMenu}
+  <MenuDialog
+    menuId={openMenu}
+    {courses}
+    onchanged={(dates) => reloadDates(dates)}
+    onmove={moveMenuTo}
+    onclose={() => (openMenu = null)}
   />
 {/if}
 

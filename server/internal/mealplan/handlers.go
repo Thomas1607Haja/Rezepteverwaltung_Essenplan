@@ -26,6 +26,7 @@ func (h *Handler) Register(mux httpx.Router) {
 	mux.HandleFunc("PUT /api/v1/meal-plan/{id}", h.update)
 	mux.HandleFunc("DELETE /api/v1/meal-plan/{id}", h.delete)
 	mux.HandleFunc("POST /api/v1/meal-plan/{id}/move", h.move)
+	h.registerMenus(mux)
 }
 
 // listResponse enthält neben den Einträgen den heutigen Tag, die
@@ -38,6 +39,8 @@ type listResponse struct {
 	// SlotTimes: Uhrzeiten der Slots ("lunch": "12:00", …) für den
 	// Kalender der Home-Assistant-Integration (Schritt 9.3).
 	SlotTimes map[string]string `json:"slot_times"`
+	// Menus: Menüs im Zeitraum (Schritt 9.4); ihre Gänge stehen in Entries.
+	Menus []Menu `json:"menus"`
 }
 
 // list liefert die Einträge eines Zeitraums: ?from=2026-10-17&to=2026-10-23.
@@ -58,6 +61,11 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, r, err)
 		return
 	}
+	menus, err := h.store.ListMenus(r.Context(), from, to)
+	if err != nil {
+		writeStoreError(w, r, err)
+		return
+	}
 	st, err := h.store.settings.Get(r.Context())
 	if err != nil {
 		httpx.WriteInternalError(w, r, err)
@@ -69,6 +77,7 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		ShoppingPeriod:     period,
 		NextShoppingPeriod: period.Next(),
 		SlotTimes:          map[string]string{SlotLunch: st.LunchTime, SlotCoffee: st.CoffeeTime, SlotDinner: st.DinnerTime},
+		Menus:              menus,
 	})
 }
 
@@ -173,7 +182,7 @@ func writeStoreError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.As(err, &verr):
 		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: verr.Message, Field: verr.Field})
-	case errors.Is(err, ErrNotFound):
+	case errors.Is(err, ErrNotFound), errors.Is(err, ErrMenuNotFound):
 		httpx.WriteError(w, http.StatusNotFound, err.Error())
 	default:
 		httpx.WriteInternalError(w, r, err)

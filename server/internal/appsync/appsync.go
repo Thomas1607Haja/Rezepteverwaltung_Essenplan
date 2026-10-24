@@ -51,10 +51,13 @@ type Response struct {
 	Recipes            []recipes.Recipe         `json:"recipes"`
 	PlanInfo           []recipes.RecipePlanInfo `json:"plan_info"`
 	MealPlanEntries    []mealplan.Entry         `json:"meal_plan_entries"`
-	PantryItems        []pantry.Item            `json:"pantry_items"`
-	TagGroups          []recipes.TagGroup       `json:"tag_groups"`
-	Settings           settings.Settings        `json:"settings"`
-	Deletions          []Deletion               `json:"deletions"`
+	// Menus: geänderte Menüs ab plan_from (Schritt 9.4); gelöschte stehen
+	// in deletions mit table "meal_plan_menus".
+	Menus       []mealplan.Menu    `json:"menus"`
+	PantryItems []pantry.Item      `json:"pantry_items"`
+	TagGroups   []recipes.TagGroup `json:"tag_groups"`
+	Settings    settings.Settings  `json:"settings"`
+	Deletions   []Deletion         `json:"deletions"`
 }
 
 // Deletion ist ein gelöschter Datensatz, z. B. {"table": "recipes", "id": 12}.
@@ -126,6 +129,9 @@ func (h *Handler) collect(ctx context.Context, since string) (Response, error) {
 		return Response{}, err
 	}
 	if resp.MealPlanEntries, err = h.plan.ChangedSince(ctx, resp.PlanFrom, since); err != nil {
+		return Response{}, err
+	}
+	if resp.Menus, err = h.plan.MenusChangedSince(ctx, resp.PlanFrom, since); err != nil {
 		return Response{}, err
 	}
 	if resp.PantryItems, err = h.pantry.List(ctx); err != nil {

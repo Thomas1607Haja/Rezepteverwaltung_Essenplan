@@ -132,7 +132,12 @@ fun StatisticsScreen(onRecipes: (RecipeFilter) -> Unit, onOpen: (Long) -> Unit) 
                 }
                 Text(
                     "${stats.entries} ${if (stats.entries == 1) "Gericht" else "Gerichte"} im Essensplan " +
-                        (stats.from?.let { "seit ${formatDate(it)}" } ?: "insgesamt") + " (bis heute)",
+                        (stats.from?.let { "seit ${formatDate(it)}" } ?: "insgesamt") + " (bis heute)" +
+                        when (stats.menus) {
+                            0 -> ""
+                            1 -> ", davon ein Menü"
+                            else -> ", davon ${stats.menus} Menüs"
+                        },
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (stats.top.isEmpty()) Muted("In diesem Zeitraum stand noch nichts im Essensplan.")

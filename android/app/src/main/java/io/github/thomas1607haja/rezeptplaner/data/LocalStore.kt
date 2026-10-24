@@ -2,6 +2,7 @@ package io.github.thomas1607haja.rezeptplaner.data
 
 import io.github.thomas1607haja.rezeptplaner.api.HouseholdSettings
 import io.github.thomas1607haja.rezeptplaner.api.MealPlanEntry
+import io.github.thomas1607haja.rezeptplaner.api.Menu
 import io.github.thomas1607haja.rezeptplaner.api.Period
 import io.github.thomas1607haja.rezeptplaner.api.PlanInfo
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
@@ -38,6 +39,10 @@ data class Snapshot(
     val recipes: List<Recipe> = emptyList(),
     val planInfo: List<PlanInfo> = emptyList(),
     val entries: List<MealPlanEntry> = emptyList(),
+    /** Menüs (Schritt 9.4); ihre Gänge stehen in [entries] mit menu_id. */
+    val menus: List<Menu> = emptyList(),
+    /** Der Server kann Menüs (ab 0.16); sonst bietet die App sie nicht an. */
+    val menusSupported: Boolean = false,
     val tagGroups: List<TagGroup> = emptyList(),
     val settings: HouseholdSettings = HouseholdSettings(),
 ) {
@@ -53,12 +58,15 @@ fun Snapshot.merge(response: SyncResponse, serverUrl: String): Snapshot {
     val full = response.full || this.serverUrl != serverUrl
     val recipes = if (full) linkedMapOf() else recipes.associateByTo(linkedMapOf()) { it.id }
     val entries = if (full) linkedMapOf() else entries.associateByTo(linkedMapOf()) { it.id }
+    val menus = if (full) linkedMapOf() else menus.associateByTo(linkedMapOf()) { it.id }
     for (r in response.recipes) recipes[r.id] = r
     for (e in response.mealPlanEntries) entries[e.id] = e
+    for (m in response.menus.orEmpty()) menus[m.id] = m
     for (d in response.deletions) {
         when (d.table) {
             "recipes" -> recipes.remove(d.id)
             "meal_plan_entries" -> entries.remove(d.id)
+            "meal_plan_menus" -> menus.remove(d.id)
         }
     }
     return Snapshot(
@@ -72,6 +80,9 @@ fun Snapshot.merge(response: SyncResponse, serverUrl: String): Snapshot {
         // Ältere Tage als plan_from braucht die App nicht mehr.
         entries = entries.values.filter { it.date >= response.planFrom }
             .sortedWith(compareBy({ it.date }, { slotOrder(it.slot) }, { it.position }, { it.id })),
+        menus = menus.values.filter { it.date >= response.planFrom }
+            .sortedWith(compareBy({ it.date }, { slotOrder(it.slot) }, { it.position }, { it.id })),
+        menusSupported = response.menus != null,
         tagGroups = response.tagGroups,
         settings = response.settings,
     )

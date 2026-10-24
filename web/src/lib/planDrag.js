@@ -7,11 +7,20 @@
 //
 // Erwartete Markierungen im HTML:
 //   data-entry-id, data-date, data-slot  an jedem Eintrag
+//   data-menu-id, data-date, data-slot   an jeder Menü-Karte (zieht als Block)
 //   data-date                            an jeder Tagesspalte
 //   data-slot-zone="lunch" | "coffee" | "dinner"    an den Bereichen Mittag/Kaffee/Abend
 //
-// Optionen: { ondrop(entryId, target), ontarget(target | null) }, wobei
-// target = { type: 'swap', id, date, slot } oder { type: 'append', date, slot }.
+// Optionen: { ondrop(source, target), ontarget(target | null) }, wobei
+// source = { kind: 'entry' | 'menu', id } und
+// target = { type: 'swap', kind, id, date, slot } oder { type: 'append', date, slot }.
+
+const DRAGGABLE = '[data-entry-id], [data-menu-id]';
+
+/** Art und ID eines ziehbaren Elements. */
+function itemOf(el) {
+  return el.dataset.menuId ? { kind: 'menu', id: Number(el.dataset.menuId) } : { kind: 'entry', id: Number(el.dataset.entryId) };
+}
 
 const LONG_PRESS_MS = 400; // Finger: so lange halten, bis das Ziehen beginnt
 const TOUCH_SLOP = 10; // Finger: mehr Bewegung vorher = normales Scrollen
@@ -27,12 +36,12 @@ export function planDrag(strip, options) {
 
   function onPointerDown(e) {
     if (e.button !== 0 || drag) return;
-    const entryEl = e.target.closest('[data-entry-id]');
+    const entryEl = e.target.closest(DRAGGABLE);
     // Der Menüknopf soll sich normal anklicken lassen.
     if (!entryEl || e.target.closest('button.menu')) return;
     press = {
       entryEl,
-      id: Number(entryEl.dataset.entryId),
+      source: itemOf(entryEl),
       startX: e.clientX,
       startY: e.clientY,
       pointerId: e.pointerId,
@@ -101,9 +110,9 @@ export function planDrag(strip, options) {
   function findTarget(x, y) {
     const el = document.elementFromPoint(x, y);
     if (!el || !strip.contains(el)) return null;
-    const entryEl = el.closest('[data-entry-id]');
+    const entryEl = el.closest(DRAGGABLE);
     if (entryEl && entryEl !== drag.entryEl) {
-      return { type: 'swap', id: Number(entryEl.dataset.entryId), date: entryEl.dataset.date, slot: entryEl.dataset.slot };
+      return { type: 'swap', ...itemOf(entryEl), date: entryEl.dataset.date, slot: entryEl.dataset.slot };
     }
     const day = el.closest('[data-date]');
     if (!day || entryEl === drag.entryEl) return null;
@@ -131,11 +140,11 @@ export function planDrag(strip, options) {
       return;
     }
     if (!drag || e.pointerId !== drag.pointerId) return;
-    const { id, target } = drag;
+    const { source, target } = drag;
     suppressClick = true;
     setTimeout(() => (suppressClick = false), 0);
     cleanup();
-    if (target) opts.ondrop(id, target);
+    if (target) opts.ondrop(source, target);
   }
 
   function cancel() {
@@ -212,5 +221,5 @@ function preventDefault(e) {
 
 function sameTarget(a, b) {
   if (!a || !b) return a === b;
-  return a.type === b.type && a.id === b.id && a.date === b.date && a.slot === b.slot;
+  return a.type === b.type && a.kind === b.kind && a.id === b.id && a.date === b.date && a.slot === b.slot;
 }

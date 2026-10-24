@@ -11,7 +11,7 @@
   // ondeleted(id) das Entfernen, onmove(entry, date) den Wunsch, den
   // Eintrag auf einen anderen Tag zu verschieben (ohne Ziehen), onclose das
   // Schließen ohne Änderung.
-  let { entry, onsaved, ondeleted, onmove, onclose } = $props();
+  let { entry, onsaved, ondeleted, onmove, onclose, ontomenu = null } = $props();
 
   // Bearbeitet wird eine Kopie; übernommen wird erst beim Speichern.
   // svelte-ignore state_referenced_locally
@@ -182,6 +182,10 @@
       <button type="button" class="link" onclick={() => navigate(`/plan/replace/${entry.id}`)}>
         {entry.recipe_id ? 'Rezept ersetzen' : 'Rezept wählen'}
       </button>
+      {#if ontomenu && !entry.menu_id}
+        <!-- Menü (Schritt 9.4): weitere Gänge dazu, z. B. Suppe und Nachtisch -->
+        <button type="button" class="link" onclick={() => ontomenu(entry)}>Zu einem Menü erweitern</button>
+      {/if}
     </div>
 
     <footer>

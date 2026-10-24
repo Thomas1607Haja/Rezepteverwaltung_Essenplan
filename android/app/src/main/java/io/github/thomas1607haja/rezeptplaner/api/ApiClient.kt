@@ -83,6 +83,30 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
     suspend fun moveEntry(config: ServerConfig, id: Long, move: MoveRequest): MoveResult =
         send(config, "POST", "/api/v1/meal-plan/$id/move", json.encodeToString(move))
 
+    // Menüs (Schritt 9.4, Server 0.16)
+
+    suspend fun createMenu(config: ServerConfig, menu: MenuInput): Menu =
+        send(config, "POST", "/api/v1/menus", json.encodeToString(menu))
+
+    suspend fun updateMenu(config: ServerConfig, id: Long, menu: MenuInput): Menu =
+        send(config, "PUT", "/api/v1/menus/$id", json.encodeToString(menu))
+
+    /** [withEntries] = false löst das Menü auf, die Gänge bleiben im Plan. */
+    suspend fun deleteMenu(config: ServerConfig, id: Long, withEntries: Boolean) {
+        withContext(Dispatchers.IO) {
+            execute(config, "/api/v1/menus/$id" + if (withEntries) "?with_entries=true" else "", "application/json", "DELETE", null)
+        }
+    }
+
+    suspend fun moveMenu(config: ServerConfig, id: Long, move: MoveRequest): MoveResult =
+        send(config, "POST", "/api/v1/menus/$id/move", json.encodeToString(move))
+
+    suspend fun toMenu(config: ServerConfig, entryId: Long, request: ToMenuRequest): Menu =
+        send(config, "POST", "/api/v1/meal-plan/$entryId/to-menu", json.encodeToString(request))
+
+    suspend fun detachEntry(config: ServerConfig, entryId: Long): MealPlanEntry =
+        send(config, "POST", "/api/v1/meal-plan/$entryId/detach", "{}")
+
     // Einkauf und Bring
 
     /** Einkaufsliste der eingekauften Woche bzw. mit [next] des nächsten Einkaufs. */

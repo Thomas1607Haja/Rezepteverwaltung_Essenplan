@@ -375,8 +375,24 @@ Verwaltet werden Gruppen und Kategorien nur in der Weboberfläche (Einstellungen
 | transferred_at | Zeitstempel | optional |
 | note | Text | optional, z. B. „Essen gehen“ |
 | excluded_ingredients | Text (JSON-Liste) | abgewählte Zutaten als `item_key` (Migration 012), Standard `[]` |
+| menu_id | Integer | optional: Gang dieses Menüs (Migration 016); beim Löschen des Menüs leer |
+| course_tag_id | Integer | optional: Gang (Kategorie der Gang-Gruppe), nur im Menü sinnvoll |
 
 Keine Eindeutigkeit über (`date`, `slot`): Mehrere Einträge pro Slot sind erlaubt. Ein Eintrag braucht ein Rezept oder eine Notiz.
+
+### `meal_plan_menus`
+
+Menüs (Schritt 9.4, Migration 016): eine Klammer um normale Planeinträge. Datum und Slot der Gänge sind immer die des Menüs; verschoben wird nur der ganze Block.
+
+| Feld | Typ | Bemerkung |
+|---|---|---|
+| id | Integer | `AUTOINCREMENT`, Löschungen in `deletions` (`meal_plan_menus`) |
+| date, slot | Datum, Text | wie bei `meal_plan_entries` |
+| position | Integer | Reihenfolge zusammen mit den einzelnen Einträgen im Slot |
+| title | Text | leer = automatisch: Hauptgericht, sonst erstes Gericht (`display_title` in der API) |
+| note | Text | z. B. „Suppe am Vortag kochen“ |
+| servings | Integer | Personen; beim Ändern auf alle Gänge übertragbar (Rezepte mit Ergebnis-Einheit wie Kuchen bleiben) |
+| created_at, updated_at | Zeitstempel | |
 
 ### `transferred_items`
 
@@ -592,6 +608,7 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App-Zugang
 | Rezepte | Liste mit Suche/Filtern, Einzelabruf (mit `parent_recipe_id` und `family`), Anlegen, Ändern, Löschen, Favorit setzen, Bild hochladen, Variante anlegen (`POST /recipes/{id}/variants`, der Server kopiert) |
 | Import | URL einlesen (liefert Entwurf, Bildadresse und Dubletten), Zutatenzeilen zerlegen; Bild der Quellseite beim Speichern übernehmen; Datei-Import: `POST /import/file` (eine oder mehrere Dateien, liefert Vorschau, Kennung und `unknown_categories`), `POST /import/file/{kennung}` (ausgewählte Rezepte speichern; `categories` ordnet unbekannte Kategorien zu oder legt sie an) |
 | Essensplan | Einträge eines Zeitraums, Anlegen, Ändern, Löschen, Verschieben/Tauschen mit Warnprüfung (erst prüfen, dann bestätigen) |
+| Menüs | `POST /menus`, `GET/PUT/DELETE /menus/{id}` (`?with_entries=true` löscht die Gänge mit, sonst „auflösen“), `POST /menus/{id}/move` (wie beim Eintrag, auch `swap_with_menu`), `POST /menus/{id}/all-available`, `POST /meal-plan/{id}/to-menu`, `POST /meal-plan/{id}/detach`; Gänge über `POST /meal-plan` mit `menu_id` und `course_tag_id`; `GET /meal-plan` und `/sync` liefern `menus` |
 | Einkauf | Vorschau der Einkaufsliste (aktueller oder folgender Einkaufszeitraum), An Bring senden, Differenz nachsenden |
 | Stammdaten | Kategorien (`GET /tags`), Vorratsliste (inkl. Prüfung, ob Zutatennamen im Vorrat sind), Einstellungen |
 | Kategorien verwalten | nur über Ingress: `GET/POST /tag-groups`, `PUT /tag-groups/order`, `PUT/DELETE /tag-groups/{id}` (`?move_to=` oder `?with_tags=true`), `PUT /tag-groups/{id}/tags` (Inhalt und Reihenfolge), `POST /tags`, `PUT/DELETE /tags/{id}`, `POST /tags/{id}/merge` |
@@ -692,7 +709,7 @@ Ziel: Rezepte nach Gang finden, Kuchen und Backwaren sauber planen und an Wochen
 | 9.1 | (umgesetzt, Server 0.13.0, App 0.14.0, Skill 2.2) **Gang:** Kategoriegruppe „Gang“ mit Kennzeichen `role = course` an `tag_groups` (Migration; genau eine Gruppe kann Gang-Gruppe sein, umschaltbar in der Kategorienverwaltung). Startliste: Vorspeise, Suppe/Eintopf und Salat (beide aus „Art“ verschoben, Zuordnungen bleiben), Hauptgericht, Beilage, Nachspeise, Kuchen & Torten, Gebäck, Brot, Snack. Schnellfilter-Reiter in Rezeptübersicht und Rezeptauswahl (Web und App): Alle \| Hauptgerichte \| Vorspeisen, Suppen & Salate \| Nachspeisen \| Backen (Kuchen & Torten, Gebäck, Brot). Seite „Gänge zuordnen“ (nur Web): Vorschläge nach Titel, Zutaten und Kategorien für Rezepte ohne Gang, gesammelt übernehmen. Skill: genau einen Gang vergeben (von Hand dürfen es mehrere sein) |
 | 9.2 | (umgesetzt, Server 0.14.0, App 0.15.0, Skill 2.3, Format 3) **Ergebnis-Einheit** `yield_unit` am Rezept (leer = Portionen; freier Text mit Vorschlägen Stück, Kuchen, Blech, Springform 26 cm, Laib). Anzeige „1 Springform 26 cm“ statt „1 Portion“; Mengen werden weiter linear umgerechnet. Beim Einplanen gilt bei gesetzter Einheit die Grundmenge des Rezepts statt der Familiengröße. Importformat Version 3, Skill liest „für eine Springform …“, „ergibt 12 Stück“ aus. Umrechnung nach Formgröße später |
 | 9.3 | (umgesetzt, Server 0.15.0, App 0.16.0, Integration 0.5.0) **Slot „Kaffee & Kuchen“** (`coffee`) zwischen Mittag und Abend (Migration mit Tabellenumbau wegen CHECK), abschaltbar in den Einstellungen (Standard an). Rezeptauswahl im Kaffee-Slot wählt den Reiter „Backen“ vor. Uhrzeiten für den Home-Assistant-Kalender in den Einstellungen: Mittag 12:00, Kaffee 15:30, Abend 18:30. Karte und Kalender zeigen „Kaffee:“ |
-| 9.4 | **Menüs:** Tabelle `meal_plan_menus` (Tag, Slot, Titel, Notiz, Portionen); jedes Gericht bleibt ein eigener Planeintrag mit `menu_id` und Gang. Plan: eine Karte „Menü: <Titel> · 4 Gänge“, ausklappbar; Titel standardmäßig das Hauptgericht, frei überschreibbar. Anlegen über Plus → „Menü zusammenstellen“ oder „Zu einem Menü erweitern“ am Eintrag; auch Einträge ohne Rezept erlaubt. Portionen am Menü, beim Ändern auf alle Gänge übertragbar, Abweichung je Gang möglich. Verschieben und Tauschen als ganzer Block (Warnregeln für alle Gänge zusammengefasst); „Aus Menü lösen“ für einen einzelnen Gang. Kurzvorschau mit einem Abschnitt je Gang. Einkauf, Bring, Differenzen und Abwahl unverändert pro Gericht. Kochansicht „Menü“ mit Notiz und allen Gängen. Home Assistant: ein Kalendertermin je Menü, Karte kompakt. Statistik zählt jedes Gericht einzeln plus „x Menüs im Zeitraum“ |
+| 9.4 | (umgesetzt, Server 0.16.0, App 0.17.0, Integration 0.6.0) **Menüs:** Tabelle `meal_plan_menus` (Tag, Slot, Titel, Notiz, Portionen); jedes Gericht bleibt ein eigener Planeintrag mit `menu_id` und Gang. Plan: eine Karte „Menü: <Titel> · 4 Gänge“, ausklappbar; Titel standardmäßig das Hauptgericht, frei überschreibbar. Anlegen über Plus → „Menü zusammenstellen“ oder „Zu einem Menü erweitern“ am Eintrag; auch Einträge ohne Rezept erlaubt. Portionen am Menü, beim Ändern auf alle Gänge übertragbar, Abweichung je Gang möglich. Verschieben und Tauschen als ganzer Block (Warnregeln für alle Gänge zusammengefasst); „Aus Menü lösen“ für einen einzelnen Gang. Kurzvorschau mit einem Abschnitt je Gang. Einkauf, Bring, Differenzen und Abwahl unverändert pro Gericht. Kochansicht „Menü“ mit Notiz und allen Gängen. Home Assistant: ein Kalendertermin je Menü, Karte kompakt. Statistik zählt jedes Gericht einzeln plus „x Menüs im Zeitraum“ |
 | 9.5 | (später) Menü-Vorlagen („Weihnachtsmenü“): speichern und wieder einplanen |
 
 ---

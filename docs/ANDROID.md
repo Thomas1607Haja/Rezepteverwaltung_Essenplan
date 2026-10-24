@@ -151,11 +151,11 @@ Quellen: [Android Developers Blog](https://developer.android.com/blog/posts/andr
 
 ## 7. Was die App kann und welche Daten auf dem Handy liegen
 
-**Funktionen (App 0.16):**
+**Funktionen (App 0.17):**
 
 | Bereich | Offline | Online |
 |---|---|---|
-| Essensplan | lesen (Stand des letzten Abgleichs) | planen (Mittag/Abend, auch ohne Rezept wie „Essen gehen“), ändern, Favorit, verschieben/tauschen (Tagesauswahl oder beliebiges Datum) mit den Warnungen des Servers, dabei auf Wunsch gleich an Bring senden; Kurzvorschau beim Einplanen mit Zutaten-Abwahl, „Zutaten vorhanden …“ im Eintragsmenü |
+| Essensplan | lesen (Stand des letzten Abgleichs) | planen (Mittag/Abend, auch ohne Rezept wie „Essen gehen“), ändern, Favorit, verschieben/tauschen (Tagesauswahl oder beliebiges Datum) mit den Warnungen des Servers, dabei auf Wunsch gleich an Bring senden; Kurzvorschau beim Einplanen mit Zutaten-Abwahl, „Zutaten vorhanden …“ im Eintragsmenü; Menüs (ab Server 0.16): zusammenstellen, Gänge hinzufügen/lösen, Gang ändern, Personen übertragen, „Zutaten vorhanden“ fürs ganze Menü, als Block verschieben/tauschen, auflösen, Kochansicht des Menüs |
 | Rezepte | suchen, filtern (auch Reiter nach Gang: Hauptgerichte, Nachspeisen, Backen …), Kochansicht mit Portionsrechner | anlegen, bearbeiten, Variante, Favorit, löschen |
 | Import | – | Link teilen (Browser, Chefkoch-App), QR-Code eines Ausdrucks scannen, Foto einer Seite (Texterkennung), Datei der Claude-Skill (Teilen, „Öffnen mit“, Dateiauswahl, WhatsApp) mit Vorschau; unbekannte Kategorien zuordnen, neu anlegen oder weglassen |
 | Einkauf | – | Liste der eingekauften Woche / des nächsten Einkaufs, an Bring senden, Differenz nachsenden |

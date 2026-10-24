@@ -60,7 +60,8 @@ func (s *Store) CurrentPeriod(ctx context.Context) (Period, error) {
 const selectEntry = `
 	SELECT e.id, e.date, e.slot, e.position, e.recipe_id, e.servings, e.status,
 	       e.transferred_at, e.note, e.created_at, e.updated_at,
-	       r.title, r.thumbnail, r.is_favorite, e.excluded_ingredients, r.yield_unit
+	       r.title, r.thumbnail, r.is_favorite, e.excluded_ingredients, r.yield_unit,
+	       e.menu_id, e.course_tag_id
 	FROM meal_plan_entries e
 	LEFT JOIN recipes r ON r.id = e.recipe_id`
 
@@ -77,7 +78,7 @@ func scanEntry(row scanner) (Entry, error) {
 	var createdAt, updatedAt, excluded string
 	err := row.Scan(&e.ID, &e.Date, &e.Slot, &e.Position, &e.RecipeID, &e.Servings, &e.Status,
 		&transferredAt, &e.Note, &createdAt, &updatedAt,
-		&title, &thumbnail, &isFavorite, &excluded, &yieldUnit)
+		&title, &thumbnail, &isFavorite, &excluded, &yieldUnit, &e.MenuID, &e.CourseTagID)
 	if err != nil {
 		return Entry{}, err
 	}
@@ -210,16 +211,36 @@ func checkRecipe(ctx context.Context, q querier, recipeID *int64) error {
 func nextPosition(ctx context.Context, q querier, date, slot string) (int, error) {
 	var pos int
 	err := q.QueryRowContext(ctx,
-		"SELECT COALESCE(MAX(position) + 1, 0) FROM meal_plan_entries WHERE date = ? AND slot = ?",
-		date, slot).Scan(&pos)
+		`SELECT max(coalesce((SELECT max(position) + 1 FROM meal_plan_entries WHERE date = ? AND slot = ?), 0),
+		            coalesce((SELECT max(position) + 1 FROM meal_plan_menus WHERE date = ? AND slot = ?), 0))`,
+		date, slot, date, slot).Scan(&pos)
 	if err != nil {
 		return 0, fmt.Errorf("position bestimmen: %w", err)
 	}
 	return pos, nil
 }
 
-// Create legt einen Eintrag am Ende von Datum und Slot an.
+// Create legt einen Eintrag am Ende von Datum und Slot an – bzw. als Gang
+// eines Menüs (in.MenuID) an dessen Tag und Slot.
 func (s *Store) Create(ctx context.Context, in NewEntry) (Entry, error) {
+	if in.MenuID != nil {
+		menu, err := s.GetMenu(ctx, *in.MenuID)
+		if err != nil {
+			return Entry{}, err
+		}
+		in.Date, in.Slot = menu.Date, menu.Slot
+		// Portionen vom Menü – außer bei Kuchen & Co. (Ergebnis-Einheit),
+		// dort gilt unten die Grundmenge des Rezepts.
+		if in.Servings == nil {
+			var unit string
+			if in.RecipeID != nil {
+				s.db.QueryRowContext(ctx, "SELECT yield_unit FROM recipes WHERE id = ?", *in.RecipeID).Scan(&unit)
+			}
+			if unit == "" {
+				in.Servings = &menu.Servings
+			}
+		}
+	}
 	if _, err := parseDate("date", in.Date); err != nil {
 		return Entry{}, err
 	}
@@ -285,9 +306,10 @@ func (s *Store) Create(ctx context.Context, in NewEntry) (Entry, error) {
 	}
 	res, err := tx.ExecContext(ctx, `
 		INSERT INTO meal_plan_entries (date, slot, position, recipe_id, servings, note,
-		                               excluded_ingredients, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		in.Date, in.Slot, pos, in.RecipeID, servings, note, string(excludedJSON), now, now)
+		                               excluded_ingredients, menu_id, course_tag_id, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		in.Date, in.Slot, pos, in.RecipeID, servings, note, string(excludedJSON),
+		in.MenuID, nonZero(in.CourseTagID), now, now)
 	if err != nil {
 		return Entry{}, fmt.Errorf("eintrag anlegen: %w", err)
 	}
@@ -362,6 +384,14 @@ func (s *Store) Update(ctx context.Context, id int64, c Changes) (Entry, error) 
 		excludedJSON = string(data)
 	case !sameRecipe:
 		excludedJSON = "[]"
+	}
+
+	// Gang im Menü: nil = unverändert, 0 = keiner.
+	if c.CourseTagID != nil {
+		if _, err := tx.ExecContext(ctx, "UPDATE meal_plan_entries SET course_tag_id = ? WHERE id = ?",
+			nonZero(c.CourseTagID), id); err != nil {
+			return Entry{}, fmt.Errorf("eintrag %d ändern: %w", id, err)
+		}
 	}
 
 	// Wer den Status zurücksetzt, löscht auch den Zeitpunkt der Übertragung.

@@ -39,9 +39,13 @@ type Entry struct {
 	// ExcludedIngredients: abgewählte Zutaten („habe ich noch“) als
 	// Zutatenschlüssel (item_key der Rezeptzutaten); sie gehen nicht in die
 	// Einkaufsliste ein. Gilt nur für diesen Eintrag.
-	ExcludedIngredients []string  `json:"excluded_ingredients"`
-	CreatedAt           time.Time `json:"created_at"`
-	UpdatedAt           time.Time `json:"updated_at"`
+	ExcludedIngredients []string `json:"excluded_ingredients"`
+	// MenuID: Menü, zu dem das Gericht gehört (Schritt 9.4); nil = keins.
+	MenuID *int64 `json:"menu_id"`
+	// CourseTagID: Gang im Menü (Kategorie der Gang-Gruppe); nil = keiner.
+	CourseTagID *int64    `json:"course_tag_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // RecipeInfo sind die Angaben zum Rezept eines Eintrags.
@@ -63,6 +67,10 @@ type NewEntry struct {
 	Note     string `json:"note"`
 	// ExcludedIngredients: abgewählte Zutaten aus der Kurzvorschau.
 	ExcludedIngredients []string `json:"excluded_ingredients"`
+	// MenuID: als Gang in dieses Menü; Tag und Slot kommen dann vom Menü,
+	// die Portionen (falls nicht angegeben) ebenfalls.
+	MenuID      *int64 `json:"menu_id"`
+	CourseTagID *int64 `json:"course_tag_id"`
 }
 
 // Changes sind die Angaben, die sich an einem Eintrag direkt ändern lassen.
@@ -78,6 +86,8 @@ type Changes struct {
 	// nicht). Bekommt der Eintrag ein anderes Rezept, verfällt die Abwahl,
 	// außer sie wird hier neu mitgeschickt.
 	ExcludedIngredients *[]string `json:"excluded_ingredients"`
+	// CourseTagID: nil = unverändert, 0 = kein Gang, sonst der Gang.
+	CourseTagID *int64 `json:"course_tag_id"`
 }
 
 // Period ist ein Zeitraum von From bis To, beide Tage eingeschlossen.

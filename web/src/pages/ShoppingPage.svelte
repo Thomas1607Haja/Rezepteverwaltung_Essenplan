@@ -132,6 +132,7 @@
             <span class="day">
               {day(entry.date)}
               {#if entry.slot === 'lunch'}<small>mittags</small>{:else if entry.slot === 'coffee'}<small>nachmittags</small>{/if}
+              {#if entry.menu_title}<small>Menü: {entry.menu_title}</small>{/if}
             </span>
             <span class="title">
               {#if entry.recipe_id != null}

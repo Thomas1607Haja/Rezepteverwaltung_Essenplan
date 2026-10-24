@@ -80,6 +80,48 @@ data class MealPlanEntry(
     val note: String = "",
     /** Abgewählte Zutaten („habe ich noch“) als item_key; nur für diesen Eintrag. */
     @SerialName("excluded_ingredients") val excludedIngredients: List<String> = emptyList(),
+    /** Gang eines Menüs (Schritt 9.4); null = einzelnes Gericht. */
+    @SerialName("menu_id") val menuId: Long? = null,
+    /** Kategorie der Gang-Gruppe, z. B. Vorspeise; nur im Menü. */
+    @SerialName("course_tag_id") val courseTagId: Long? = null,
+)
+
+/**
+ * Menü im Essensplan (Schritt 9.4): Klammer um normale Einträge mit
+ * menu_id. Titel leer = automatisch ([displayTitle] vom Server).
+ */
+@Serializable
+data class Menu(
+    val id: Long,
+    val date: String,
+    val slot: String = "dinner",
+    val position: Int = 0,
+    val title: String = "",
+    @SerialName("display_title") val displayTitle: String = "Menü",
+    val note: String = "",
+    val servings: Int = 4,
+    /** Nur in Antworten von /menus/{id}: die Gänge in Reihenfolge. */
+    val entries: List<MealPlanEntry> = emptyList(),
+)
+
+/** POST /api/v1/menus bzw. PUT /api/v1/menus/{id}. */
+@Serializable
+data class MenuInput(
+    val date: String = "",
+    val slot: String = "dinner",
+    val title: String = "",
+    val note: String = "",
+    val servings: Int? = null,
+    /** Beim Ändern: Personen auf alle Gänge übertragen (außer Kuchen & Co.). */
+    @SerialName("apply_servings") val applyServings: Boolean = false,
+)
+
+/** POST /api/v1/meal-plan/{id}/to-menu („Zu einem Menü erweitern“). */
+@Serializable
+data class ToMenuRequest(
+    val title: String = "",
+    val note: String = "",
+    @SerialName("course_tag_id") val courseTagId: Long = 0,
 )
 
 @Serializable
@@ -119,6 +161,8 @@ data class SyncResponse(
     val recipes: List<Recipe> = emptyList(),
     @SerialName("plan_info") val planInfo: List<PlanInfo> = emptyList(),
     @SerialName("meal_plan_entries") val mealPlanEntries: List<MealPlanEntry> = emptyList(),
+    /** Ab Server 0.16 (immer, auch leer); null = Server kennt keine Menüs. */
+    val menus: List<Menu>? = null,
     @SerialName("tag_groups") val tagGroups: List<TagGroup> = emptyList(),
     val settings: HouseholdSettings = HouseholdSettings(),
     val deletions: List<Deletion> = emptyList(),
@@ -135,6 +179,9 @@ data class NewEntry(
     val servings: Int? = null,
     val note: String = "",
     @OptIn(ExperimentalSerializationApi::class) @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("excluded_ingredients") val excludedIngredients: List<String> = emptyList(),
+    /** Als Gang in dieses Menü (Datum und Slot kommen dann vom Menü). */
+    @OptIn(ExperimentalSerializationApi::class) @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("menu_id") val menuId: Long? = null,
+    @OptIn(ExperimentalSerializationApi::class) @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("course_tag_id") val courseTagId: Long? = null,
 )
 
 /** PUT /api/v1/meal-plan/{id}: ersetzt diese Felder. */
@@ -146,6 +193,8 @@ data class EntryChanges(
     val status: String,
     /** null = unverändert lassen; beim Ersetzen verfällt die Abwahl ohne neue Angabe. */
     @OptIn(ExperimentalSerializationApi::class) @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("excluded_ingredients") val excludedIngredients: List<String>? = null,
+    /** null = unverändert, 0 = kein Gang. */
+    @OptIn(ExperimentalSerializationApi::class) @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("course_tag_id") val courseTagId: Long? = null,
 )
 
 /** POST /api/v1/meal-plan/{id}/move. */
@@ -154,6 +203,8 @@ data class MoveRequest(
     val date: String,
     val slot: String,
     @SerialName("swap_with") val swapWith: Long? = null,
+    /** Mit diesem Menü tauschen (Server 0.16); ältere Server kennen das Feld nicht. */
+    @OptIn(ExperimentalSerializationApi::class) @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("swap_with_menu") val swapWithMenu: Long? = null,
     val confirm: Boolean = false,
     @SerialName("have_ingredients") val haveIngredients: List<Long> = emptyList(),
 )
@@ -361,6 +412,8 @@ data class Statistics(
     val illustrated: Int = 0,
     val favorites: Int = 0,
     val entries: Int = 0,
+    /** Davon Menüs (jedes Gericht zählt trotzdem einzeln). */
+    val menus: Int = 0,
     val top: List<StatRecipe> = emptyList(),
     @SerialName("favorites_waiting") val favoritesWaiting: List<StatRecipe> = emptyList(),
     @SerialName("recently_added") val recentlyAdded: List<StatRecipe> = emptyList(),

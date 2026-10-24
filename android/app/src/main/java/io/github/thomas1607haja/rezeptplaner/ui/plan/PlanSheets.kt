@@ -65,13 +65,24 @@ import java.time.ZoneOffset
 
 fun entryTitle(e: MealPlanEntry) = e.recipe?.title ?: e.note
 
-/** Die nächsten [count] Tage ab heute mit ihren Einträgen. */
+/** Die nächsten [count] Tage ab heute mit ihren Einträgen und Menüs. */
 fun upcomingDays(snapshot: Snapshot, today: LocalDate, count: Int): List<PlanDay> {
     val byDate = snapshot.entries.groupBy { it.date }
+    val menus = snapshot.menus.groupBy { it.date }
     return (0 until count).map { i ->
         val date = today.plusDays(i.toLong()).toString()
-        PlanDay(date, byDate[date].orEmpty())
+        PlanDay(date, byDate[date].orEmpty(), menus[date].orEmpty())
     }
+}
+
+fun itemTitle(item: PlanItem) = when (item) {
+    is PlanItem.Single -> entryTitle(item.entry)
+    is PlanItem.MenuBlock -> "Menü: ${item.menu.displayTitle}"
+}
+
+fun itemDate(item: PlanItem) = when (item) {
+    is PlanItem.Single -> item.entry.date
+    is PlanItem.MenuBlock -> item.menu.date
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,20 +109,21 @@ internal fun SlotChooser(slot: String, onChange: (String) -> Unit) {
 /**
  * Liste der Tage zum Auswählen. Ein leerer Tag (im gewählten Slot) wird
  * mit einem Tippen gewählt; bei belegten Tagen gibt es „Dazu“ und je
- * Gericht [entryAction] (z. B. „Tauschen“ oder „Ersetzen“).
+ * Gericht oder Menü [action] (z. B. „Tauschen“ oder „Ersetzen“; null =
+ * kein Knopf).
  */
 @Composable
 private fun DayChooser(
     days: List<PlanDay>,
     slot: String,
-    exclude: Long?,
-    entryAction: String,
+    exclude: String?,
+    action: (PlanItem) -> String?,
     onAppend: (String) -> Unit,
-    onEntry: (MealPlanEntry) -> Unit,
+    onItem: (PlanItem) -> Unit,
 ) {
     LazyColumn(Modifier.fillMaxWidth()) {
         items(days, key = { it.date }) { day ->
-            val inSlot = day.entries.filter { it.slot == slot && it.id != exclude }
+            val inSlot = planItems(day.entries, day.menus).filter { it.slot == slot && it.key != exclude }
             Column(
                 Modifier.fillMaxWidth()
                     .then(if (inSlot.isEmpty()) Modifier.clickable { onAppend(day.date) } else Modifier)
@@ -126,10 +138,10 @@ private fun DayChooser(
                         TextButton(onClick = { onAppend(day.date) }) { Text("Dazu") }
                     }
                 }
-                inSlot.forEach { e ->
+                inSlot.forEach { item ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(entryTitle(e), modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        TextButton(onClick = { onEntry(e) }) { Text(entryAction) }
+                        Text(itemTitle(item), modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        action(item)?.let { label -> TextButton(onClick = { onItem(item) }) { Text(label) } }
                     }
                 }
             }
@@ -176,7 +188,9 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
                 if (busy) CircularProgressIndicator(Modifier.size(24.dp))
             }
             DayChooser(
-                days = upcomingDays(snapshot, today, 14), slot = slot, exclude = null, entryAction = "Ersetzen",
+                days = upcomingDays(snapshot, today, 14), slot = slot, exclude = null,
+                // Ersetzen nur bei einzelnen Gerichten; ein Menü ergänzt man im Menü.
+                action = { if (it is PlanItem.Single) "Ersetzen" else null },
                 onAppend = { date ->
                     when {
                         busy -> {}
@@ -184,7 +198,10 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
                         else -> run(date) { app.planRepository.add(date, slot, recipeId) }
                     }
                 },
-                onEntry = { e -> if (preview) { error = null; previewReplace = e } else replacing = e },
+                onItem = { item ->
+                    val e = (item as PlanItem.Single).entry
+                    if (preview) { error = null; previewReplace = e } else replacing = e
+                },
             )
         }
     }
@@ -225,7 +242,13 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
 /** Langes Drücken auf einen Eintrag: Portionen, Notiz, Status, Favorit, Ersetzen, Verschieben, Entfernen. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Unit, onMove: () -> Unit) {
+fun EntrySheet(
+    entry: MealPlanEntry,
+    onDismiss: () -> Unit,
+    onReplace: () -> Unit,
+    onMove: () -> Unit,
+    onMenu: (menuId: Long) -> Unit = {},
+) {
     val app = app()
     val scope = rememberCoroutineScope()
     var servings by remember(entry.id) { mutableIntStateOf(entry.servings) }
@@ -341,6 +364,37 @@ fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Uni
                     Text("Entfernen", color = MaterialTheme.colorScheme.error)
                 }
             }
+            // Menüs (Schritt 9.4, Server 0.16)
+            val menu = snapshot.menus.firstOrNull { it.id == entry.menuId }
+            if (menu != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "Gang im Menü „${menu.displayTitle}“", Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    TextButton(onClick = { onDismiss(); onMenu(menu.id) }, enabled = !busy) { Text("Menü") }
+                    TextButton(onClick = { run { app.planRepository.detach(entry) } }, enabled = !busy) { Text("Aus Menü lösen") }
+                }
+            } else if (snapshot.menusSupported && entry.menuId == null) {
+                TextButton(
+                    onClick = {
+                        busy = true
+                        scope.launch {
+                            // Gang des Rezepts (z. B. Kuchen & Torten), sonst Hauptgericht;
+                            // ein Text (z. B. „Grillen“) bleibt ohne Gang.
+                            val courses = courseTags(snapshot)
+                            val main = courses.firstOrNull { it.name.equals("Hauptgericht", ignoreCase = true) }
+                            val own = recipe?.tags?.firstOrNull { t -> courses.any { it.id == t.id } }
+                            val course = if (entry.recipeId != null) (own ?: main)?.id ?: 0 else 0
+                            val (created, err) = app.planRepository.toMenu(entry, course)
+                            busy = false
+                            error = err
+                            if (created != null) { onDismiss(); onMenu(created.id) }
+                        }
+                    },
+                    enabled = !busy,
+                ) { Text("Zu einem Menü erweitern") }
+            }
         }
     }
 
@@ -371,43 +425,53 @@ fun EntrySheet(entry: MealPlanEntry, onDismiss: () -> Unit, onReplace: () -> Uni
 }
 
 /**
- * Verschieben oder Tauschen. Meldet der Server Warnungen (z. B. das
- * Gericht rutscht in den Einkaufszeitraum), wird erst nach Bestätigung
- * gespeichert – wie in der Weboberfläche (MoveWarningDialog).
+ * Verschieben oder Tauschen eines Gerichts oder Menüs ([subject]; ein Menü
+ * wandert immer als Block). Meldet der Server Warnungen (z. B. das Gericht
+ * rutscht in den Einkaufszeitraum), wird erst nach Bestätigung gespeichert
+ * – wie in der Weboberfläche (MoveWarningDialog).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MoveSheet(entry: MealPlanEntry, snapshot: Snapshot, today: LocalDate, onDismiss: () -> Unit) {
+fun MoveSheet(subject: PlanItem, snapshot: Snapshot, today: LocalDate, onDismiss: () -> Unit) {
     val app = app()
     val snackbar = LocalSnackbar.current
     val scope = rememberCoroutineScope()
-    var slot by rememberSaveable { mutableStateOf(entry.slot) }
+    var slot by rememberSaveable { mutableStateOf(subject.slot) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     // Angefragte Verschiebung, die noch bestätigt werden muss.
-    var pending by remember { mutableStateOf<Triple<String, Long?, List<MoveWarning>>?>(null) }
+    var pending by remember { mutableStateOf<Triple<String, PlanItem?, List<MoveWarning>>?>(null) }
     var pickDate by remember { mutableStateOf(false) }
+    val title = when (subject) {
+        is PlanItem.Single -> "„${entryTitle(subject.entry)}“"
+        is PlanItem.MenuBlock -> "Menü „${subject.menu.displayTitle}“"
+    }
 
     /** [sendEntries]: danach die Zutaten dieser Gerichte an Bring senden. */
     fun move(
         date: String,
-        swapWith: Long?,
+        target: PlanItem?,
         confirm: Boolean,
         have: List<Long> = emptyList(),
         sendEntries: List<Long> = emptyList(),
     ) {
         busy = true
         scope.launch {
-            val (result, err) = app.planRepository.move(entry, date, slot, swapWith, confirm, have)
+            val swapWith = (target as? PlanItem.Single)?.entry?.id
+            val swapWithMenu = (target as? PlanItem.MenuBlock)?.menu?.id
+            val (result, err) = when (subject) {
+                is PlanItem.Single -> app.planRepository.move(subject.entry, date, slot, swapWith, confirm, have, swapWithMenu)
+                is PlanItem.MenuBlock -> app.planRepository.moveMenu(subject.menu, date, slot, swapWith, swapWithMenu, confirm, have)
+            }
             error = err
             when {
                 err != null -> busy = false
                 result != null && !result.applied -> {
                     busy = false
-                    pending = Triple(date, swapWith, result.warnings)
+                    pending = Triple(date, target, result.warnings)
                 }
                 else -> {
-                    var message = "„${entryTitle(entry)}“ ist jetzt am ${dayLabel(date)}"
+                    var message = "$title ist jetzt am ${dayLabel(date)}"
                     if (sendEntries.isNotEmpty()) {
                         message = when (val sent = app.shoppingRepository.sendEntries(sendEntries)) {
                             is Outcome.Error -> "Verschoben, aber Senden an Bring fehlgeschlagen: ${sent.message}"
@@ -426,7 +490,7 @@ fun MoveSheet(entry: MealPlanEntry, snapshot: Snapshot, today: LocalDate, onDism
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("„${entryTitle(entry)}“ verschieben", style = MaterialTheme.typography.titleMedium)
+                Text("$title verschieben", style = MaterialTheme.typography.titleMedium)
                 SlotChooser(slot) { slot = it }
                 // Die Liste zeigt vier Wochen; jedes andere Datum über den Kalender (wie im Web).
                 TextButton(onClick = { pickDate = true }, enabled = !busy) { Text("Anderes Datum wählen …") }
@@ -434,14 +498,14 @@ fun MoveSheet(entry: MealPlanEntry, snapshot: Snapshot, today: LocalDate, onDism
                 if (busy) CircularProgressIndicator(Modifier.size(24.dp))
             }
             DayChooser(
-                days = upcomingDays(snapshot, today, 28), slot = slot, exclude = entry.id, entryAction = "Tauschen",
+                days = upcomingDays(snapshot, today, 28), slot = slot, exclude = subject.key, action = { "Tauschen" },
                 onAppend = { date -> if (!busy) move(date, null, confirm = false) },
-                onEntry = { other -> if (!busy) move(other.date, other.id, confirm = false) },
+                onItem = { other -> if (!busy) move(itemDate(other), other, confirm = false) },
             )
         }
     }
 
-    pending?.let { (date, swapWith, warnings) ->
+    pending?.let { (date, target, warnings) ->
         val canMarkAvailable = warnings.any { it.type == "planned_into_period" }
         AlertDialog(
             onDismissRequest = { pending = null },
@@ -449,16 +513,16 @@ fun MoveSheet(entry: MealPlanEntry, snapshot: Snapshot, today: LocalDate, onDism
             text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { warnings.forEach { Text(it.message) } } },
             confirmButton = {
                 Column(horizontalAlignment = Alignment.End) {
-                    TextButton(onClick = { pending = null; move(date, swapWith, confirm = true) }) { Text("Trotzdem verschieben") }
+                    TextButton(onClick = { pending = null; move(date, target, confirm = true) }) { Text("Trotzdem verschieben") }
                     if (canMarkAvailable) {
                         val ids = warnings.filter { it.type == "planned_into_period" }.map { it.entryId }
                         TextButton(onClick = {
                             pending = null
-                            move(date, swapWith, confirm = true, have = ids)
+                            move(date, target, confirm = true, have = ids)
                         }) { Text("Zutaten sind vorhanden") }
                         TextButton(onClick = {
                             pending = null
-                            move(date, swapWith, confirm = true, sendEntries = ids)
+                            move(date, target, confirm = true, sendEntries = ids)
                         }) { Text("Zutaten an Bring senden") }
                     }
                     TextButton(onClick = { pending = null }) { Text("Abbrechen") }
@@ -470,7 +534,7 @@ fun MoveSheet(entry: MealPlanEntry, snapshot: Snapshot, today: LocalDate, onDism
     if (pickDate) {
         // Der DatePicker rechnet in UTC-Millisekunden.
         val state = rememberDatePickerState(
-            initialSelectedDateMillis = LocalDate.parse(entry.date).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+            initialSelectedDateMillis = LocalDate.parse(itemDate(subject)).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
         )
         DatePickerDialog(
             onDismissRequest = { pickDate = false },

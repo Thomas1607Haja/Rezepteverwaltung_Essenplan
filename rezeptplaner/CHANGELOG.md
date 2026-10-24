@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.16.0
+
+- **Menüs:** Mehrere Gänge an einem Abend, z. B. Suppe, Hauptgericht und Nachtisch. Anlegen über Plus → „Menü zusammenstellen …“ oder am Eintrag „Zu einem Menü erweitern“. Jeder Gang bleibt ein eigenes Gericht im Plan (Einkauf, Bring und abgewählte Zutaten wie bisher); das Menü hat einen Titel (automatisch das Hauptgericht), eine Notiz und die Personenzahl, die sich auf alle Gänge übertragen lässt. Verschieben und Tauschen nur als ganzes Menü, ein einzelner Gang lässt sich lösen. „Zutaten vorhanden …“ für alle Gänge auf einmal, Kochansicht mit allen Gängen. Die Statistik zählt jedes Gericht und zusätzlich die Menüs.
+- Die Home-Assistant-Integration ab 0.6.0 zeigt ein Menü als einen Kalendertermin mit allen Gängen; Karte und Sensor nennen das Menü einmal.
+- Die Datenbank wird beim ersten Start erweitert; alle Planeinträge bleiben erhalten.
+
 ## 0.15.0
 
 - **Kaffee & Kuchen:** Neuer Slot zwischen Mittag- und Abendessen, z. B. für Kuchen am Wochenende. Beim Einplanen für den Kaffee zeigt die Rezeptauswahl gleich die Backrezepte. Abschaltbar unter Einstellungen → Haushalt.

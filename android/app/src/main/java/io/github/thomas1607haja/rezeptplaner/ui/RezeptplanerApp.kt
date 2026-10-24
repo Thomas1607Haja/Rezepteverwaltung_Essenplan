@@ -49,6 +49,7 @@ import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.sync.SyncWorker
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.plan.MealPlanScreen
+import io.github.thomas1607haja.rezeptplaner.ui.plan.MenuScreen
 import io.github.thomas1607haja.rezeptplaner.ui.plan.PickRecipeScreen
 import io.github.thomas1607haja.rezeptplaner.ui.recipe.RecipeScreen
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipeFilter
@@ -77,7 +78,10 @@ import kotlinx.serialization.Serializable
  * Rezeptauswahl beim Planen: für [date]/[slot] einplanen oder – mit
  * [replaceEntryId] > 0 – das Gericht dieses Eintrags ersetzen.
  */
-@Serializable data class PickRecipeRoute(val date: String, val slot: String = "dinner", val replaceEntryId: Long = 0)
+@Serializable data class PickRecipeRoute(val date: String, val slot: String = "dinner", val replaceEntryId: Long = 0, val menuId: Long = 0)
+
+// Kochansicht eines Menüs (Schritt 9.4).
+@Serializable data class MenuRoute(val id: Long)
 
 /** Rezept bearbeiten bzw. anlegen (id 0); fromDraft: Entwurf aus dem URL-Import. */
 @Serializable data class EditRecipeRoute(val id: Long = 0, val fromDraft: Boolean = false, val freshVariant: Boolean = false)
@@ -261,10 +265,28 @@ internal fun MainScaffold(
                     onOpenRecipe = { id, entryId -> navController.navigate(RecipeRoute(id, entryId = entryId)) },
                     onAdd = { date -> navController.navigate(PickRecipeRoute(date)) },
                     onReplace = { e -> navController.navigate(PickRecipeRoute(e.date, e.slot, e.id)) },
+                    onAddCourse = { m -> navController.navigate(PickRecipeRoute(m.date, m.slot, menuId = m.id)) },
+                    onCookMenu = { m -> navController.navigate(MenuRoute(m.id)) },
                 )
             }
             composable<PickRecipeRoute> { entry ->
-                PickRecipeScreen(entry.toRoute(), onDone = { navController.popBackStack() })
+                val route = entry.toRoute<PickRecipeRoute>()
+                PickRecipeScreen(
+                    route,
+                    onDone = { navController.popBackStack() },
+                    onMenu = { id ->
+                        navController.navigate(PickRecipeRoute(route.date, route.slot, menuId = id)) {
+                            popUpTo<PickRecipeRoute> { inclusive = true }
+                        }
+                    },
+                )
+            }
+            composable<MenuRoute> { entry ->
+                MenuScreen(
+                    entry.toRoute<MenuRoute>().id,
+                    onBack = { navController.popBackStack() },
+                    onOpenCourse = { id, entryId -> navController.navigate(RecipeRoute(id, entryId = entryId)) },
+                )
             }
             composable<RecipesRoute> {
                 RecipesScreen(

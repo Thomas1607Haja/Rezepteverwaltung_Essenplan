@@ -70,6 +70,8 @@ type Statistics struct {
 	Favorites    int `json:"favorites"`
 	// Entries: Einträge mit Rezept im Zeitraum bis heute.
 	Entries int `json:"entries"`
+	// Menus: Menüs im Zeitraum bis heute (ihre Gerichte zählen einzeln mit).
+	Menus int `json:"menus"`
 
 	Top              []StatRecipe `json:"top"`               // 20 häufigste im Zeitraum
 	FavoritesWaiting []StatRecipe `json:"favorites_waiting"` // Favoriten, lange nicht dran
@@ -125,6 +127,11 @@ func (s *Store) Statistics(ctx context.Context, period string) (Statistics, erro
 
 	err = s.db.QueryRowContext(ctx, `
 		SELECT count(*) FROM meal_plan_entries e WHERE e.recipe_id IS NOT NULL AND `+inPeriod, from, today).Scan(&st.Entries)
+	if err != nil {
+		return Statistics{}, fmt.Errorf("statistik: %w", err)
+	}
+	err = s.db.QueryRowContext(ctx, `
+		SELECT count(*) FROM meal_plan_menus e WHERE `+inPeriod, from, today).Scan(&st.Menus)
 	if err != nil {
 		return Statistics{}, fmt.Errorf("statistik: %w", err)
 	}

@@ -263,10 +263,20 @@ function createCardClass() {
         body = '<ul>';
         for (const date of daysBetween(period.from, period.to)) {
           const label = dayLabel(date);
-          const dishes = entries.filter((e) => e.date === date);
+          // Gänge eines Menüs (Rezeptplaner 0.16) stehen in seiner Zeile.
+          const dishes = entries.filter((e) => e.date === date && !e.menu_id);
+          const menus = (this._data.menus ?? []).filter((m) => m.date === date);
           const cls = date === today ? 'day today' : date < today ? 'day past' : 'day';
           body += `<li class="${cls}"><span class="label"><b>${label.weekday}</b><small>${label.date}</small></span><div class="dishes">`;
-          if (dishes.length === 0) body += '<span class="muted">–</span>';
+          if (dishes.length === 0 && menus.length === 0) body += '<span class="muted">–</span>';
+          for (const m of menus) {
+            const courses = entries.filter((e) => e.menu_id === m.id);
+            const slot = { lunch: 'Mittag', coffee: 'Kaffee' }[m.slot] ?? '';
+            const info = [slot, courses.length === 1 ? '1 Gang' : `${courses.length} Gänge`, ...courses.map((e) => e.recipe ? e.recipe.title : e.note)]
+              .filter(Boolean).join(' · ');
+            body += `<button class="dish" disabled>${this._img(courses.find((e) => e.recipe?.thumbnail)?.recipe.thumbnail, 'thumb')}
+              <span class="title">Menü: ${esc(m.display_title)}<small>${esc(info)}</small></span></button>`;
+          }
           for (const e of dishes) {
             const name = e.recipe ? e.recipe.title : e.note;
             const slot = { lunch: 'Mittag', coffee: 'Kaffee' }[e.slot] ?? '';
