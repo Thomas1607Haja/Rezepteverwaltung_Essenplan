@@ -68,7 +68,7 @@
     <Icon name="search" size={18} />
     <input
       type="search"
-      placeholder="Suchen nach Titel oder Zutat"
+      placeholder="Suchen nach Titel, Zutat oder Zubereitung"
       aria-label="Rezepte durchsuchen"
       bind:value={recipeFilter.query}
     />

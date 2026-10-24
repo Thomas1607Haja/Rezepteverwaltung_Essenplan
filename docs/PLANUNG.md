@@ -443,7 +443,7 @@ Eigene Seite mit Suche, Kategorie-Filtern, Favoriten und Statushinweis an jedem 
 
 ### 5.3 Rezeptübersicht
 
-- Suchfeld (Volltextsuche über Titel, Zutaten, optional Zubereitung).
+- Suchfeld (Volltextsuche über Titel, Beschreibung, Zutaten und – seit 0.12.1, nur Weboberfläche – Zubereitung; die App sucht offline weiter in Titel, Beschreibung und Zutaten).
 - Kategorie-Filter als Chips nach Gruppen, Herzchen-Filter, Filter „Illustrationen“ (gezeichnete Bilder, die ein Foto ersetzen sollte; Kachel mit Kennzeichen „Illustration“).
 - Kacheln mit Bild, Titel, Zeit, Statushinweis; Varianten mit Kennzeichen „Variante“ (Suche, Filter, Favoriten, Statushinweis je Variante).
 - Sortierung: Name, zuletzt eingeplant, am häufigsten eingeplant, neu hinzugefügt.

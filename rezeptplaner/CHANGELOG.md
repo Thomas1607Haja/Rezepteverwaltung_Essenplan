@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.12.1
+
+- **Suche auch in der Zubereitung** (Weboberfläche): Die Rezeptsuche findet Wörter jetzt auch in den Zubereitungsschritten, z. B. „Ofen“ oder „über Nacht“.
+
 ## 0.12.0
 
 - **Rezept per QR-Code:** Beim neuen Rezept gibt es neben dem Adressfeld den Knopf „QR-Code“, wenn der Browser QR-Codes mit der Kamera lesen kann (z. B. Chrome auf Android); die gescannte Adresse wird sofort eingelesen. In der Android-App (ab 0.13.0): Rezepte → Plus → „Rezept aus QR-Code“ und ein Scan-Knopf bei „Rezept aus Internetadresse“.

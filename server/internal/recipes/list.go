@@ -20,8 +20,8 @@ const (
 // ListFilter beschreibt, welche Rezepte die Liste in welcher Reihenfolge
 // enthält. Der Nullwert liefert alle Rezepte nach Namen sortiert.
 type ListFilter struct {
-	// Query ist der Suchtext. Jedes Wort muss im Titel, in der Beschreibung
-	// oder in einer Zutat vorkommen.
+	// Query ist der Suchtext. Jedes Wort muss im Titel, in der Beschreibung,
+	// in einer Zutat oder in einem Zubereitungsschritt vorkommen.
 	Query string
 	// TagIDs filtert nach Kategorien. Innerhalb einer Gruppe genügt eine
 	// der Kategorien (Pasta oder Reis), über Gruppen hinweg müssen alle
@@ -104,8 +104,10 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 		where = append(where, `(fold(r.title) LIKE ? ESCAPE '\'
 			OR fold(r.description) LIKE ? ESCAPE '\'
 			OR EXISTS (SELECT 1 FROM recipe_ingredients i
-			           WHERE i.recipe_id = r.id AND fold(i.name) LIKE ? ESCAPE '\'))`)
-		args = append(args, pattern, pattern, pattern)
+			           WHERE i.recipe_id = r.id AND fold(i.name) LIKE ? ESCAPE '\')
+			OR EXISTS (SELECT 1 FROM recipe_steps st
+			           WHERE st.recipe_id = r.id AND fold(st.text) LIKE ? ESCAPE '\'))`)
+		args = append(args, pattern, pattern, pattern, pattern)
 	}
 
 	if f.FavoritesOnly {
