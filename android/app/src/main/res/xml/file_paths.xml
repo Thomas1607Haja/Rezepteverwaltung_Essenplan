@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Fotos der Kamera-App für das Rezeptbild landen im Cache der App (FileProvider). -->
+<!-- Fotos der Kamera-App für das Rezeptbild landen im Cache der App (FileProvider),
+     ebenso Rezepte als PDF zum Teilen (share/RecipeShare.kt). -->
 <paths>
     <cache-path name="camera" path="camera/" />
+    <cache-path name="share" path="share/" />
 </paths>

@@ -19,10 +19,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -45,6 +47,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -60,6 +63,7 @@ import io.github.thomas1607haja.rezeptplaner.api.isIllustrated
 import io.github.thomas1607haja.rezeptplaner.data.Outcome
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
@@ -69,6 +73,9 @@ import io.github.thomas1607haja.rezeptplaner.ui.formatQuantity
 import io.github.thomas1607haja.rezeptplaner.ui.planStatus
 import io.github.thomas1607haja.rezeptplaner.ui.amountText
 import io.github.thomas1607haja.rezeptplaner.ui.plan.AddToPlanSheet
+import io.github.thomas1607haja.rezeptplaner.share.createRecipePdf
+import io.github.thomas1607haja.rezeptplaner.share.sharePdf
+import android.util.Log
 import java.net.URI
 import java.time.LocalDate
 
@@ -96,6 +103,31 @@ fun RecipeScreen(
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
     val recipe = snapshot.recipes.firstOrNull { it.id == recipeId }
+    val context = LocalContext.current
+
+    // Rezept als PDF teilen (Schritt 10.1): immer mit den Grundportionen.
+    // Ohne Notizen gleich ins Teilen-Menü, sonst erst die Frage nach den Notizen.
+    var askShare by remember { mutableStateOf(false) }
+    var sharing by remember { mutableStateOf(false) }
+    fun share(withNotes: Boolean) {
+        val r = recipe ?: return
+        askShare = false
+        sharing = true
+        scope.launch {
+            try {
+                val file = createRecipePdf(context, r, snapshot, app.imageStore, withNotes)
+                sharePdf(context, file, r.title)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("Rezeptplaner", "PDF teilen fehlgeschlagen", e)
+                snackbar.showSnackbar("PDF konnte nicht erstellt werden.")
+            } finally {
+                sharing = false
+            }
+        }
+    }
+    if (askShare) ShareDialog(onShare = ::share, onDismiss = { askShare = false })
 
     // Bildschirm bleibt an, solange die Kochansicht offen ist.
     val view = LocalView.current
@@ -109,6 +141,13 @@ fun RecipeScreen(
             title = { Text(recipe?.title.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis) },
             navigationIcon = {
                 IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_back), contentDescription = "Zurück") }
+            },
+            actions = {
+                if (recipe != null) {
+                    IconButton(onClick = { if (recipe.notes.isBlank()) share(false) else askShare = true }, enabled = !sharing) {
+                        Icon(painterResource(R.drawable.ic_share), contentDescription = "Als PDF teilen")
+                    }
+                }
             },
             // Den Platz für die Statusleiste hält schon das Scaffold frei.
             windowInsets = WindowInsets(0),
@@ -281,6 +320,27 @@ private fun RecipeContent(
             SectionCard("Notizen") { Text(recipe.notes) }
         }
     }
+}
+
+/** Vor dem Teilen: nur die Frage, ob die eigenen Notizen mitgehen (Standard: nein). */
+@Composable
+private fun ShareDialog(onShare: (Boolean) -> Unit, onDismiss: () -> Unit) {
+    var withNotes by rememberSaveable { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Als PDF teilen") },
+        text = {
+            Row(
+                Modifier.fillMaxWidth().clickable { withNotes = !withNotes },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(checked = withNotes, onCheckedChange = { withNotes = it })
+                Text("Eigene Notizen mitsenden")
+            }
+        },
+        confirmButton = { TextButton(onClick = { onShare(withNotes) }) { Text("Teilen") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Abbrechen") } },
+    )
 }
 
 /** Aktionen der Kochansicht (Favorit, Bearbeiten, Variante). */

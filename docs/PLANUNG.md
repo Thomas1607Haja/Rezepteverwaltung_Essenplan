@@ -473,6 +473,7 @@ Eigene Seite mit Suche, Kategorie-Filtern, Favoriten und Statushinweis an jedem 
 - Buttons „Zum Essensplan hinzufügen“ (Dialog mit den nächsten Tagen und deren Belegung; bei belegtem Tag: Ersetzen oder als zweites Gericht) und „Bearbeiten“.
 - Bildschirm bleibt während der Kochansicht eingeschaltet.
 - Button „Variante speichern“; bei einer Variante „Variante von <Titel>“; direkt unter dem Titel eine Leiste mit Mini-Kacheln (Vorschaubild, Titel, „Ursprungsrezept“/„Variante“) für alle anderen Rezepte der Familie, seitwärts scrollbar, ohne Familie nicht sichtbar.
+- Nur App: Teilen-Symbol oben rechts – Rezept als PDF über das Android-Teilen-Menü (Schritt 10.1).
 
 ### 5.5 Rezept bearbeiten
 
@@ -713,6 +714,12 @@ Ziel: Rezepte nach Gang finden, Kuchen und Backwaren sauber planen und an Wochen
 | 9.5 | (später) Menü-Vorlagen („Weihnachtsmenü“): speichern und wieder einplanen |
 | 9.6 | (umgesetzt, Server 0.17.0, nur Weboberfläche) **Gänge von Hand zuordnen:** Reiter „Ohne Gang (n)“ in der Rezeptübersicht (`course=none`, kombinierbar mit Suche, Kategorien, Favoriten). Zuweisungsmodus „Gang zuweisen“: Ziel wählen, Kacheln an-/abwählen, „Alle sichtbaren auswählen“, „Übernehmen“ in einem Schritt (`POST /tags/bulk`, eine Transaktion, `updated_at` für den Abgleich), danach Hinweis mit „Rückgängig“; der Modus bleibt bis „Fertig“. Der Gang kommt **hinzu** (Entscheidung 2026-10-24, das Modell erlaubt mehrere Gänge); vorher steht, wie viele schon einen anderen Gang haben. Ziele auch „Gang entfernen“, „Alle Gänge entfernen“ sowie jede andere Kategorie (hinzufügen/entfernen). Kacheln zeigen ihre Gänge als Etikett. Einstellungen → Gänge: „Vorschläge für … prüfen“ öffnet den Modus mit den Vorschlägen ausgewählt. Die App bekommt die Zuordnungen über den Abgleich; dort ändert sich nichts |
 
+### Phase 10: Teilen (2026-10-26)
+
+| Schritt | Inhalt |
+|---|---|
+| 10.1 | (umgesetzt, App 0.18.0, nur App) **Rezept als PDF teilen:** Teilen-Symbol oben in der Kochansicht. Hat das Rezept Notizen, fragt ein kleiner Dialog „Eigene Notizen mitsenden“ (Standard aus) mit „Teilen“; sonst öffnet sich sofort das Android-Teilen-Menü. Das PDF entsteht auf dem Handy aus den gespeicherten Daten (auch offline) mit Androids `PdfDocument`, ohne Zusatzbibliothek: DIN A4, Systemschrift eingebettet (Umlaute, ½, „“), heller druckfreundlicher Satz in den Farben der App. Inhalt: Titel, „Variante von …“, Zeiten, Gang, Kategorien, Bild (großes Bild, sonst Vorschaubild, fehlt beides: ohne Bild), Beschreibung, Zutaten mit Gruppen **für die Grundportionen** bzw. die Ergebnis-Einheit (nicht der Portionen-Zähler; Entscheidung 2026-10-26), nummerierte Schritte, auf Wunsch Notizen, Quelle mit Webadresse, Fußzeile „Erstellt mit Rezeptplaner · Seite x von y“. Seitenumbruch in Blöcken: Zutatengruppen und Schritte bleiben zusammen, Überschriften nie allein unten, nur überlange Blöcke werden zwischen zwei Zeilen geteilt; bliebe auf der letzten Seite nur ein kleiner Rest, wird das Bild niedriger. Bild 800 × 450 px (PdfDocument speichert verlustfrei): mit Foto etwa 0,6–0,8 MB, ohne Bild unter 50 KB. Datei `cache/share/Rezept_<Titel>.pdf` über den FileProvider mit `ACTION_SEND` (`application/pdf`, Leserecht für die Ziel-App); geteilte PDFs werden nach 24 Stunden gelöscht (beim Teilen und beim Start). „Als Text teilen“ bewusst nicht (Entscheidung 2026-10-26) |
+
 ---
 
 ## 11. Offene Punkte
@@ -727,6 +734,7 @@ Ziel: Rezepte nach Gang finden, Kuchen und Backwaren sauber planen und an Wochen
 
 - **Ideen aus dem Alltag (2026-10-23), zurückgestellt:** ~~QR-Code-Scanner beim URL-Import~~ (umgesetzt als 8.F), Vorratsliste auf alle Rezepte anwenden (mit Ausnahmen; dazu in der App „Vorrat auf alle Rezepte übertragen“, das das Web schon hat), Bildersuche beim Bearbeiten, Online-Abgleich beim Foto-Import (Originalrezept suchen)
 - **App, später:** Haushalt-Einstellungen (Familiengröße, Einkaufstag, Uhrzeit, Bring-Liste) und Vorratsliste in der App bearbeiten, Systeminfo (Speicher, Datenbankgröße) in den Einstellungen der App
+- **Weboberfläche: Rezept drucken bzw. als PDF speichern** (Druckansicht mit eigenem Druck-Stylesheet im Stil des App-PDFs aus Schritt 10.1; der Browser erzeugt das PDF)
 - Optionale KI-Strukturierung beim Foto-Import
 - Umrechnung unterschiedlicher Einheiten derselben Zutat
 - Auslesen des tatsächlichen Abhak-Status aus Bring
