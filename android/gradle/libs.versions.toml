@@ -1,7 +1,7 @@
 # Versionen aller Plugins und Bibliotheken an einer Stelle.
 # Dependabot (Ökosystem "gradle") schlägt Updates vor.
 [versions]
-agp = "9.4.1"
+agp = "9.5.0"
 kotlin = "2.4.21"
 composeBom = "2026.09.00"
 activityCompose = "1.13.0"
@@ -15,7 +15,7 @@ work = "2.12.0"
 coil = "3.6.3"
 datastore = "1.3.0"
 codeScanner = "16.1.0"
-textRecognition = "19.0.1"
+textRecognition = "19.0.2"
 # Der Scanner bringt play-services-base/-basement 18.1.0 mit. Die stürzen ab
 # Android 14 mit targetSdk >= 34 beim Start ab (Broadcast-Empfänger ohne
 # RECEIVER_EXPORTED-Angabe); daher neuere Versionen ausdrücklich.
