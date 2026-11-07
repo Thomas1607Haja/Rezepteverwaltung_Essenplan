@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
@@ -34,6 +35,9 @@ type Preview struct {
 	// dem Protokoll: Was fehlt noch auf der Bring-Liste, was ist zu viel?
 	Missing []Item `json:"missing"`
 	Surplus []Item `json:"surplus"`
+	// List ist die eingestellte Bring-Liste, an die „An Bring senden“
+	// geht; leer, wenn keine gewählt ist.
+	List ListRef `json:"list"`
 }
 
 // Entry ist ein Planeintrag, wie ihn die Einkaufsseite anzeigt.
@@ -85,6 +89,13 @@ type Store struct {
 	// sendMu sorgt dafür, dass immer nur eine Übertragung läuft. Ein
 	// Mutex braucht keine Initialisierung: Der Nullwert ist entsperrt.
 	sendMu sync.Mutex
+
+	// Namen der To-do-Listen (Entität -> Name), damit die Einkaufsliste
+	// den Namen der Bring-Liste zeigen kann, ohne bei jedem Abruf Home
+	// Assistant zu fragen.
+	namesMu sync.Mutex
+	names   map[string]string
+	namesAt time.Time
 }
 
 // NewStore erzeugt einen Store. plan liefert heute und den Einkaufszeitraum,
@@ -114,7 +125,50 @@ func (s *Store) Preview(ctx context.Context, next bool) (Preview, error) {
 	if err != nil {
 		return Preview{}, err
 	}
-	return Preview{Period: period, Today: today, Entries: entries, Items: summarize(needs), Missing: missing, Surplus: surplus}, nil
+	st, err := s.settings.Get(ctx)
+	if err != nil {
+		return Preview{}, err
+	}
+	return Preview{Period: period, Today: today, Entries: entries, Items: summarize(needs), Missing: missing, Surplus: surplus,
+		List: s.listRef(ctx, st.BringEntity)}, nil
+}
+
+// listRef liefert die Liste mit Namen. Die Namen kommen aus dem Speicher;
+// ist eine Liste unbekannt oder der Stand älter als eine Stunde, fragt
+// listRef Home Assistant – nach einem Fehler höchstens einmal je Minute.
+// Ohne Antwort steht die Entität als Name da.
+func (s *Store) listRef(ctx context.Context, entity string) ListRef {
+	if entity == "" {
+		return ListRef{}
+	}
+	s.namesMu.Lock()
+	defer s.namesMu.Unlock()
+	name, known := s.names[entity]
+	age := time.Since(s.namesAt)
+	if (!known || age > time.Hour) && age > time.Minute {
+		s.namesAt = time.Now()
+		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+		if lists, err := s.ha.TodoLists(ctx); err == nil {
+			s.names = map[string]string{}
+			for _, l := range lists {
+				s.names[l.EntityID] = l.Name
+			}
+			name = s.names[entity]
+		}
+	}
+	if name == "" {
+		name = entity
+	}
+	return ListRef{entity, name}
+}
+
+// rememberNames übernimmt frisch gelesene Namen der To-do-Listen.
+func (s *Store) rememberNames(names map[string]string) {
+	s.namesMu.Lock()
+	defer s.namesMu.Unlock()
+	s.names = names
+	s.namesAt = time.Now()
 }
 
 // period liefert den gewünschten Einkaufszeitraum und heute.
@@ -133,15 +187,20 @@ func (s *Store) period(ctx context.Context, next bool) (mealplan.Period, string,
 const slotOrder = mealplan.SlotOrder
 
 func (s *Store) loadEntries(ctx context.Context, period mealplan.Period, today string) ([]Entry, error) {
+	return s.queryEntries(ctx, "e.date BETWEEN ? AND ?", today, period.From, period.To)
+}
+
+// queryEntries liest die Planeinträge, auf die where passt.
+func (s *Store) queryEntries(ctx context.Context, where, today string, args ...any) ([]Entry, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT e.id, e.date, e.slot, e.recipe_id, coalesce(r.title, e.note), e.servings, e.status,
 		       coalesce(r.yield_unit, ''),
 		       CASE WHEN m.id IS NULL THEN '' ELSE coalesce(nullif(m.title, ''), 'Menü') END
 		FROM meal_plan_entries e LEFT JOIN recipes r ON r.id = e.recipe_id
 		LEFT JOIN meal_plan_menus m ON m.id = e.menu_id
-		WHERE e.date BETWEEN ? AND ?
+		WHERE `+where+`
 		ORDER BY e.date, `+slotOrder+`, e.position, e.id`,
-		period.From, period.To)
+		args...)
 	if err != nil {
 		return nil, fmt.Errorf("einkaufsliste: gerichte lesen: %w", err)
 	}

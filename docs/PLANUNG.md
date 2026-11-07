@@ -258,10 +258,12 @@ Es wird nicht ausgelesen, was in Bring tatsächlich abgehakt wurde.
 - Vor dem Senden lassen sich einzelne Artikel abwählen.
 - **Zutaten je Eintrag abwählen (Schritt 8.E):** Beim Einplanen (Plus → Rezept, „Zum Essensplan hinzufügen“, Ersetzen) erscheint eine Kurzvorschau: Titel, Portionen (Mengen sofort umgerechnet), einkaufsrelevante Zutaten mit Häkchen (alle gesetzt), Vorratszutaten ausgegraut darunter, „Alles vorhanden“ (Status `have_ingredients`) und „Hinzufügen“. Abgewählte Zutaten („habe ich noch“) gelten nur für diesen Eintrag und gehen nicht in Einkaufsliste und Bring ein. Nachträglich änderbar über „Zutaten vorhanden …“ im Menü des Eintrags; nach der Übertragung erscheinen Änderungen als Differenz (nachsenden bzw. zu viel). Gespeichert wird der Zutatenschlüssel (wie beim Zusammenfassen, `item_key`), nicht die Zutaten-ID – die ändert sich bei jedem Speichern des Rezepts. Gelöschte Zutaten fallen damit heraus, neue sind eingeschlossen. Beim Verschieben und Tauschen wandert die Abwahl mit, beim Ersetzen durch ein anderes Rezept verfällt sie. Im Plan steht am Eintrag „2 Zutaten vorhanden“. Abschaltbar in den Einstellungen („Kurzvorschau beim Einplanen“, Standard an).
 - Übertragung über die Bring-Integration von Home Assistant (To-do-Entität) per Supervisor-API; Artikelname und Mengenangabe getrennt, soweit möglich.
-  - Die App hat `homeassistant_api: true` und ruft mit `SUPERVISOR_TOKEN` die Dienste `todo.get_items`, `todo.add_item` und `todo.update_item` unter `http://supervisor/core/api/` auf. Die To-do-Entität wird in den Einstellungen gewählt (`bring_entity`).
+  - Die App hat `homeassistant_api: true` und ruft mit `SUPERVISOR_TOKEN` die Dienste `todo.get_items`, `todo.add_item`, `todo.update_item` und `todo.remove_item` (nur beim Zurücksetzen) unter `http://supervisor/core/api/` auf. Die To-do-Entität wird in den Einstellungen gewählt (`bring_entity`).
   - Die Bring-Integration übernimmt die Beschreibung eines To-do-Eintrags als Spezifikation, also die Mengenangabe unter dem Artikel.
-  - Lokal ohne Supervisor: mit `REZEPTPLANER_HA_URL` und `REZEPTPLANER_HA_TOKEN` (langlebiger Token) gegen eine echte Instanz, sonst Testmodus mit einer Liste im Arbeitsspeicher.
+  - Lokal ohne Supervisor: mit `REZEPTPLANER_HA_URL` und `REZEPTPLANER_HA_TOKEN` (langlebiger Token) gegen eine echte Instanz, sonst Testmodus mit zwei Listen im Arbeitsspeicher („Testliste“, „Testliste 2“ – damit lässt sich der Wechsel der Liste durchspielen).
 - Übertragene Artikel werden protokolliert, um Differenzen nachsenden zu können. Zu viel Gekauftes wird nur angezeigt, nicht aus Bring gelöscht.
+- Der Knopf „An Bring senden“ nennt die Ziel-Liste („An Bring senden: Einkauf Familie (12)“), damit nichts versehentlich an eine Test- oder falsche Liste geht. Den Namen fragt der Server bei Home Assistant ab und merkt ihn sich (höchstens stündlich neu, nach einem Fehler höchstens einmal je Minute).
+- **Übertragung zurücksetzen** (Server 0.18, siehe Ablauf H): übertragene Gerichte wieder auf `planned`, auf Wunsch die damals gesendeten Artikel aus der damaligen Liste entfernen.
 
 ### Statistik und Statushinweis
 
@@ -407,6 +409,7 @@ Menüs (Schritt 9.4, Migration 016): eine Klammer um normale Planeinträge. Datu
 | unit | Text | |
 | sent | Boolean | gesendet bzw. beim Senden abgewählt (gilt als erledigt) |
 | transferred_at | Zeitstempel | |
+| list_entity | Text | To-do-Entität, an die gesendet wurde (seit Migration 017, Server 0.18); leer bei älteren Übertragungen |
 
 Eine Zeile je Planeintrag und Zutat, damit sich Änderungen am Plan später genau mit dem Übertragenen vergleichen lassen.
 
@@ -555,6 +558,16 @@ Vergleich mit den übertragenen Artikeln; Angebot, nur die Differenz nachzusende
 - **Fehlt noch:** z. B. nach mehr Portionen, einem ersetzten Rezept oder einem Artikel, der beim Senden nicht ankam. Einzelne Artikel lassen sich abwählen (gelten dann als erledigt); „Differenz nachsenden“ ergänzt offene Bring-Einträge bzw. legt neue an.
 - **Zu viel gesendet:** nur Anzeige, nichts wird aus Bring gelöscht. Abgewählte Artikel zählen nicht als zu viel, sie wurden ja nicht gekauft.
 - Der Dialog beim Verschieben bietet „Zutaten an Bring senden“: Das Gericht wird verschoben und seine Zutaten werden sofort übertragen.
+
+### H. Übertragung zurücksetzen
+
+Für den Fall „an die falsche Bring-Liste gesendet“ (Server 0.18, App 0.19). Erreichbar im Einkauf unter den Gerichten („Übertragung zurücksetzen …“, sobald eines übertragen ist) und im Menü eines übertragenen Planeintrags (nur dieses Gericht).
+
+1. Vorschau (`GET /api/v1/shopping/reset?period=current|next` bzw. `?entry=<id>`): übertragene Gerichte des Einkaufszeitraums, einzeln abwählbar (Standard: alle), je Gericht die Liste(n), an die gesendet wurde, und die Zahl der Artikel; dazu die jetzt eingestellte Liste.
+2. Option „Artikel aus der alten Liste entfernen“ (Standard an). Für jeden gesendeten Artikel sucht der Server den offenen Eintrag gleichen Namens auf der damaligen Liste und löscht ihn (`todo.remove_item`). Brauchen andere, weiter übertragene Gerichte desselben Einkaufszeitraums den Artikel auf dieser Liste, wird nur die Mengenangabe auf deren Bedarf gesetzt. Nicht mehr offene (abgehakte) Artikel bleiben unberührt und werden genannt. Ist eine Liste nicht erreichbar, ändert sich gar nichts. Ein Artikel, der vor dem Senden schon offen auf der Liste stand (Mengenangabe ergänzt), wird mit entfernt – das Protokoll kennt den Unterschied nicht.
+3. Gerichte ohne gespeicherte Liste (vor Server 0.18 gesendet): Die Vorschau zeigt „unbekannte Liste“ und bietet die To-do-Listen aus Home Assistant zur Auswahl („– nicht entfernen –“ als Standard). Die aktuelle Einstellung wird bewusst nicht angenommen – sie ist nach einem Versehen meist schon die neue Liste.
+4. Bestätigen (`POST /api/v1/shopping/reset`, `{"entries": [...], "remove": true, "fallback_list": "todo.…"}`): Status zurück auf `planned`, `transferred_at` leer, Protokollzeilen dieser Gerichte gelöscht. Bleibt in einem Einkaufszeitraum kein übertragenes Gericht übrig, werden auch die nachgesendeten Differenzen (Zeilen ohne Gericht) gelöscht. Abgewählte Zutaten („Zutaten vorhanden“) bleiben.
+5. Danach normal „An Bring senden“ – es geht an die jetzt eingestellte Liste.
 
 ---
 
@@ -719,6 +732,7 @@ Ziel: Rezepte nach Gang finden, Kuchen und Backwaren sauber planen und an Wochen
 | Schritt | Inhalt |
 |---|---|
 | 10.1 | (umgesetzt, App 0.18.0, nur App) **Rezept als PDF teilen:** Teilen-Symbol oben in der Kochansicht. Hat das Rezept Notizen, fragt ein kleiner Dialog „Eigene Notizen mitsenden“ (Standard aus) mit „Teilen“; sonst öffnet sich sofort das Android-Teilen-Menü. Das PDF entsteht auf dem Handy aus den gespeicherten Daten (auch offline) mit Androids `PdfDocument`, ohne Zusatzbibliothek: DIN A4, Systemschrift eingebettet (Umlaute, ½, „“), heller druckfreundlicher Satz in den Farben der App. Inhalt: Titel, „Variante von …“, Zeiten, Gang, Kategorien, Bild (großes Bild, sonst Vorschaubild, fehlt beides: ohne Bild), Beschreibung, Zutaten mit Gruppen **für die Grundportionen** bzw. die Ergebnis-Einheit (nicht der Portionen-Zähler; Entscheidung 2026-10-26), nummerierte Schritte, auf Wunsch Notizen, Quelle mit Webadresse, Fußzeile „Erstellt mit Rezeptplaner · Seite x von y“. Seitenumbruch in Blöcken: Zutatengruppen und Schritte bleiben zusammen, Überschriften nie allein unten, nur überlange Blöcke werden zwischen zwei Zeilen geteilt; bliebe auf der letzten Seite nur ein kleiner Rest, wird das Bild niedriger. Bild 800 × 450 px (PdfDocument speichert verlustfrei): mit Foto etwa 0,6–0,8 MB, ohne Bild unter 50 KB. Datei `cache/share/Rezept_<Titel>.pdf` über den FileProvider mit `ACTION_SEND` (`application/pdf`, Leserecht für die Ziel-App); geteilte PDFs werden nach 24 Stunden gelöscht (beim Teilen und beim Start). „Als Text teilen“ bewusst nicht (Entscheidung 2026-10-26) |
+| 10.2 | (umgesetzt, Server 0.18.0, App 0.19.0) **Übertragung zurücksetzen** nach dem Senden an die falsche Bring-Liste, siehe Ablauf H; Ziel-Liste im Knopf „An Bring senden“; Migration 017 speichert die Ziel-Liste je übertragenem Artikel |
 
 ---
 

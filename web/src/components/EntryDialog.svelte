@@ -5,6 +5,7 @@
   import { dayLabel } from '../lib/format.js';
   import Icon from './Icon.svelte';
   import PlanPreview from './PlanPreview.svelte';
+  import ResetTransferDialog from './ResetTransferDialog.svelte';
   import { slotLabel } from '../lib/slots.js';
 
   // entry: der Planeintrag. onsaved(entry) meldet den neuen Stand,
@@ -27,6 +28,19 @@
   let error = $state('');
   let busy = $state(false);
   let showPreview = $state(false);
+  let showReset = $state(false);
+  // Nach dem Zurücksetzen: Beim Schließen den neuen Stand melden.
+  let wasReset = false;
+
+  async function resetClosed() {
+    showReset = false;
+    if (!wasReset) return;
+    try {
+      onsaved(await api.getEntry(entry.id));
+    } catch (e) {
+      error = e.message;
+    }
+  }
 
   let dialog;
   // showModal öffnet den Dialog über der Seite; Esc schließt ihn.
@@ -140,7 +154,10 @@
 
     {#if entry.recipe_id}
       {#if transferred}
-        <p class="hint"><Icon name="cart" size={16} /> Zutaten sind an Bring übertragen.</p>
+        <p class="hint">
+          <Icon name="cart" size={16} /> Zutaten sind an Bring übertragen.
+          <button type="button" class="link" onclick={() => (showReset = true)}>Übertragung zurücksetzen …</button>
+        </p>
       {:else}
         <label class="check">
           <input type="checkbox" bind:checked={haveIngredients} />
@@ -205,6 +222,10 @@
     onconfirm={saveChoice}
     onclose={() => (showPreview = false)}
   />
+{/if}
+
+{#if showReset}
+  <ResetTransferDialog entryId={entry.id} ondone={() => (wasReset = true)} onclose={resetClosed} />
 {/if}
 
 <style>

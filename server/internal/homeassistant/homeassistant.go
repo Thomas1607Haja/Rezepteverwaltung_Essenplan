@@ -53,6 +53,8 @@ type Client interface {
 	AddItem(ctx context.Context, entityID, summary, description string) error
 	// UpdateDescription ändert die Beschreibung des Eintrags uid.
 	UpdateDescription(ctx context.Context, entityID, uid, description string) error
+	// RemoveItem löscht den Eintrag uid von der Liste.
+	RemoveItem(ctx context.Context, entityID, uid string) error
 }
 
 // New wählt die Betriebsart: Mit supervisorToken (in der App gesetzt) geht
@@ -196,53 +198,96 @@ func (c *rest) UpdateDescription(ctx context.Context, entityID, uid, description
 	return c.call(ctx, http.MethodPost, "/services/todo/update_item", body, nil)
 }
 
-// TestClient hält eine To-do-Liste im Arbeitsspeicher. Er dient zum
-// lokalen Ausprobieren und für Tests; nach einem Neustart ist die Liste leer.
+func (c *rest) RemoveItem(ctx context.Context, entityID, uid string) error {
+	body := map[string]string{"entity_id": entityID, "item": uid}
+	return c.call(ctx, http.MethodPost, "/services/todo/remove_item", body, nil)
+}
+
+// TestClient hält zwei To-do-Listen im Arbeitsspeicher. Er dient zum
+// lokalen Ausprobieren und für Tests; nach einem Neustart sind die Listen
+// leer. Die zweite Liste erlaubt es, den Wechsel der Bring-Liste (z. B. von
+// einer Test- auf die Familienliste) durchzuspielen.
 type TestClient struct {
-	// mu schützt items: Mehrere Anfragen können gleichzeitig laufen.
+	// mu schützt lists: Mehrere Anfragen können gleichzeitig laufen.
 	mu     sync.Mutex
-	items  []TodoItem
+	lists  map[string][]TodoItem
 	nextID int
 }
 
-// TestListID ist die einzige Liste des Testmodus.
-const TestListID = "todo.testliste"
+// TestListID und TestListID2 sind die Listen des Testmodus.
+const (
+	TestListID  = "todo.testliste"
+	TestListID2 = "todo.testliste_2"
+)
 
-// NewTestClient erzeugt einen Testmodus mit leerer Liste.
-func NewTestClient() *TestClient { return &TestClient{} }
+// NewTestClient erzeugt einen Testmodus mit leeren Listen.
+func NewTestClient() *TestClient {
+	return &TestClient{lists: map[string][]TodoItem{TestListID: {}, TestListID2: {}}}
+}
 
 func (c *TestClient) Mode() string { return ModeTest }
 
 func (c *TestClient) TodoLists(context.Context) ([]TodoList, error) {
-	return []TodoList{{EntityID: TestListID, Name: "Testliste (nur lokal)"}}, nil
+	return []TodoList{
+		{EntityID: TestListID, Name: "Testliste (nur lokal)"},
+		{EntityID: TestListID2, Name: "Testliste 2 (nur lokal)"},
+	}, nil
+}
+
+// list liefert die Einträge einer Liste; c.mu muss gesperrt sein.
+func (c *TestClient) list(entityID string) ([]TodoItem, error) {
+	items, ok := c.lists[entityID]
+	if !ok {
+		return nil, fmt.Errorf("%w: unbekannte liste %s", ErrUnavailable, entityID)
+	}
+	return items, nil
 }
 
 func (c *TestClient) OpenItems(_ context.Context, entityID string) ([]TodoItem, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if entityID != TestListID {
-		return nil, fmt.Errorf("%w: unbekannte liste %s", ErrUnavailable, entityID)
-	}
-	return slices.Clone(c.items), nil
+	items, err := c.list(entityID)
+	return slices.Clone(items), err
 }
 
 func (c *TestClient) AddItem(_ context.Context, entityID, summary, description string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if entityID != TestListID {
-		return fmt.Errorf("%w: unbekannte liste %s", ErrUnavailable, entityID)
+	items, err := c.list(entityID)
+	if err != nil {
+		return err
 	}
 	c.nextID++
-	c.items = append(c.items, TodoItem{UID: fmt.Sprint(c.nextID), Summary: summary, Description: description, Status: "needs_action"})
+	c.lists[entityID] = append(items, TodoItem{UID: fmt.Sprint(c.nextID), Summary: summary, Description: description, Status: "needs_action"})
 	return nil
 }
 
 func (c *TestClient) UpdateDescription(_ context.Context, entityID, uid, description string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	for i := range c.items {
-		if c.items[i].UID == uid {
-			c.items[i].Description = description
+	items, err := c.list(entityID)
+	if err != nil {
+		return err
+	}
+	for i := range items {
+		if items[i].UID == uid {
+			items[i].Description = description
+			return nil
+		}
+	}
+	return fmt.Errorf("%w: eintrag %s nicht gefunden", ErrUnavailable, uid)
+}
+
+func (c *TestClient) RemoveItem(_ context.Context, entityID, uid string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	items, err := c.list(entityID)
+	if err != nil {
+		return err
+	}
+	for i := range items {
+		if items[i].UID == uid {
+			c.lists[entityID] = slices.Delete(items, i, i+1)
 			return nil
 		}
 	}

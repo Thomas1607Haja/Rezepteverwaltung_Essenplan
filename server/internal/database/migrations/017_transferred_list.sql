@@ -1,0 +1,11 @@
+-- Ziel-Liste je übertragenem Artikel (Übertragung zurücksetzen, Server 0.18).
+-- Siehe docs/PLANUNG.md, Abschnitt 3 „Einkaufsliste und Bring“.
+--
+-- To-do-Entität, an die der Artikel ging, z. B. todo.einkauf_familie. Beim
+-- Zurücksetzen entfernt der Server die Artikel wieder aus genau dieser
+-- Liste – auch wenn in den Einstellungen inzwischen eine andere gewählt ist.
+--
+-- NULL bei allem, was vor dieser Version übertragen wurde: Welche Liste
+-- damals eingestellt war, ist nicht mehr bekannt (die Einstellung kann sich
+-- seitdem geändert haben). Beim Zurücksetzen wählt man sie dann von Hand.
+ALTER TABLE transferred_items ADD COLUMN list_entity TEXT;

@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.ui.plan
 
+import io.github.thomas1607haja.rezeptplaner.ui.shopping.ResetTransferDialog
 import io.github.thomas1607haja.rezeptplaner.ui.wrapTitle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -260,6 +261,8 @@ fun EntrySheet(
     var confirmDelete by remember { mutableStateOf(false) }
     var favorite by remember(entry.id) { mutableStateOf(entry.recipe?.isFavorite == true) }
     var showPreview by remember { mutableStateOf(false) }
+    var showReset by remember { mutableStateOf(false) }
+    var wasReset by remember { mutableStateOf(false) }
     val snapshot by app.localStore.snapshot.collectAsStateWithLifecycle()
     val recipe = snapshot.recipes.firstOrNull { it.id == entry.recipeId }
     val transferred = entry.status == "transferred"
@@ -332,6 +335,9 @@ fun EntrySheet(
                         )
                     }
                     Switch(checked = haveIngredients, onCheckedChange = { haveIngredients = it }, enabled = !transferred)
+                }
+                if (transferred) {
+                    TextButton(onClick = { showReset = true }, enabled = !busy) { Text("Übertragung zurücksetzen …") }
                 }
             }
             // „Zutaten vorhanden …“: dieselbe Kurzvorschau wie beim Einplanen.
@@ -409,6 +415,16 @@ fun EntrySheet(
             error = error,
             onConfirm = { choice -> run { app.planRepository.setChoice(entry, choice) } },
             onDismiss = { showPreview = false },
+        )
+    }
+
+    if (showReset) {
+        ResetTransferDialog(
+            next = false,
+            entryId = entry.id,
+            onDone = { wasReset = true },
+            // Nach dem Zurücksetzen zeigt das Blatt einen veralteten Stand: schließen.
+            onDismiss = { showReset = false; if (wasReset) onDismiss() },
         )
     }
 

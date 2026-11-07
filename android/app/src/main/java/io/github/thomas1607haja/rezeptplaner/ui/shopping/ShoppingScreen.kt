@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -26,6 +27,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -51,6 +55,7 @@ fun ShoppingScreen(onOpenRecipe: (Long, Int) -> Unit) {
     val ui by vm.ui.collectAsStateWithLifecycle()
     val sync by app.syncRepository.state.collectAsStateWithLifecycle()
     val preview = ui.preview
+    var resetting by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize()) {
         OfflineBanner(sync.log)
@@ -83,7 +88,7 @@ fun ShoppingScreen(onOpenRecipe: (Long, Int) -> Unit) {
                             )
                         }
                         ui.error?.let { item { Message(it, error = true) } }
-                        entries(ui, onOpenRecipe)
+                        entries(ui, onOpenRecipe) { resetting = true }
                         shoppingList(ui, vm)
                         differences(ui, vm)
                     }
@@ -96,12 +101,29 @@ fun ShoppingScreen(onOpenRecipe: (Long, Int) -> Unit) {
                 Column(Modifier.fillMaxWidth().padding(16.dp, 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     SendStatus(ui, vm)
                     val count = preview.items.size - ui.deselected.size
+                    // Die Ziel-Liste steht im Knopf, damit nichts an die falsche geht.
+                    val list = preview.list?.takeIf { it.entityId.isNotEmpty() }?.name
                     Button(onClick = { vm.send(missing = false) }, enabled = !ui.sending && count > 0, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (ui.sending) "Sendet …" else "An Bring senden ($count)")
+                        Text(
+                            when {
+                                ui.sending -> "Sendet …"
+                                list != null -> "An Bring senden: $list ($count)"
+                                else -> "An Bring senden ($count)"
+                            },
+                        )
                     }
                 }
             }
         }
+    }
+
+    if (resetting) {
+        ResetTransferDialog(
+            next = ui.next,
+            entryId = null,
+            onDone = { vm.load() },
+            onDismiss = { resetting = false },
+        )
     }
 
     ui.lists?.let { lists ->
@@ -126,7 +148,7 @@ fun ShoppingScreen(onOpenRecipe: (Long, Int) -> Unit) {
 }
 
 /** Gerichte des Zeitraums; nicht eingehende mit Grund. */
-private fun LazyListScope.entries(ui: ShoppingUi, onOpenRecipe: (Long, Int) -> Unit) {
+private fun LazyListScope.entries(ui: ShoppingUi, onOpenRecipe: (Long, Int) -> Unit, onReset: () -> Unit) {
     val preview = ui.preview ?: return
     item { Heading("Gerichte") }
     if (preview.entries.isEmpty()) {
@@ -157,6 +179,14 @@ private fun LazyListScope.entries(ui: ShoppingUi, onOpenRecipe: (Long, Int) -> U
                 if (details.isNotEmpty()) {
                     Text(details.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            }
+        }
+    }
+    // Unter den schon übertragenen Gerichten: z. B. an die falsche Liste gesendet.
+    if (preview.entries.any { it.status == "transferred" }) {
+        item {
+            OutlinedButton(onClick = onReset, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                Text("Übertragung zurücksetzen …")
             }
         }
     }
@@ -226,6 +256,9 @@ private fun LazyListScope.differences(ui: ShoppingUi, vm: ShoppingViewModel) {
                 if (preview.items.isEmpty()) SendStatus(ui, vm)
                 Button(onClick = { vm.send(missing = true) }, enabled = !ui.sending) {
                     Text(if (ui.sending) "Sendet …" else "Differenz nachsenden (${preview.missing.size - ui.deselectedMissing.size})")
+                }
+                preview.list?.takeIf { it.entityId.isNotEmpty() }?.let {
+                    Text("an „${it.name}“", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

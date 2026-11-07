@@ -163,7 +163,7 @@ func (s *Store) Send(ctx context.Context, opts SendOptions) (SendResult, error) 
 		result.Sent = append(result.Sent, SentItem{Name: it.Name, Spec: it.Spec, Merged: merged})
 	}
 
-	if err := s.record(ctx, period, entryIDs, rows, opts.Deselected, done); err != nil {
+	if err := s.record(ctx, period, st.BringEntity, entryIDs, rows, opts.Deselected, done); err != nil {
 		return SendResult{}, err
 	}
 	result.Entries = len(entryIDs)
@@ -194,8 +194,8 @@ func joinSpec(old, add string) string {
 }
 
 // record setzt die Gerichte auf "transferred" und protokolliert, was
-// gesendet (sent = 1) oder abgewählt (sent = 0) wurde.
-func (s *Store) record(ctx context.Context, period mealplan.Period, entryIDs []int64, rows []logRow, deselected []string, done map[string]bool) error {
+// gesendet (sent = 1) oder abgewählt (sent = 0) wurde und an welche Liste.
+func (s *Store) record(ctx context.Context, period mealplan.Period, list string, entryIDs []int64, rows []logRow, deselected []string, done map[string]bool) error {
 	now := database.FormatTime(time.Now())
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -219,9 +219,9 @@ func (s *Store) record(ctx context.Context, period mealplan.Period, entryIDs []i
 		sent := !slices.Contains(deselected, r.Key)
 		_, err := tx.ExecContext(ctx, `
 			INSERT INTO transferred_items (entry_id, period_from, item_key, ingredient_name,
-			                               quantity, unit, sent, transferred_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			r.EntryID, period.From, r.Key, r.Name, r.Quantity, r.Unit, sent, now)
+			                               quantity, unit, sent, transferred_at, list_entity)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			r.EntryID, period.From, r.Key, r.Name, r.Quantity, r.Unit, sent, now, list)
 		if err != nil {
 			return fmt.Errorf("übertragung speichern: %w", err)
 		}

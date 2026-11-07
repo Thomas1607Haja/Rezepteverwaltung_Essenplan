@@ -32,7 +32,7 @@ func fakeHA(t *testing.T) (*httptest.Server, *[]string) {
 		case "/api/services/todo/get_items":
 			w.Write([]byte(`{"changed_states": [], "service_response": {"todo.zuhause": {"items": [
 				{"uid": "u1", "summary": "Milch", "description": "1 l", "status": "needs_action"}]}}}`))
-		case "/api/services/todo/add_item", "/api/services/todo/update_item":
+		case "/api/services/todo/add_item", "/api/services/todo/update_item", "/api/services/todo/remove_item":
 			w.Write([]byte(`[]`))
 		default:
 			http.NotFound(w, r)
@@ -69,12 +69,16 @@ func TestREST(t *testing.T) {
 	if err := c.UpdateDescription(ctx, "todo.zuhause", "u1", "1 l + 250 ml"); err != nil {
 		t.Fatal(err)
 	}
+	if err := c.RemoveItem(ctx, "todo.zuhause", "u1"); err != nil {
+		t.Fatal(err)
+	}
 
 	got := strings.Join(*calls, "\n")
 	for _, want := range []string{
 		`POST /api/services/todo/get_items?return_response {"entity_id":"todo.zuhause","status":["needs_action"]}`,
 		`POST /api/services/todo/add_item {"description":"500 g","entity_id":"todo.zuhause","item":"Mehl"}`,
 		`POST /api/services/todo/update_item {"description":"1 l + 250 ml","entity_id":"todo.zuhause","item":"u1"}`,
+		`POST /api/services/todo/remove_item {"entity_id":"todo.zuhause","item":"u1"}`,
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("Aufruf fehlt: %s\nbisher:\n%s", want, got)
@@ -117,6 +121,18 @@ func TestTestClientAndHandler(t *testing.T) {
 	if err := c.AddItem(ctx, "todo.anders", "x", ""); err == nil {
 		t.Error("unbekannte Liste ohne Fehler")
 	}
+	// Die zweite Liste ist getrennt; Entfernen trifft nur die eigene.
+	c.AddItem(ctx, TestListID2, "Milch", "")
+	if err := c.RemoveItem(ctx, TestListID2, items[0].UID); err == nil {
+		t.Error("Eintrag der anderen Liste entfernt")
+	}
+	other, _ := c.OpenItems(ctx, TestListID2)
+	if err := c.RemoveItem(ctx, TestListID2, other[0].UID); err != nil {
+		t.Fatal(err)
+	}
+	if other, _ = c.OpenItems(ctx, TestListID2); len(other) != 0 {
+		t.Errorf("Liste 2 = %+v", other)
+	}
 
 	mux := http.NewServeMux()
 	NewHandler(c).Register(mux)
@@ -124,7 +140,7 @@ func TestTestClientAndHandler(t *testing.T) {
 	mux.ServeHTTP(rec, httptest.NewRequest("GET", "/api/v1/homeassistant/status", nil))
 	var resp statusResponse
 	json.Unmarshal(rec.Body.Bytes(), &resp)
-	if resp.Mode != ModeTest || len(resp.Lists) != 1 || resp.Error != "" {
+	if resp.Mode != ModeTest || len(resp.Lists) != 2 || resp.Error != "" {
 		t.Errorf("Status = %+v", resp)
 	}
 

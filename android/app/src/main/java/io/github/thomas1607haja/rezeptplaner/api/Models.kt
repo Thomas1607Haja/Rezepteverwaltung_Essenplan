@@ -323,6 +323,8 @@ data class ShoppingPreview(
     val missing: List<ShoppingItem> = emptyList(),
     /** Zu viel gesendet. */
     val surplus: List<ShoppingItem> = emptyList(),
+    /** Eingestellte Bring-Liste (Server 0.18); leere Entität = keine gewählt. */
+    val list: TodoList? = null,
 )
 
 @Serializable
@@ -373,7 +375,52 @@ data class SendResult(
 
 /** To-do-Liste in Home Assistant (Bring). */
 @Serializable
-data class TodoList(@SerialName("entity_id") val entityId: String, val name: String)
+data class TodoList(@SerialName("entity_id") val entityId: String = "", val name: String = "")
+
+// Übertragung zurücksetzen (Server 0.18): übertragene Gerichte wieder auf
+// „geplant“, auf Wunsch Artikel aus der damaligen Liste entfernen.
+
+@Serializable
+data class ResetEntry(
+    val id: Long,
+    val date: String,
+    val title: String,
+    /** Listen, an die Artikel dieses Gerichts gingen. */
+    val lists: List<TodoList> = emptyList(),
+    /** Vor Server 0.18 gesendet: Liste nicht gespeichert. */
+    @SerialName("unknown_list") val unknownList: Boolean = false,
+    /** Gesendete Artikel. */
+    val items: Int = 0,
+)
+
+@Serializable
+data class ResetPreview(
+    val entries: List<ResetEntry> = emptyList(),
+    @SerialName("current_list") val currentList: TodoList = TodoList(),
+    /** Alle To-do-Listen, zur Auswahl für Gerichte ohne gespeicherte Liste. */
+    val lists: List<TodoList> = emptyList(),
+    @SerialName("lists_error") val listsError: String = "",
+)
+
+@Serializable
+data class ResetRequest(
+    val entries: List<Long>,
+    val remove: Boolean,
+    @SerialName("fallback_list") val fallbackList: String = "",
+)
+
+@Serializable
+data class ResetResult(
+    val entries: Int = 0,
+    val removed: List<String> = emptyList(),
+    /** Menge verringert, andere Gerichte brauchen den Artikel noch. */
+    val reduced: List<String> = emptyList(),
+    /** Nicht mehr offen auf der Liste (schon abgehakt). */
+    @SerialName("not_found") val notFound: List<String> = emptyList(),
+    val failed: List<FailedItem> = emptyList(),
+    /** Liste unbekannt, nicht entfernt. */
+    val skipped: List<String> = emptyList(),
+)
 
 @Serializable
 data class HomeAssistantStatus(val mode: String = "", val lists: List<TodoList> = emptyList(), val error: String = "")

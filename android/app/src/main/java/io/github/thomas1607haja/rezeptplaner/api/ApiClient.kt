@@ -121,6 +121,13 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
 
     suspend fun homeAssistantStatus(config: ServerConfig): HomeAssistantStatus = get(config, "/api/v1/homeassistant/status")
 
+    /** Vorschau „Übertragung zurücksetzen“: Gerichte des Zeitraums bzw. nur [entryId]. */
+    suspend fun resetPreview(config: ServerConfig, next: Boolean, entryId: Long?): ResetPreview =
+        get(config, if (entryId != null) "/api/v1/shopping/reset?entry=$entryId" else "/api/v1/shopping/reset?period=" + if (next) "next" else "current")
+
+    suspend fun resetTransfer(config: ServerConfig, request: ResetRequest): ResetResult =
+        send(config, "POST", "/api/v1/shopping/reset", json.encodeToString(request))
+
     /** Wählt die Bring-Liste (Einstellung bring_entity; die anderen bleiben). */
     suspend fun setBringList(config: ServerConfig, entityId: String) {
         send<HouseholdSettings>(config, "PUT", "/api/v1/settings", json.encodeToString(mapOf("bring_entity" to entityId)))

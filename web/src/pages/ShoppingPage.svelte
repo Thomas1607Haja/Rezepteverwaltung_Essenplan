@@ -2,6 +2,7 @@
   import { SvelteSet } from 'svelte/reactivity';
   import { api } from '../lib/api.js';
   import { dayLabel } from '../lib/format.js';
+  import ResetTransferDialog from '../components/ResetTransferDialog.svelte';
 
   let next = $state(false); // false = eingekaufte Woche, true = nächster Einkauf
   // Beim Öffnen: Ist für die eingekaufte Woche nichts mehr zu senden,
@@ -79,6 +80,15 @@
 
   load();
 
+  // „Übertragung zurücksetzen“ offen?
+  let resetting = $state(false);
+  const transferredCount = $derived(preview ? preview.entries.filter((e) => e.status === 'transferred').length : 0);
+
+  /** „An Bring senden: Einkauf Familie (12)“ – die Ziel-Liste steht dabei. */
+  const sendLabel = $derived(
+    preview?.list?.entity_id ? `An Bring senden: ${preview.list.name} (${selectedCount})` : `An Bring senden (${selectedCount})`,
+  );
+
   const selectedCount = $derived(preview ? preview.items.length - deselected.size : 0);
 
   function toggle(key, set = deselected) {
@@ -146,6 +156,12 @@
           </li>
         {/each}
       </ul>
+      {#if transferredCount > 0}
+        <div class="reset">
+          <button type="button" class="secondary" onclick={() => (resetting = true)}>Übertragung zurücksetzen …</button>
+          <small class="muted">z. B. nach dem Senden an die falsche Bring-Liste</small>
+        </div>
+      {/if}
     {/if}
   </section>
 
@@ -193,7 +209,7 @@
 
       <div class="send">
         <button type="button" class="primary" onclick={() => send()} disabled={sending}>
-          {sending ? 'Sendet …' : `An Bring senden (${selectedCount})`}
+          {sending ? 'Sendet …' : sendLabel}
         </button>
         {#if sendError}
           <span class="error">
@@ -233,6 +249,7 @@
           <button type="button" class="primary" onclick={() => send(true)} disabled={sending}>
             {sending ? 'Sendet …' : `Differenz nachsenden (${preview.missing.length - deselectedMissing.size})`}
           </button>
+          {#if preview.list?.entity_id}<small class="muted">an „{preview.list.name}“</small>{/if}
         </div>
       {/if}
 
@@ -247,6 +264,17 @@
       {/if}
     </section>
   {/if}
+{/if}
+
+{#if resetting}
+  <ResetTransferDialog
+    {next}
+    ondone={() => {
+      sendResult = null;
+      load();
+    }}
+    onclose={() => (resetting = false)}
+  />
 {/if}
 
 <style>
@@ -484,6 +512,24 @@
     background: var(--accent);
     color: var(--on-accent);
     font-weight: 600;
+    cursor: pointer;
+  }
+
+  .reset {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .secondary {
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
     cursor: pointer;
   }
 

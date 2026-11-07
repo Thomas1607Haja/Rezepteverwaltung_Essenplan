@@ -2,6 +2,9 @@ package io.github.thomas1607haja.rezeptplaner.data
 
 import io.github.thomas1607haja.rezeptplaner.api.ApiClient
 import io.github.thomas1607haja.rezeptplaner.api.ApiException
+import io.github.thomas1607haja.rezeptplaner.api.ResetPreview
+import io.github.thomas1607haja.rezeptplaner.api.ResetRequest
+import io.github.thomas1607haja.rezeptplaner.api.ResetResult
 import io.github.thomas1607haja.rezeptplaner.api.SendResult
 import io.github.thomas1607haja.rezeptplaner.api.ShoppingPreview
 import io.github.thomas1607haja.rezeptplaner.api.ShoppingSend
@@ -31,6 +34,15 @@ class ShoppingRepository(
      */
     suspend fun sendEntries(entryIds: List<Long>): Outcome<SendResult> =
         call { api.sendShopping(it, ShoppingSend("current", emptyList(), entries = entryIds)) }
+            .also { if (it is Outcome.Ok) sync.sync(SyncTrigger.Manual) }
+
+    /** Was „Übertragung zurücksetzen“ beträfe: Gerichte des Zeitraums bzw. nur [entryId]. */
+    suspend fun resetPreview(next: Boolean, entryId: Long?): Outcome<ResetPreview> =
+        call { api.resetPreview(it, next, entryId) }
+
+    /** Setzt die Gerichte zurück; danach gleicht die App ab, damit der Plan „geplant“ zeigt. */
+    suspend fun reset(entries: List<Long>, remove: Boolean, fallbackList: String): Outcome<ResetResult> =
+        call { api.resetTransfer(it, ResetRequest(entries, remove, if (remove) fallbackList else "")) }
             .also { if (it is Outcome.Ok) sync.sync(SyncTrigger.Manual) }
 
     /** To-do-Listen aus Home Assistant (für die Wahl der Bring-Liste). */

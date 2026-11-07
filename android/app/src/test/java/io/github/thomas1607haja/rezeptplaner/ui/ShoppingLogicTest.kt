@@ -1,6 +1,9 @@
 package io.github.thomas1607haja.rezeptplaner.ui
 
 import io.github.thomas1607haja.rezeptplaner.api.Period
+import io.github.thomas1607haja.rezeptplaner.api.ResetEntry
+import io.github.thomas1607haja.rezeptplaner.api.ResetResult
+import io.github.thomas1607haja.rezeptplaner.api.TodoList
 import io.github.thomas1607haja.rezeptplaner.api.SendResult
 import io.github.thomas1607haja.rezeptplaner.api.SentItem
 import io.github.thomas1607haja.rezeptplaner.api.ShoppingEntry
@@ -8,6 +11,8 @@ import io.github.thomas1607haja.rezeptplaner.api.ShoppingItem
 import io.github.thomas1607haja.rezeptplaner.api.ShoppingPreview
 import io.github.thomas1607haja.rezeptplaner.ui.shopping.entryReason
 import io.github.thomas1607haja.rezeptplaner.ui.shopping.nothingLeft
+import io.github.thomas1607haja.rezeptplaner.ui.shopping.resetSummary
+import io.github.thomas1607haja.rezeptplaner.ui.shopping.resetTarget
 import io.github.thomas1607haja.rezeptplaner.ui.shopping.sentSummary
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -40,6 +45,23 @@ class ShoppingLogicTest {
         assertEquals(
             "2 Artikel an Bring gesendet, davon 1 bei schon vorhandenen ergänzt.",
             sentSummary(SendResult(sent = listOf(SentItem("Mehl"), SentItem("Eier", merged = true)))),
+        )
+    }
+
+    @Test
+    fun resetShowsTargetListAndOutcome() {
+        val e = ResetEntry(1, "2026-11-07", "Gulasch", lists = listOf(TodoList("todo.test", "Test")), items = 3)
+        assertEquals("an „Test“", resetTarget(e))
+        assertEquals("an unbekannte Liste", resetTarget(e.copy(lists = emptyList(), unknownList = true)))
+        assertEquals("keine Artikel gesendet", resetTarget(e.copy(lists = emptyList())))
+        assertEquals(
+            listOf(
+                "2 Gerichte wieder geplant.",
+                "Von der alten Liste entfernt: Eier, Milch.",
+                "Nicht entfernt, Liste unbekannt: Mehl.",
+                "Jetzt „An Bring senden“ – es geht an „Einkauf Familie“.",
+            ),
+            resetSummary(ResetResult(entries = 2, removed = listOf("Eier", "Milch"), skipped = listOf("Mehl")), "Einkauf Familie"),
         )
     }
 }

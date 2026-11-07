@@ -147,7 +147,7 @@ export const api = {
    * Einkaufsliste des aktuellen (next = false) bzw. folgenden
    * Einkaufszeitraums. Ergebnis { period, today, entries: [{ id, date,
    * title, servings, status, included, … }], items: [{ key, name, spec,
-   * recipes, … }] }.
+   * recipes, … }], list: { entity_id, name } (eingestellte Bring-Liste) }.
    */
   shoppingPreview: (next = false) => request('GET', `/shopping/preview?period=${next ? 'next' : 'current'}`),
 
@@ -159,6 +159,25 @@ export const api = {
    */
   sendShopping: (next, deselected, options = {}) =>
     request('POST', '/shopping/send', { period: next ? 'next' : 'current', deselected, ...options }),
+
+  /**
+   * Vorschau „Übertragung zurücksetzen“: übertragene Gerichte des
+   * Einkaufszeitraums bzw. mit entryId nur dieses. Ergebnis { entries: [{
+   * id, date, title, …, lists: [{ entity_id, name }], unknown_list, items }],
+   * current_list: { entity_id, name }, lists: [{ entity_id, name }],
+   * lists_error? }.
+   */
+  resetPreview: (next = false, entryId = null) =>
+    request('GET', entryId ? `/shopping/reset?entry=${entryId}` : `/shopping/reset?period=${next ? 'next' : 'current'}`),
+
+  /**
+   * Setzt die Gerichte entries wieder auf „geplant“. remove: Artikel aus
+   * der damaligen Liste entfernen; fallbackList gilt für Gerichte ohne
+   * gespeicherte Liste. Ergebnis { entries, removed, reduced, not_found,
+   * failed: [{ name, error }], skipped }.
+   */
+  resetTransfer: (entries, remove, fallbackList = '') =>
+    request('POST', '/shopping/reset', { entries, remove, fallback_list: fallbackList }),
 
   /**
    * Verbindung zu Home Assistant: { mode: "supervisor" | "direct" | "test",

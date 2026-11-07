@@ -75,4 +75,31 @@ class ApiClientTest {
         // Server vor 0.6.0 kennt api_version nicht.
         assertTrue(errorFor(MockResponse.Builder().body("""{"version":"0.5.1"}""").build()).contains("zu alt"))
     }
+
+    // Übertragung zurücksetzen (Server 0.18): Antwort wie vom Server, Anfrage mit Ersatzliste.
+    @Test
+    fun resetTransfer() = runTest {
+        server.enqueue(
+            MockResponse.Builder().body(
+                """{"entries":[{"id":1,"date":"2026-11-07","slot":"dinner","recipe_id":1,"title":"Gulasch","servings":4,
+                "menu_title":"","yield_unit":"","status":"transferred","included":false,"lists":[],"unknown_list":true,"items":3}],
+                "current_list":{"entity_id":"todo.familie","name":"Einkauf Familie"},
+                "lists":[{"entity_id":"todo.test","name":"Test"},{"entity_id":"todo.familie","name":"Einkauf Familie"}]}""",
+            ).build(),
+        )
+        val preview = api.resetPreview(config(), next = false, entryId = 1)
+        val first = server.takeRequest()
+        assertEquals("/api/v1/shopping/reset", first.url.encodedPath)
+        assertEquals("1", first.url.queryParameter("entry"))
+        assertTrue(preview.entries.single().unknownList)
+        assertEquals("Einkauf Familie", preview.currentList.name)
+        assertEquals(2, preview.lists.size)
+
+        server.enqueue(MockResponse.Builder().body("""{"entries":1,"removed":["Eier"],"reduced":[],"not_found":[],"failed":[],"skipped":[]}""").build())
+        val result = api.resetTransfer(config(), ResetRequest(listOf(1), remove = true, fallbackList = "todo.test"))
+        assertEquals(listOf("Eier"), result.removed)
+        val request = server.takeRequest()
+        assertEquals("/api/v1/shopping/reset", request.url.encodedPath)
+        assertEquals("""{"entries":[1],"remove":true,"fallback_list":"todo.test"}""", request.body?.utf8())
+    }
 }

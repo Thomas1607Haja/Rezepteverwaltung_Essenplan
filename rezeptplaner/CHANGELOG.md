@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.18.0
+
+- **Übertragung zurücksetzen:** Versehentlich an die falsche Bring-Liste gesendet? Im Einkauf unter den Gerichten „Übertragung zurücksetzen …“ – oder im Menü eines einzelnen übertragenen Gerichts. Die Vorschau zeigt die übertragenen Gerichte (einzeln abwählbar) und an welche Liste sie gingen. Mit „Artikel aus der alten Liste entfernen“ (Standard an) löscht der Rezeptplaner die damals gesendeten Artikel wieder aus dieser Liste; was andere übertragene Gerichte noch brauchen, bleibt mit kleinerer Menge stehen, schon abgehakte Artikel bleiben unberührt. Danach sind die Gerichte wieder „geplant“, abgewählte Zutaten („Zutaten vorhanden“) bleiben erhalten, und „An Bring senden“ geht an die jetzt eingestellte Liste.
+- Ab dieser Version merkt sich der Rezeptplaner, an welche Liste übertragen wurde. Bei früheren Übertragungen ist das nicht bekannt – dann wählt man die alte Liste im Zurücksetzen-Dialog aus.
+- **Ziel-Liste im Knopf:** „An Bring senden: Einkauf Familie (12)“ zeigt, wohin die Artikel gehen.
+- **App 0.19.0:** dieselben Funktionen in der Android-App (Einkauf und Menü des Planeintrags). Sie braucht dafür diese Version des Rezeptplaners.
+- Die Datenbank wird beim ersten Start erweitert; alle Daten bleiben erhalten.
+
 ## 0.17.1
 
 - **Rezeptauswahl beim Planen (Weboberfläche):** Gang-Reiter und Suchfeld bleiben beim Scrollen oben stehen; das Suchfeld ist auf dem Handy wieder breit statt nur ein Lupen-Symbol.
