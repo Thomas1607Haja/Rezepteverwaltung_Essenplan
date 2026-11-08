@@ -1,12 +1,15 @@
 # Rezeptplaner
 
-Rezepte verwalten, Essen planen und kochen – direkt in der Seitenleiste von Home Assistant.
+Manage recipes, plan meals and cook – right in the Home Assistant sidebar.
 
-- Rezepte anlegen, bearbeiten und per Adresse aus dem Internet übernehmen (z. B. chefkoch.de)
-- Kochansicht mit Portionen-Umrechnung; der Bildschirm bleibt an
-- Suche, Kategorien und Favoriten
-- Essensplan: Tage nebeneinander, Gerichte per Drag and Drop verschieben und tauschen, Einkaufszeitraum im Blick
-- An jedem Rezept sichtbar, wann es zuletzt dran war oder als Nächstes eingeplant ist
-- Schlank: ein kleiner Go-Server mit SQLite, im Leerlauf ohne CPU-Last
+- Create and edit recipes, import them from a web page or from photos (Claude skill)
+- Cooking view with serving conversion; the screen stays on
+- Meal plan: days side by side, move and swap dishes by drag and drop, menus with several courses
+- Shopping list sent to Bring! via Home Assistant
+- Android app, dashboard card, calendar and sensor
+- English, German, French, Spanish and Italian
+- Lean: a small Go server with SQLite, no CPU load when idle
 
-Einkaufsliste mit Bring und die Android-App folgen.
+---
+
+**Deutsch:** Rezepte verwalten, Essen planen und kochen – direkt in der Seitenleiste von Home Assistant. Rezepte anlegen, aus Webseiten oder Fotos übernehmen, Kochansicht mit Portionen-Umrechnung, Essensplan mit Drag and Drop und Menüs, Einkaufsliste an Bring, Android-App, Dashboard-Karte, Kalender und Sensor. Auf Deutsch, Englisch, Französisch, Spanisch und Italienisch.

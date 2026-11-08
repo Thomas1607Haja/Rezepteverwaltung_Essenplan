@@ -1,81 +1,101 @@
 # Rezeptplaner
 
-Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wochenplanung des Essens – als App (Add-on) für Home Assistant.
+**English** · [Deutsch](README.de.md)
 
-## Funktionen
+A lean, self-built system for managing recipes and planning the week's meals – running as an app (add-on) in Home Assistant.
 
-- **Rezepte** per URL (z. B. chefkoch.de), per Foto (Android-App) oder aus einer Datei importieren, manuell anlegen und frei bearbeiten
-- **Essensplan** mit frei scrollbaren Tagen, Planung beliebig weit im Voraus, Verschieben per Drag and Drop
-- **Einkaufsliste** für den aktuellen Einkaufszeitraum, Übertragung an die Bring-App über Home Assistant
-- **Dashboard-Karte** mit dem aktuellen Essensplan in Home Assistant
-- **Kalender und Sensor** in Home Assistant (Integration über HACS)
-- **Android-App:** Rezepte und Plan auch offline lesen, planen, Rezepte anlegen und bearbeiten, Rezept-Links teilen, Foto-Import mit Texterkennung auf dem Handy, Einkauf an Bring senden
-- **Claude-Skill** „rezeptplaner-import“: erfasst Rezepte aus Fotos (Rezeptkarten, Kochbuchseiten, Zettel) und liefert eine Importdatei; fehlt ein Foto vom Gericht, zeichnet sie eine Illustration
+## Features
+
+- **Recipes:** import from a web page (schema.org recipe data, e.g. allrecipes.com, marmiton.org, chefkoch.de), from a photo (Android app) or from a file; create and edit them freely
+- **Meal plan** with freely scrolling days, plan as far ahead as you like, move and swap dishes by drag and drop, multi-course menus
+- **Shopping list** for the current shopping period, sent to the Bring! app via Home Assistant
+- **Dashboard card** with the current meal plan in Home Assistant
+- **Calendar and sensor** in Home Assistant (integration via HACS)
+- **Android app:** read recipes and the plan offline, plan, create and edit recipes, share recipe links and PDFs, photo import with on-device text recognition, send the shopping list to Bring!
+- **Claude skill** “rezeptplaner-import”: captures recipes from photos (recipe cards, cookbook pages, handwritten notes) and produces an import file; if there is no photo of the dish, it draws an illustration
+
+## Languages
+
+The web interface, the Android app, the Home Assistant integration and the dashboard card are available in **English, German, French, Spanish and Italian**. English is the fallback whenever a language or a single text is missing.
+
+- **Web interface:** follows the system language of Home Assistant (Settings → System → General), then the browser language. Under **Settings → Household → Language** you can set a fixed language for the whole household.
+- **Android app:** follows the Android system language. From Android 13 you can choose a language just for this app (Android settings → Apps → Rezeptplaner → Language).
+- **Integration and card:** the integration uses the Home Assistant system language, the card the language of the logged-in user.
+- **Your content is never translated:** recipes, ingredients, notes and your own categories stay exactly as you entered them. A new installation creates its default categories and pantry list in the Home Assistant language; existing installations are not touched.
+
+French, Spanish and Italian were translated without a native speaker review – some phrases may still be a bit clumsy. **Improvements are very welcome!** See [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md) for how to correct a translation or contribute a new language via pull request. The terms used everywhere are listed in the [glossary](docs/glossar.md).
 
 ## Installation
 
-1. **App:** In Home Assistant unter Einstellungen → Apps → App-Store → ⋮ → Repositories diese Adresse hinzufügen und „Rezeptplaner“ installieren:
+1. **App:** In Home Assistant go to Settings → Apps → App store → ⋮ → Repositories, add this address and install “Rezeptplaner”:
    `https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan`
-2. **Integration und Dashboard-Karte (optional):** In HACS → ⋮ → Benutzerdefinierte Repositories dieselbe Adresse mit Typ „Integration“ hinzufügen, „Rezeptplaner“ herunterladen und Home Assistant neu starten. Die Integration erscheint dann unter Einstellungen → Geräte & Dienste als „Entdeckt“ – nur noch bestätigen.
-3. Nach der Einrichtung die Seite einmal neu laden (F5), dann im Dashboard eine Karte „Essensplan“ hinzufügen (in der Kartenauswahl oder als `type: custom:rezeptplaner-card`). Die Integration trägt die Karte selbst als Dashboard-Ressource ein (Einstellungen → Dashboards → ⋮ → Ressourcen) und hält den Eintrag bei Updates aktuell. Werden die Ressourcen in YAML gepflegt (`lovelace: resource_mode: yaml`), dort einen Eintrag mit `url: /rezeptplaner_static/rezeptplaner-card.js` und `type: module` ergänzen; bis dahin lädt die Integration die Karte ersatzweise über die Startseite.
+2. **Integration and dashboard card (optional):** In HACS → ⋮ → Custom repositories add the same address with type “Integration”, download “Rezeptplaner” and restart Home Assistant. The integration then appears under Settings → Devices & services as “Discovered” – just confirm it.
+3. After setting it up, reload the page once (F5), then add a “Meal plan” card to a dashboard (from the card picker or as `type: custom:rezeptplaner-card`). The integration registers the card as a dashboard resource itself (Settings → Dashboards → ⋮ → Resources) and keeps the entry up to date. If your resources are maintained in YAML (`lovelace: resource_mode: yaml`), add an entry with `url: /rezeptplaner_static/rezeptplaner-card.js` and `type: module`; until then the integration loads the card via the start page as a fallback.
 
-   Einstellungen der Karte (im visuellen Editor oder in YAML):
+   Card options (visual editor or YAML):
 
-   | Feld | Bedeutung | Standard |
+   | Field | Meaning | Default |
    |---|---|---|
-   | `title` | Überschrift | „Essensplan“ |
-   | `days` | Anzahl Tage ab heute (1–31) | aktueller Einkaufszeitraum |
-   | `height` | Höhe in Pixel; passt nicht alles hinein, scrollt der Inhalt innerhalb der Karte | so hoch wie der Inhalt |
+   | `title` | Heading | “Meal plan” in the user's language |
+   | `days` | Number of days from today (1–31) | current shopping period |
+   | `height` | Height in pixels; if not everything fits, the card scrolls | as tall as the content |
 
-### Zugriff über einen Cloudflare-Tunnel
+### Access through a Cloudflare tunnel
 
-Cloudflare speichert ohne eigene Regel auch Fehlerantworten zwischen und weist Browser an, sie 4 Stunden zu behalten. Fragt ein Browser oder die Companion-App die Karte während eines Neustarts von Home Assistant ab, bleibt sie danach stundenlang verschwunden („Konfigurationsfehler“). Abhilfe im Cloudflare-Dashboard der Domain:
+Without a rule of its own, Cloudflare also caches error responses and tells browsers to keep them for 4 hours. If a browser or the companion app requests the card while Home Assistant is restarting, it stays missing for hours afterwards (“configuration error”). Fix it in the Cloudflare dashboard of your domain:
 
-1. **Caching → Cache Rules → Create rule:** Name „Home Assistant nicht cachen“, Bedingung *Hostname equals* `<HA-Hostname>`, Aktion **Bypass cache**, speichern.
+1. **Caching → Cache Rules → Create rule:** name “Do not cache Home Assistant”, condition *Hostname equals* `<HA host name>`, action **Bypass cache**, save.
 2. **Caching → Configuration → Browser Cache TTL:** **Respect Existing Headers**.
-3. Einmalig **Caching → Configuration → Purge Everything**; in der Companion-App unter Einstellungen → Companion-App → Fehlerbehebung den Frontend-Cache zurücksetzen.
+3. Once: **Caching → Configuration → Purge Everything**; in the companion app reset the frontend cache under Settings → Companion app → Troubleshooting.
 
-### Android-App
+### Android app
 
-In der Weboberfläche unter **Einstellungen → App installieren**: Schritt 1 zeigt QR-Codes für Obtainium (installiert und aktualisiert die App aus den GitHub-Releases), Schritt 2 verbindet das Handy per QR-Code. Damit die App von unterwegs erreichbar ist, braucht der App-Zugang (Port 8100) einen eigenen Hostnamen, z. B. im bestehenden Cloudflare-Tunnel – Anleitung in [docs/APP-ZUGANG.md](docs/APP-ZUGANG.md). Details zur App: [docs/ANDROID.md](docs/ANDROID.md).
+In the web interface under **Settings → Install the app**: step 1 shows QR codes for Obtainium (installs and updates the app from the GitHub releases), step 2 connects the phone via QR code. To reach the app from outside your home, the app access (port 8100) needs its own host name, e.g. in your existing Cloudflare tunnel – see [docs/APP-ZUGANG.md](docs/APP-ZUGANG.md) (German). More about the app: [docs/ANDROID.md](docs/ANDROID.md) (German).
 
-### Claude-Skill
+### Claude skill
 
-Unter **Einstellungen → App installieren → Claude-Skill** liegt die aktuelle Skill zum Herunterladen. In Claude unter Einstellungen → Fähigkeiten → Skills hochladen; danach Fotos von Rezepten in einen Chat geben. Die erzeugte ZIP-Datei in der App per Teilen oder in der Weboberfläche unter **Rezepte → Datei importieren** übernehmen. Format: [docs/importformat.md](docs/importformat.md).
+The current skill can be downloaded under **Settings → Install the app → Claude skill**. In Claude, upload it under Settings → Capabilities → Skills, then drop photos of recipes into a chat. Import the resulting ZIP file by sharing it to the app or in the web interface under **Recipes → Import file**. Format: [docs/importformat.md](docs/importformat.md).
 
-## Bausteine
+In short (the skill's own instructions are in German):
 
-| Baustein | Technik |
+- It captures recipes **in the language of the original** – a French recipe stays French; nothing is translated.
+- Units are written the way Rezeptplaner's parser writes them (`tbsp`, `tsp`, `oz`, `c. à s.`, `cda`, `cucchiaio`, `EL` …) and are never converted.
+- Categories must match your Rezeptplaner exactly. If Rezeptplaner runs in another language than German, copy your category list (**Settings → Categories → Copy category list for Claude**) and paste it into the chat first.
+- Before saving anything, Rezeptplaner shows a preview with duplicates, unknown categories and hints.
+
+## Building blocks
+
+| Part | Technology |
 |---|---|
-| Server | Go mit SQLite, läuft als Home-Assistant-Add-on |
-| Weboberfläche | in den Server eingebettet, erreichbar über die HA-Seitenleiste |
-| HA-Integration und Dashboard-Karte | Python bzw. JavaScript, installierbar über HACS |
-| Android-App | Kotlin, Jetpack Compose |
+| Server | Go with SQLite, runs as a Home Assistant add-on |
+| Web interface | embedded in the server, reachable from the HA sidebar |
+| HA integration and dashboard card | Python and JavaScript, installable via HACS |
+| Android app | Kotlin, Jetpack Compose |
 
-Grundsatz: Das System muss so schlank sein, dass es einen Home Assistant Green neben seiner eigentlichen Aufgabe kaum belastet.
+Principle: the system has to be so lean that it barely affects a Home Assistant Green next to its actual job.
 
-## Projektstand
+## Project status
 
-Fertig: Rezepte, Essensplan, Einkaufsliste mit Bring, Integration mit Dashboard-Karte, Android-App, Datei-Import mit Claude-Skill. Als Nächstes: Feinschliff (Statistik, Kategorien verwalten). Die vollständige Planung – Architektur, fachliche Regeln, Datenmodell, Bildschirme und Projektphasen – steht in [docs/PLANUNG.md](docs/PLANUNG.md).
+Done: recipes, meal plan, shopping list with Bring!, integration with dashboard card, Android app, file import with Claude skill, five languages. The complete plan – architecture, domain rules, data model, screens and project phases – is in [docs/PLANUNG.md](docs/PLANUNG.md) (German).
 
-## Projektstruktur
+## Project structure
 
 ```
-rezeptplaner/                    Home-Assistant-Add-on
-custom_components/rezeptplaner/  HA-Integration (HACS) mit Dashboard-Karte (frontend/)
-server/                          Go-Backend
-web/                             Weboberfläche
-android/                         Android-App
-skills/                          Claude-Skill „rezeptplaner-import“ (mit Tests)
-docs/                            Planung und Notizen
+rezeptplaner/                    Home Assistant add-on
+custom_components/rezeptplaner/  HA integration (HACS) with dashboard card (frontend/)
+server/                          Go backend
+web/                             Web interface
+android/                         Android app
+skills/                          Claude skill "rezeptplaner-import" (with tests)
+docs/                            Planning and notes
 ```
 
-## Lizenz
+## License
 
 [MIT](LICENSE)
 
-## Unterstützen
+## Support
 
-Der Rezeptplaner ist kostenlos. Wenn er dir gefällt, freue ich mich über einen Kaffee.
+Rezeptplaner is free. If you like it, I'd be happy about a coffee.
 
 <a href="https://buymeacoffee.com/rezeptplaner"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="40"></a>

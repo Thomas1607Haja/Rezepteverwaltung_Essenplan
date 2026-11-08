@@ -341,13 +341,14 @@ Die einzeln abgeglichenen Tabellen (`recipes`, `meal_plan_entries`, `pantry_item
 | name | Text | über alle Gruppen eindeutig, ohne Rücksicht auf Groß-/Kleinschreibung und Umlaute (prüft der Server) |
 | group_id | Integer | Gruppe (bis Migration 010 Text `tag_group`) |
 | position | Integer | Reihenfolge in der Gruppe |
+| course_key | Text | fester Schlüssel eines Gangs der Startliste (`starter`, `soup`, `salad`, `main`, `side`, `dessert`, `cake`, `pastry`, `bread`, `snack`), sonst leer (Migration 018). Der Code erkennt Gänge nur daran, nie am Namen |
 | updated_at | Zeitstempel | |
 
 `recipe_tags`: `recipe_id`, `tag_id` (Verknüpfungstabelle)
 
 Verwaltet werden Gruppen und Kategorien nur in der Weboberfläche (Einstellungen → Kategorien, Schritt 8.C). Die App liest sie beim Abgleich vollständig (leere Gruppen fehlen dort). Weil die Rezepte ihre Kategorien mit Name und Gruppe mitbringen, bekommen alle betroffenen Rezepte bei Umbenennen, Verschieben in eine andere Gruppe, Löschen und Zusammenführen ein neues `updated_at`; gelöschte Kategorien stehen zusätzlich in `deletions`. Reines Umsortieren ändert die Rezepte nicht.
 
-**Startkategorien:**
+**Startkategorien** (so legen die Migrationen sie an; eine neue Installation benennt sie beim ersten Start in die Sprache von Home Assistant um, siehe Phase 11):
 
 - **Hauptzutat:** Vegetarisch, Vegan, Rind, Schwein, Geflügel, Hackfleisch, Fisch, Meeresfrüchte
 - **Geschmack:** Herzhaft, Süß
@@ -436,6 +437,7 @@ Schlüssel-Wert-Speicher, u. a.:
 - `shopping_time` (Uhrzeit des Einkaufs, z. B. `18:00`; ab dann gilt am Einkaufstag eingekauft)
 - `bring_entity` (To-do-Entität der Bring-Liste in Home Assistant)
 - `app_url` (Adresse, unter der die Android-App den App-Zugang erreicht, z. B. `https://rezepte.example.org`; steht im QR-Code)
+- `ui_language` (Sprache der Weboberfläche: `auto` = Home Assistant, sonst `en`, `de`, `fr`, `es`, `it`)
 
 ### Nicht gespeichert (wird berechnet)
 
@@ -617,6 +619,8 @@ Für den Fall „an die falsche Bring-Liste gesendet“ (Server 0.18, App 0.19).
 
 Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App-Zugang, Port 8100) bzw. über Ingress (Weboberfläche, Port 8099).
 
+**Fehler und Hinweise** kommen als stabile Codes mit Parametern, nie als deutsche Sätze: `{"error": "<englischer Text>", "code": "out_of_range", "field": "servings", "params": {"min": 1, "max": 50}}` (Katalog: `server/internal/apierr/catalog.go`). Hinweise im Datei-Import als `error_details`/`warning_details` (`{code, params, message}`), Verschiebe-Warnungen mit `type` als Code und `params`. Die alten Textfelder (`errors`, `warnings`, `message`) bleiben mit englischem Text für ältere App-Versionen. `GET /language` liefert `{setting, home_assistant, default, supported}`.
+
 | Bereich | Funktionen |
 |---|---|
 | Rezepte | Liste mit Suche/Filtern, Einzelabruf (mit `parent_recipe_id` und `family`), Anlegen, Ändern, Löschen, Favorit setzen, Bild hochladen, Variante anlegen (`POST /recipes/{id}/variants`, der Server kopiert) |
@@ -733,6 +737,23 @@ Ziel: Rezepte nach Gang finden, Kuchen und Backwaren sauber planen und an Wochen
 |---|---|
 | 10.1 | (umgesetzt, App 0.18.0, nur App) **Rezept als PDF teilen:** Teilen-Symbol oben in der Kochansicht. Hat das Rezept Notizen, fragt ein kleiner Dialog „Eigene Notizen mitsenden“ (Standard aus) mit „Teilen“; sonst öffnet sich sofort das Android-Teilen-Menü. Das PDF entsteht auf dem Handy aus den gespeicherten Daten (auch offline) mit Androids `PdfDocument`, ohne Zusatzbibliothek: DIN A4, Systemschrift eingebettet (Umlaute, ½, „“), heller druckfreundlicher Satz in den Farben der App. Inhalt: Titel, „Variante von …“, Zeiten, Gang, Kategorien, Bild (großes Bild, sonst Vorschaubild, fehlt beides: ohne Bild), Beschreibung, Zutaten mit Gruppen **für die Grundportionen** bzw. die Ergebnis-Einheit (nicht der Portionen-Zähler; Entscheidung 2026-10-26), nummerierte Schritte, auf Wunsch Notizen, Quelle mit Webadresse, Fußzeile „Erstellt mit Rezeptplaner · Seite x von y“. Seitenumbruch in Blöcken: Zutatengruppen und Schritte bleiben zusammen, Überschriften nie allein unten, nur überlange Blöcke werden zwischen zwei Zeilen geteilt; bliebe auf der letzten Seite nur ein kleiner Rest, wird das Bild niedriger. Bild 800 × 450 px (PdfDocument speichert verlustfrei): mit Foto etwa 0,6–0,8 MB, ohne Bild unter 50 KB. Datei `cache/share/Rezept_<Titel>.pdf` über den FileProvider mit `ACTION_SEND` (`application/pdf`, Leserecht für die Ziel-App); geteilte PDFs werden nach 24 Stunden gelöscht (beim Teilen und beim Start). „Als Text teilen“ bewusst nicht (Entscheidung 2026-10-26) |
 | 10.2 | (umgesetzt, Server 0.18.0, App 0.19.0) **Übertragung zurücksetzen** nach dem Senden an die falsche Bring-Liste, siehe Ablauf H; Ziel-Liste im Knopf „An Bring senden“; Migration 017 speichert die Ziel-Liste je übertragenem Artikel |
+
+### Phase 11: Mehrsprachigkeit (2026-11-08)
+
+Sprachen Deutsch, Englisch, Französisch, Spanisch, Italienisch; Englisch ist Rückfallsprache. Begriffe: [glossar.md](glossar.md); Beitragen: [TRANSLATIONS.md](TRANSLATIONS.md).
+
+| Schritt | Inhalt |
+|---|---|
+| 11.0 | Glossar, Test aller Sprachdateien auf gleiche Schlüssel und Platzhalter (`server/internal/locales`) |
+| 11.1 | Server: Fehlercodes (`apierr`), Sprache von Home Assistant (`GET /api/config`, 5 Minuten zwischengespeichert, nur bei Bedarf), Einstellung `ui_language`, `course_key` (Migration 018, benennt nichts um), Startdaten einer **neuen** Datenbank in der Sprache von Home Assistant (`seed`), ohne Home Assistant `REZEPTPLANER_LANGUAGE` bzw. Englisch |
+| 11.2 | Weboberfläche: `web/src/locales/<bereich>/<sprache>.json`, Sprache = Einstellung, sonst Home Assistant, sonst Browser, sonst Englisch; Formate über `Intl` |
+| 11.3 | Android: `values` Englisch, `values-de/fr/es/it`; Fehler- und gemeinsame Texte erzeugt aus dem Web (`android/tools/gen_errors.py`); Sprache pro App ab Android 13 (`generateLocaleConfig`) |
+| 11.4 | Integration (Übersetzungen, Kalendertexte in der Systemsprache), Dashboard-Karte (Sprache des Nutzers), Add-on (Seitenleiste „Rezeptplaner“), Icon der Integration in `brand/` |
+| 11.5 | Parser und Vorratsabgleich in fünf Sprachen; Einheiten bleiben in der Sprache der Vorlage (`tbsp` bleibt `tbsp`, keine Umrechnung von Tassen/Unzen); Dezimalzeichen der Mengen an Bring nach Haushaltssprache |
+| 11.6 | Claude-Skill 2.4: erfasst in der Sprache der Vorlage, Einheiten wie der Parser |
+| 11.7 | Doku: README englisch, README.de.md deutsch |
+
+Entscheidungen (2026-11-08): Inhalte des Nutzers werden nie übersetzt; bestehende Installationen behalten ihre Daten; die Sprachwahl der Weboberfläche gilt für den ganzen Haushalt; ältere Apps zeigen Fehler des neuen Servers englisch.
 
 ---
 
