@@ -2,3 +2,5 @@ configuration:
   app_repository:
     name: Repository dell'app Android
     description: Repository GitHub (proprietario/nome) le cui release forniscono l'app Android. Da modificare solo per un tuo fork.
+network:
+  8100/tcp: "Accesso per l'app (serve una chiave API)"

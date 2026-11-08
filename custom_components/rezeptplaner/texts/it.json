@@ -1,0 +1,10 @@
+{
+  "lunch_prefix": "Pranzo: ",
+  "coffee_prefix": "Merenda: ",
+  "menu": "Menù",
+  "menu_title": "Menù: {title}",
+  "servings": {
+    "one": "{count} porzione",
+    "other": "{count} porzioni"
+  }
+}

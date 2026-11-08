@@ -229,6 +229,12 @@ func TestIntegrationTranslations(t *testing.T) {
 		readJSONDir(t, filepath.Join(repo, "custom_components/rezeptplaner/translations")))
 }
 
+// Texte der Kalendertermine und des Sensors (custom_components/…/texts).
+func TestIntegrationTexts(t *testing.T) {
+	compare(t, "custom_components/rezeptplaner/texts",
+		readJSONDir(t, filepath.Join(repo, "custom_components/rezeptplaner/texts")))
+}
+
 // Die Karte ist eine einzelne JS-Datei ohne Build. Ihre Texte stehen als
 // reines JSON zwischen den Kommentaren "// i18n:begin" und "// i18n:end"
 // ({"en": {...}, "de": {...}, ...}).

@@ -30,7 +30,8 @@ type Menu struct {
 	// Title: vom Nutzer vergeben; leer = automatisch (DisplayTitle).
 	Title string `json:"title"`
 	// DisplayTitle: Title oder der Titel des Hauptgerichts bzw. des ersten
-	// Gerichts; „Menü“, wenn es noch keine Gänge gibt. Nur lesbar.
+	// Gerichts; leer, wenn es noch keine Gänge gibt (die Oberfläche zeigt
+	// dann „Menü“ in ihrer Sprache). Nur lesbar.
 	DisplayTitle string    `json:"display_title"`
 	Note         string    `json:"note"`
 	Servings     int       `json:"servings"`
@@ -58,7 +59,8 @@ func nonZero(p *int64) any {
 }
 
 // selectMenu liest Menüs samt automatischem Titel. Der Hauptgang ist der
-// Gang mit der Kategorie „Hauptgericht“, sonst das erste Gericht.
+// Gang mit dem Gang-Schlüssel "main" (Hauptgericht, Migration 018), sonst
+// das erste Gericht.
 const selectMenu = `
 	SELECT m.id, m.date, m.slot, m.position, m.title, m.note, m.servings, m.created_at, m.updated_at,
 	       coalesce(nullif(m.title, ''),
@@ -66,9 +68,9 @@ const selectMenu = `
 	                 LEFT JOIN recipes r ON r.id = e.recipe_id
 	                 LEFT JOIN tags t ON t.id = e.course_tag_id
 	                 WHERE e.menu_id = m.id
-	                 ORDER BY CASE WHEN lower(t.name) = 'hauptgericht' THEN 0 ELSE 1 END, e.position, e.id
+	                 ORDER BY CASE WHEN t.course_key = 'main' THEN 0 ELSE 1 END, e.position, e.id
 	                 LIMIT 1),
-	                'Menü')
+	                '')
 	FROM meal_plan_menus m`
 
 func scanMenu(row scanner) (Menu, error) {

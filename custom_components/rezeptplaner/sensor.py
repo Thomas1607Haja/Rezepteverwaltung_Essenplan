@@ -11,6 +11,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from . import RezeptplanerConfigEntry
 from .coordinator import RezeptplanerCoordinator, entry_title
 from .entity import RezeptplanerEntity
+from .texts import language, text
 
 
 async def async_setup_entry(
@@ -39,7 +40,7 @@ class TodaySensor(RezeptplanerEntity, SensorEntity):
             if e.get("slot", "dinner") != "dinner":
                 continue
             menu = menus.get(e.get("menu_id"))
-            title = f"Menü: {menu.get('display_title')}" if menu else entry_title(e)
+            title = text(language(self.hass), "menu_title", title=menu.get("display_title")) if menu else entry_title(e)
             if title not in dinner:
                 dinner.append(title)
         # Zustände dürfen höchstens 255 Zeichen lang sein.

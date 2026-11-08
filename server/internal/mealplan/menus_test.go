@@ -15,7 +15,7 @@ func TestMenus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if menu.DisplayTitle != "Menü" || menu.Servings != 6 {
+	if menu.DisplayTitle != "" || menu.Servings != 6 {
 		t.Errorf("leeres Menü: %+v", menu)
 	}
 	// Zwei Gänge: Portionen vom Menü, Tag/Slot vom Menü (Angaben im Eintrag zählen nicht).

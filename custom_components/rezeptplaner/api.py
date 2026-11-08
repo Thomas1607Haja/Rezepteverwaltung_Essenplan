@@ -28,7 +28,7 @@ class RezeptplanerClient:
                 timeout=aiohttp.ClientTimeout(total=15),
             )
         except (aiohttp.ClientError, TimeoutError) as err:
-            raise RezeptplanerError(f"Server nicht erreichbar: {err}") from err
+            raise RezeptplanerError(f"Rezeptplaner not reachable: {err}") from err
         if resp.status != 200:
             text = await resp.text()
             resp.release()
