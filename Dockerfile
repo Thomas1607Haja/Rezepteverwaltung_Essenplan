@@ -17,6 +17,8 @@ WORKDIR /src/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web/ ./
+# Adresse der Seite „Unterstützen“, liest web/src/lib/support.js ein.
+COPY support-url.txt /src/
 # Ausgabe nach ../server/internal/web/dist/app (siehe vite.config.js)
 RUN npm run build
 

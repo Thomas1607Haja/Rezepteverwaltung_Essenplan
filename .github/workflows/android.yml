@@ -9,6 +9,9 @@
 #   …/releases/latest/download/rezeptplaner.apk immer die neueste liefert
 #   (QR-Code unter Einstellungen → App installieren, server/internal/appinstall).
 #
+# Gebaut wird nur die Variante „github“ (mit Link „Unterstützen“); „play“
+# ist für einen späteren Play-Store-Eintrag vorbereitet (app/build.gradle.kts).
+#
 # Geheime Werte (Settings → Secrets and variables → Actions):
 #   ANDROID_KEYSTORE_BASE64   Signaturschlüssel (.jks), base64-kodiert
 #   ANDROID_KEYSTORE_PASSWORD Passwort des Schlüsselspeichers
@@ -20,9 +23,9 @@ on:
   push:
     branches: [main]
     tags: ["android-v*"]
-    paths: ["android/**", ".github/workflows/android.yml"]
+    paths: ["android/**", "support-url.txt", ".github/workflows/android.yml"]
   pull_request:
-    paths: ["android/**", ".github/workflows/android.yml"]
+    paths: ["android/**", "support-url.txt", ".github/workflows/android.yml"]
   workflow_dispatch:
 
 permissions:
@@ -47,19 +50,19 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
 
       - name: Debug-APK, Tests und Lint
-        run: ./gradlew --no-daemon assembleDebug testDebugUnitTest lintDebug
+        run: ./gradlew --no-daemon assembleGithubDebug testGithubDebugUnitTest lintGithubDebug
 
       - uses: actions/upload-artifact@v7
         with:
           name: rezeptplaner-debug-apk
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: android/app/build/outputs/apk/github/debug/*.apk
           retention-days: 14
 
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: lint-bericht
-          path: android/app/build/reports/lint-results-debug.html
+          path: android/app/build/reports/lint-results-githubDebug.html
           retention-days: 14
 
   release:
@@ -104,11 +107,11 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew --no-daemon assembleRelease
+        run: ./gradlew --no-daemon assembleGithubRelease
 
       - name: Signatur prüfen
         run: |
-          apk=app/build/outputs/apk/release/app-release.apk
+          apk=app/build/outputs/apk/github/release/app-github-release.apk
           apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           "$apksigner" verify --print-certs "$apk"
           cp "$apk" "$RUNNER_TEMP/rezeptplaner.apk"

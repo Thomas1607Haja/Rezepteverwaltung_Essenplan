@@ -6,4 +6,7 @@
     <string name="nav_shopping">Einkauf</string>
     <string name="nav_statistics">Statistik</string>
     <string name="nav_settings">Einstellungen</string>
+    <string name="support_title">Unterstützen</string>
+    <string name="support_text">Der Rezeptplaner ist kostenlos. Wenn er dir gefällt, freue ich mich über einen Kaffee.</string>
+    <string name="support_button">Einen Kaffee spendieren</string>
 </resources>

@@ -73,3 +73,9 @@ docs/                            Planung und Notizen
 ## Lizenz
 
 [MIT](LICENSE)
+
+## Unterstützen
+
+Der Rezeptplaner ist kostenlos. Wenn er dir gefällt, freue ich mich über einen Kaffee.
+
+<a href="https://buymeacoffee.com/rezeptplaner"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="40"></a>

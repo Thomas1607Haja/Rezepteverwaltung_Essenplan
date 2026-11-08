@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.19.0
+
+- **Unterstützen:** Unter Einstellungen gibt es ganz unten einen kleinen Abschnitt mit einem Link zu Buy Me a Coffee (öffnet in einem neuen Tab). Keine Hinweise, keine Erinnerungen.
+- **App 0.20.0:** derselbe Eintrag in den Einstellungen der Android-App; er öffnet die Seite im Browser. Intern gibt es jetzt zwei Build-Varianten („github“ und eine vorbereitete „play“ ohne Spendenlink); veröffentlicht wird weiterhin nur die bekannte App, Obtainium und Dateiname bleiben gleich.
+
 ## 0.18.0
 
 - **Übertragung zurücksetzen:** Versehentlich an die falsche Bring-Liste gesendet? Im Einkauf unter den Gerichten „Übertragung zurücksetzen …“ – oder im Menü eines einzelnen übertragenen Gerichts. Die Vorschau zeigt die übertragenen Gerichte (einzeln abwählbar) und an welche Liste sie gingen. Mit „Artikel aus der alten Liste entfernen“ (Standard an) löscht der Rezeptplaner die damals gesendeten Artikel wieder aus dieser Liste; was andere übertragene Gerichte noch brauchen, bleibt mit kleinerer Menge stehen, schon abgehakte Artikel bleiben unberührt. Danach sind die Gerichte wieder „geplant“, abgewählte Zutaten („Zutaten vorhanden“) bleiben erhalten, und „An Bring senden“ geht an die jetzt eingestellte Liste.

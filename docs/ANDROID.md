@@ -31,17 +31,19 @@ Bauen ohne Android Studio (Git Bash):
 ```bash
 export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
 cd /c/Projekte/Rezepteverwaltung_Essenplan/android
-./gradlew assembleDebug     # APK: app/build/outputs/apk/debug/app-debug.apk
-./gradlew installDebug      # auf das per USB verbundene Handy installieren
+./gradlew assembleGithubDebug   # APK: app/build/outputs/apk/github/debug/app-github-debug.apk
+./gradlew installGithubDebug    # auf das per USB verbundene Handy installieren
 ```
+
+**Zwei Varianten (Flavors):** `github` ist die veröffentlichte App (GitHub-Releases, Obtainium) und zeigt in den Einstellungen den Eintrag „Unterstützen“. `play` ist für einen späteren Play-Store-Eintrag vorbereitet, wird aber noch nicht gebaut oder veröffentlicht; sie enthält keinen Spendenlink, weil der gegen die Play-Richtlinien verstoßen kann. Die Adresse des Links steht nur in `support-url.txt` im Hauptordner (Weboberfläche und App lesen sie beim Bauen ein; im README steht sie zusätzlich als Text).
 
 Oberflächentests ohne Gerät (Robolectric) mit Bildschirmfotos unter `app/build/outputs/roborazzi/`:
 
 ```bash
-./gradlew recordRoborazziDebug
+./gradlew recordRoborazziGithubDebug
 ```
 
-**Release-Build vor dem Veröffentlichen auf einem Gerät oder Emulator prüfen** – am einfachsten mit der Variante `qa` (`./gradlew assembleQa`): wie Release mit R8, aber mit Debug-Schlüssel signiert und mit `http` zum Testserver (`http://10.0.2.2:<Port>` aus dem Emulator; Debug und QA erlauben das, Release nur `https`). Nur er wird von R8 verkleinert; Fehler durch fehlende R8-Regeln (z. B. beim QR-Scanner in 0.2.0/0.2.1) zeigen weder Debug-Build noch Unit-Tests. Eigene Regeln stehen in `app/proguard-rules.pro`. Einen verschleierten Stacktrace übersetzt `retrace` mit `app/build/outputs/mapping/release/mapping.txt`.
+**Release-Build vor dem Veröffentlichen auf einem Gerät oder Emulator prüfen** – am einfachsten mit der Variante `qa` (`./gradlew assembleGithubQa`): wie Release mit R8, aber mit Debug-Schlüssel signiert und mit `http` zum Testserver (`http://10.0.2.2:<Port>` aus dem Emulator; Debug und QA erlauben das, Release nur `https`). Nur er wird von R8 verkleinert; Fehler durch fehlende R8-Regeln (z. B. beim QR-Scanner in 0.2.0/0.2.1) zeigen weder Debug-Build noch Unit-Tests. Eigene Regeln stehen in `app/proguard-rules.pro`. Einen verschleierten Stacktrace übersetzt `retrace` mit `app/build/outputs/mapping/githubRelease/mapping.txt`.
 
 ## 2. Galaxy A54 per USB verbinden
 

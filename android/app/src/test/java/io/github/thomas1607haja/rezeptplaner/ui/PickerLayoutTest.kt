@@ -33,7 +33,7 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * Rezeptauswahl beim Planen mit vielen Schnellauswahlen: Die Rezepte
  * müssen auch mit großer Schrift und im Querformat erreichbar sein.
- * Bildschirmfotos mit `./gradlew recordRoborazziDebug`.
+ * Bildschirmfotos mit `./gradlew recordRoborazziGithubDebug`.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

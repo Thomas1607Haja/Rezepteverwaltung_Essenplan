@@ -4,6 +4,7 @@
   import PantryEditor from '../components/PantryEditor.svelte';
   import ApiKeysEditor from '../components/ApiKeysEditor.svelte';
   import TagManager from '../components/TagManager.svelte';
+  import { supportUrl } from '../lib/support.js';
 
   // Ein Promise direkt im Markup: {#await} zeigt je nach Zustand
   // "lädt", das Ergebnis oder den Fehler an. Neu zuweisen lädt neu.
@@ -193,6 +194,13 @@
   {/await}
 </section>
 
+<section class="card">
+  <h2>Unterstützen</h2>
+  <p>Der Rezeptplaner ist kostenlos. Wenn er dir gefällt, freue ich mich über einen Kaffee.</p>
+  <!-- Neuer Tab: Die Oberfläche läuft im Ingress-Rahmen von Home Assistant. -->
+  <a class="support" href={supportUrl} target="_blank" rel="noopener noreferrer">☕ Einen Kaffee spendieren</a>
+</section>
+
 <style>
   .card {
     margin-bottom: 1rem;
@@ -241,6 +249,22 @@
 
   .error {
     color: var(--danger);
+  }
+
+  /* Link im Stil der Knöpfe dieser Seite */
+  .support {
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .support:hover {
+    background: var(--surface-hover);
   }
 
   .ok {

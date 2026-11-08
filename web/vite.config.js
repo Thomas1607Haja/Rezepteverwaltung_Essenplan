@@ -23,5 +23,9 @@ export default defineConfig({
     proxy: {
       '/api': 'http://127.0.0.1:8080',
     },
+    // support-url.txt liegt eine Ebene über web/ (siehe src/lib/support.js).
+    fs: {
+      allow: ['.', '../support-url.txt'],
+    },
   },
 });

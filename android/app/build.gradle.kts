@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     // Bildschirmfotos der Oberfläche in JVM-Tests (Robolectric):
-    // ./gradlew recordRoborazziDebug → app/build/outputs/roborazzi/
+    // ./gradlew recordRoborazziGithubDebug → app/build/outputs/roborazzi/
     alias(libs.plugins.roborazzi)
 }
 
@@ -33,6 +33,13 @@ val signing: Map<String, String> = run {
         value("ANDROID_KEY_PASSWORD", "keyPassword")?.let { "keyPassword" to it },
     ).toMap()
 }
+
+// Adresse der Seite „Unterstützen“ (Buy Me a Coffee). Sie steht nur in
+// support-url.txt im Hauptordner des Repositorys; die Weboberfläche liest
+// dieselbe Datei. fileContents meldet die Datei dem Configuration Cache,
+// eine Änderung wirkt also beim nächsten Build.
+val supportUrl = providers.fileContents(rootProject.layout.projectDirectory.file("../support-url.txt"))
+    .asText.get().trim()
 
 android {
     namespace = "io.github.thomas1607haja.rezeptplaner"
@@ -76,7 +83,7 @@ android {
         }
         // Wie release (mit R8), aber mit Debug-Schlüssel und http zum
         // Testserver im Emulator: zum Prüfen des verkleinerten Builds vor
-        // jedem Release (./gradlew assembleQa). Wird nie veröffentlicht.
+        // jedem Release (./gradlew assembleGithubQa). Wird nie veröffentlicht.
         create("qa") {
             initWith(getByName("release"))
             applicationIdSuffix = ".qa"
@@ -84,6 +91,23 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += "release"
             buildConfigField("boolean", "ALLOW_LOCAL_HTTP", "true")
+        }
+    }
+
+    // Zwei Vertriebswege. Gebaut und veröffentlicht wird vorerst nur
+    // „github“ (GitHub-Releases, Obtainium). „play“ ist für einen späteren
+    // Play-Store-Eintrag vorbereitet und enthält keinen Spendenlink, weil
+    // der gegen die Play-Richtlinien verstoßen kann. Beide behalten die
+    // gleiche applicationId.
+    flavorDimensions += "store"
+    productFlavors {
+        create("github") {
+            dimension = "store"
+            buildConfigField("String", "SUPPORT_URL", "\"$supportUrl\"")
+        }
+        create("play") {
+            dimension = "store"
+            buildConfigField("String", "SUPPORT_URL", "\"\"")
         }
     }
 

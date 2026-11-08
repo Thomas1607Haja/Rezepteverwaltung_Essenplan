@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
+import io.github.thomas1607haja.rezeptplaner.BuildConfig
 import io.github.thomas1607haja.rezeptplaner.RezeptplanerApplication
 import io.github.thomas1607haja.rezeptplaner.ui.setup.SetupScreen
 import io.github.thomas1607haja.rezeptplaner.ui.setup.SetupViewModel
@@ -26,7 +27,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Oberflächentests ohne Gerät (Robolectric). Mit
- * `./gradlew recordRoborazziDebug` entstehen zusätzlich Bildschirmfotos
+ * `./gradlew recordRoborazziGithubDebug` entstehen zusätzlich Bildschirmfotos
  * unter app/build/outputs/roborazzi/ – zum Ansehen, nicht zum Vergleichen.
  */
 @RunWith(AndroidJUnit4::class)
@@ -62,6 +63,9 @@ class ScreensTest {
         compose.setContent { RezeptplanerTheme { MainScaffold(onReconnect = {}) } }
         tab("Einstellungen").performClick()
         compose.onNodeWithText("Verbindung testen").assertExists()
+        // „Unterstützen“ nur in der GitHub-Variante, nie in „play“.
+        val support = compose.onNodeWithText("Einen Kaffee spendieren")
+        if (BuildConfig.SUPPORT_URL.isNotEmpty()) support.assertExists() else support.assertDoesNotExist()
         shot("02-einstellungen")
     }
 

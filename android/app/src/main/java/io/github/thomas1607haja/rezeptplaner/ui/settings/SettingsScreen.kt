@@ -29,11 +29,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.thomas1607haja.rezeptplaner.BuildConfig
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.ui.CrashReportCard
 import kotlinx.coroutines.launch
 
@@ -94,6 +97,9 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
             }
         }
 
+        // Nur in der GitHub-Variante gesetzt, in „play“ leer (build.gradle.kts).
+        if (BuildConfig.SUPPORT_URL.isNotEmpty()) SupportCard(BuildConfig.SUPPORT_URL)
+
         Text(
             "Rezeptplaner für Android ${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.bodySmall,
@@ -111,6 +117,19 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
             },
             dismissButton = { TextButton(onClick = { confirmDisconnect = false }) { Text("Abbrechen") } },
         )
+    }
+}
+
+/** Link zu Buy Me a Coffee; öffnet die Seite im Browser. */
+@Composable
+private fun SupportCard(url: String) {
+    val uriHandler = LocalUriHandler.current
+    Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.support_title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.support_text), style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(onClick = { uriHandler.openUri(url) }) { Text(stringResource(R.string.support_button)) }
+        }
     }
 }
 
