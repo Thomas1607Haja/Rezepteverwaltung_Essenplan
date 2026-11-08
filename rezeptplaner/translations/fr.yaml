@@ -1,0 +1,4 @@
+configuration:
+  app_repository:
+    name: Dépôt de l'application Android
+    description: Dépôt GitHub (propriétaire/nom) dont les versions fournissent l'application Android. À modifier uniquement pour votre propre fork.

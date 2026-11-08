@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "hassio_confirm": {
+        "title": "Rezeptplaner",
+        "description": "L'application Rezeptplaner a été trouvée. Configurer l'intégration ? Vous obtiendrez le calendrier « Planning des repas », le capteur « Aujourd'hui » et la carte de tableau de bord « Planning des repas »."
+      }
+    },
+    "abort": {
+      "already_configured": "Rezeptplaner est déjà configuré.",
+      "discovery_only": "L'intégration se configure d'elle-même dès que l'application Rezeptplaner est lancée. Installez ou démarrez l'application, puis ajoutez l'intégration sous « Découvert »."
+    }
+  },
+  "entity": {
+    "calendar": {
+      "meal_plan": { "name": "Planning des repas" }
+    },
+    "sensor": {
+      "today": {
+        "name": "Aujourd'hui",
+        "state_attributes": {
+          "lunch": { "name": "Déjeuner" },
+          "dishes": { "name": "Plats" }
+        }
+      }
+    }
+  }
+}

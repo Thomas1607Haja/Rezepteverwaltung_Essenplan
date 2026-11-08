@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "hassio_confirm": {
+        "title": "Rezeptplaner",
+        "description": "È stata trovata l'app Rezeptplaner. Configurare l'integrazione? Avrai il calendario «Piano pasti», il sensore «Oggi» e la scheda della dashboard «Piano pasti»."
+      }
+    },
+    "abort": {
+      "already_configured": "Rezeptplaner è già configurato.",
+      "discovery_only": "L'integrazione si configura da sola non appena l'app Rezeptplaner è in esecuzione. Installa o avvia l'app, poi aggiungi l'integrazione in «Rilevati»."
+    }
+  },
+  "entity": {
+    "calendar": {
+      "meal_plan": { "name": "Piano pasti" }
+    },
+    "sensor": {
+      "today": {
+        "name": "Oggi",
+        "state_attributes": {
+          "lunch": { "name": "Pranzo" },
+          "dishes": { "name": "Piatti" }
+        }
+      }
+    }
+  }
+}
