@@ -15,6 +15,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 // repo ist der Hauptordner des Repositorys, von server/internal/locales aus.
@@ -157,6 +159,34 @@ func firstText(e entries, base string) string {
 	return e[base+"#other"]
 }
 
+// readNamespaces liest <dir>/<bereich>/<sprache>.json und fasst die Bereiche
+// je Sprache zusammen (Schlüssel "bereich.…", wie t() in der Weboberfläche).
+func readNamespaces(t *testing.T, dir string) map[string]entries {
+	t.Helper()
+	files := map[string]entries{}
+	areas, err := os.ReadDir(dir)
+	if os.IsNotExist(err) {
+		return files
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, area := range areas {
+		if !area.IsDir() {
+			continue
+		}
+		for lang, e := range readJSONDir(t, filepath.Join(dir, area.Name())) {
+			if files[lang] == nil {
+				files[lang] = entries{}
+			}
+			for k, v := range e {
+				files[lang][area.Name()+"."+k] = v
+			}
+		}
+	}
+	return files
+}
+
 // readJSONDir liest <dir>/<sprache>.json für alle Sprachen, die es gibt.
 func readJSONDir(t *testing.T, dir string) map[string]entries {
 	t.Helper()
@@ -181,7 +211,17 @@ func readJSONDir(t *testing.T, dir string) map[string]entries {
 }
 
 func TestWebLocales(t *testing.T) {
-	compare(t, "web/src/locales", readJSONDir(t, filepath.Join(repo, "web/src/locales")))
+	compare(t, "web/src/locales", readNamespaces(t, filepath.Join(repo, "web/src/locales")))
+}
+
+// Jeder Fehlercode des Servers braucht einen Text in der Weboberfläche.
+func TestWebKnowsAllErrorCodes(t *testing.T) {
+	en := readNamespaces(t, filepath.Join(repo, "web/src/locales"))["en"]
+	for _, code := range apierr.Codes() {
+		if _, ok := en["errors."+code]; !ok {
+			t.Errorf("web/src/locales/errors: Code %q fehlt", code)
+		}
+	}
 }
 
 func TestIntegrationTranslations(t *testing.T) {

@@ -1,0 +1,42 @@
+{
+  "minutes": "{count} Min.",
+  "hours": "{count} Std.",
+  "hours_minutes": "{hours} Std. {minutes} Min.",
+  "days_hours": {
+    "one": "{count} Tag {hours} Std.",
+    "other": "{count} Tage {hours} Std."
+  },
+  "servings": {
+    "one": "{count} Portion",
+    "other": "{count} Portionen"
+  },
+  "planned_today": "heute eingeplant",
+  "planned_tomorrow": "morgen eingeplant",
+  "planned_in_days": {
+    "one": "eingeplant in {count} Tag",
+    "other": "eingeplant in {count} Tagen"
+  },
+  "planned_in_weeks": {
+    "one": "eingeplant in {count} Woche",
+    "other": "eingeplant in {count} Wochen"
+  },
+  "last_yesterday": "zuletzt gestern",
+  "last_days": {
+    "one": "zuletzt vor {count} Tag",
+    "other": "zuletzt vor {count} Tagen"
+  },
+  "last_weeks": {
+    "one": "zuletzt vor {count} Woche",
+    "other": "zuletzt vor {count} Wochen"
+  },
+  "last_months": {
+    "one": "zuletzt vor {count} Monat",
+    "other": "zuletzt vor {count} Monaten"
+  },
+  "last_years": {
+    "one": "zuletzt vor über einem Jahr",
+    "other": "zuletzt vor über {count} Jahren"
+  },
+  "never_planned": "noch nie eingeplant",
+  "yield_units": "Stück|Kuchen|Blech|Springform 26 cm|Kastenform|Laib"
+}

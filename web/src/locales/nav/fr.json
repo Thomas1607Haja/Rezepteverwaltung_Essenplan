@@ -1,0 +1,10 @@
+{
+  "plan": "Planning",
+  "recipes": "Recettes",
+  "shopping": "Courses",
+  "statistics": "Statistiques",
+  "settings": "Paramètres",
+  "main_sections": "Sections principales",
+  "page_failed": "Impossible de charger la page. Veuillez recharger.",
+  "not_found": "Page introuvable."
+}

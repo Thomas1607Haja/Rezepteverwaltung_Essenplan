@@ -1,0 +1,42 @@
+{
+  "minutes": "{count} min",
+  "hours": "{count} h",
+  "hours_minutes": "{hours} h {minutes} min",
+  "days_hours": {
+    "one": "{count} giorno {hours} h",
+    "other": "{count} giorni {hours} h"
+  },
+  "servings": {
+    "one": "{count} porzione",
+    "other": "{count} porzioni"
+  },
+  "planned_today": "previsto per oggi",
+  "planned_tomorrow": "previsto per domani",
+  "planned_in_days": {
+    "one": "previsto tra {count} giorno",
+    "other": "previsto tra {count} giorni"
+  },
+  "planned_in_weeks": {
+    "one": "previsto tra {count} settimana",
+    "other": "previsto tra {count} settimane"
+  },
+  "last_yesterday": "fatto ieri",
+  "last_days": {
+    "one": "fatto {count} giorno fa",
+    "other": "fatto {count} giorni fa"
+  },
+  "last_weeks": {
+    "one": "fatto {count} settimana fa",
+    "other": "fatto {count} settimane fa"
+  },
+  "last_months": {
+    "one": "fatto {count} mese fa",
+    "other": "fatto {count} mesi fa"
+  },
+  "last_years": {
+    "one": "fatto più di un anno fa",
+    "other": "fatto più di {count} anni fa"
+  },
+  "never_planned": "mai previsto",
+  "yield_units": "pezzi|torta|teglia|tortiera apribile 26 cm|stampo da plumcake|pagnotta"
+}

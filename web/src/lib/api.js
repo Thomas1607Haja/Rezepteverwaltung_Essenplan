@@ -4,12 +4,18 @@
 // damit sie unter dem Ingress-Pfad von Home Assistant genauso funktionieren
 // wie lokal.
 
-/** Fehler der API mit HTTP-Status und ggf. betroffenem Feld. */
+/**
+ * Fehler der API mit HTTP-Status, Code und ggf. betroffenem Feld. Den Text
+ * für die Anzeige liefert errorText(err) aus i18n.svelte.js (übersetzter
+ * Code); message ist der englische Text des Servers.
+ */
 export class ApiError extends Error {
-  constructor(status, message, field) {
+  constructor(status, message, field, code = '', params = {}) {
     super(message);
     this.status = status;
     this.field = field ?? '';
+    this.code = code ?? '';
+    this.params = params ?? {};
   }
 }
 
@@ -35,14 +41,20 @@ export async function request(method, path, body) {
   try {
     response = await fetch('api/v1' + path, options);
   } catch {
-    throw new ApiError(0, 'Server nicht erreichbar');
+    throw new ApiError(0, 'Server not reachable', '', 'network');
   }
 
   if (response.status === 204) return null;
 
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new ApiError(response.status, data?.error ?? `Fehler ${response.status}`, data?.field);
+    throw new ApiError(
+      response.status,
+      data?.error ?? `Error ${response.status}`,
+      data?.field,
+      data?.code ?? 'http_status',
+      data?.params ?? { status: response.status },
+    );
   }
   return data;
 }
@@ -75,6 +87,9 @@ function listParams(filter) {
 
 export const api = {
   health: () => request('GET', '/health'),
+
+  /** Sprache: { setting, home_assistant, default, supported } (siehe i18n.svelte.js). */
+  language: () => request('GET', '/language'),
 
   /**
    * Einstellungen: { family_size, shopping_day, bring_entity, app_url }.

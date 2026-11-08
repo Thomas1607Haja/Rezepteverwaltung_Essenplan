@@ -1,4 +1,5 @@
 <script>
+  import { t } from '../lib/i18n.svelte.js';
   import { dragHandle } from 'svelte-dnd-action';
 
   // Griff zum Verschieben eines Kärtchens. Nur hier lässt sich ziehen,
@@ -6,7 +7,7 @@
   let { label } = $props();
 </script>
 
-<span class="handle" use:dragHandle aria-label={label} title="Zum Verschieben ziehen">
+<span class="handle" use:dragHandle aria-label={label} title={t('common.drag_to_move')}>
   <svg width="16" height="20" viewBox="0 0 16 20" aria-hidden="true">
     {#each [4, 10, 16] as y (y)}
       <circle cx="5" cy={y} r="1.6" />

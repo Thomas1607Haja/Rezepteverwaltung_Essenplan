@@ -1,0 +1,42 @@
+{
+  "minutes": "{count} min",
+  "hours": "{count} h",
+  "hours_minutes": "{hours} h {minutes} min",
+  "days_hours": {
+    "one": "{count} jour {hours} h",
+    "other": "{count} jours {hours} h"
+  },
+  "servings": {
+    "one": "{count} portion",
+    "other": "{count} portions"
+  },
+  "planned_today": "prévu aujourd'hui",
+  "planned_tomorrow": "prévu demain",
+  "planned_in_days": {
+    "one": "prévu dans {count} jour",
+    "other": "prévu dans {count} jours"
+  },
+  "planned_in_weeks": {
+    "one": "prévu dans {count} semaine",
+    "other": "prévu dans {count} semaines"
+  },
+  "last_yesterday": "fait hier",
+  "last_days": {
+    "one": "fait il y a {count} jour",
+    "other": "fait il y a {count} jours"
+  },
+  "last_weeks": {
+    "one": "fait il y a {count} semaine",
+    "other": "fait il y a {count} semaines"
+  },
+  "last_months": {
+    "one": "fait il y a {count} mois",
+    "other": "fait il y a {count} mois"
+  },
+  "last_years": {
+    "one": "fait il y a plus d'un an",
+    "other": "fait il y a plus de {count} ans"
+  },
+  "never_planned": "jamais prévu",
+  "yield_units": "pièces|gâteau|plaque|moule à charnière 26 cm|moule à cake|pain"
+}

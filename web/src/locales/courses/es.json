@@ -1,0 +1,8 @@
+{
+  "all": "Todo",
+  "main": "Platos principales",
+  "starters": "Entrantes, sopas y ensaladas",
+  "desserts": "Postres",
+  "baking": "Repostería",
+  "none": "Sin plato"
+}

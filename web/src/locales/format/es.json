@@ -1,0 +1,42 @@
+{
+  "minutes": "{count} min",
+  "hours": "{count} h",
+  "hours_minutes": "{hours} h {minutes} min",
+  "days_hours": {
+    "one": "{count} día {hours} h",
+    "other": "{count} días {hours} h"
+  },
+  "servings": {
+    "one": "{count} ración",
+    "other": "{count} raciones"
+  },
+  "planned_today": "previsto para hoy",
+  "planned_tomorrow": "previsto para mañana",
+  "planned_in_days": {
+    "one": "previsto en {count} día",
+    "other": "previsto en {count} días"
+  },
+  "planned_in_weeks": {
+    "one": "previsto en {count} semana",
+    "other": "previsto en {count} semanas"
+  },
+  "last_yesterday": "hecho ayer",
+  "last_days": {
+    "one": "hecho hace {count} día",
+    "other": "hecho hace {count} días"
+  },
+  "last_weeks": {
+    "one": "hecho hace {count} semana",
+    "other": "hecho hace {count} semanas"
+  },
+  "last_months": {
+    "one": "hecho hace {count} mes",
+    "other": "hecho hace {count} meses"
+  },
+  "last_years": {
+    "one": "hecho hace más de un año",
+    "other": "hecho hace más de {count} años"
+  },
+  "never_planned": "nunca previsto",
+  "yield_units": "unidades|bizcocho|bandeja|molde desmontable 26 cm|molde rectangular|hogaza"
+}

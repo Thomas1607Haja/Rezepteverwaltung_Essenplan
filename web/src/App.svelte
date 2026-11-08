@@ -1,5 +1,6 @@
 <script>
   import { currentPath, match } from './lib/router.svelte.js';
+  import { t } from './lib/i18n.svelte.js';
   import Icon from './components/Icon.svelte';
   import MealPlanPage from './pages/MealPlanPage.svelte';
   import RecipesPage from './pages/RecipesPage.svelte';
@@ -11,11 +12,11 @@
 
   // Die Hauptbereiche (docs/PLANUNG.md, Abschnitt 5).
   const sections = [
-    { path: '/', label: 'Essensplan', icon: 'calendar' },
-    { path: '/recipes', label: 'Rezepte', icon: 'book' },
-    { path: '/shopping', label: 'Einkauf', icon: 'cart' },
-    { path: '/statistics', label: 'Statistik', icon: 'chart' },
-    { path: '/settings', label: 'Einstellungen', icon: 'gear' },
+    { path: '/', key: 'plan', icon: 'calendar' },
+    { path: '/recipes', key: 'recipes', icon: 'book' },
+    { path: '/shopping', key: 'shopping', icon: 'cart' },
+    { path: '/statistics', key: 'statistics', icon: 'chart' },
+    { path: '/settings', key: 'settings', icon: 'gear' },
   ];
 
   // Die Bearbeiten-Seite samt Drag-and-Drop-Bibliothek wird erst geladen,
@@ -66,7 +67,7 @@
 </script>
 
 <div class="layout">
-  <nav class="nav" aria-label="Hauptbereiche">
+  <nav class="nav" aria-label={t('nav.main_sections')}>
     {#each sections as section (section.path)}
       <a
         href={'#' + section.path}
@@ -74,7 +75,7 @@
         aria-current={section.path === current.route.section ? 'page' : undefined}
       >
         <Icon name={section.icon} />
-        <span>{section.label}</span>
+        <span>{t(`nav.${section.key}`)}</span>
       </a>
     {/each}
   </nav>
@@ -87,7 +88,7 @@
         {#await current.route.load() then module}
           <module.default {...current.params} />
         {:catch}
-          <p>Seite konnte nicht geladen werden. Bitte neu laden.</p>
+          <p>{t('nav.page_failed')}</p>
         {/await}
       {:else}
         <Page {...current.params} />

@@ -1,0 +1,10 @@
+{
+  "plan": "Essensplan",
+  "recipes": "Rezepte",
+  "shopping": "Einkauf",
+  "statistics": "Statistik",
+  "settings": "Einstellungen",
+  "main_sections": "Hauptbereiche",
+  "page_failed": "Seite konnte nicht geladen werden. Bitte neu laden.",
+  "not_found": "Seite nicht gefunden."
+}

@@ -1,0 +1,42 @@
+{
+  "minutes": "{count} min",
+  "hours": "{count} h",
+  "hours_minutes": "{hours} h {minutes} min",
+  "days_hours": {
+    "one": "{count} day {hours} h",
+    "other": "{count} days {hours} h"
+  },
+  "servings": {
+    "one": "{count} serving",
+    "other": "{count} servings"
+  },
+  "planned_today": "planned for today",
+  "planned_tomorrow": "planned for tomorrow",
+  "planned_in_days": {
+    "one": "planned in {count} day",
+    "other": "planned in {count} days"
+  },
+  "planned_in_weeks": {
+    "one": "planned in {count} week",
+    "other": "planned in {count} weeks"
+  },
+  "last_yesterday": "last made yesterday",
+  "last_days": {
+    "one": "last made {count} day ago",
+    "other": "last made {count} days ago"
+  },
+  "last_weeks": {
+    "one": "last made {count} week ago",
+    "other": "last made {count} weeks ago"
+  },
+  "last_months": {
+    "one": "last made {count} month ago",
+    "other": "last made {count} months ago"
+  },
+  "last_years": {
+    "one": "last made over a year ago",
+    "other": "last made over {count} years ago"
+  },
+  "never_planned": "never planned",
+  "yield_units": "pieces|cake|tray|26 cm springform|loaf tin|loaf"
+}

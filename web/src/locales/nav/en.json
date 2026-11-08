@@ -1,0 +1,10 @@
+{
+  "plan": "Meal plan",
+  "recipes": "Recipes",
+  "shopping": "Shopping",
+  "statistics": "Statistics",
+  "settings": "Settings",
+  "main_sections": "Main sections",
+  "page_failed": "The page could not be loaded. Please reload.",
+  "not_found": "Page not found."
+}

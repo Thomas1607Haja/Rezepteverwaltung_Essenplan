@@ -1,13 +1,15 @@
-// Hilfsfunktionen für die Anzeige.
+// Hilfsfunktionen für die Anzeige. Texte und Zahlenformate kommen aus
+// i18n.svelte.js und folgen der Sprache der Oberfläche.
+import { currentLocale, formatNumber, t } from './i18n.svelte.js';
 
-/** Minuten als Text: 45 -> "45 Min.", 75 -> "1 Std. 15 Min.". */
+/** Minuten als Text: 45 -> "45 Min.", 75 -> "1 Std. 15 Min." (bzw. "1 h 15 min"). */
 export function formatMinutes(minutes) {
   if (minutes == null) return '';
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  if (hours === 0) return `${rest} Min.`;
-  if (rest === 0) return `${hours} Std.`;
-  return `${hours} Std. ${rest} Min.`;
+  if (hours === 0) return t('format.minutes', { count: rest });
+  if (rest === 0) return t('format.hours', { count: hours });
+  return t('format.hours_minutes', { hours, minutes: rest });
 }
 
 // Brüche, die beim Kochen üblich sind, mit ihrem Zahlenwert.
@@ -40,9 +42,9 @@ export function formatQuantity(value) {
   return formatDecimal(value, 2);
 }
 
-/** Zahl mit höchstens digits Nachkommastellen und deutschem Komma. */
+/** Zahl mit höchstens digits Nachkommastellen im Format der Sprache. */
 function formatDecimal(value, digits) {
-  return value.toLocaleString('de-DE', { maximumFractionDigits: digits });
+  return formatNumber(value, digits);
 }
 
 /** Größe in Bytes lesbar: 1536 -> "1,5 KB", 23_000_000 -> "21,9 MB". */
@@ -56,7 +58,7 @@ export function formatBytes(bytes) {
     unit++;
   }
   const digits = unit === 0 || value >= 100 ? 0 : 1;
-  return `${value.toLocaleString('de-DE', { maximumFractionDigits: digits })} ${units[unit]}`;
+  return `${formatNumber(value, digits)} ${units[unit]}`;
 }
 
 /** Dauer in Sekunden lesbar: 93784 -> "1 Tag 2 Std.", 300 -> "5 Min.". */
@@ -64,9 +66,9 @@ export function formatUptime(seconds) {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-  if (days > 0) return `${days} ${days === 1 ? 'Tag' : 'Tage'} ${hours} Std.`;
-  if (hours > 0) return `${hours} Std. ${minutes} Min.`;
-  return `${minutes} Min.`;
+  if (days > 0) return t('format.days_hours', { count: days, hours });
+  if (hours > 0) return t('format.hours_minutes', { hours, minutes });
+  return t('format.minutes', { count: minutes });
 }
 
 /** Heutiger Tag im Format "2026-10-21" (Zeitzone des Browsers). */
@@ -91,21 +93,20 @@ export function daysBetween(a, b) {
 export function planStatus(recipe, today = todayString()) {
   if (recipe.next_planned) {
     const days = daysBetween(today, recipe.next_planned);
-    if (days <= 0) return 'heute eingeplant';
-    if (days === 1) return 'morgen eingeplant';
-    if (days < 14) return `eingeplant in ${days} Tagen`;
-    return `eingeplant in ${Math.round(days / 7)} Wochen`;
+    if (days <= 0) return t('format.planned_today');
+    if (days === 1) return t('format.planned_tomorrow');
+    if (days < 14) return t('format.planned_in_days', { count: days });
+    return t('format.planned_in_weeks', { count: Math.round(days / 7) });
   }
   if (recipe.last_planned) {
     const days = daysBetween(recipe.last_planned, today);
-    if (days <= 1) return 'zuletzt gestern';
-    if (days < 14) return `zuletzt vor ${days} Tagen`;
-    if (days < 60) return `zuletzt vor ${Math.round(days / 7)} Wochen`;
-    if (days < 365) return `zuletzt vor ${Math.round(days / 30)} Monaten`;
-    const years = Math.floor(days / 365);
-    return years === 1 ? 'zuletzt vor über einem Jahr' : `zuletzt vor über ${years} Jahren`;
+    if (days <= 1) return t('format.last_yesterday');
+    if (days < 14) return t('format.last_days', { count: days });
+    if (days < 60) return t('format.last_weeks', { count: Math.round(days / 7) });
+    if (days < 365) return t('format.last_months', { count: Math.round(days / 30) });
+    return t('format.last_years', { count: Math.floor(days / 365) });
   }
-  return 'noch nie eingeplant';
+  return t('format.never_planned');
 }
 
 /**
@@ -113,12 +114,12 @@ export function planStatus(recipe, today = todayString()) {
  * bei Backrezepten „1 Springform 26 cm“, „12 Stück“.
  */
 export function amountText(n, unit = '') {
-  if (!unit) return n === 1 ? '1 Portion' : `${n} Portionen`;
+  if (!unit) return t('format.servings', { count: n });
   return `${n} ${unit}`;
 }
 
-/** Vorschläge für die Ergebnis-Einheit im Editor. */
-export const YIELD_UNITS = ['Stück', 'Kuchen', 'Blech', 'Springform 26 cm', 'Kastenform', 'Laib'];
+/** Vorschläge für die Ergebnis-Einheit im Editor (in der Sprache der Oberfläche). */
+export const yieldUnits = () => t('format.yield_units').split('|');
 
 /** Tag date ("2026-10-21") plus n Tage, wieder als "2026-10-21". */
 export function addDays(date, n) {
@@ -126,10 +127,30 @@ export function addDays(date, n) {
   return d.toISOString().slice(0, 10);
 }
 
-const weekdayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-
-/** Kopf einer Tagesspalte: { weekday: "Mi", date: "21.10." }. */
+/**
+ * Kopf einer Tagesspalte in der Schreibweise der Sprache:
+ * { weekday: "Mi", date: "21.10." } bzw. { weekday: "Wed", date: "10/21" }.
+ */
 export function dayLabel(date) {
   const d = new Date(Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10))));
-  return { weekday: weekdayNames[d.getUTCDay()], date: `${date.slice(8, 10)}.${date.slice(5, 7)}.` };
+  const locale = currentLocale();
+  // Kurze Wochentage ohne Punkt („Mi.“ → „Mi“, „mer.“ → „mer“).
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(d).replace(/\.$/, '');
+  let day = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', timeZone: 'UTC' }).format(d);
+  // Deutsch schreibt den Tag mit Punkt am Ende: „21.10.“
+  if (locale.startsWith('de') && !day.endsWith('.')) day += '.';
+  return { weekday, date: day };
+}
+
+/** Langes Datum, z. B. „Samstag, 24. Oktober“ bzw. „Saturday, October 24“. */
+export function longDate(date) {
+  const d = new Date(Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10))));
+  return new Intl.DateTimeFormat(currentLocale(), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(d);
+}
+
+/** Uhrzeit "18:30" in der Schreibweise der Sprache ("6:30 PM" im amerikanischen Englisch). */
+export function formatTime(hhmm) {
+  if (!hhmm) return '';
+  const [h, m] = hhmm.split(':').map(Number);
+  return new Intl.DateTimeFormat(currentLocale(), { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, 0, 1, h, m)));
 }

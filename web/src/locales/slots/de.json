@@ -1,0 +1,11 @@
+{
+  "dinner": "Abendessen",
+  "lunch": "Mittagessen",
+  "coffee": "Kaffee & Kuchen",
+  "dinner_short": "Abend",
+  "lunch_short": "Mittag",
+  "coffee_short": "Kaffee",
+  "dinner_when": "abends",
+  "lunch_when": "mittags",
+  "coffee_when": "nachmittags"
+}

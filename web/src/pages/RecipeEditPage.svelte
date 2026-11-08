@@ -4,7 +4,7 @@
   import { navigate } from '../lib/router.svelte.js';
   import { takeFreshVariant } from '../lib/freshVariant.js';
   import { toForm, toPayload } from '../lib/recipeForm.js';
-  import { YIELD_UNITS } from '../lib/format.js';
+  import { yieldUnits } from '../lib/format.js';
   import TagFilter from '../components/TagFilter.svelte';
   import IngredientEditor from '../components/IngredientEditor.svelte';
   import StepEditor from '../components/StepEditor.svelte';
@@ -259,7 +259,7 @@
           <!-- Leer = Portionen; für Kuchen & Co. z. B. „Springform 26 cm“ -->
           <input list="yield-units" maxlength="40" placeholder="Portionen" bind:value={form.yield_unit} />
           <datalist id="yield-units">
-            {#each YIELD_UNITS as u (u)}<option value={u}></option>{/each}
+            {#each yieldUnits() as u (u)}<option value={u}></option>{/each}
           </datalist>
         </label>
         <label class="field">

@@ -1,16 +1,15 @@
 // Schnellfilter-Reiter nach Gang (docs/PLANUNG.md, Schritt 9.1). Die Reiter
-// fassen Gänge der Gang-Gruppe (role "course") zusammen; Kategorien, die es
-// unter diesem Namen nicht (mehr) gibt, fallen weg – ein Reiter ohne
-// passende Kategorie erscheint nicht.
+// fassen Gänge der Gang-Gruppe (role "course") über ihren festen Schlüssel
+// (course_key, Migration 018) zusammen – die Namen sind Daten des Nutzers.
+// Ein Reiter ohne passende Kategorie erscheint nicht.
+import { t } from './i18n.svelte.js';
 
 const TABS = [
-  { key: 'main', label: 'Hauptgerichte', names: ['Hauptgericht'] },
-  { key: 'starters', label: 'Vorspeisen, Suppen & Salate', names: ['Vorspeise', 'Suppe/Eintopf', 'Salat'] },
-  { key: 'desserts', label: 'Nachspeisen', names: ['Nachspeise'] },
-  { key: 'baking', label: 'Backen', names: ['Kuchen & Torten', 'Gebäck', 'Brot'] },
+  { key: 'main', courses: ['main'] },
+  { key: 'starters', courses: ['starter', 'soup', 'salad'] },
+  { key: 'desserts', courses: ['dessert'] },
+  { key: 'baking', courses: ['cake', 'pastry', 'bread'] },
 ];
-
-const fold = (s) => s.toLocaleLowerCase('de').replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ß/g, 'ss');
 
 /**
  * Reiter mit den IDs ihrer Gänge: [{ key, label, ids }], vorn „Alle“.
@@ -18,12 +17,12 @@ const fold = (s) => s.toLocaleLowerCase('de').replace(/ä/g, 'a').replace(/ö/g,
  */
 export function courseTabs(groups, withNone = false) {
   const course = groups.find((g) => g.role === 'course');
-  const tabs = [{ key: 'all', label: 'Alle', ids: [] }];
+  const tabs = [{ key: 'all', label: t('courses.all'), ids: [] }];
   if (!course) return tabs;
   for (const tab of TABS) {
-    const ids = course.tags.filter((t) => tab.names.some((n) => fold(n) === fold(t.name))).map((t) => t.id);
-    if (ids.length > 0) tabs.push({ ...tab, ids });
+    const ids = course.tags.filter((tag) => tab.courses.includes(tag.course_key)).map((tag) => tag.id);
+    if (ids.length > 0) tabs.push({ key: tab.key, label: t(`courses.${tab.key}`), ids });
   }
-  if (withNone) tabs.push({ key: 'none', label: 'Ohne Gang', ids: [] });
+  if (withNone) tabs.push({ key: 'none', label: t('courses.none'), ids: [] });
   return tabs;
 }
