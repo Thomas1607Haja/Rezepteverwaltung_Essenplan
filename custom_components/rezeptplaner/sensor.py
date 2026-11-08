@@ -40,7 +40,12 @@ class TodaySensor(RezeptplanerEntity, SensorEntity):
             if e.get("slot", "dinner") != "dinner":
                 continue
             menu = menus.get(e.get("menu_id"))
-            title = text(language(self.hass), "menu_title", title=menu.get("display_title")) if menu else entry_title(e)
+            if menu:
+                lang = language(self.hass)
+                shown = menu.get("display_title")
+                title = text(lang, "menu_title", title=shown) if shown else text(lang, "menu")
+            else:
+                title = entry_title(e)
             if title not in dinner:
                 dinner.append(title)
         # Zustände dürfen höchstens 255 Zeichen lang sein.

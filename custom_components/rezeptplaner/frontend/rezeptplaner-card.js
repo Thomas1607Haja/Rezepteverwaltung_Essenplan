@@ -487,7 +487,7 @@ function createCardClass() {
             const info = [slot, tr(lang, 'courses', { count: courses.length }), ...courses.map((e) => e.recipe ? e.recipe.title : e.note)]
               .filter(Boolean).join(' · ');
             body += `<button class="dish" disabled>${this._img(courses.find((e) => e.recipe?.thumbnail)?.recipe.thumbnail, 'thumb')}
-              <span class="title">${esc(tr(lang, 'menu_title', { title: m.display_title || tr(lang, 'menu') }))}<small>${esc(info)}</small></span></button>`;
+              <span class="title">${esc(m.display_title ? tr(lang, 'menu_title', { title: m.display_title }) : tr(lang, 'menu'))}<small>${esc(info)}</small></span></button>`;
           }
           for (const e of dishes) {
             const name = e.recipe ? e.recipe.title : e.note;

@@ -76,7 +76,8 @@ def to_events(data: dict[str, Any], lang: str = "en") -> list[CalendarEvent]:
             lines.append("")
             lines.append(menu["note"])
         pseudo = {"id": f"menu-{menu['id']}", "date": menu["date"], "slot": menu.get("slot", "dinner"),
-                  "note": text(lang, "menu_title", title=menu.get("display_title") or text(lang, "menu"))}
+                  "note": text(lang, "menu_title", title=menu["display_title"]) if menu.get("display_title")
+                  else text(lang, "menu")}
         event = to_event(pseudo, slot_times, lang)
         event.description = "\n".join(lines)
         events.append(event)
