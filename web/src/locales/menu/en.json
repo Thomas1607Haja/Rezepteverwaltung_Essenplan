@@ -1,0 +1,65 @@
+{
+  "document_title": "Menu: {title} – Rezeptplaner",
+  "gone": "This menu no longer exists.",
+  "badge": "Menu",
+  "persons": {
+    "one": "{count} person",
+    "other": "{count} people"
+  },
+  "no_courses_hint": "No courses yet – add them from the menu in the meal plan.",
+  "course_count": {
+    "one": "{count} course",
+    "other": "{count} courses"
+  },
+  "note": "Note",
+  "sent_to_bring": "Sent to Bring",
+  "partly_sent": "{done} of {total} sent to Bring",
+  "have_ingredients": "Ingredients at home",
+  "hide_courses": "Hide courses",
+  "show_courses": "Show courses",
+  "dissolve_confirm": "Break up the menu? The courses stay in the plan as separate dishes.",
+  "delete_confirm": {
+    "one": "Delete menu “{title}” with {count} course?",
+    "other": "Delete menu “{title}” with all {count} courses?"
+  },
+  "dialog_title": "Menu: {title}",
+  "title_label": "Title",
+  "title_auto": "{title} (automatic)",
+  "note_placeholder": "e.g. cook the soup ahead, dessert the day before",
+  "persons_label": "People",
+  "fewer": "Fewer",
+  "more": "More",
+  "apply_to_all": "apply to all courses",
+  "courses": "Courses",
+  "course": "Course",
+  "course_placeholder": "– Course –",
+  "servings_short": {
+    "one": "{count} serv.",
+    "other": "{count} serv."
+  },
+  "without_recipe": "no recipe",
+  "status_sent": "sent to Bring",
+  "excluded_count": {
+    "one": "{count} at home",
+    "other": "{count} at home"
+  },
+  "detach_title": "Keep in the plan as a separate dish",
+  "detach": "detach",
+  "no_courses": "No courses yet.",
+  "add_course": "Add course",
+  "have_ingredients_open": "Ingredients at home …",
+  "cooking_view": "Cooking view",
+  "move_to": "Move to",
+  "move": "Move",
+  "dissolve": "Break up menu",
+  "delete": "Delete menu",
+  "preview": {
+    "title": "Ingredients at home – whole menu",
+    "hint": "Uncheck what you already have. Applies to this menu only.",
+    "already_sent": "Already sent to Bring – changes show up in Shopping as a difference.",
+    "nothing_to_buy": "No ingredients to buy.",
+    "no_recipes": "The menu has no courses with a recipe yet.",
+    "all_available": "All at home"
+  },
+  "untitled": "Menu"
+}

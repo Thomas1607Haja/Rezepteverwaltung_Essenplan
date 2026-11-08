@@ -2,8 +2,9 @@
   import { onMount } from 'svelte';
   import { api } from '../lib/api.js';
   import { navigate } from '../lib/router.svelte.js';
-  import { dayLabel } from '../lib/format.js';
+  import { dayLabel, menuTitle } from '../lib/format.js';
   import { slotLabel } from '../lib/slots.js';
+  import { t, errorText } from '../lib/i18n.svelte.js';
   import MenuPreview from './MenuPreview.svelte';
 
   // Menü eines Menüs (Schritt 9.4): Titel, Notiz, Portionen, Gänge
@@ -37,7 +38,7 @@
       servings = menu.servings;
       moveDate = menu.date;
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     }
   }
   load();
@@ -54,7 +55,7 @@
       if (close) onclose();
       else await load();
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     } finally {
       busy = false;
     }
@@ -82,12 +83,12 @@
   }
 
   function dissolve() {
-    if (!confirm('Menü auflösen? Die Gänge bleiben als einzelne Gerichte im Plan.')) return;
+    if (!confirm(t('menu.dissolve_confirm'))) return;
     run(() => api.deleteMenu(menu.id), true);
   }
 
   function remove() {
-    if (!confirm(`Menü „${menu.display_title}“ mit allen ${menu.entries.length} Gängen löschen?`)) return;
+    if (!confirm(t('menu.delete_confirm', { title: menuTitle(menu), count: menu.entries.length }))) return;
     run(() => api.deleteMenu(menu.id, true), true);
   }
 
@@ -97,45 +98,45 @@
 <dialog bind:this={dialog} oncancel={onclose} onclick={(e) => e.target === dialog && onclose()} aria-labelledby="menu-title">
   <div class="content">
     {#if !menu}
-      {#if error}<p class="error">{error}</p>{:else}<p>Lädt …</p>{/if}
+      {#if error}<p class="error">{error}</p>{:else}<p>{t('common.loading')}</p>{/if}
     {:else}
       <header>
         <div>
           <p class="when">{label.weekday} {label.date} · {slotLabel(menu.slot)}</p>
-          <h2 id="menu-title">Menü: {menu.display_title}</h2>
+          <h2 id="menu-title">{t('menu.dialog_title', { title: menuTitle(menu) })}</h2>
         </div>
-        <button type="button" class="icon-button" title="Schließen" onclick={onclose}>✕</button>
+        <button type="button" class="icon-button" title={t('common.close')} onclick={onclose}>✕</button>
       </header>
 
       <form class="fields" onsubmit={save}>
         <label>
-          <span>Titel</span>
-          <input bind:value={title} maxlength="200" placeholder="{menu.display_title} (automatisch)" />
+          <span>{t('menu.title_label')}</span>
+          <input bind:value={title} maxlength="200" placeholder={t('menu.title_auto', { title: menuTitle(menu) })} />
         </label>
         <label>
-          <span>Notiz</span>
-          <textarea bind:value={note} rows="2" maxlength="2000" placeholder="z. B. Suppe vorher kochen, Nachtisch am Vortag"></textarea>
+          <span>{t('menu.note')}</span>
+          <textarea bind:value={note} rows="2" maxlength="2000" placeholder={t('menu.note_placeholder')}></textarea>
         </label>
         <div class="row">
-          <span>Personen</span>
+          <span>{t('menu.persons_label')}</span>
           <div class="stepper">
-            <button type="button" aria-label="Weniger" disabled={servings <= 1} onclick={() => servings--}>−</button>
+            <button type="button" aria-label={t('menu.fewer')} disabled={servings <= 1} onclick={() => servings--}>−</button>
             <output>{servings}</output>
-            <button type="button" aria-label="Mehr" disabled={servings >= 50} onclick={() => servings++}>+</button>
+            <button type="button" aria-label={t('menu.more')} disabled={servings >= 50} onclick={() => servings++}>+</button>
           </div>
           {#if servings !== menu.servings}
-            <label class="check"><input type="checkbox" bind:checked={applyServings} /> auf alle Gänge übertragen</label>
+            <label class="check"><input type="checkbox" bind:checked={applyServings} /> {t('menu.apply_to_all')}</label>
           {/if}
         </div>
-        {#if changed}<button type="submit" class="primary" disabled={busy}>Speichern</button>{/if}
+        {#if changed}<button type="submit" class="primary" disabled={busy}>{t('common.save')}</button>{/if}
       </form>
 
-      <h3>Gänge</h3>
+      <h3>{t('menu.courses')}</h3>
       <ul class="courses">
         {#each menu.entries as e (e.id)}
           <li>
-            <select aria-label="Gang" value={e.course_tag_id ?? 0} onchange={(ev) => setCourse(e, ev.currentTarget.value)} disabled={busy}>
-              <option value={0}>– Gang –</option>
+            <select aria-label={t('menu.course')} value={e.course_tag_id ?? 0} onchange={(ev) => setCourse(e, ev.currentTarget.value)} disabled={busy}>
+              <option value={0}>{t('menu.course_placeholder')}</option>
               {#each courses as c (c.id)}<option value={c.id}>{c.name}</option>{/each}
             </select>
             <span class="dish">
@@ -145,36 +146,36 @@
                 {e.note}
               {/if}
               <small>
-                {e.recipe_id ? `${e.servings} P.` : 'ohne Rezept'}
-                {#if e.status === 'transferred'} · an Bring{:else if e.status === 'have_ingredients'} · Zutaten vorhanden{/if}
-                {#if e.excluded_ingredients?.length} · {e.excluded_ingredients.length} vorhanden{/if}
+                {e.recipe_id ? t('menu.servings_short', { count: e.servings }) : t('menu.without_recipe')}
+                {#if e.status === 'transferred'} · {t('menu.status_sent')}{:else if e.status === 'have_ingredients'} · {t('menu.have_ingredients')}{/if}
+                {#if e.excluded_ingredients?.length} · {t('menu.excluded_count', { count: e.excluded_ingredients.length })}{/if}
               </small>
             </span>
-            <button type="button" class="link" onclick={() => detach(e)} disabled={busy} title="Als einzelnes Gericht im Plan lassen">lösen</button>
+            <button type="button" class="link" onclick={() => detach(e)} disabled={busy} title={t('menu.detach_title')}>{t('menu.detach')}</button>
           </li>
         {:else}
-          <li class="hint">Noch keine Gänge.</li>
+          <li class="hint">{t('menu.no_courses')}</li>
         {/each}
       </ul>
       <div class="actions">
-        <button type="button" class="primary" onclick={() => { onclose(); navigate(`/plan/menu/${menu.id}`); }}>+ Gang hinzufügen</button>
+        <button type="button" class="primary" onclick={() => { onclose(); navigate(`/plan/menu/${menu.id}`); }}>+ {t('menu.add_course')}</button>
         {#if menu.entries.some((e) => e.recipe_id)}
-          <button type="button" onclick={() => (showPreview = true)} disabled={busy}>Zutaten vorhanden …</button>
+          <button type="button" onclick={() => (showPreview = true)} disabled={busy}>{t('menu.have_ingredients_open')}</button>
         {/if}
-        <a class="button" href="#/menus/{menu.id}" onclick={onclose}>Kochansicht</a>
+        <a class="button" href="#/menus/{menu.id}" onclick={onclose}>{t('menu.cooking_view')}</a>
       </div>
 
       <div class="move">
-        <label for="menu-move-date">Verschieben auf</label>
+        <label for="menu-move-date">{t('menu.move_to')}</label>
         <input id="menu-move-date" type="date" bind:value={moveDate} />
-        <button type="button" disabled={!moveDate || moveDate === menu.date || busy} onclick={() => onmove(menu, moveDate)}>Verschieben</button>
+        <button type="button" disabled={!moveDate || moveDate === menu.date || busy} onclick={() => onmove(menu, moveDate)}>{t('menu.move')}</button>
       </div>
 
       {#if error}<p class="error">{error}</p>{/if}
 
       <footer>
-        <button type="button" onclick={dissolve} disabled={busy}>Menü auflösen</button>
-        <button type="button" class="danger" onclick={remove} disabled={busy}>Menü löschen</button>
+        <button type="button" onclick={dissolve} disabled={busy}>{t('menu.dissolve')}</button>
+        <button type="button" class="danger" onclick={remove} disabled={busy}>{t('menu.delete')}</button>
       </footer>
     {/if}
   </div>

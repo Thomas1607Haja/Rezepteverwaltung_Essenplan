@@ -1,0 +1,59 @@
+{
+  "title": "Estadísticas",
+  "load_failed": "No se pudieron cargar las estadísticas: {message}",
+  "key_figures": "Cifras clave",
+  "period_label": "Periodo",
+  "periods": {
+    "3m": "3 meses",
+    "12m": "12 meses",
+    "all": "Todo"
+  },
+  "recipes": {
+    "one": "receta",
+    "other": "recetas"
+  },
+  "planned": "ya previstas ({percent} %)",
+  "never_planned": "nunca previstas ({percent} %)",
+  "illustrated": "con ilustración en vez de foto",
+  "favorites": "favoritos",
+  "top_title": "Lo más comido",
+  "entries_since": {
+    "one": "{count} plato en el plan de comidas desde el {date} (hasta hoy)",
+    "other": "{count} platos en el plan de comidas desde el {date} (hasta hoy)"
+  },
+  "entries_total": {
+    "one": "{count} plato en el plan de comidas en total (hasta hoy)",
+    "other": "{count} platos en el plan de comidas en total (hasta hoy)"
+  },
+  "menus": {
+    "one": ", de ellos {count} menú",
+    "other": ", de ellos {count} menús"
+  },
+  "top_empty": "No hubo nada en el plan de comidas en este periodo.",
+  "without_recipe_title": "Sin receta",
+  "without_recipe_hint": "Entradas como «{example}» en el periodo elegido: no cuentan como receta.",
+  "favorites_waiting_title": "Favoritos que hace tiempo que no tocan",
+  "favorites_waiting_empty": "Todos los favoritos se han comido en las últimas 8 semanas o ya están previstos.",
+  "recent_title": "Añadidas recientemente",
+  "categories_title": "Recetas por categoría",
+  "without_category": {
+    "one": "{count} receta sin categoría",
+    "other": "{count} recetas sin categoría"
+  },
+  "last": {
+    "today": "última vez hoy",
+    "days": {
+      "one": "última vez hace {count} día",
+      "other": "última vez hace {count} días"
+    },
+    "weeks": {
+      "one": "última vez hace {count} semana",
+      "other": "última vez hace {count} semanas"
+    },
+    "months": {
+      "one": "última vez hace {count} mes",
+      "other": "última vez hace {count} meses"
+    },
+    "never": "nunca previsto"
+  }
+}

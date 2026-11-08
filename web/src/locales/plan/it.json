@@ -1,0 +1,102 @@
+{
+  "title": "Piano pasti",
+  "week_back": "Settimana precedente",
+  "week_forward": "Settimana successiva",
+  "shopped": "Spesa fatta: {range}",
+  "next_shopping": "Prossima spesa: {range}",
+  "load_failed": "Impossibile caricare il piano: {message}",
+  "move_failed": "Impossibile spostare: {message}",
+  "menu_not_created": "Menù non creato: {message}",
+  "bring_sent": {
+    "one": "{count} articolo inviato a Bring.",
+    "other": "{count} articoli inviati a Bring."
+  },
+  "bring_failed": {
+    "one": "{count} articolo non è arrivato (vedi Spesa).",
+    "other": "{count} articoli non sono arrivati (vedi Spesa)."
+  },
+  "bring_send_failed": "Invio a Bring non riuscito: {message}",
+  "add_dish": "Pianifica un piatto per {day}",
+  "card": {
+    "sent_to_bring": "Inviato a Bring",
+    "have_ingredients": "Ingredienti in casa",
+    "servings_short": {
+      "one": "{count} porz.",
+      "other": "{count} porz."
+    },
+    "excluded_title": "Deselezionato perché già in casa",
+    "excluded_count": {
+      "one": "{count} ingrediente in casa",
+      "other": "{count} ingredienti in casa"
+    },
+    "favorite": "Preferito",
+    "options": "Opzioni",
+    "options_for": "Opzioni per {title}"
+  },
+  "entry": {
+    "note_required": "Senza ricetta serve una nota.",
+    "favorite_failed": "Preferito non salvato: {message}",
+    "remove_confirm": "Rimuovere «{title}» dal piano?",
+    "servings": "Porzioni",
+    "fewer": "Meno",
+    "more": "Più",
+    "note": "Nota",
+    "note_optional": "Nota (facoltativa)",
+    "note_placeholder": "es. Fuori a cena",
+    "note_placeholder_recipe": "es. con insalata",
+    "sent_to_bring": "Ingredienti inviati a Bring.",
+    "undo_sending": "Annulla l'invio …",
+    "have_ingredients": "Ingredienti in casa (non comprare)",
+    "excluded_count": {
+      "one": "{count} ingrediente in casa.",
+      "other": "{count} ingredienti in casa."
+    },
+    "have_ingredients_open": "Ingredienti in casa …",
+    "already_sent": "(già inviato a Bring – le modifiche compaiono in Spesa come differenza)",
+    "move_to": "Sposta al",
+    "move": "Sposta",
+    "open_cooking_view": "Apri modalità cucina",
+    "favorite": "Preferito",
+    "make_favorite": "Aggiungi ai preferiti",
+    "replace_recipe": "Sostituisci ricetta",
+    "choose_recipe": "Scegli ricetta",
+    "to_menu": "Trasforma in menù"
+  },
+  "add": {
+    "title": "Aggiungi al piano",
+    "replace_confirm": "Sostituire «{old}» con «{title}»?",
+    "done": "«{title}» è previsto per {day}.",
+    "show_plan": "Vai al piano",
+    "meal": "Pasto",
+    "replace": "sostituisci",
+    "replace_button": "Sostituisci",
+    "free": "libero",
+    "add_more": "+ aggiungi",
+    "add": "Aggiungi"
+  },
+  "preview": {
+    "fewer": "Meno porzioni",
+    "more": "Più porzioni",
+    "hint": "Togli la spunta a ciò che hai già – vale solo per questa voce.",
+    "nothing_to_buy": "Nessun ingrediente da comprare.",
+    "pantry": "Dalla dispensa ({count}) – non si compra",
+    "all_available_title": "Hai tutti gli ingredienti in casa",
+    "all_available": "Tutto in casa",
+    "have_count": "({count} in casa)"
+  },
+  "move": {
+    "title": "Spostare comunque?",
+    "have_ingredients": "Ingredienti in casa",
+    "send_to_bring": "Invia a Bring",
+    "move_anyway": "Sposta comunque"
+  },
+  "dnd": {
+    "drag_started": "{item} preso. Usa le frecce per spostarlo nella lista {zone}.",
+    "moved_to_position": "{item} spostato in posizione {position}.",
+    "moved_to_end": "{item} spostato in fondo.",
+    "moved_to_start": "{item} spostato all'inizio.",
+    "dropped": "{item} rilasciato, posizione {position} di {count}.",
+    "zone_active": "Premi Tab per andare a una maniglia e Spazio per prenderla.",
+    "zone_disabled": "Qui non è possibile spostare."
+  }
+}

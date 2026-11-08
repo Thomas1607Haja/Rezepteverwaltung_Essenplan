@@ -1,0 +1,82 @@
+{
+  "title": "Recettes",
+  "import_file": "Importer un fichier",
+  "new_recipe": "Nouvelle recette",
+  "search_placeholder": "Rechercher par titre, ingrédient ou étape",
+  "search_label": "Rechercher des recettes",
+  "categories": "Catégories",
+  "favorites": "Favoris",
+  "favorites_only": "Favoris uniquement",
+  "illustrations": "Illustrations",
+  "illustrations_only": "Seulement les recettes avec une image dessinée – à remplacer par une photo",
+  "never_planned": "Jamais prévues",
+  "never_planned_only": "Seulement les recettes jamais inscrites au planning des repas",
+  "course": "Plat",
+  "sort": {
+    "label": "Trier par",
+    "name": "Nom",
+    "newest": "Ajout récent",
+    "last_planned": "Dernière fois prévue",
+    "most_planned": "Les plus prévues"
+  },
+  "assign": {
+    "button": "Attribuer un plat",
+    "hint": "Attribuer un plat à plusieurs recettes à la fois",
+    "label": "Attribuer :",
+    "target": "Cible",
+    "add_course": "Ajouter un plat",
+    "remove_course": "Retirer un plat",
+    "add_tag": "Ajouter {name}",
+    "remove_tag": "Retirer {name}",
+    "remove_all_courses": "Retirer tous les plats",
+    "add_category": "Ajouter une catégorie : {group}",
+    "remove_category": "Retirer une catégorie : {group}",
+    "selected": {
+      "one": "{count} sélectionnée",
+      "other": "{count} sélectionnées"
+    },
+    "select_visible": "Tout sélectionner",
+    "clear_selection": "Désélectionner",
+    "done": "Terminé",
+    "other_course": {
+      "one": "{count} recette sélectionnée a déjà un autre plat – il est conservé et « {name} » s'ajoute.",
+      "other": "{count} recettes sélectionnées ont déjà un autre plat – il est conservé et « {name} » s'ajoute."
+    }
+  },
+  "notice": {
+    "added": {
+      "one": "« {name} » ajouté à {count} recette.",
+      "other": "« {name} » ajouté à {count} recettes."
+    },
+    "removed": {
+      "one": "« {name} » retiré de {count} recette.",
+      "other": "« {name} » retiré de {count} recettes."
+    },
+    "removed_all_courses": {
+      "one": "Tous les plats retirés de {count} recette.",
+      "other": "Tous les plats retirés de {count} recettes."
+    },
+    "unchanged": "Rien n'a changé – c'était déjà le cas.",
+    "not_saved": "Non enregistré : {message}",
+    "undone": "Annulé.",
+    "undo_failed": "Impossible d'annuler : {message}",
+    "undo": "Annuler"
+  },
+  "load_error": "Impossible de charger les recettes : {message}",
+  "empty": {
+    "none_found": "Aucune recette trouvée.",
+    "reset_filter": "Réinitialiser les filtres",
+    "no_recipes": "Aucune recette pour l'instant."
+  },
+  "count": {
+    "one": "{count} recette",
+    "other": "{count} recettes"
+  },
+  "tile": {
+    "illustration": "Illustration",
+    "illustration_hint": "Image dessinée – à remplacer par une photo",
+    "no_course": "sans plat",
+    "variant": "Variante",
+    "favorite": "Favori"
+  }
+}

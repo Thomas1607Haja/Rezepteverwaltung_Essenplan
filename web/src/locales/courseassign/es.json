@@ -1,0 +1,18 @@
+{
+  "back": "Ajustes",
+  "title": "Asignar platos",
+  "intro": "Sugerencias para todas las recetas sin plato, según las palabras del título, los ingredientes y las categorías existentes. Revísalas; «no asignar» omite una receta. Puedes añadir más platos (p. ej. una ensalada también como guarnición) en la receta.",
+  "review_hint": "O revísalas en la vista de recetas con imágenes; allí las sugerencias ya están seleccionadas (modo asignación):",
+  "review": "Revisar sugerencias para {name} ({count})",
+  "all_done": "Todas las recetas tienen un plato.",
+  "course_for": "Plato para {title}",
+  "skip": "no asignar",
+  "apply": {
+    "one": "Aplicar {count} asignación",
+    "other": "Aplicar {count} asignaciones"
+  },
+  "assigned": {
+    "one": "{count} receta asignada.",
+    "other": "{count} recetas asignadas."
+  }
+}

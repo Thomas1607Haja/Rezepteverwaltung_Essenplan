@@ -1,0 +1,51 @@
+{
+  "title": "Paramètres",
+  "load_failed": "Impossible de charger les paramètres : {message}",
+  "household": {
+    "title": "Foyer",
+    "family_size": "Taille du foyer",
+    "family_size_hint": "Portions par défaut des nouvelles entrées du planning",
+    "shopping_day": "Jour des courses",
+    "shopping_day_hint": "La semaine de courses commence ce jour-là",
+    "shopping_time": "Heure des courses",
+    "shopping_time_hint": "À partir de cette heure, les courses du jour comptent comme faites ; avant, la nouvelle semaine est la « prochaine course »",
+    "bring_list": "Liste Bring",
+    "bring_none": "– aucune –",
+    "bring_missing": "{entity} (introuvable)",
+    "lists_loading": "Chargement des listes …",
+    "test_mode": "Mode test sans Home Assistant : les articles vont seulement dans une liste de test.",
+    "no_lists": "Aucune liste de tâches trouvée. Configurez l'intégration Bring dans Home Assistant.",
+    "bring_hint": "Liste de tâches de Home Assistant qui reçoit la liste de courses",
+    "language": "Langue",
+    "language_auto": "Automatique (Home Assistant)",
+    "ha_language": "Home Assistant indique : {language}",
+    "ha_language_unknown": "Home Assistant indique : non détectée",
+    "plan_preview": "Aperçu rapide en planifiant",
+    "plan_preview_hint": "En ajoutant au planning, choisir les portions et décocher les ingrédients déjà à la maison",
+    "coffee_slot": "Créneau « Goûter »",
+    "coffee_slot_hint": "Entre le déjeuner et le dîner, p. ex. pour un gâteau le week-end",
+    "times": "Horaires dans le calendrier Home Assistant",
+    "time_lunch": "Déjeuner",
+    "time_coffee": "Goûter",
+    "time_dinner": "Dîner"
+  },
+  "system": {
+    "title": "Système",
+    "checking": "Vérification de la connexion …",
+    "version": "Version",
+    "uptime": "Actif depuis",
+    "memory": "Mémoire",
+    "memory_peak": "Pic depuis le démarrage",
+    "database": "Base de données",
+    "images": "Images",
+    "images_value": {
+      "one": "{size} ({count} fichier)",
+      "other": "{size} ({count} fichiers)"
+    }
+  },
+  "support": {
+    "title": "Soutenir",
+    "text": "Rezeptplaner est gratuit. Si vous l'appréciez, un café me ferait très plaisir.",
+    "button": "Offrir un café"
+  }
+}

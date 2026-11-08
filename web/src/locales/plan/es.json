@@ -1,0 +1,102 @@
+{
+  "title": "Plan de comidas",
+  "week_back": "Semana anterior",
+  "week_forward": "Semana siguiente",
+  "shopped": "Compra hecha: {range}",
+  "next_shopping": "Próxima compra: {range}",
+  "load_failed": "No se pudo cargar el plan: {message}",
+  "move_failed": "No se pudo mover: {message}",
+  "menu_not_created": "Menú no creado: {message}",
+  "bring_sent": {
+    "one": "{count} artículo enviado a Bring.",
+    "other": "{count} artículos enviados a Bring."
+  },
+  "bring_failed": {
+    "one": "{count} artículo no llegó (ver Compra).",
+    "other": "{count} artículos no llegaron (ver Compra)."
+  },
+  "bring_send_failed": "No se pudo enviar a Bring: {message}",
+  "add_dish": "Planear un plato para el {day}",
+  "card": {
+    "sent_to_bring": "Enviado a Bring",
+    "have_ingredients": "Ingredientes en casa",
+    "servings_short": {
+      "one": "{count} rac.",
+      "other": "{count} rac."
+    },
+    "excluded_title": "Desmarcado porque ya lo tienes",
+    "excluded_count": {
+      "one": "{count} ingrediente en casa",
+      "other": "{count} ingredientes en casa"
+    },
+    "favorite": "Favorito",
+    "options": "Opciones",
+    "options_for": "Opciones de {title}"
+  },
+  "entry": {
+    "note_required": "Sin receta hace falta una nota.",
+    "favorite_failed": "Favorito no guardado: {message}",
+    "remove_confirm": "¿Quitar «{title}» del plan?",
+    "servings": "Raciones",
+    "fewer": "Menos",
+    "more": "Más",
+    "note": "Nota",
+    "note_optional": "Nota (opcional)",
+    "note_placeholder": "p. ej. Comer fuera",
+    "note_placeholder_recipe": "p. ej. con ensalada",
+    "sent_to_bring": "Ingredientes enviados a Bring.",
+    "undo_sending": "Deshacer el envío …",
+    "have_ingredients": "Ingredientes en casa (no comprar)",
+    "excluded_count": {
+      "one": "{count} ingrediente en casa.",
+      "other": "{count} ingredientes en casa."
+    },
+    "have_ingredients_open": "Ingredientes en casa …",
+    "already_sent": "(ya enviado a Bring – los cambios aparecen en Compra como diferencia)",
+    "move_to": "Mover al",
+    "move": "Mover",
+    "open_cooking_view": "Abrir modo cocina",
+    "favorite": "Favorito",
+    "make_favorite": "Añadir a favoritos",
+    "replace_recipe": "Cambiar receta",
+    "choose_recipe": "Elegir receta",
+    "to_menu": "Convertir en menú"
+  },
+  "add": {
+    "title": "Añadir al plan",
+    "replace_confirm": "¿Cambiar «{old}» por «{title}»?",
+    "done": "«{title}» está previsto para el {day}.",
+    "show_plan": "Ver el plan",
+    "meal": "Comida",
+    "replace": "cambiar",
+    "replace_button": "Cambiar",
+    "free": "libre",
+    "add_more": "+ añadir",
+    "add": "Añadir"
+  },
+  "preview": {
+    "fewer": "Menos raciones",
+    "more": "Más raciones",
+    "hint": "Desmarca lo que ya tienes: solo para esta entrada.",
+    "nothing_to_buy": "No hay ingredientes que comprar.",
+    "pantry": "De la despensa ({count}): no se compra",
+    "all_available_title": "Tienes todos los ingredientes en casa",
+    "all_available": "Todo en casa",
+    "have_count": "({count} en casa)"
+  },
+  "move": {
+    "title": "¿Mover de todos modos?",
+    "have_ingredients": "Ingredientes en casa",
+    "send_to_bring": "Enviar a Bring",
+    "move_anyway": "Mover igualmente"
+  },
+  "dnd": {
+    "drag_started": "{item} seleccionado. Usa las flechas para moverlo en la lista {zone}.",
+    "moved_to_position": "{item} movido a la posición {position}.",
+    "moved_to_end": "{item} movido al final.",
+    "moved_to_start": "{item} movido al principio.",
+    "dropped": "{item} soltado, posición {position} de {count}.",
+    "zone_active": "Pulsa Tab para ir a un asa y Espacio para seleccionarla.",
+    "zone_disabled": "Aquí no se puede mover."
+  }
+}

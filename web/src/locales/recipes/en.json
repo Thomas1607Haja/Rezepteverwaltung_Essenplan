@@ -1,0 +1,82 @@
+{
+  "title": "Recipes",
+  "import_file": "Import file",
+  "new_recipe": "New recipe",
+  "search_placeholder": "Search titles, ingredients or steps",
+  "search_label": "Search recipes",
+  "categories": "Categories",
+  "favorites": "Favorites",
+  "favorites_only": "Favorites only",
+  "illustrations": "Illustrations",
+  "illustrations_only": "Only recipes with a drawn image – to replace with a photo",
+  "never_planned": "Never planned",
+  "never_planned_only": "Only recipes that have never been on the meal plan",
+  "course": "Course",
+  "sort": {
+    "label": "Sort by",
+    "name": "Name",
+    "newest": "Recently added",
+    "last_planned": "Last planned",
+    "most_planned": "Most planned"
+  },
+  "assign": {
+    "button": "Assign course",
+    "hint": "Give several recipes a course at once",
+    "label": "Assign:",
+    "target": "Target",
+    "add_course": "Add course",
+    "remove_course": "Remove course",
+    "add_tag": "Add {name}",
+    "remove_tag": "Remove {name}",
+    "remove_all_courses": "Remove all courses",
+    "add_category": "Add category: {group}",
+    "remove_category": "Remove category: {group}",
+    "selected": {
+      "one": "{count} selected",
+      "other": "{count} selected"
+    },
+    "select_visible": "Select all visible",
+    "clear_selection": "Clear selection",
+    "done": "Done",
+    "other_course": {
+      "one": "1 selected recipe already has another course – it stays, and “{name}” is added.",
+      "other": "{count} selected recipes already have another course – it stays, and “{name}” is added."
+    }
+  },
+  "notice": {
+    "added": {
+      "one": "Added “{name}” to 1 recipe.",
+      "other": "Added “{name}” to {count} recipes."
+    },
+    "removed": {
+      "one": "Removed “{name}” from 1 recipe.",
+      "other": "Removed “{name}” from {count} recipes."
+    },
+    "removed_all_courses": {
+      "one": "Removed all courses from 1 recipe.",
+      "other": "Removed all courses from {count} recipes."
+    },
+    "unchanged": "Nothing changed – it was already like that.",
+    "not_saved": "Not saved: {message}",
+    "undone": "Undone.",
+    "undo_failed": "Couldn't undo: {message}",
+    "undo": "Undo"
+  },
+  "load_error": "Couldn't load recipes: {message}",
+  "empty": {
+    "none_found": "No recipes found.",
+    "reset_filter": "Reset filters",
+    "no_recipes": "No recipes yet."
+  },
+  "count": {
+    "one": "{count} recipe",
+    "other": "{count} recipes"
+  },
+  "tile": {
+    "illustration": "Illustration",
+    "illustration_hint": "Drawn image – replace it with a photo",
+    "no_course": "no course",
+    "variant": "Variant",
+    "favorite": "Favorite"
+  }
+}

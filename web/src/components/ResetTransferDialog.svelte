@@ -3,6 +3,7 @@
   import { SvelteSet } from 'svelte/reactivity';
   import { api } from '../lib/api.js';
   import { dayLabel } from '../lib/format.js';
+  import { t, errorText, noteText } from '../lib/i18n.svelte.js';
 
   // Übertragung zurücksetzen: übertragene Gerichte wieder auf „geplant“
   // setzen, z. B. nach dem Senden an die falsche Bring-Liste. next wählt
@@ -29,7 +30,7 @@
       preview = await api.resetPreview(next, entryId);
       for (const e of preview.entries) selected.add(e.id);
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     }
   });
 
@@ -48,10 +49,10 @@
 
   /** „an „Testliste““, mehrere mit Komma; unbekannt = vor 0.18 übertragen. */
   function target(e) {
-    const names = e.lists.map((l) => `„${l.name}“`);
-    if (e.unknown_list) names.push('unbekannte Liste');
-    if (names.length === 0) return 'keine Artikel gesendet';
-    return `an ${names.join(', ')}`;
+    const names = e.lists.map((l) => t('shopping.reset.list_name', { name: l.name }));
+    if (e.unknown_list) names.push(t('shopping.reset.unknown_list'));
+    if (names.length === 0) return t('shopping.reset.no_items');
+    return t('shopping.reset.target', { lists: names.join(', ') });
   }
 
   async function confirm() {
@@ -61,59 +62,59 @@
       result = await api.resetTransfer([...selected], remove, remove ? fallbackList : '');
       ondone?.(result);
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     } finally {
       busy = false;
     }
   }
 
-  function count(n, one, many) {
-    return n === 1 ? `1 ${one}` : `${n} ${many}`;
-  }
+  /** Fehler beim Laden der Bring-Listen (Code vom Server, sonst englischer Text). */
+  const listsError = $derived(
+    preview?.lists_error ? noteText({ code: preview.lists_error_code, message: preview.lists_error }) : '',
+  );
 </script>
 
 <dialog bind:this={dialog} oncancel={onclose} aria-labelledby="reset-title">
   <div class="content">
-    <h2 id="reset-title">Übertragung zurücksetzen</h2>
+    <h2 id="reset-title">{t('shopping.reset.title')}</h2>
 
     {#if result}
       <div role="status" class="result">
-        <p>{count(result.entries, 'Gericht', 'Gerichte')} wieder geplant.</p>
+        <p>{t('shopping.reset.done', { count: result.entries })}</p>
         {#if result.removed.length > 0}
-          <p>Von der alten Liste entfernt: {result.removed.join(', ')}.</p>
+          <p>{t('shopping.reset.removed', { items: result.removed.join(', ') })}</p>
         {/if}
         {#if result.reduced.length > 0}
-          <p>Menge verringert (andere Gerichte brauchen sie noch): {result.reduced.join(', ')}.</p>
+          <p>{t('shopping.reset.reduced', { items: result.reduced.join(', ') })}</p>
         {/if}
         {#if result.not_found.length > 0}
-          <p class="muted">Nicht mehr offen auf der Liste, unverändert: {result.not_found.join(', ')}.</p>
+          <p class="muted">{t('shopping.reset.not_found', { items: result.not_found.join(', ') })}</p>
         {/if}
         {#if result.skipped.length > 0}
-          <p class="muted">Nicht entfernt, Liste unbekannt: {result.skipped.join(', ')}.</p>
+          <p class="muted">{t('shopping.reset.skipped', { items: result.skipped.join(', ') })}</p>
         {/if}
         {#if result.failed.length > 0}
-          <p class="error">Nicht entfernt (bitte von Hand löschen): {result.failed.map((f) => f.name).join(', ')}.</p>
+          <p class="error">{t('shopping.reset.failed', { items: result.failed.map((f) => f.name).join(', ') })}</p>
         {/if}
         {#if preview.current_list.entity_id}
-          <p>Jetzt „An Bring senden“ – es geht an „{preview.current_list.name}“.</p>
+          <p>{t('shopping.reset.send_now', { name: preview.current_list.name })}</p>
         {/if}
       </div>
       <footer>
-        <button type="button" class="primary" onclick={onclose}>Schließen</button>
+        <button type="button" class="primary" onclick={onclose}>{t('common.close')}</button>
       </footer>
     {:else if !preview}
-      <p class={error ? 'error' : 'muted'}>{error || 'Lädt …'}</p>
+      <p class={error ? 'error' : 'muted'}>{error || t('common.loading')}</p>
       <footer>
-        <button type="button" class="secondary" onclick={onclose}>Abbrechen</button>
+        <button type="button" class="secondary" onclick={onclose}>{t('common.cancel')}</button>
       </footer>
     {:else}
       <p>
-        Die Gerichte gelten danach wieder als geplant und lassen sich neu an Bring senden. Abgewählte Zutaten
-        („Zutaten vorhanden“) bleiben erhalten.
+        {t('shopping.reset.intro')}
       </p>
 
       {#if preview.entries.length === 0}
-        <p class="muted">In diesem Zeitraum ist nichts übertragen.</p>
+        <p class="muted">{t('shopping.reset.nothing')}</p>
       {:else}
         <ul class="entries">
           {#each preview.entries as e (e.id)}
@@ -121,7 +122,7 @@
               <label>
                 <input type="checkbox" checked={selected.has(e.id)} onchange={() => toggle(e.id)} />
                 <span class="title">{e.title}</span>
-                <small>{day(e.date)} · {target(e)}{e.items > 0 ? ` · ${count(e.items, 'Artikel', 'Artikel')}` : ''}</small>
+                <small>{day(e.date)} · {target(e)}{e.items > 0 ? ` · ${t('shopping.reset.items', { count: e.items })}` : ''}</small>
               </label>
             </li>
           {/each}
@@ -129,43 +130,41 @@
 
         <label class="check">
           <input type="checkbox" bind:checked={remove} />
-          Artikel aus der alten Liste entfernen
+          {t('shopping.reset.remove')}
         </label>
         {#if remove}
           <p class="hint">
-            Was andere, weiter übertragene Gerichte brauchen, bleibt mit kleinerer Menge stehen. Schon abgehakte Artikel
-            bleiben unberührt.
+            {t('shopping.reset.remove_hint')}
           </p>
           {#if unknown > 0}
             <label class="field">
               <span>
-                Für {count(unknown, 'Gericht', 'Gerichte')} ist die damalige Liste nicht gespeichert (vor Version 0.18
-                gesendet). Entfernen aus:
+                {t('shopping.reset.unknown_label', { count: unknown })}
               </span>
               <select bind:value={fallbackList}>
-                <option value="">– nicht entfernen –</option>
+                <option value="">{t('shopping.reset.dont_remove')}</option>
                 {#each preview.lists as l (l.entity_id)}
                   <option value={l.entity_id}>{l.name}</option>
                 {/each}
               </select>
             </label>
-            {#if preview.lists_error}
-              <p class="error">Home Assistant nicht erreichbar – Listen nicht geladen.</p>
+            {#if listsError}
+              <p class="error">{t('shopping.reset.lists_error', { message: listsError })}</p>
             {/if}
           {/if}
         {/if}
 
         {#if preview.current_list.entity_id}
-          <p class="hint">Neu senden geht danach an „{preview.current_list.name}“ (Einstellungen).</p>
+          <p class="hint">{t('shopping.reset.resend_hint', { name: preview.current_list.name })}</p>
         {/if}
       {/if}
 
       {#if error}<p class="error">{error}</p>{/if}
 
       <footer>
-        <button type="button" class="secondary" onclick={onclose} disabled={busy}>Abbrechen</button>
+        <button type="button" class="secondary" onclick={onclose} disabled={busy}>{t('common.cancel')}</button>
         <button type="button" class="primary" onclick={confirm} disabled={busy || selected.size === 0}>
-          {busy ? 'Setzt zurück …' : `Zurücksetzen (${selected.size})`}
+          {busy ? t('shopping.reset.resetting') : t('shopping.reset.confirm', { count: selected.size })}
         </button>
       </footer>
     {/if}

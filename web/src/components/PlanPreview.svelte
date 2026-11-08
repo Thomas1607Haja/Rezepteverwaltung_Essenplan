@@ -2,16 +2,17 @@
   import { onMount } from 'svelte';
   import { api } from '../lib/api.js';
   import { amountText, formatQuantity } from '../lib/format.js';
+  import { t, errorText } from '../lib/i18n.svelte.js';
 
   // Kurzvorschau beim Einplanen (Schritt 8.E): Portionen und Zutaten, die
   // man noch hat, abwählen. Gilt nur für diesen Planeintrag.
   //   recipeId     Rezept, das eingeplant wird
   //   servings     Portionen zu Beginn (null = Familiengröße)
   //   excluded     schon abgewählte Zutatenschlüssel (item_key)
-  //   confirmLabel Text des Hauptknopfs
+  //   confirmLabel Text des Hauptknopfs (ohne Angabe: „Hinzufügen“)
   //   onconfirm({ servings, excluded, allAvailable })
   //   onclose()
-  let { recipeId, servings = null, excluded = [], confirmLabel = 'Hinzufügen', busy = false, onconfirm, onclose } =
+  let { recipeId, servings = null, excluded = [], confirmLabel = null, busy = false, onconfirm, onclose } =
     $props();
 
   let recipe = $state(null);
@@ -32,7 +33,7 @@
       // Kuchen & Co.: die Grundmenge des Rezepts statt der Familiengröße.
       if (portions == null) portions = r.yield_unit ? r.base_servings : settings.family_size;
     })
-    .catch((e) => (error = e.message));
+    .catch((e) => (error = errorText(e)));
 
   const toBuy = $derived(recipe?.ingredients.filter((i) => i.shopping_relevant) ?? []);
   const pantry = $derived(recipe?.ingredients.filter((i) => !i.shopping_relevant) ?? []);
@@ -67,19 +68,19 @@
   <div class="content">
     {#if error}
       <p class="error">{error}</p>
-      <footer><button type="button" onclick={onclose}>Schließen</button></footer>
+      <footer><button type="button" onclick={onclose}>{t('common.close')}</button></footer>
     {:else if !recipe}
-      <p>Lädt …</p>
+      <p>{t('common.loading')}</p>
     {:else}
       <h2 id="preview-title">{recipe.title}</h2>
       <div class="portions">
-        <button type="button" aria-label="Weniger Portionen" disabled={portions <= 1} onclick={() => portions--}>−</button>
+        <button type="button" aria-label={t('plan.preview.fewer')} disabled={portions <= 1} onclick={() => portions--}>−</button>
         <span>{amountText(portions, recipe.yield_unit)}</span>
-        <button type="button" aria-label="Mehr Portionen" disabled={portions >= 50} onclick={() => portions++}>+</button>
+        <button type="button" aria-label={t('plan.preview.more')} disabled={portions >= 50} onclick={() => portions++}>+</button>
       </div>
 
       {#if toBuy.length > 0}
-        <p class="hint">Häkchen entfernen, was du noch hast – gilt nur für diesen Eintrag.</p>
+        <p class="hint">{t('plan.preview.hint')}</p>
         <ul class="ingredients">
           {#each toBuy as ing (ing.id)}
             <li>
@@ -92,12 +93,12 @@
           {/each}
         </ul>
       {:else}
-        <p class="hint">Keine Zutaten zum Einkaufen.</p>
+        <p class="hint">{t('plan.preview.nothing_to_buy')}</p>
       {/if}
 
       {#if pantry.length > 0}
         <details>
-          <summary>Aus dem Vorrat ({pantry.length}) – wird nicht eingekauft</summary>
+          <summary>{t('plan.preview.pantry', { count: pantry.length })}</summary>
           <ul class="ingredients pantry">
             {#each pantry as ing (ing.id)}
               <li><span class="amount">{amount(ing)}</span> {ing.name}</li>
@@ -107,12 +108,12 @@
       {/if}
 
       <footer>
-        <button type="button" onclick={onclose} disabled={busy}>Abbrechen</button>
-        <button type="button" onclick={() => confirm(true)} disabled={busy} title="Alle Zutaten sind im Haus">
-          Alles vorhanden
+        <button type="button" onclick={onclose} disabled={busy}>{t('common.cancel')}</button>
+        <button type="button" onclick={() => confirm(true)} disabled={busy} title={t('plan.preview.all_available_title')}>
+          {t('plan.preview.all_available')}
         </button>
         <button type="button" class="primary" onclick={() => confirm(false)} disabled={busy}>
-          {busy ? 'Speichert …' : confirmLabel}{offCount > 0 ? ` (${offCount} vorhanden)` : ''}
+          {busy ? t('common.saving') : (confirmLabel ?? t('common.add'))}{offCount > 0 ? ` ${t('plan.preview.have_count', { count: offCount })}` : ''}
         </button>
       </footer>
     {/if}

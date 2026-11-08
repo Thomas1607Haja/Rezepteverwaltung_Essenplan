@@ -1,6 +1,7 @@
 <script>
   import { api } from '../lib/api.js';
   import PantryApplyDialog from './PantryApplyDialog.svelte';
+  import { t, errorText } from '../lib/i18n.svelte.js';
 
   let items = $state(null); // null = lädt noch
   let loadError = $state('');
@@ -20,7 +21,7 @@
   api
     .listPantry()
     .then((list) => (items = list))
-    .catch((e) => (loadError = `Vorratsliste nicht geladen: ${e.message}`));
+    .catch((e) => (loadError = t('pantry.load_failed', { message: errorText(e) })));
 
   function showMessage(text, isError = false) {
     message = text;
@@ -46,9 +47,9 @@
       const item = await api.createPantryItem(toPayload(fresh));
       upsert(item);
       fresh = { name: '', synonyms: '' };
-      showMessage(`„${item.name}“ hinzugefügt.`);
+      showMessage(t('pantry.added', { name: item.name }));
     } catch (e) {
-      showMessage(e.message, true);
+      showMessage(errorText(e), true);
     } finally {
       busy = false;
     }
@@ -68,21 +69,21 @@
       editingId = null;
       message = '';
     } catch (e) {
-      showMessage(e.message, true);
+      showMessage(errorText(e), true);
     } finally {
       busy = false;
     }
   }
 
   async function remove(item) {
-    if (!confirm(`„${item.name}“ von der Vorratsliste nehmen?`)) return;
+    if (!confirm(t('pantry.remove_confirm', { name: item.name }))) return;
     busy = true;
     try {
       await api.deletePantryItem(item.id);
       items = items.filter((it) => it.id !== item.id);
-      showMessage(`„${item.name}“ entfernt.`);
+      showMessage(t('pantry.removed', { name: item.name }));
     } catch (e) {
-      showMessage(e.message, true);
+      showMessage(errorText(e), true);
     } finally {
       busy = false;
     }
@@ -94,10 +95,10 @@
     message = '';
     try {
       const result = await api.applyPantry(false);
-      if (result.changes.length === 0) showMessage('Alle Rezepte passen schon zur Vorratsliste.');
+      if (result.changes.length === 0) showMessage(t('pantry.nothing_to_apply'));
       else preview = result;
     } catch (e) {
-      showMessage(e.message, true);
+      showMessage(errorText(e), true);
     } finally {
       busy = false;
     }
@@ -112,9 +113,14 @@
     try {
       const result = await api.applyPantry(true);
       const n = result.changes.length;
-      showMessage(`${n === 1 ? 'Eine Zutat' : `${n} Zutaten`} in ${result.recipes === 1 ? 'einem Rezept' : `${result.recipes} Rezepten`} aktualisiert.`);
+      showMessage(
+        t('pantry.applied', {
+          ingredients: t('pantry.ingredients', { count: n }),
+          recipes: t('pantry.in_recipes', { count: result.recipes }),
+        }),
+      );
     } catch (e) {
-      showMessage(e.message, true);
+      showMessage(errorText(e), true);
     } finally {
       busy = false;
       preview = null;
@@ -123,26 +129,24 @@
 </script>
 
 <section class="card">
-  <h2>Vorratsliste</h2>
-  <p class="hint">
-    Zutaten, die immer im Haus sind. Sie werden in neuen Rezepten automatisch nicht zum Einkaufen vorgemerkt.
-  </p>
+  <h2>{t('pantry.title')}</h2>
+  <p class="hint">{t('pantry.intro')}</p>
 
   {#if loadError}
     <p class="error">{loadError}</p>
   {:else if items === null}
-    <p>Lädt …</p>
+    <p>{t('common.loading')}</p>
   {:else}
     <ul class="items">
       {#each items as item (item.id)}
         <li>
           {#if editingId === item.id}
             <form class="row-form" onsubmit={saveEdit}>
-              <input aria-label="Name" bind:value={draft.name} required />
-              <input aria-label="Synonyme" placeholder="Synonyme, durch Komma getrennt" bind:value={draft.synonyms} />
+              <input aria-label={t('pantry.name')} bind:value={draft.name} required />
+              <input aria-label={t('pantry.synonyms')} placeholder={t('pantry.synonyms_placeholder')} bind:value={draft.synonyms} />
               <div class="actions">
-                <button type="button" onclick={() => (editingId = null)} disabled={busy}>Abbrechen</button>
-                <button type="submit" class="primary" disabled={busy}>Speichern</button>
+                <button type="button" onclick={() => (editingId = null)} disabled={busy}>{t('common.cancel')}</button>
+                <button type="submit" class="primary" disabled={busy}>{t('common.save')}</button>
               </div>
             </form>
           {:else}
@@ -151,29 +155,29 @@
                 <strong>{item.name}</strong>
                 {#if item.synonyms.length > 0}<small>{item.synonyms.join(', ')}</small>{/if}
               </span>
-              <button type="button" onclick={() => startEdit(item)} disabled={busy} aria-label="{item.name} bearbeiten">Bearbeiten</button>
-              <button type="button" class="remove" onclick={() => remove(item)} disabled={busy} aria-label="{item.name} entfernen">×</button>
+              <button type="button" onclick={() => startEdit(item)} disabled={busy} aria-label={t('pantry.edit_item', { name: item.name })}>{t('common.edit')}</button>
+              <button type="button" class="remove" onclick={() => remove(item)} disabled={busy} aria-label={t('pantry.remove_item', { name: item.name })}>×</button>
             </div>
           {/if}
         </li>
       {:else}
-        <li class="empty">Noch nichts im Vorrat.</li>
+        <li class="empty">{t('pantry.empty')}</li>
       {/each}
     </ul>
 
     <form class="row-form add" onsubmit={add}>
-      <input aria-label="Neuer Vorratsartikel" placeholder="Neuer Artikel, z. B. Mehl" bind:value={fresh.name} />
-      <input aria-label="Synonyme des neuen Artikels" placeholder="Synonyme, z. B. Weizenmehl, Dinkelmehl" bind:value={fresh.synonyms} />
+      <input aria-label={t('pantry.new_item')} placeholder={t('pantry.new_item_placeholder')} bind:value={fresh.name} />
+      <input aria-label={t('pantry.new_synonyms')} placeholder={t('pantry.new_synonyms_placeholder')} bind:value={fresh.synonyms} />
       <div class="actions">
-        <button type="submit" class="primary" disabled={busy || fresh.name.trim() === ''}>Hinzufügen</button>
+        <button type="submit" class="primary" disabled={busy || fresh.name.trim() === ''}>{t('common.add')}</button>
       </div>
     </form>
 
     <div class="apply">
-      <button type="button" onclick={startApply} disabled={busy}>Auf alle Rezepte übertragen …</button>
+      <button type="button" onclick={startApply} disabled={busy}>{t('pantry.apply_all')}</button>
       {#if message}<span class:error={messageIsError} class:ok={!messageIsError}>{message}</span>{/if}
     </div>
-    <p class="hint">Bestehende Rezepte ändern sich erst mit diesem Knopf. Vorher siehst du, welche Zutaten betroffen sind.</p>
+    <p class="hint">{t('pantry.apply_hint')}</p>
   {/if}
 </section>
 

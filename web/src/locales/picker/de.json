@@ -1,0 +1,37 @@
+{
+  "menu_gone": "Dieses Menü gibt es nicht mehr.",
+  "entry_gone": "Diesen Eintrag gibt es nicht mehr.",
+  "added": "„{title}“ hinzugefügt.",
+  "added_as": "„{title}“ als {course} hinzugefügt.",
+  "added_hint": "Weiteren Gang wählen oder „Fertig“.",
+  "heading_menu": "Gang für Menü",
+  "heading_menu_named": "Gang für Menü: {title}",
+  "heading_replace": "Ersetzen",
+  "heading_replace_named": "Ersetzen: {title}",
+  "heading_add": "Gericht für {day}",
+  "course": "Gang",
+  "course_none": "– keiner –",
+  "courses_in_menu": {
+    "one": "{count} Gang im Menü",
+    "other": "{count} Gänge im Menü"
+  },
+  "done": "Fertig",
+  "meal": "Mahlzeit",
+  "compose_menu": "Menü zusammenstellen …",
+  "note_placeholder": "Ohne Rezept, z. B. Essen gehen",
+  "note_label": "Eintrag ohne Rezept",
+  "note_submit": "Eintragen",
+  "search_placeholder": "Rezept suchen",
+  "search_label": "Rezepte durchsuchen",
+  "favorites_only": "Nur Favoriten",
+  "sort_label": "Sortierung",
+  "sort": {
+    "name": "Name",
+    "last_planned": "Zuletzt eingeplant",
+    "most_planned": "Am häufigsten eingeplant",
+    "newest": "Neu hinzugefügt"
+  },
+  "no_results": "Keine passenden Rezepte.",
+  "variant": "Variante",
+  "replace": "Ersetzen"
+}

@@ -1,0 +1,18 @@
+{
+  "back": "Einstellungen",
+  "title": "Gänge zuordnen",
+  "intro": "Vorschläge für alle Rezepte ohne Gang – nach Wörtern im Titel, den Zutaten und vorhandenen Kategorien. Bitte prüfen; „nicht zuordnen“ lässt ein Rezept aus. Weitere Gänge (z. B. Salat auch als Beilage) lassen sich im Rezept ergänzen.",
+  "review_hint": "Oder in der Rezeptübersicht mit Bildern prüfen – die Vorschläge sind dort schon ausgewählt (Zuweisungsmodus):",
+  "review": "Vorschläge für {name} prüfen ({count})",
+  "all_done": "Alle Rezepte haben einen Gang.",
+  "course_for": "Gang für {title}",
+  "skip": "nicht zuordnen",
+  "apply": {
+    "one": "{count} Zuordnung übernehmen",
+    "other": "{count} Zuordnungen übernehmen"
+  },
+  "assigned": {
+    "one": "{count} Rezept zugeordnet.",
+    "other": "{count} Rezepte zugeordnet."
+  }
+}

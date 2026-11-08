@@ -17,6 +17,7 @@
 
 <script>
   import { onMount } from 'svelte';
+  import { t } from '../lib/i18n.svelte.js';
 
   // Liest einen QR-Code mit der Kamera. onresult(text) liefert den Inhalt,
   // onclose() schließt ohne Ergebnis.
@@ -54,8 +55,8 @@
       } catch (e) {
         error =
           e.name === 'NotAllowedError'
-            ? 'Kein Zugriff auf die Kamera. Bitte im Browser erlauben – in der Home-Assistant-App ist die Kamera hier oft gesperrt; dann die Adresse einfügen.'
-            : `Kamera nicht verfügbar (${e.message}). Bitte die Adresse einfügen.`;
+            ? t('devices.scan.denied')
+            : t('devices.scan.unavailable', { message: e.message });
       }
     })();
 
@@ -63,22 +64,22 @@
     return () => {
       stopped = true;
       clearInterval(timer);
-      stream?.getTracks().forEach((t) => t.stop());
+      stream?.getTracks().forEach((track) => track.stop());
     };
   });
 </script>
 
 <dialog bind:this={dialog} oncancel={onclose} aria-labelledby="qr-title">
   <div class="content">
-    <h2 id="qr-title">QR-Code scannen</h2>
+    <h2 id="qr-title">{t('devices.scan.title')}</h2>
     {#if error}
       <p class="error">{error}</p>
     {:else}
-      <p class="hint">Den QR-Code des Rezepts (z. B. auf einem Chefkoch-Ausdruck) vor die Kamera halten.</p>
+      <p class="hint">{t('devices.scan.hint')}</p>
       <!-- muted + playsinline: sonst startet das Video auf Handys nicht von selbst -->
       <video bind:this={video} muted playsinline></video>
     {/if}
-    <footer><button type="button" onclick={onclose}>Abbrechen</button></footer>
+    <footer><button type="button" onclick={onclose}>{t('common.cancel')}</button></footer>
   </div>
 </dialog>
 

@@ -5,6 +5,8 @@
 // group_name an jeder Zutat. Beim Laden werden daraus Überschriften, beim
 // Speichern bekommt jede Zutat den Namen der Überschrift darüber.
 
+import { currentLocale, t } from './i18n.svelte.js';
+
 let nextId = 1;
 
 /** Eindeutige ID je Zeile für {#each} und Drag and Drop (die Bibliothek
@@ -86,9 +88,10 @@ export function toForm(recipe) {
   };
 }
 
-/** Zahl für ein Eingabefeld: 0.5 -> "0,5". */
+/** Zahl für ein Eingabefeld mit dem Dezimalzeichen der Sprache: 0.5 -> "0,5" bzw. "0.5". */
 function formatInputNumber(value) {
-  return String(value).replace('.', ',');
+  const separator = new Intl.NumberFormat(currentLocale()).formatToParts(1.5).find((p) => p.type === 'decimal')?.value;
+  return String(value).replace('.', separator === ',' ? ',' : '.');
 }
 
 const unicodeFractions = { '¼': 0.25, '½': 0.5, '¾': 0.75, '⅓': 1 / 3, '⅔': 2 / 3 };
@@ -130,21 +133,27 @@ function parseMinutes(value) {
 }
 
 /**
+ * Text zu einem Prüfschlüssel aus toPayload. Erst beim Anzeigen übersetzt,
+ * damit ein Sprachwechsel auch schon angezeigte Meldungen umstellt.
+ */
+export const validationText = (key) => t(`editor.validation.${key}`);
+
+/**
  * Prüft das Formular und baut daraus die Daten für die API.
- * Ergebnis: { payload } oder { errors } mit Fehlertexten je Feld bzw. je
- * Zeilen-ID.
+ * Ergebnis: { payload } oder { errors } mit Prüfschlüsseln je Feld bzw. je
+ * Zeilen-ID (Anzeige über validationText).
  */
 export function toPayload(form) {
   const errors = {};
 
-  if (form.title.trim() === '') errors.title = 'Bitte einen Titel eingeben.';
+  if (form.title.trim() === '') errors.title = 'title_required';
   if (!Number.isInteger(Number(form.base_servings)) || Number(form.base_servings) < 1) {
-    errors.base_servings = 'Mindestens 1 Portion.';
+    errors.base_servings = 'servings_min';
   }
   for (const field of ['prep_minutes', 'total_minutes']) {
     const v = form[field];
     if (v !== '' && v != null && (!Number.isInteger(Number(v)) || Number(v) < 0)) {
-      errors[field] = 'Ganze Minuten, nicht negativ.';
+      errors[field] = 'whole_minutes';
     }
   }
 
@@ -160,9 +169,9 @@ export function toPayload(form) {
 
     const quantity = parseQuantity(item.quantity);
     if (quantity === undefined) {
-      errors[item.id] = 'Menge nicht lesbar, z. B. 1,5 oder 1/2.';
+      errors[item.id] = 'quantity_unreadable';
     } else if (item.name.trim() === '') {
-      errors[item.id] = 'Bitte einen Namen eingeben.';
+      errors[item.id] = 'name_required';
     }
     ingredients.push({
       group_name: group,

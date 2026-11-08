@@ -6,6 +6,7 @@
   import TagFilter from '../components/TagFilter.svelte';
   import CourseTabs from '../components/CourseTabs.svelte';
   import { courseTabs } from '../lib/courseTabs.js';
+  import { t, errorText } from '../lib/i18n.svelte.js';
 
   let recipes = $state(null); // null = noch nicht geladen
   let error = $state('');
@@ -13,8 +14,8 @@
   let showTags = $state(recipeFilter.tagIds.length > 0);
   const tabs = $derived(courseTabs(tagGroups, true));
   const courseGroup = $derived(tagGroups.find((g) => g.role === 'course'));
-  const courseIds = $derived(new Set(courseGroup?.tags.map((t) => t.id) ?? []));
-  const tagName = $derived(new Map(tagGroups.flatMap((g) => g.tags.map((t) => [t.id, t.name]))));
+  const courseIds = $derived(new Set(courseGroup?.tags.map((tag) => tag.id) ?? []));
+  const tagName = $derived(new Map(tagGroups.flatMap((g) => g.tags.map((tag) => [tag.id, tag.name]))));
   /** Namen der Gänge eines Rezepts für das Etikett auf der Kachel. */
   const coursesOf = (recipe) => (recipe.tag_ids ?? []).filter((id) => courseIds.has(id)).map((id) => tagName.get(id));
   // Anzahl für den Reiter „Ohne Gang (214)“ – mit Suche und übrigen Filtern.
@@ -44,7 +45,7 @@
       }
     } catch (e) {
       if (id !== requestCount) return;
-      error = e.message;
+      error = errorText(e);
     }
   }
 
@@ -57,7 +58,7 @@
       favoritesOnly: recipeFilter.favoritesOnly,
       illustrationsOnly: recipeFilter.illustrationsOnly,
       neverPlanned: recipeFilter.neverPlanned,
-      courseIds: tabs.find((t) => t.key === recipeFilter.course)?.ids ?? [],
+      courseIds: tabs.find((tab) => tab.key === recipeFilter.course)?.ids ?? [],
       withoutCourse: recipeFilter.course === 'none',
       sort: recipeFilter.sort,
     };
@@ -84,7 +85,9 @@
   let selected = $state(new Set());
   let applied = $state(false); // schon etwas übernommen → „Fertig“ statt „Abbrechen“
   let busy = $state(false);
-  let notice = $state(null); // { text, undo: { add, remove } | null }
+  // { key, params, undo: { add, remove } | null } – der Text wird erst beim
+  // Anzeigen übersetzt, damit ein Sprachwechsel ihn mitnimmt.
+  let notice = $state(null);
   let noticeTimer;
 
   // Vorauswahl aus Einstellungen → Gänge („Vorschläge prüfen“).
@@ -100,9 +103,8 @@
   const targetIds = $derived(
     targetPart === 'courses' ? [...courseIds] : targetPart ? [Number(targetPart)] : [],
   );
-  const targetLabel = $derived(
-    targetPart === 'courses' ? 'alle Gänge' : targetPart ? `„${tagName.get(Number(targetPart))}“` : '',
-  );
+  // Name der Ziel-Kategorie (Daten des Nutzers, nicht übersetzt).
+  const targetName = $derived(targetPart && targetPart !== 'courses' ? (tagName.get(Number(targetPart)) ?? '') : '');
   const targetIsCourse = $derived(targetIds.length > 0 && targetIds.every((id) => courseIds.has(id)));
 
   /** Die geladenen Rezepte der Auswahl (für Hinweise und Änderungen). */
@@ -137,14 +139,11 @@
     selected = new Set([...selected, ...(recipes ?? []).map((r) => r.id)]);
   }
 
-  function showNotice(text, undo = null) {
+  function showNotice(key, params = {}, undo = null) {
     clearTimeout(noticeTimer);
-    notice = { text, undo };
+    notice = { key, params, undo };
     noticeTimer = setTimeout(() => (notice = null), 8000);
   }
-
-  // „bei 1 Rezept“, „bei 12 Rezepten“
-  const recipesText = (n) => (n === 1 ? '1 Rezept' : `${n} Rezepten`);
 
   async function apply() {
     // Auch ausgewählte Rezepte, die gerade nicht sichtbar sind (anderer Filter).
@@ -155,16 +154,21 @@
     try {
       const result = action === 'add' ? await api.bulkTags(pairs) : await api.bulkTags([], pairs);
       const n = result.recipes;
-      const text =
-        action === 'add'
-          ? `${targetLabel} bei ${recipesText(n)} hinzugefügt.`
-          : `${targetLabel} bei ${recipesText(n)} entfernt.`;
-      showNotice(n === 0 ? 'Nichts geändert – war schon so.' : text, n === 0 ? null : { add: result.removed, remove: result.added });
+      if (n === 0) showNotice('recipes.notice.unchanged');
+      else {
+        const key =
+          action === 'add'
+            ? 'recipes.notice.added'
+            : targetPart === 'courses'
+              ? 'recipes.notice.removed_all_courses'
+              : 'recipes.notice.removed';
+        showNotice(key, { name: targetName, count: n }, { add: result.removed, remove: result.added });
+      }
       selected = new Set();
       applied = true;
       if (lastFilter) await load(lastFilter);
     } catch (e) {
-      showNotice(`Nicht gespeichert: ${e.message}`);
+      showNotice('recipes.notice.not_saved', { message: errorText(e) });
     } finally {
       busy = false;
     }
@@ -175,10 +179,10 @@
     busy = true;
     try {
       await api.bulkTags(add, remove);
-      showNotice('Rückgängig gemacht.');
+      showNotice('recipes.notice.undone');
       if (lastFilter) await load(lastFilter);
     } catch (e) {
-      showNotice(`Rückgängig fehlgeschlagen: ${e.message}`);
+      showNotice('recipes.notice.undo_failed', { message: errorText(e) });
     } finally {
       busy = false;
     }
@@ -186,10 +190,10 @@
 </script>
 
 <div class="page-head">
-  <h1>Rezepte</h1>
+  <h1>{t('recipes.title')}</h1>
   <div class="head-actions">
-    <a class="secondary" href="#/recipes/import">Datei importieren</a>
-    <a class="new" href="#/recipes/new">+ Neues Rezept</a>
+    <a class="secondary" href="#/recipes/import">{t('recipes.import_file')}</a>
+    <a class="new" href="#/recipes/new">+ {t('recipes.new_recipe')}</a>
   </div>
 </div>
 
@@ -205,8 +209,8 @@
     <Icon name="search" size={18} />
     <input
       type="search"
-      placeholder="Suchen nach Titel, Zutat oder Zubereitung"
-      aria-label="Rezepte durchsuchen"
+      placeholder={t('recipes.search_placeholder')}
+      aria-label={t('recipes.search_label')}
       bind:value={recipeFilter.query}
     />
   </label>
@@ -219,53 +223,53 @@
       onclick={() => (showTags = !showTags)}
     >
       <Icon name="filter" size={18} />
-      Kategorien{activeTagCount > 0 ? ` (${activeTagCount})` : ''}
+      {t('recipes.categories')}{activeTagCount > 0 ? ` (${activeTagCount})` : ''}
     </button>
 
     <button
       type="button"
       class="toggle"
       aria-pressed={recipeFilter.favoritesOnly}
-      title="Nur Favoriten"
+      title={t('recipes.favorites_only')}
       onclick={() => (recipeFilter.favoritesOnly = !recipeFilter.favoritesOnly)}
     >
       <Icon name="heart" size={18} filled={recipeFilter.favoritesOnly} />
-      <span class="label-wide">Favoriten</span>
+      <span class="label-wide">{t('recipes.favorites')}</span>
     </button>
 
     <button
       type="button"
       class="toggle"
       aria-pressed={recipeFilter.illustrationsOnly}
-      title="Nur Rezepte mit gezeichnetem Bild – zum Ersetzen durch ein Foto"
+      title={t('recipes.illustrations_only')}
       onclick={() => (recipeFilter.illustrationsOnly = !recipeFilter.illustrationsOnly)}
     >
       <Icon name="brush" size={18} />
-      <span class="label-wide">Illustrationen</span>
+      <span class="label-wide">{t('recipes.illustrations')}</span>
     </button>
 
     <button
       type="button"
       class="toggle"
       aria-pressed={recipeFilter.neverPlanned}
-      title="Nur Rezepte, die noch nie im Essensplan standen"
+      title={t('recipes.never_planned_only')}
       onclick={() => (recipeFilter.neverPlanned = !recipeFilter.neverPlanned)}
     >
       <Icon name="sparkle" size={18} />
-      <span class="label-wide">Nie eingeplant</span>
+      <span class="label-wide">{t('recipes.never_planned')}</span>
     </button>
 
     {#if !assigning && courseGroup}
-      <button type="button" class="toggle" title="Mehreren Rezepten auf einmal einen Gang geben" onclick={startAssign}>
-        Gang zuweisen
+      <button type="button" class="toggle" title={t('recipes.assign.hint')} onclick={startAssign}>
+        {t('recipes.assign.button')}
       </button>
     {/if}
 
-    <select bind:value={recipeFilter.sort} aria-label="Sortierung">
-      <option value="name">Name</option>
-      <option value="newest">Neu hinzugefügt</option>
-      <option value="last_planned">Zuletzt eingeplant</option>
-      <option value="most_planned">Am häufigsten eingeplant</option>
+    <select bind:value={recipeFilter.sort} aria-label={t('recipes.sort.label')}>
+      <option value="name">{t('recipes.sort.name')}</option>
+      <option value="newest">{t('recipes.sort.newest')}</option>
+      <option value="last_planned">{t('recipes.sort.last_planned')}</option>
+      <option value="most_planned">{t('recipes.sort.most_planned')}</option>
     </select>
   </div>
 </div>
@@ -277,44 +281,43 @@
 {/if}
 
 {#if assigning}
-  <div class="assign-bar" role="region" aria-label="Gang zuweisen">
+  <div class="assign-bar" role="region" aria-label={t('recipes.assign.button')}>
     <div class="assign-row">
       <label>
-        <span>Zuweisen:</span>
-        <select bind:value={target} aria-label="Ziel">
+        <span>{t('recipes.assign.label')}</span>
+        <select bind:value={target} aria-label={t('recipes.assign.target')}>
           {#if courseGroup}
-            <optgroup label="Gang hinzufügen">
-              {#each courseGroup.tags as t (t.id)}<option value="add:{t.id}">{t.name} hinzufügen</option>{/each}
+            <optgroup label={t('recipes.assign.add_course')}>
+              {#each courseGroup.tags as tag (tag.id)}<option value="add:{tag.id}">{t('recipes.assign.add_tag', { name: tag.name })}</option>{/each}
             </optgroup>
-            <optgroup label="Gang entfernen">
-              {#each courseGroup.tags as t (t.id)}<option value="remove:{t.id}">{t.name} entfernen</option>{/each}
-              <option value="remove:courses">Alle Gänge entfernen</option>
+            <optgroup label={t('recipes.assign.remove_course')}>
+              {#each courseGroup.tags as tag (tag.id)}<option value="remove:{tag.id}">{t('recipes.assign.remove_tag', { name: tag.name })}</option>{/each}
+              <option value="remove:courses">{t('recipes.assign.remove_all_courses')}</option>
             </optgroup>
           {/if}
           {#each tagGroups.filter((g) => g.role !== 'course') as g (g.name)}
-            <optgroup label="Kategorie hinzufügen: {g.name}">
-              {#each g.tags as t (t.id)}<option value="add:{t.id}">{t.name} hinzufügen</option>{/each}
+            <optgroup label={t('recipes.assign.add_category', { group: g.name })}>
+              {#each g.tags as tag (tag.id)}<option value="add:{tag.id}">{t('recipes.assign.add_tag', { name: tag.name })}</option>{/each}
             </optgroup>
-            <optgroup label="Kategorie entfernen: {g.name}">
-              {#each g.tags as t (t.id)}<option value="remove:{t.id}">{t.name} entfernen</option>{/each}
+            <optgroup label={t('recipes.assign.remove_category', { group: g.name })}>
+              {#each g.tags as tag (tag.id)}<option value="remove:{tag.id}">{t('recipes.assign.remove_tag', { name: tag.name })}</option>{/each}
             </optgroup>
           {/each}
         </select>
       </label>
-      <strong>{selected.size} ausgewählt</strong>
+      <strong>{t('recipes.assign.selected', { count: selected.size })}</strong>
     </div>
     <div class="assign-row">
-      <button type="button" onclick={selectVisible} disabled={!recipes?.length}>Alle sichtbaren auswählen</button>
-      <button type="button" onclick={() => (selected = new Set())} disabled={selected.size === 0}>Auswahl aufheben</button>
+      <button type="button" onclick={selectVisible} disabled={!recipes?.length}>{t('recipes.assign.select_visible')}</button>
+      <button type="button" onclick={() => (selected = new Set())} disabled={selected.size === 0}>{t('recipes.assign.clear_selection')}</button>
       <button type="button" class="primary" onclick={apply} disabled={busy || selected.size === 0 || !target}>
-        {busy ? 'Speichert …' : 'Übernehmen'}
+        {busy ? t('common.saving') : t('common.apply')}
       </button>
-      <button type="button" onclick={stopAssign}>{applied ? 'Fertig' : 'Abbrechen'}</button>
+      <button type="button" onclick={stopAssign}>{applied ? t('recipes.assign.done') : t('common.cancel')}</button>
     </div>
     {#if otherCourse > 0}
       <p class="assign-hint">
-        {otherCourse === 1 ? '1 ausgewähltes Rezept hat' : `${otherCourse} ausgewählte Rezepte haben`} schon einen anderen
-        Gang – er bleibt erhalten, {targetLabel} kommt dazu.
+        {t('recipes.assign.other_course', { count: otherCourse, name: targetName })}
       </p>
     {/if}
   </div>
@@ -322,26 +325,26 @@
 
 {#if notice}
   <div class="notice" role="status">
-    <span>{notice.text}</span>
-    {#if notice.undo}<button type="button" class="link" onclick={undo} disabled={busy}>Rückgängig</button>{/if}
+    <span>{t(notice.key, notice.params)}</span>
+    {#if notice.undo}<button type="button" class="link" onclick={undo} disabled={busy}>{t('recipes.notice.undo')}</button>{/if}
   </div>
 {/if}
 
 {#if error}
-  <p class="message error">Rezepte konnten nicht geladen werden: {error}</p>
+  <p class="message error">{t('recipes.load_error', { message: error })}</p>
 {:else if recipes === null}
-  <p class="message">Lädt …</p>
+  <p class="message">{t('common.loading')}</p>
 {:else if recipes.length === 0}
   {#if hasActiveFilter()}
     <div class="message">
-      <p>Keine Rezepte gefunden.</p>
-      <button type="button" class="link" onclick={resetFilter}>Filter zurücksetzen</button>
+      <p>{t('recipes.empty.none_found')}</p>
+      <button type="button" class="link" onclick={resetFilter}>{t('recipes.empty.reset_filter')}</button>
     </div>
   {:else}
-    <p class="message">Noch keine Rezepte vorhanden.</p>
+    <p class="message">{t('recipes.empty.no_recipes')}</p>
   {/if}
 {:else}
-  <p class="count">{recipes.length} {recipes.length === 1 ? 'Rezept' : 'Rezepte'}</p>
+  <p class="count">{t('recipes.count', { count: recipes.length })}</p>
   <div class="grid">
     {#each recipes as recipe (recipe.id)}
       <RecipeTile

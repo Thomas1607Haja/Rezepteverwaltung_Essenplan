@@ -1,0 +1,96 @@
+{
+  "title_new": "Neues Rezept",
+  "title_variant": "Neue Variante",
+  "title_edit": "Rezept bearbeiten",
+  "not_found": "Dieses Rezept gibt es nicht (mehr).",
+  "url_import": {
+    "heading": "Aus dem Internet übernehmen",
+    "hint": "Adresse einer Rezeptseite einfügen, z. B. von chefkoch.de. Das Rezept landet als Entwurf im Formular.",
+    "address_label": "Adresse der Rezeptseite",
+    "scan": "QR-Code",
+    "scan_title": "QR-Code mit der Kamera scannen",
+    "no_url_in_qr": "Der QR-Code enthält keine Webadresse (http/https): „{text}“",
+    "address_missing": "Bitte eine Adresse einfügen.",
+    "replace_confirm": "Bisherige Eingaben durch das importierte Rezept ersetzen?",
+    "no_recipe": "Auf dieser Seite wurde kein Rezept gefunden. Das Rezept lässt sich unten von Hand eingeben.",
+    "page_failed": "Die Seite ließ sich nicht laden: {message}",
+    "failed": "Import fehlgeschlagen: {message}"
+  },
+  "duplicates": {
+    "title": "Dieses Rezept gibt es schon:",
+    "hint": "Speichern legt trotzdem ein weiteres an."
+  },
+  "sections": {
+    "general": "Allgemein",
+    "image": "Bild",
+    "categories": "Kategorien",
+    "ingredients": "Zutaten",
+    "steps": "Zubereitung",
+    "notes": "Notizen"
+  },
+  "fields": {
+    "title": "Titel",
+    "description": "Beschreibung",
+    "amount": "Menge",
+    "servings": "Portionen",
+    "unit": "Einheit",
+    "prep": "Vorbereitung (Min.)",
+    "total": "Gesamt (Min.)",
+    "source_url": "Quelle (URL)",
+    "source_name": "Quelle (Name)",
+    "source_name_placeholder": "z. B. HelloFresh-Karte, Kochbuch"
+  },
+  "ingredients_hint": "Mengen als 1,5 oder 1/2. Leere Zeilen werden beim Speichern weggelassen.",
+  "check_fields": "Bitte die markierten Felder prüfen.",
+  "image_failed": "Rezept gespeichert, aber das Bild konnte nicht übernommen werden: {message}",
+  "save_error_field": "{message} (Feld: {field})",
+  "save_failed": "Speichern fehlgeschlagen: {message}",
+  "discard_variant": "Variante wieder verwerfen? Sie wird gelöscht.",
+  "delete_failed": "Löschen fehlgeschlagen: {message}",
+  "discard_changes": "Änderungen verwerfen?",
+  "validation": {
+    "title_required": "Bitte einen Titel eingeben.",
+    "servings_min": "Mindestens 1 Portion.",
+    "whole_minutes": "Ganze Minuten, nicht negativ.",
+    "quantity_unreadable": "Menge nicht lesbar, z. B. 1,5 oder 1/2.",
+    "name_required": "Bitte einen Namen eingeben."
+  },
+  "ingredients": {
+    "heading_label": "Überschrift {name}",
+    "ingredient_label": "Zutat {name}",
+    "unnamed": "(ohne Namen)",
+    "empty": "(leer)",
+    "move": "{label} verschieben",
+    "heading_placeholder": "Überschrift, z. B. Für die Soße",
+    "heading_aria": "Gruppenüberschrift",
+    "remove_heading": "Überschrift entfernen",
+    "quantity": "Menge",
+    "unit": "Einheit",
+    "name": "Zutat",
+    "note": "Hinweis",
+    "note_placeholder": "Hinweis, z. B. gehackt",
+    "shopping": "einkaufen",
+    "shopping_title": "Beim Einkaufen berücksichtigen",
+    "remove": "Zutat entfernen",
+    "add": "Zutat",
+    "add_heading": "Überschrift"
+  },
+  "steps": {
+    "step": "Schritt {n}",
+    "move": "Schritt {n} verschieben",
+    "placeholder": "Was ist zu tun?",
+    "remove": "Schritt {n} entfernen",
+    "add": "Schritt"
+  },
+  "image": {
+    "not_image": "Bitte eine Bilddatei wählen.",
+    "too_large": "Die Datei ist zu groß (höchstens {max} MB).",
+    "preview_alt": "Vorschau des Rezeptbildes",
+    "choose": "Bild wählen",
+    "choose_other": "Anderes Bild wählen",
+    "remove": "Bild entfernen",
+    "upload_on_save": "Wird beim Speichern hochgeladen und verkleinert.",
+    "remote_on_save": "Bild der Quellseite – wird beim Speichern übernommen.",
+    "remove_on_save": "Wird beim Speichern entfernt."
+  }
+}

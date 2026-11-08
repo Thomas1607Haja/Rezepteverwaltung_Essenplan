@@ -1,0 +1,51 @@
+{
+  "title": "Ajustes",
+  "load_failed": "No se pudieron cargar los ajustes: {message}",
+  "household": {
+    "title": "Hogar",
+    "family_size": "Personas en casa",
+    "family_size_hint": "Raciones por defecto para nuevas entradas del plan de comidas",
+    "shopping_day": "Día de la compra",
+    "shopping_day_hint": "La semana de compra empieza este día",
+    "shopping_time": "Hora de la compra",
+    "shopping_time_hint": "A partir de esta hora, la compra del día cuenta como hecha; antes, la nueva semana es la «próxima compra»",
+    "bring_list": "Lista de Bring",
+    "bring_none": "– ninguna –",
+    "bring_missing": "{entity} (no encontrada)",
+    "lists_loading": "Cargando listas …",
+    "test_mode": "Modo de prueba sin Home Assistant: los artículos solo van a una lista de prueba.",
+    "no_lists": "No se encontró ninguna lista de tareas. Configura la integración de Bring en Home Assistant.",
+    "bring_hint": "Lista de tareas de Home Assistant que recibe la lista de la compra",
+    "language": "Idioma",
+    "language_auto": "Automático (Home Assistant)",
+    "ha_language": "Home Assistant indica: {language}",
+    "ha_language_unknown": "Home Assistant indica: no detectado",
+    "plan_preview": "Vista rápida al añadir al plan",
+    "plan_preview_hint": "Al añadir al plan de comidas, elige las raciones y desmarca los ingredientes que ya tienes en casa",
+    "coffee_slot": "Franja «Merienda»",
+    "coffee_slot_hint": "Entre la comida y la cena, p. ej. para tarta el fin de semana",
+    "times": "Horas en el calendario de Home Assistant",
+    "time_lunch": "Comida",
+    "time_coffee": "Merienda",
+    "time_dinner": "Cena"
+  },
+  "system": {
+    "title": "Sistema",
+    "checking": "Comprobando la conexión …",
+    "version": "Versión",
+    "uptime": "En marcha desde hace",
+    "memory": "Memoria",
+    "memory_peak": "Pico desde el inicio",
+    "database": "Base de datos",
+    "images": "Imágenes",
+    "images_value": {
+      "one": "{size} ({count} archivo)",
+      "other": "{size} ({count} archivos)"
+    }
+  },
+  "support": {
+    "title": "Apoyar",
+    "text": "Rezeptplaner es gratuito. Si te gusta, me alegrará que me invites a un café.",
+    "button": "Invítame a un café"
+  }
+}

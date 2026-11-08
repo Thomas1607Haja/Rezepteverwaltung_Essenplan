@@ -1,0 +1,38 @@
+{
+  "title": "Garde-manger",
+  "intro": "Ingrédients toujours à la maison. Dans les nouvelles recettes, ils ne sont automatiquement pas mis sur la liste de courses.",
+  "load_failed": "Impossible de charger le garde-manger : {message}",
+  "added": "« {name} » ajouté.",
+  "remove_confirm": "Retirer « {name} » du garde-manger ?",
+  "removed": "« {name} » retiré.",
+  "nothing_to_apply": "Toutes les recettes correspondent déjà au garde-manger.",
+  "ingredients": {
+    "one": "Un ingrédient",
+    "other": "{count} ingrédients"
+  },
+  "in_recipes": {
+    "one": "dans une recette",
+    "other": "dans {count} recettes"
+  },
+  "applied": "{ingredients} {recipes} mis à jour.",
+  "name": "Nom",
+  "synonyms": "Autres noms",
+  "synonyms_placeholder": "Autres noms, séparés par des virgules",
+  "edit_item": "Modifier {name}",
+  "remove_item": "Retirer {name}",
+  "empty": "Rien dans le garde-manger pour l'instant.",
+  "new_item": "Nouvel article du garde-manger",
+  "new_item_placeholder": "Nouvel article, p. ex. farine",
+  "new_synonyms": "Autres noms du nouvel article",
+  "new_synonyms_placeholder": "Autres noms, p. ex. farine de blé, farine d'épeautre",
+  "apply_all": "Appliquer à toutes les recettes …",
+  "apply_hint": "Les recettes existantes ne changent qu'avec ce bouton. Vous verrez d'abord quels ingrédients sont concernés.",
+  "apply_dialog": {
+    "title": "Appliquer le garde-manger à toutes les recettes ?",
+    "text": "Modifications : {ingredients} {recipes}. Les cases cochées à la main seront écrasées.",
+    "to_shopping": "revient sur la liste de courses",
+    "to_pantry": "passe au garde-manger",
+    "apply": "Appliquer",
+    "applying": "Application …"
+  }
+}

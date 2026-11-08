@@ -1,0 +1,65 @@
+{
+  "document_title": "Menu : {title} – Rezeptplaner",
+  "gone": "Ce menu n'existe plus.",
+  "badge": "Menu",
+  "persons": {
+    "one": "{count} personne",
+    "other": "{count} personnes"
+  },
+  "no_courses_hint": "Pas encore de plats – ajoutez-les via le menu dans le planning.",
+  "course_count": {
+    "one": "{count} plat",
+    "other": "{count} plats"
+  },
+  "note": "Note",
+  "sent_to_bring": "Envoyé à Bring",
+  "partly_sent": "{done} sur {total} envoyés à Bring",
+  "have_ingredients": "Ingrédients à la maison",
+  "hide_courses": "Masquer les plats",
+  "show_courses": "Afficher les plats",
+  "dissolve_confirm": "Dissoudre le menu ? Les plats restent dans le planning comme plats séparés.",
+  "delete_confirm": {
+    "one": "Supprimer le menu « {title} » avec {count} plat ?",
+    "other": "Supprimer le menu « {title} » et ses {count} plats ?"
+  },
+  "dialog_title": "Menu : {title}",
+  "title_label": "Titre",
+  "title_auto": "{title} (automatique)",
+  "note_placeholder": "p. ex. préparer la soupe avant, le dessert la veille",
+  "persons_label": "Personnes",
+  "fewer": "Moins",
+  "more": "Plus",
+  "apply_to_all": "appliquer à tous les plats",
+  "courses": "Plats",
+  "course": "Plat",
+  "course_placeholder": "– Plat –",
+  "servings_short": {
+    "one": "{count} port.",
+    "other": "{count} port."
+  },
+  "without_recipe": "sans recette",
+  "status_sent": "envoyé à Bring",
+  "excluded_count": {
+    "one": "{count} à la maison",
+    "other": "{count} à la maison"
+  },
+  "detach_title": "Garder dans le planning comme plat séparé",
+  "detach": "détacher",
+  "no_courses": "Pas encore de plats.",
+  "add_course": "Ajouter un plat",
+  "have_ingredients_open": "Ingrédients à la maison …",
+  "cooking_view": "Mode cuisine",
+  "move_to": "Déplacer au",
+  "move": "Déplacer",
+  "dissolve": "Dissoudre le menu",
+  "delete": "Supprimer le menu",
+  "preview": {
+    "title": "Ingrédients à la maison – tout le menu",
+    "hint": "Décochez ce que vous avez déjà. Pour ce menu uniquement.",
+    "already_sent": "Déjà envoyé à Bring – les modifications apparaissent dans Courses comme différence.",
+    "nothing_to_buy": "Aucun ingrédient à acheter.",
+    "no_recipes": "Le menu n'a pas encore de plat avec recette.",
+    "all_available": "Tout est là"
+  },
+  "untitled": "Menu"
+}

@@ -1,0 +1,82 @@
+{
+  "title": "Rezepte",
+  "import_file": "Datei importieren",
+  "new_recipe": "Neues Rezept",
+  "search_placeholder": "Suchen nach Titel, Zutat oder Zubereitung",
+  "search_label": "Rezepte durchsuchen",
+  "categories": "Kategorien",
+  "favorites": "Favoriten",
+  "favorites_only": "Nur Favoriten",
+  "illustrations": "Illustrationen",
+  "illustrations_only": "Nur Rezepte mit gezeichnetem Bild – zum Ersetzen durch ein Foto",
+  "never_planned": "Nie eingeplant",
+  "never_planned_only": "Nur Rezepte, die noch nie im Essensplan standen",
+  "course": "Gang",
+  "sort": {
+    "label": "Sortierung",
+    "name": "Name",
+    "newest": "Neu hinzugefügt",
+    "last_planned": "Zuletzt eingeplant",
+    "most_planned": "Am häufigsten eingeplant"
+  },
+  "assign": {
+    "button": "Gang zuweisen",
+    "hint": "Mehreren Rezepten auf einmal einen Gang geben",
+    "label": "Zuweisen:",
+    "target": "Ziel",
+    "add_course": "Gang hinzufügen",
+    "remove_course": "Gang entfernen",
+    "add_tag": "{name} hinzufügen",
+    "remove_tag": "{name} entfernen",
+    "remove_all_courses": "Alle Gänge entfernen",
+    "add_category": "Kategorie hinzufügen: {group}",
+    "remove_category": "Kategorie entfernen: {group}",
+    "selected": {
+      "one": "{count} ausgewählt",
+      "other": "{count} ausgewählt"
+    },
+    "select_visible": "Alle sichtbaren auswählen",
+    "clear_selection": "Auswahl aufheben",
+    "done": "Fertig",
+    "other_course": {
+      "one": "1 ausgewähltes Rezept hat schon einen anderen Gang – er bleibt erhalten, „{name}“ kommt dazu.",
+      "other": "{count} ausgewählte Rezepte haben schon einen anderen Gang – er bleibt erhalten, „{name}“ kommt dazu."
+    }
+  },
+  "notice": {
+    "added": {
+      "one": "„{name}“ bei 1 Rezept hinzugefügt.",
+      "other": "„{name}“ bei {count} Rezepten hinzugefügt."
+    },
+    "removed": {
+      "one": "„{name}“ bei 1 Rezept entfernt.",
+      "other": "„{name}“ bei {count} Rezepten entfernt."
+    },
+    "removed_all_courses": {
+      "one": "Alle Gänge bei 1 Rezept entfernt.",
+      "other": "Alle Gänge bei {count} Rezepten entfernt."
+    },
+    "unchanged": "Nichts geändert – war schon so.",
+    "not_saved": "Nicht gespeichert: {message}",
+    "undone": "Rückgängig gemacht.",
+    "undo_failed": "Rückgängig fehlgeschlagen: {message}",
+    "undo": "Rückgängig"
+  },
+  "load_error": "Rezepte konnten nicht geladen werden: {message}",
+  "empty": {
+    "none_found": "Keine Rezepte gefunden.",
+    "reset_filter": "Filter zurücksetzen",
+    "no_recipes": "Noch keine Rezepte vorhanden."
+  },
+  "count": {
+    "one": "{count} Rezept",
+    "other": "{count} Rezepte"
+  },
+  "tile": {
+    "illustration": "Illustration",
+    "illustration_hint": "Gezeichnetes Bild – durch ein Foto ersetzen",
+    "no_course": "ohne Gang",
+    "variant": "Variante",
+    "favorite": "Favorit"
+  }
+}

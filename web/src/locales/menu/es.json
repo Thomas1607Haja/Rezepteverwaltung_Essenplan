@@ -1,0 +1,65 @@
+{
+  "document_title": "Menú: {title} – Rezeptplaner",
+  "gone": "Este menú ya no existe.",
+  "badge": "Menú",
+  "persons": {
+    "one": "{count} persona",
+    "other": "{count} personas"
+  },
+  "no_courses_hint": "Aún no hay platos: añádelos desde el menú en el plan.",
+  "course_count": {
+    "one": "{count} plato",
+    "other": "{count} platos"
+  },
+  "note": "Nota",
+  "sent_to_bring": "Enviado a Bring",
+  "partly_sent": "{done} de {total} en Bring",
+  "have_ingredients": "Ingredientes en casa",
+  "hide_courses": "Ocultar platos",
+  "show_courses": "Ver platos",
+  "dissolve_confirm": "¿Deshacer el menú? Los platos quedan en el plan por separado.",
+  "delete_confirm": {
+    "one": "¿Eliminar el menú «{title}» con {count} plato?",
+    "other": "¿Eliminar el menú «{title}» con sus {count} platos?"
+  },
+  "dialog_title": "Menú: {title}",
+  "title_label": "Título",
+  "title_auto": "{title} (automático)",
+  "note_placeholder": "p. ej. hacer la sopa antes, el postre el día anterior",
+  "persons_label": "Personas",
+  "fewer": "Menos",
+  "more": "Más",
+  "apply_to_all": "aplicar a todos los platos",
+  "courses": "Platos",
+  "course": "Plato",
+  "course_placeholder": "– Plato –",
+  "servings_short": {
+    "one": "{count} rac.",
+    "other": "{count} rac."
+  },
+  "without_recipe": "sin receta",
+  "status_sent": "enviado a Bring",
+  "excluded_count": {
+    "one": "{count} en casa",
+    "other": "{count} en casa"
+  },
+  "detach_title": "Dejar en el plan como plato suelto",
+  "detach": "separar",
+  "no_courses": "Aún no hay platos.",
+  "add_course": "Añadir plato",
+  "have_ingredients_open": "Ingredientes en casa …",
+  "cooking_view": "Modo cocina",
+  "move_to": "Mover al",
+  "move": "Mover",
+  "dissolve": "Deshacer menú",
+  "delete": "Eliminar menú",
+  "preview": {
+    "title": "Ingredientes en casa: todo el menú",
+    "hint": "Desmarca lo que ya tienes. Solo para este menú.",
+    "already_sent": "Ya enviado a Bring: los cambios aparecen en Compra como diferencia.",
+    "nothing_to_buy": "No hay ingredientes que comprar.",
+    "no_recipes": "El menú aún no tiene platos con receta.",
+    "all_available": "Todo en casa"
+  },
+  "untitled": "Menú"
+}

@@ -1,7 +1,8 @@
 <script>
   import { api, imageUrl } from '../lib/api.js';
-  import { dayLabel, amountText } from '../lib/format.js';
+  import { dayLabel, amountText, menuTitle } from '../lib/format.js';
   import { slotLabel } from '../lib/slots.js';
+  import { t, errorText } from '../lib/i18n.svelte.js';
   import { focusPlanOn } from '../lib/planFocus.svelte.js';
   import { navigate } from '../lib/router.svelte.js';
 
@@ -19,9 +20,9 @@
     .then(([m, groups]) => {
       menu = m;
       courses = groups.find((g) => g.role === 'course')?.tags ?? [];
-      document.title = `Menü: ${m.display_title} – Rezeptplaner`;
+      document.title = t('menu.document_title', { title: menuTitle(m) });
     })
-    .catch((e) => (error = e.status === 404 ? 'Dieses Menü gibt es nicht mehr.' : e.message));
+    .catch((e) => (error = e.status === 404 ? t('menu.gone') : errorText(e)));
 
   const courseName = (cid) => courses.find((c) => c.id === cid)?.name ?? '';
 
@@ -31,17 +32,17 @@
   }
 </script>
 
-<p class="back"><button type="button" class="link" onclick={back}>← Essensplan</button></p>
+<p class="back"><button type="button" class="link" onclick={back}>← {t('nav.plan')}</button></p>
 
 {#if error}
   <p class="error">{error}</p>
 {:else if !menu}
-  <p>Lädt …</p>
+  <p>{t('common.loading')}</p>
 {:else}
   {@const l = dayLabel(menu.date)}
-  <p class="badge">Menü</p>
-  <h1>{menu.display_title}</h1>
-  <p class="muted">{l.weekday} {l.date} · {slotLabel(menu.slot)} · {menu.servings === 1 ? '1 Person' : `${menu.servings} Personen`}</p>
+  <p class="badge">{t('menu.badge')}</p>
+  <h1>{menuTitle(menu)}</h1>
+  <p class="muted">{l.weekday} {l.date} · {slotLabel(menu.slot)} · {t('menu.persons', { count: menu.servings })}</p>
   {#if menu.note}<p class="note">{menu.note}</p>{/if}
 
   <ol class="courses">
@@ -59,7 +60,7 @@
         </span>
       </li>
     {:else}
-      <li class="muted">Noch keine Gänge – im Essensplan über das Menü hinzufügen.</li>
+      <li class="muted">{t('menu.no_courses_hint')}</li>
     {/each}
   </ol>
 {/if}

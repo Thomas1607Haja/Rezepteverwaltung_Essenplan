@@ -2,6 +2,7 @@
   import { flip } from 'svelte/animate';
   import { dragHandleZone } from 'svelte-dnd-action';
   import { newStep } from '../lib/recipeForm.js';
+  import { t } from '../lib/i18n.svelte.js';
   import { flipDurationMs, dropTargetStyle, isShadow } from '../lib/dnd.js';
   import DragHandle from './DragHandle.svelte';
 
@@ -15,23 +16,23 @@
 
 <ol
   class="list"
-  aria-label="Zubereitung"
+  aria-label={t('editor.sections.steps')}
   use:dragHandleZone={{ items: steps, flipDurationMs, dropTargetStyle, type: 'steps' }}
   onconsider={sort}
   onfinalize={sort}
 >
   {#each steps as step, i (step.id)}
-    <li class="card" class:shadow={isShadow(step)} aria-label="Schritt {i + 1}" animate:flip={{ duration: flipDurationMs }}>
-      <DragHandle label="Schritt {i + 1} verschieben" />
+    <li class="card" class:shadow={isShadow(step)} aria-label={t('editor.steps.step', { n: i + 1 })} animate:flip={{ duration: flipDurationMs }}>
+      <DragHandle label={t('editor.steps.move', { n: i + 1 })} />
       <span class="number">{i + 1}</span>
-      <textarea rows="2" placeholder="Was ist zu tun?" aria-label="Schritt {i + 1}" bind:value={step.text}></textarea>
-      <button type="button" class="remove" aria-label="Schritt {i + 1} entfernen" onclick={() => steps.splice(i, 1)}>×</button>
+      <textarea rows="2" placeholder={t('editor.steps.placeholder')} aria-label={t('editor.steps.step', { n: i + 1 })} bind:value={step.text}></textarea>
+      <button type="button" class="remove" aria-label={t('editor.steps.remove', { n: i + 1 })} onclick={() => steps.splice(i, 1)}>×</button>
     </li>
   {/each}
 </ol>
 
 <div class="add">
-  <button type="button" onclick={() => steps.push(newStep())}>+ Schritt</button>
+  <button type="button" onclick={() => steps.push(newStep())}>+ {t('editor.steps.add')}</button>
 </div>
 
 <style>

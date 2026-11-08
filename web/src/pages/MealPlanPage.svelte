@@ -2,6 +2,7 @@
   import { tick } from 'svelte';
   import { api } from '../lib/api.js';
   import { addDays, dayLabel, todayString } from '../lib/format.js';
+  import { t, errorText } from '../lib/i18n.svelte.js';
   import { takePlanFocus } from '../lib/planFocus.svelte.js';
   import Icon from '../components/Icon.svelte';
   import PlanEntry from '../components/PlanEntry.svelte';
@@ -78,7 +79,7 @@
       await tick(); // warten, bis die Spalten im DOM stehen
       scrollToDay(center, 'instant');
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     }
   }
   init();
@@ -125,7 +126,7 @@
       await tick();
       strip.scrollLeft += strip.scrollWidth - before;
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     } finally {
       loading = false;
     }
@@ -140,7 +141,7 @@
       to = end;
       await tick();
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     } finally {
       loading = false;
     }
@@ -209,7 +210,7 @@
       }
       await reloadDates([fromDate, move.date, ...result.entries.map((e) => e.date)]);
     } catch (e) {
-      alert(`Verschieben fehlgeschlagen: ${e.message}`);
+      alert(t('plan.move_failed', { message: errorText(e) }));
       await reloadDates([fromDate, move.date]);
     }
   }
@@ -247,14 +248,14 @@
       let course = 0;
       if (entry.recipe_id) {
         const recipe = await api.getRecipe(entry.recipe_id);
-        const own = recipe.tags.find((t) => courses.some((c) => c.id === t.id));
-        course = own?.id ?? courses.find((c) => c.name.toLowerCase() === 'hauptgericht')?.id ?? 0;
+        const own = recipe.tags.find((tag) => courses.some((c) => c.id === tag.id));
+        course = own?.id ?? courses.find((c) => c.course_key === 'main')?.id ?? 0;
       }
       const menu = await api.toMenu(entry.id, { course_tag_id: course });
       await reloadDates([entry.date]);
       openMenu = menu.id;
     } catch (e) {
-      alert(`Menü nicht angelegt: ${e.message}`);
+      alert(t('plan.menu_not_created', { message: errorText(e) }));
     }
   }
 
@@ -271,10 +272,10 @@
   async function sendToBring(ids) {
     try {
       const result = await api.sendShopping(false, [], { entries: ids });
-      const failed = result.failed.length > 0 ? ` ${result.failed.length} Artikel kamen nicht an (siehe Einkauf).` : '';
-      alert(`${result.sent.length} Artikel an Bring gesendet.${failed}`);
+      const failed = result.failed.length > 0 ? ` ${t('plan.bring_failed', { count: result.failed.length })}` : '';
+      alert(t('plan.bring_sent', { count: result.sent.length }) + failed);
     } catch (e) {
-      alert(`Senden an Bring fehlgeschlagen: ${e.message}`);
+      alert(t('plan.bring_send_failed', { message: errorText(e) }));
     }
     await reloadDates(ids.map((id) => findEntry(id)?.date).filter(Boolean));
   }
@@ -305,26 +306,26 @@
 </script>
 
 <div class="head">
-  <h1>Essensplan</h1>
+  <h1>{t('plan.title')}</h1>
   <div class="controls">
-    <button type="button" class="icon-button" title="Eine Woche zurück" onclick={() => shiftWeek(-1)}>
+    <button type="button" class="icon-button" title={t('plan.week_back')} onclick={() => shiftWeek(-1)}>
       <Icon name="chevron-left" size={20} />
     </button>
-    <button type="button" class="today-button" onclick={() => scrollToDay(today)}>Heute</button>
-    <button type="button" class="icon-button" title="Eine Woche vor" onclick={() => shiftWeek(1)}>
+    <button type="button" class="today-button" onclick={() => scrollToDay(today)}>{t('common.today')}</button>
+    <button type="button" class="icon-button" title={t('plan.week_forward')} onclick={() => shiftWeek(1)}>
       <Icon name="chevron-right" size={20} />
     </button>
   </div>
 </div>
 {#if period}
   <p class="legend">
-    <span class="item"><span class="swatch"></span> Eingekauft: {range(period)}</span>
-    {#if nextPeriod}<span class="item"><span class="swatch next"></span> Nächster Einkauf: {range(nextPeriod)}</span>{/if}
+    <span class="item"><span class="swatch"></span> {t('plan.shopped', { range: range(period) })}</span>
+    {#if nextPeriod}<span class="item"><span class="swatch next"></span> {t('plan.next_shopping', { range: range(nextPeriod) })}</span>{/if}
   </p>
 {/if}
 
 {#if error}
-  <p class="error">Der Plan konnte nicht geladen werden: {error}</p>
+  <p class="error">{t('plan.load_failed', { message: error })}</p>
 {/if}
 
 {#snippet planItem(item)}
@@ -349,7 +350,7 @@
   class="strip"
   bind:this={strip}
   onscroll={onScroll}
-  use:planDrag={{ ondrop: handleDrop, ontarget: (t) => (dropTarget = t) }}
+  use:planDrag={{ ondrop: handleDrop, ontarget: (target) => (dropTarget = target) }}
 >
   {#each days as date (date)}
     {@const label = dayLabel(date)}
@@ -359,24 +360,24 @@
       <header class="day-head">
         <span class="weekday">{label.weekday}</span>
         <span class="date">{label.date}</span>
-        {#if date === today}<span class="badge">Heute</span>{/if}
+        {#if date === today}<span class="badge">{t('common.today')}</span>{/if}
       </header>
       <!-- data-slot-zone: Ablagefläche beim Ziehen (lib/planDrag.js) -->
       <div class="entries">
         {#if lunchEntries.length > 0}
           <div class="zone" data-slot-zone="lunch" class:drop-target={isDropTarget(date, 'lunch')}>
-            <span class="slot">Mittag</span>
+            <span class="slot">{t('slots.lunch_short')}</span>
             {#each lunchEntries as item (item.key)}{@render planItem(item)}{/each}
           </div>
         {/if}
         {#if coffeeEntries.length > 0}
           <div class="zone" data-slot-zone="coffee" class:drop-target={isDropTarget(date, 'coffee')}>
-            <span class="slot">Kaffee</span>
+            <span class="slot">{t('slots.coffee_short')}</span>
             {#each coffeeEntries as item (item.key)}{@render planItem(item)}{/each}
           </div>
         {/if}
         <div class="zone dinner" data-slot-zone="dinner" class:drop-target={isDropTarget(date, 'dinner')}>
-          {#if lunchEntries.length > 0 || coffeeEntries.length > 0}<span class="slot">Abend</span>{/if}
+          {#if lunchEntries.length > 0 || coffeeEntries.length > 0}<span class="slot">{t('slots.dinner_short')}</span>{/if}
           {#each items(date, 'dinner') as item (item.key)}{@render planItem(item)}{/each}
           <!-- Leerer Tag: großes Plus; belegter Tag: kleines Plus für ein
                weiteres Gericht -->
@@ -385,8 +386,8 @@
             class:small={entriesByDate[date]?.length > 0}
             href="#/plan/add/{date}"
             draggable="false"
-            title="Gericht für {label.weekday} {label.date} planen"
-            aria-label="Gericht für {label.weekday} {label.date} planen"
+            title={t('plan.add_dish', { day: `${label.weekday} ${label.date}` })}
+            aria-label={t('plan.add_dish', { day: `${label.weekday} ${label.date}` })}
           >+</a>
         </div>
       </div>

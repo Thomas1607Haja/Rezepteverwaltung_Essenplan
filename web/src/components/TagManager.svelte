@@ -4,6 +4,7 @@
   import { api } from '../lib/api.js';
   import { flipDurationMs, dropTargetStyle, isShadow } from '../lib/dnd.js';
   import DragHandle from './DragHandle.svelte';
+  import { t, errorText, currentLocale } from '../lib/i18n.svelte.js';
 
   // Kategorien und Gruppen verwalten (Schritt 8.C). Gruppen und Kategorien
   // lassen sich ziehen – Kategorien auch in eine andere Gruppe. Jede
@@ -36,11 +37,11 @@
   async function load() {
     try {
       const list = await api.adminTagGroups();
-      saved = Object.fromEntries(list.map((g) => [g.id, g.tags.map((t) => t.id)]));
+      saved = Object.fromEntries(list.map((g) => [g.id, g.tags.map((tag) => tag.id)]));
       groups = list;
       loadError = '';
     } catch (e) {
-      loadError = `Kategorien nicht geladen: ${e.message}`;
+      loadError = t('tags.load_failed', { message: errorText(e) });
     }
   }
   load();
@@ -59,15 +60,15 @@
       if (success) showMessage(success);
       editing = null;
     } catch (e) {
-      showMessage(e.message, true);
+      showMessage(errorText(e), true);
     } finally {
       await load();
       busy = false;
     }
   }
 
-  const recipes = (n) => (n === 1 ? '1 Rezept' : `${n} Rezepte`);
-  const allTags = $derived(groups?.flatMap((g) => g.tags.map((t) => ({ ...t, group: g.name }))) ?? []);
+  const recipes = (n) => t('tags.recipes', { count: n });
+  const allTags = $derived(groups?.flatMap((g) => g.tags.map((tag) => ({ ...tag, group: g.name }))) ?? []);
 
   // --- Ziehen ------------------------------------------------------------
 
@@ -92,7 +93,7 @@
    */
   function finalizeTags(group, event) {
     group.tags = event.detail.items;
-    const ids = group.tags.map((t) => t.id);
+    const ids = group.tags.map((tag) => tag.id);
     const before = saved[group.id] ?? [];
     const onlyLost = ids.every((id) => before.includes(id)) && ids.join() === before.filter((id) => ids.includes(id)).join();
     if (onlyLost) return;
@@ -108,12 +109,12 @@
     run(async () => {
       await api.createTagGroup(name);
       newGroup = '';
-    }, `Gruppe „${name}“ angelegt.`);
+    }, t('tags.group_created', { name }));
   }
 
   function toggleCourse(group) {
     const on = group.role !== 'course';
-    run(() => api.setCourseGroup(group.id, on), on ? `„${group.name}“ ist jetzt die Gang-Gruppe.` : '');
+    run(() => api.setCourseGroup(group.id, on), on ? t('tags.course_group_set', { name: group.name }) : '');
   }
 
   function startEditGroup(group) {
@@ -129,7 +130,8 @@
 
   function askDeleteGroup(group) {
     if (group.tags.length === 0) {
-      if (confirm(`Gruppe „${group.name}“ löschen?`)) run(() => api.deleteTagGroup(group.id), `Gruppe „${group.name}“ gelöscht.`);
+      if (confirm(t('tags.delete_group_confirm', { name: group.name })))
+        run(() => api.deleteTagGroup(group.id), t('tags.group_deleted', { name: group.name }));
       return;
     }
     deleting = group;
@@ -142,7 +144,7 @@
     const group = deleting;
     deleting = null;
     const options = deleteMode === 'move' ? { moveTo: deleteTarget } : { withTags: true };
-    run(() => api.deleteTagGroup(group.id, options), `Gruppe „${group.name}“ gelöscht.`);
+    run(() => api.deleteTagGroup(group.id, options), t('tags.group_deleted', { name: group.name }));
   }
 
   // --- Kategorien --------------------------------------------------------
@@ -154,7 +156,7 @@
     run(async () => {
       await api.createTag(name, group.id);
       newTag[group.id] = '';
-    }, `Kategorie „${name}“ angelegt.`);
+    }, t('tags.tag_created', { name }));
   }
 
   function startEditTag(tag, group) {
@@ -169,38 +171,30 @@
   }
 
   function mergeTag(tag) {
-    const into = allTags.find((t) => t.id === draft.mergeInto);
+    const into = allTags.find((other) => other.id === draft.mergeInto);
     if (!into) return;
-    const text =
-      tag.recipe_count > 0
-        ? `${tag.recipe_count === 1 ? 'Das Rezept' : `Alle ${tag.recipe_count} Rezepte`} mit „${tag.name}“ ${tag.recipe_count === 1 ? 'bekommt' : 'bekommen'} „${into.name}“. Danach wird „${tag.name}“ gelöscht.`
-        : `„${tag.name}“ hat keine Rezepte und wird gelöscht.`;
-    if (!confirm(`Zusammenführen?\n\n${text}`)) return;
-    run(() => api.mergeTag(tag.id, into.id), `„${tag.name}“ in „${into.name}“ zusammengeführt.`);
+    const params = { count: tag.recipe_count, name: tag.name, into: into.name };
+    const text = tag.recipe_count > 0 ? t('tags.merge_recipes', params) : t('tags.merge_empty', params);
+    if (!confirm(`${t('tags.merge_confirm')}\n\n${text}`)) return;
+    run(() => api.mergeTag(tag.id, into.id), t('tags.merged', params));
   }
 
   function deleteTag(tag) {
-    const text =
-      tag.recipe_count > 0
-        ? `„${tag.name}“ ist ${tag.recipe_count === 1 ? 'einem Rezept' : `${tag.recipe_count} Rezepten`} zugeordnet.\n\nKategorie löschen? Die Rezepte bleiben unverändert, nur die Zuordnung fällt weg.`
-        : `Kategorie „${tag.name}“ löschen? Sie ist keinem Rezept zugeordnet.`;
+    const params = { count: tag.recipe_count, name: tag.name };
+    const text = tag.recipe_count > 0 ? t('tags.delete_tag_used', params) : t('tags.delete_tag_unused', params);
     if (!confirm(text)) return;
-    run(() => api.deleteTag(tag.id), `„${tag.name}“ gelöscht.`);
+    run(() => api.deleteTag(tag.id), t('tags.tag_deleted', params));
   }
 
   // --- Liste für die Claude-Skill -----------------------------------------
 
   /** Aufbau wie skills/rezeptplaner-import/categories.md (## Gruppe, - Name). */
   function skillList() {
-    const today = new Date().toLocaleDateString('de-DE');
-    const lines = [
-      '# Kategorien des Rezeptplaners',
-      '',
-      `Stand ${today}. Verwende für „categories“ ausschließlich diese Namen, genau so geschrieben – sie ersetzen categories.md der Skill (als Datei speichern und beim Bauen mit --categories angeben).`,
-    ];
+    const today = new Date().toLocaleDateString(currentLocale());
+    const lines = [`# ${t('tags.skill.title')}`, '', t('tags.skill.intro', { date: today })];
     for (const g of groups) {
       if (g.tags.length === 0) continue;
-      lines.push('', `## ${g.name}`, ...g.tags.map((t) => `- ${t.name}`));
+      lines.push('', `## ${g.name}`, ...g.tags.map((tag) => `- ${tag.name}`));
     }
     return lines.join('\n') + '\n';
   }
@@ -211,97 +205,94 @@
       // Die Zwischenablage gibt es nur über https oder auf dem eigenen Rechner.
       await navigator.clipboard.writeText(text);
       copyText = '';
-      showMessage('Kategorieliste kopiert – im Chat mit Claude einfügen.');
+      showMessage(t('tags.copied'));
     } catch {
       copyText = text;
-      showMessage('Kopieren hier nicht möglich – bitte den Text unten markieren und kopieren.', true);
+      showMessage(t('tags.copy_failed'), true);
     }
   }
 </script>
 
 <section class="card">
-  <h2>Kategorien</h2>
-  <p class="hint">
-    Gruppen und Kategorien zum Filtern der Rezepte. Am Griff ziehen zum Sortieren – Kategorien auch in eine andere Gruppe.
-    Namen gibt es nur einmal (Groß-/Kleinschreibung und Umlaute zählen nicht).
-  </p>
+  <h2>{t('tags.title')}</h2>
+  <p class="hint">{t('tags.intro')}</p>
 
   {#if loadError}
     <p class="error">{loadError}</p>
   {:else if groups === null}
-    <p>Lädt …</p>
+    <p>{t('common.loading')}</p>
   {:else}
     <div
       class="groups"
-      aria-label="Gruppen"
+      aria-label={t('tags.groups')}
       use:dragHandleZone={{ items: groups, flipDurationMs, dropTargetStyle, type: 'tag-groups', dragDisabled: busy }}
       onconsider={considerGroups}
       onfinalize={finalizeGroups}
     >
       {#each groups as group (group.id)}
-        <div class="group" class:shadow={isShadow(group)} aria-label="Gruppe {group.name}" animate:flip={{ duration: flipDurationMs }}>
+        <div class="group" class:shadow={isShadow(group)} aria-label={t('tags.group_label', { name: group.name })} animate:flip={{ duration: flipDurationMs }}>
           <div class="group-head">
-            <DragHandle label="Gruppe {group.name} verschieben" />
+            <DragHandle label={t('tags.move_group', { name: group.name })} />
             {#if editing?.kind === 'group' && editing.id === group.id}
               <form class="inline" onsubmit={(e) => renameGroup(e, group)}>
-                <input aria-label="Name der Gruppe" bind:value={draft.name} maxlength="50" required />
-                <button type="button" onclick={() => (editing = null)} disabled={busy}>Abbrechen</button>
-                <button type="submit" class="primary" disabled={busy}>Speichern</button>
+                <input aria-label={t('tags.group_name')} bind:value={draft.name} maxlength="50" required />
+                <button type="button" onclick={() => (editing = null)} disabled={busy}>{t('common.cancel')}</button>
+                <button type="submit" class="primary" disabled={busy}>{t('common.save')}</button>
               </form>
             {:else}
               <strong class="group-name">
                 {group.name}
-                {#if group.role === 'course'}<span class="badge" title="Schnellfilter-Reiter und Gänge im Menü">Gang</span>{/if}
+                {#if group.role === 'course'}<span class="badge" title={t('tags.course_badge_title')}>{t('tags.course_badge')}</span>{/if}
               </strong>
               <button type="button" onclick={() => toggleCourse(group)} disabled={busy}>
-                {group.role === 'course' ? 'Kein Gang' : 'Als Gang'}
+                {group.role === 'course' ? t('tags.course_off') : t('tags.course_on')}
               </button>
-              <button type="button" onclick={() => startEditGroup(group)} disabled={busy}>Umbenennen</button>
-              <button type="button" class="remove" onclick={() => askDeleteGroup(group)} disabled={busy} aria-label="Gruppe {group.name} löschen">×</button>
+              <button type="button" onclick={() => startEditGroup(group)} disabled={busy}>{t('tags.rename')}</button>
+              <button type="button" class="remove" onclick={() => askDeleteGroup(group)} disabled={busy} aria-label={t('tags.delete_group', { name: group.name })}>×</button>
             {/if}
           </div>
 
           <ul
             class="tags"
-            aria-label="Kategorien der Gruppe {group.name}"
+            aria-label={t('tags.group_tags', { name: group.name })}
             use:dragHandleZone={{ items: group.tags, flipDurationMs, dropTargetStyle, type: 'tags', dragDisabled: busy }}
             onconsider={(e) => considerTags(group, e)}
             onfinalize={(e) => finalizeTags(group, e)}
           >
             {#each group.tags as tag (tag.id)}
-              <li class:shadow={isShadow(tag)} aria-label="Kategorie {tag.name}" animate:flip={{ duration: flipDurationMs }}>
+              <li class:shadow={isShadow(tag)} aria-label={t('tags.tag_label', { name: tag.name })} animate:flip={{ duration: flipDurationMs }}>
                 {#if editing?.kind === 'tag' && editing.id === tag.id}
                   <div class="tag-edit">
                     <form class="inline" onsubmit={(e) => saveTag(e, tag)}>
-                      <input aria-label="Name der Kategorie" bind:value={draft.name} maxlength="50" required />
-                      <select aria-label="Gruppe" bind:value={draft.groupId}>
+                      <input aria-label={t('tags.tag_name')} bind:value={draft.name} maxlength="50" required />
+                      <select aria-label={t('tags.group')} bind:value={draft.groupId}>
                         {#each groups as g (g.id)}<option value={g.id}>{g.name}</option>{/each}
                       </select>
-                      <button type="submit" class="primary" disabled={busy}>Speichern</button>
+                      <button type="submit" class="primary" disabled={busy}>{t('common.save')}</button>
                     </form>
                     <div class="inline">
-                      <select aria-label="Zusammenführen mit" bind:value={draft.mergeInto}>
-                        <option value={0}>Zusammenführen mit …</option>
+                      <select aria-label={t('tags.merge_with')} bind:value={draft.mergeInto}>
+                        <option value={0}>{t('tags.merge_with_option')}</option>
                         {#each groups as g (g.id)}
-                          {#if g.tags.some((t) => t.id !== tag.id)}
+                          {#if g.tags.some((other) => other.id !== tag.id)}
                             <optgroup label={g.name}>
-                              {#each g.tags.filter((t) => t.id !== tag.id) as t (t.id)}<option value={t.id}>{t.name}</option>{/each}
+                              {#each g.tags.filter((other) => other.id !== tag.id) as other (other.id)}<option value={other.id}>{other.name}</option>{/each}
                             </optgroup>
                           {/if}
                         {/each}
                       </select>
-                      <button type="button" onclick={() => mergeTag(tag)} disabled={busy || !draft.mergeInto}>Zusammenführen</button>
+                      <button type="button" onclick={() => mergeTag(tag)} disabled={busy || !draft.mergeInto}>{t('tags.merge')}</button>
                     </div>
                     <div class="inline end">
-                      <button type="button" class="danger" onclick={() => deleteTag(tag)} disabled={busy}>Löschen</button>
-                      <button type="button" onclick={() => (editing = null)} disabled={busy}>Schließen</button>
+                      <button type="button" class="danger" onclick={() => deleteTag(tag)} disabled={busy}>{t('common.delete')}</button>
+                      <button type="button" onclick={() => (editing = null)} disabled={busy}>{t('common.close')}</button>
                     </div>
                   </div>
                 {:else}
                   <div class="row">
-                    <DragHandle label="Kategorie {tag.name} verschieben" />
+                    <DragHandle label={t('tags.move_tag', { name: tag.name })} />
                     <span class="text">{tag.name} <small>{recipes(tag.recipe_count)}</small></span>
-                    <button type="button" onclick={() => startEditTag(tag, group)} disabled={busy} aria-label="{tag.name} bearbeiten">Bearbeiten</button>
+                    <button type="button" onclick={() => startEditTag(tag, group)} disabled={busy} aria-label={t('tags.edit_tag', { name: tag.name })}>{t('common.edit')}</button>
                   </div>
                 {/if}
               </li>
@@ -309,33 +300,30 @@
           </ul>
 
           <form class="inline add" onsubmit={(e) => addTag(e, group)}>
-            <input aria-label="Neue Kategorie in {group.name}" placeholder="Neue Kategorie" bind:value={newTag[group.id]} maxlength="50" />
-            <button type="submit" disabled={busy || !(newTag[group.id] ?? '').trim()}>Hinzufügen</button>
+            <input aria-label={t('tags.new_tag_in', { name: group.name })} placeholder={t('tags.new_tag')} bind:value={newTag[group.id]} maxlength="50" />
+            <button type="submit" disabled={busy || !(newTag[group.id] ?? '').trim()}>{t('common.add')}</button>
           </form>
         </div>
       {/each}
     </div>
 
     <form class="inline add-group" onsubmit={addGroup}>
-      <input aria-label="Neue Gruppe" placeholder="Neue Gruppe, z. B. Anlass" bind:value={newGroup} maxlength="50" />
-      <button type="submit" class="primary" disabled={busy || newGroup.trim() === ''}>Gruppe anlegen</button>
+      <input aria-label={t('tags.new_group')} placeholder={t('tags.new_group_placeholder')} bind:value={newGroup} maxlength="50" />
+      <button type="submit" class="primary" disabled={busy || newGroup.trim() === ''}>{t('tags.create_group')}</button>
     </form>
 
     <p class="hint">
-      Die Gang-Gruppe (Vorspeise, Hauptgericht, Kuchen …) steuert die Reiter in der Rezeptübersicht.
-      <a href="#/settings/courses">Gänge zuordnen</a> – Vorschläge für Rezepte ohne Gang.
+      {t('tags.course_hint')}
+      <a href="#/settings/courses">{t('tags.assign_courses')}</a> – {t('tags.assign_courses_hint')}
     </p>
 
     <div class="claude">
-      <button type="button" onclick={copyForClaude} disabled={busy}>Kategorieliste für Claude kopieren</button>
+      <button type="button" onclick={copyForClaude} disabled={busy}>{t('tags.copy_for_claude')}</button>
       {#if message}<span class:error={messageIsError} class:ok={!messageIsError}>{message}</span>{/if}
     </div>
-    <p class="hint">
-      Die Claude-Skill kennt nur die Startkategorien. Nach Änderungen hier die Liste kopieren und im Chat mit Claude
-      einfügen; beim Import lassen sich unbekannte Kategorien außerdem zuordnen oder neu anlegen.
-    </p>
+    <p class="hint">{t('tags.claude_hint')}</p>
     {#if copyText}
-      <textarea readonly rows="8" aria-label="Kategorieliste für Claude" onfocus={(e) => e.currentTarget.select()}>{copyText}</textarea>
+      <textarea readonly rows="8" aria-label={t('tags.claude_list')} onfocus={(e) => e.currentTarget.select()}>{copyText}</textarea>
     {/if}
   {/if}
 </section>
@@ -343,15 +331,17 @@
 {#if deleting}
   <div class="backdrop" role="presentation">
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="delete-group-title">
-      <h3 id="delete-group-title">Gruppe „{deleting.name}“ löschen</h3>
+      <h3 id="delete-group-title">{t('tags.delete_dialog.title', { name: deleting.name })}</h3>
       <p>
-        Sie enthält {deleting.tags.length === 1 ? 'eine Kategorie' : `${deleting.tags.length} Kategorien`}:
-        {deleting.tags.map((t) => t.name).join(', ')}.
+        {t('tags.delete_dialog.contains', {
+          count: deleting.tags.length,
+          names: deleting.tags.map((tag) => tag.name).join(', '),
+        })}
       </p>
       {#if groups.length > 1}
         <label class="choice">
           <input type="radio" bind:group={deleteMode} value="move" />
-          In Gruppe verschieben:
+          {t('tags.delete_dialog.move_to')}
           <select bind:value={deleteTarget} disabled={deleteMode !== 'move'}>
             {#each groups.filter((g) => g.id !== deleting.id) as g (g.id)}<option value={g.id}>{g.name}</option>{/each}
           </select>
@@ -359,11 +349,11 @@
       {/if}
       <label class="choice">
         <input type="radio" bind:group={deleteMode} value="delete" />
-        Kategorien mitlöschen ({recipes(deleting.tags.reduce((n, t) => n + t.recipe_count, 0))} verlieren die Zuordnung, die Rezepte bleiben)
+        {t('tags.delete_dialog.with_tags', { recipes: recipes(deleting.tags.reduce((n, tag) => n + tag.recipe_count, 0)) })}
       </label>
       <div class="inline end">
-        <button type="button" onclick={() => (deleting = null)}>Abbrechen</button>
-        <button type="button" class="danger" onclick={confirmDeleteGroup}>Gruppe löschen</button>
+        <button type="button" onclick={() => (deleting = null)}>{t('common.cancel')}</button>
+        <button type="button" class="danger" onclick={confirmDeleteGroup}>{t('tags.delete_dialog.confirm')}</button>
       </div>
     </div>
   </div>

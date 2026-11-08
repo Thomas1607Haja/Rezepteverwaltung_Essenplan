@@ -1,0 +1,84 @@
+{
+  "title": "Shopping",
+  "period_label": "Period",
+  "period_current": "This shop",
+  "period_next": "Next shop",
+  "load_failed": "Couldn't load the shopping list: {message}",
+  "range": "{from} to {to}",
+  "dishes": "Dishes",
+  "nothing_planned": "Nothing is planned for this period.",
+  "to_plan": "Go to meal plan",
+  "slot_lunch": "lunch",
+  "slot_coffee": "afternoon",
+  "menu": "Menu: {title}",
+  "servings_short": {
+    "one": "{count} serv.",
+    "other": "{count} serv."
+  },
+  "reason": {
+    "no_recipe": "no recipe",
+    "transferred": "already sent to Bring",
+    "have_ingredients": "ingredients at home",
+    "past": "past"
+  },
+  "reset_button": "Undo sending …",
+  "reset_hint": "e.g. after sending to the wrong Bring list",
+  "list_title": "Shopping list",
+  "selected": "{selected} of {total} selected",
+  "sent": {
+    "one": "1 item sent to Bring.",
+    "other": "{count} items sent to Bring."
+  },
+  "sent_merged": {
+    "one": "1 item sent to Bring, {merged} added to an existing entry.",
+    "other": "{count} items sent to Bring, {merged} added to existing entries."
+  },
+  "failed_intro": "Not received – send again later or add them by hand:",
+  "nothing_to_buy": "Nothing to buy.",
+  "send": "Send to Bring ({count})",
+  "send_to": "Send to Bring: {list} ({count})",
+  "sending": "Sending …",
+  "to_settings": "Go to settings",
+  "deselected_hint": "Unselected items will count as done.",
+  "changed_title": "Changed after sending",
+  "changed_hint": "Dishes were changed, moved or removed after sending.",
+  "missing_title": "Still missing from the Bring list",
+  "send_missing": "Send the difference ({count})",
+  "to_list": "to “{name}”",
+  "surplus_title": "Sent too much",
+  "surplus_hint": "Not removed from Bring – it may already be bought. Best to plan it for another dish.",
+  "reset": {
+    "title": "Undo sending",
+    "intro": "The dishes go back to planned and can be sent to Bring again. Unselected ingredients (“ingredients at home”) are kept.",
+    "nothing": "Nothing has been sent in this period.",
+    "list_name": "“{name}”",
+    "unknown_list": "unknown list",
+    "no_items": "no items sent",
+    "target": "to {lists}",
+    "items": {
+      "one": "{count} item",
+      "other": "{count} items"
+    },
+    "remove": "Remove items from the old list",
+    "remove_hint": "Items still needed by other sent dishes stay with a smaller amount. Items already checked off are left alone.",
+    "unknown_label": {
+      "one": "For {count} dish the original list wasn't saved (sent before version 0.18). Remove from:",
+      "other": "For {count} dishes the original list wasn't saved (sent before version 0.18). Remove from:"
+    },
+    "dont_remove": "– don't remove –",
+    "lists_error": "Lists not loaded: {message}",
+    "resend_hint": "Sending again will go to “{name}” (settings).",
+    "resetting": "Undoing …",
+    "confirm": "Undo ({count})",
+    "done": {
+      "one": "{count} dish is planned again.",
+      "other": "{count} dishes are planned again."
+    },
+    "removed": "Removed from the old list: {items}.",
+    "reduced": "Amount reduced (other dishes still need it): {items}.",
+    "not_found": "No longer open on the list, left unchanged: {items}.",
+    "skipped": "Not removed, list unknown: {items}.",
+    "failed": "Not removed (please delete by hand): {items}.",
+    "send_now": "Now tap “Send to Bring” – it will go to “{name}”."
+  }
+}

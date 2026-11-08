@@ -1,0 +1,82 @@
+{
+  "title": "Ricette",
+  "import_file": "Importa file",
+  "new_recipe": "Nuova ricetta",
+  "search_placeholder": "Cerca per titolo, ingrediente o passaggio",
+  "search_label": "Cerca ricette",
+  "categories": "Categorie",
+  "favorites": "Preferiti",
+  "favorites_only": "Solo preferiti",
+  "illustrations": "Illustrazioni",
+  "illustrations_only": "Solo ricette con immagine disegnata – da sostituire con una foto",
+  "never_planned": "Mai previste",
+  "never_planned_only": "Solo ricette mai inserite nel piano pasti",
+  "course": "Portata",
+  "sort": {
+    "label": "Ordina per",
+    "name": "Nome",
+    "newest": "Aggiunte di recente",
+    "last_planned": "Previste di recente",
+    "most_planned": "Più previste"
+  },
+  "assign": {
+    "button": "Assegna portata",
+    "hint": "Assegna una portata a più ricette insieme",
+    "label": "Assegna:",
+    "target": "Destinazione",
+    "add_course": "Aggiungi portata",
+    "remove_course": "Rimuovi portata",
+    "add_tag": "Aggiungi {name}",
+    "remove_tag": "Rimuovi {name}",
+    "remove_all_courses": "Rimuovi tutte le portate",
+    "add_category": "Aggiungi categoria: {group}",
+    "remove_category": "Rimuovi categoria: {group}",
+    "selected": {
+      "one": "{count} selezionata",
+      "other": "{count} selezionate"
+    },
+    "select_visible": "Seleziona le visibili",
+    "clear_selection": "Annulla selezione",
+    "done": "Fatto",
+    "other_course": {
+      "one": "1 ricetta selezionata ha già un'altra portata: resta e si aggiunge «{name}».",
+      "other": "{count} ricette selezionate hanno già un'altra portata: resta e si aggiunge «{name}»."
+    }
+  },
+  "notice": {
+    "added": {
+      "one": "«{name}» aggiunto a 1 ricetta.",
+      "other": "«{name}» aggiunto a {count} ricette."
+    },
+    "removed": {
+      "one": "«{name}» rimosso da 1 ricetta.",
+      "other": "«{name}» rimosso da {count} ricette."
+    },
+    "removed_all_courses": {
+      "one": "Tutte le portate rimosse da 1 ricetta.",
+      "other": "Tutte le portate rimosse da {count} ricette."
+    },
+    "unchanged": "Nessuna modifica: era già così.",
+    "not_saved": "Non salvato: {message}",
+    "undone": "Annullato.",
+    "undo_failed": "Impossibile annullare: {message}",
+    "undo": "Annulla"
+  },
+  "load_error": "Impossibile caricare le ricette: {message}",
+  "empty": {
+    "none_found": "Nessuna ricetta trovata.",
+    "reset_filter": "Azzera filtri",
+    "no_recipes": "Ancora nessuna ricetta."
+  },
+  "count": {
+    "one": "{count} ricetta",
+    "other": "{count} ricette"
+  },
+  "tile": {
+    "illustration": "Illustrazione",
+    "illustration_hint": "Immagine disegnata: sostituiscila con una foto",
+    "no_course": "senza portata",
+    "variant": "Variante",
+    "favorite": "Preferito"
+  }
+}

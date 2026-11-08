@@ -1,0 +1,73 @@
+{
+  "title": "Kategorien",
+  "intro": "Gruppen und Kategorien zum Filtern der Rezepte. Am Griff ziehen zum Sortieren – Kategorien auch in eine andere Gruppe. Namen gibt es nur einmal (Groß-/Kleinschreibung und Umlaute zählen nicht).",
+  "load_failed": "Kategorien nicht geladen: {message}",
+  "recipes": {
+    "one": "{count} Rezept",
+    "other": "{count} Rezepte"
+  },
+  "group_created": "Gruppe „{name}“ angelegt.",
+  "course_group_set": "„{name}“ ist jetzt die Gang-Gruppe.",
+  "delete_group_confirm": "Gruppe „{name}“ löschen?",
+  "group_deleted": "Gruppe „{name}“ gelöscht.",
+  "tag_created": "Kategorie „{name}“ angelegt.",
+  "merge_confirm": "Zusammenführen?",
+  "merge_recipes": {
+    "one": "Das Rezept mit „{name}“ bekommt „{into}“. Danach wird „{name}“ gelöscht.",
+    "other": "Alle {count} Rezepte mit „{name}“ bekommen „{into}“. Danach wird „{name}“ gelöscht."
+  },
+  "merge_empty": "„{name}“ hat keine Rezepte und wird gelöscht.",
+  "merged": "„{name}“ in „{into}“ zusammengeführt.",
+  "delete_tag_used": {
+    "one": "„{name}“ ist einem Rezept zugeordnet.\n\nKategorie löschen? Die Rezepte bleiben unverändert, nur die Zuordnung fällt weg.",
+    "other": "„{name}“ ist {count} Rezepten zugeordnet.\n\nKategorie löschen? Die Rezepte bleiben unverändert, nur die Zuordnung fällt weg."
+  },
+  "delete_tag_unused": "Kategorie „{name}“ löschen? Sie ist keinem Rezept zugeordnet.",
+  "tag_deleted": "„{name}“ gelöscht.",
+  "skill": {
+    "title": "Kategorien des Rezeptplaners",
+    "intro": "Stand {date}. Verwende für „categories“ ausschließlich diese Namen, genau so geschrieben – sie ersetzen categories.md der Skill (als Datei speichern und beim Bauen mit --categories angeben)."
+  },
+  "copied": "Kategorieliste kopiert – im Chat mit Claude einfügen.",
+  "copy_failed": "Kopieren hier nicht möglich – bitte den Text unten markieren und kopieren.",
+  "groups": "Gruppen",
+  "group": "Gruppe",
+  "group_label": "Gruppe {name}",
+  "move_group": "Gruppe {name} verschieben",
+  "group_name": "Name der Gruppe",
+  "course_badge": "Gang",
+  "course_badge_title": "Schnellfilter-Reiter und Gänge im Menü",
+  "course_on": "Als Gang",
+  "course_off": "Kein Gang",
+  "rename": "Umbenennen",
+  "delete_group": "Gruppe {name} löschen",
+  "group_tags": "Kategorien der Gruppe {name}",
+  "tag_label": "Kategorie {name}",
+  "tag_name": "Name der Kategorie",
+  "merge_with": "Zusammenführen mit",
+  "merge_with_option": "Zusammenführen mit …",
+  "merge": "Zusammenführen",
+  "move_tag": "Kategorie {name} verschieben",
+  "edit_tag": "{name} bearbeiten",
+  "new_tag_in": "Neue Kategorie in {name}",
+  "new_tag": "Neue Kategorie",
+  "new_group": "Neue Gruppe",
+  "new_group_placeholder": "Neue Gruppe, z. B. Anlass",
+  "create_group": "Gruppe anlegen",
+  "course_hint": "Die Gang-Gruppe (Vorspeise, Hauptgericht, Kuchen …) steuert die Reiter in der Rezeptübersicht.",
+  "assign_courses": "Gänge zuordnen",
+  "assign_courses_hint": "Vorschläge für Rezepte ohne Gang.",
+  "copy_for_claude": "Kategorieliste für Claude kopieren",
+  "claude_hint": "Die Claude-Skill kennt nur die Startkategorien. Nach Änderungen hier die Liste kopieren und im Chat mit Claude einfügen; beim Import lassen sich unbekannte Kategorien außerdem zuordnen oder neu anlegen.",
+  "claude_list": "Kategorieliste für Claude",
+  "delete_dialog": {
+    "title": "Gruppe „{name}“ löschen",
+    "contains": {
+      "one": "Sie enthält eine Kategorie: {names}.",
+      "other": "Sie enthält {count} Kategorien: {names}."
+    },
+    "move_to": "In Gruppe verschieben:",
+    "with_tags": "Kategorien mitlöschen ({recipes} verlieren die Zuordnung, die Rezepte bleiben)",
+    "confirm": "Gruppe löschen"
+  }
+}

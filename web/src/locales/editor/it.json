@@ -1,0 +1,96 @@
+{
+  "title_new": "Nuova ricetta",
+  "title_variant": "Nuova variante",
+  "title_edit": "Modifica ricetta",
+  "not_found": "Questa ricetta non esiste (più).",
+  "url_import": {
+    "heading": "Importa dal web",
+    "hint": "Incolla l'indirizzo di una pagina di ricette, ad es. di giallozafferano.it. La ricetta viene inserita nel modulo come bozza.",
+    "address_label": "Indirizzo della pagina della ricetta",
+    "scan": "Codice QR",
+    "scan_title": "Scansiona un codice QR con la fotocamera",
+    "no_url_in_qr": "Il codice QR non contiene un indirizzo web (http/https): \"{text}\"",
+    "address_missing": "Incolla un indirizzo.",
+    "replace_confirm": "Sostituire quanto inserito con la ricetta importata?",
+    "no_recipe": "Nessuna ricetta trovata in questa pagina. Puoi inserirla a mano qui sotto.",
+    "page_failed": "Impossibile caricare la pagina: {message}",
+    "failed": "Importazione non riuscita: {message}"
+  },
+  "duplicates": {
+    "title": "Questa ricetta esiste già:",
+    "hint": "Salvando ne crei comunque un'altra."
+  },
+  "sections": {
+    "general": "Generale",
+    "image": "Foto",
+    "categories": "Categorie",
+    "ingredients": "Ingredienti",
+    "steps": "Passaggi",
+    "notes": "Note"
+  },
+  "fields": {
+    "title": "Titolo",
+    "description": "Descrizione",
+    "amount": "Quantità",
+    "servings": "Porzioni",
+    "unit": "Unità",
+    "prep": "Preparazione (min)",
+    "total": "Tempo totale (min)",
+    "source_url": "Fonte (URL)",
+    "source_name": "Fonte (nome)",
+    "source_name_placeholder": "ad es. scheda HelloFresh, libro di cucina"
+  },
+  "ingredients_hint": "Quantità come 1,5 o 1/2. Le righe vuote vengono eliminate al salvataggio.",
+  "check_fields": "Controlla i campi evidenziati.",
+  "image_failed": "Ricetta salvata, ma non è stato possibile aggiungere la foto: {message}",
+  "save_error_field": "{message} (campo: {field})",
+  "save_failed": "Salvataggio non riuscito: {message}",
+  "discard_variant": "Scartare questa variante? Verrà eliminata.",
+  "delete_failed": "Eliminazione non riuscita: {message}",
+  "discard_changes": "Scartare le modifiche?",
+  "validation": {
+    "title_required": "Inserisci un titolo.",
+    "servings_min": "Almeno 1 porzione.",
+    "whole_minutes": "Minuti interi, non negativi.",
+    "quantity_unreadable": "Quantità non leggibile, ad es. 1,5 o 1/2.",
+    "name_required": "Inserisci un nome."
+  },
+  "ingredients": {
+    "heading_label": "Titolo {name}",
+    "ingredient_label": "Ingrediente {name}",
+    "unnamed": "(senza nome)",
+    "empty": "(vuoto)",
+    "move": "Sposta {label}",
+    "heading_placeholder": "Titolo, ad es. Per la salsa",
+    "heading_aria": "Titolo del gruppo",
+    "remove_heading": "Rimuovi titolo",
+    "quantity": "Q.tà",
+    "unit": "Unità",
+    "name": "Ingrediente",
+    "note": "Nota",
+    "note_placeholder": "Nota, ad es. tritato",
+    "shopping": "da comprare",
+    "shopping_title": "Metti nella lista della spesa",
+    "remove": "Rimuovi ingrediente",
+    "add": "Ingrediente",
+    "add_heading": "Titolo"
+  },
+  "steps": {
+    "step": "Passaggio {n}",
+    "move": "Sposta passaggio {n}",
+    "placeholder": "Cosa c'è da fare?",
+    "remove": "Rimuovi passaggio {n}",
+    "add": "Passaggio"
+  },
+  "image": {
+    "not_image": "Scegli un file immagine.",
+    "too_large": "Il file è troppo grande (max {max} MB).",
+    "preview_alt": "Anteprima della foto della ricetta",
+    "choose": "Scegli foto",
+    "choose_other": "Scegli un'altra foto",
+    "remove": "Rimuovi foto",
+    "upload_on_save": "Verrà caricata e ridimensionata al salvataggio.",
+    "remote_on_save": "Foto della pagina di origine – aggiunta al salvataggio.",
+    "remove_on_save": "Verrà rimossa al salvataggio."
+  }
+}

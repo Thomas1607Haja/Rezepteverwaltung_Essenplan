@@ -1,0 +1,37 @@
+{
+  "menu_gone": "Este menú ya no existe.",
+  "entry_gone": "Esta entrada ya no existe.",
+  "added": "«{title}» añadido.",
+  "added_as": "«{title}» añadido como {course}.",
+  "added_hint": "Elige otro plato o «Listo».",
+  "heading_menu": "Plato para el menú",
+  "heading_menu_named": "Plato para el menú: {title}",
+  "heading_replace": "Cambiar",
+  "heading_replace_named": "Cambiar: {title}",
+  "heading_add": "Plato para el {day}",
+  "course": "Plato",
+  "course_none": "– ninguno –",
+  "courses_in_menu": {
+    "one": "{count} plato en el menú",
+    "other": "{count} platos en el menú"
+  },
+  "done": "Listo",
+  "meal": "Comida",
+  "compose_menu": "Crear un menú …",
+  "note_placeholder": "Sin receta, p. ej. Comer fuera",
+  "note_label": "Entrada sin receta",
+  "note_submit": "Añadir",
+  "search_placeholder": "Buscar receta",
+  "search_label": "Buscar recetas",
+  "favorites_only": "Solo favoritos",
+  "sort_label": "Orden",
+  "sort": {
+    "name": "Nombre",
+    "last_planned": "Último planeado",
+    "most_planned": "Más planeadas",
+    "newest": "Añadidas recientemente"
+  },
+  "no_results": "No hay recetas que coincidan.",
+  "variant": "Variante",
+  "replace": "Cambiar"
+}

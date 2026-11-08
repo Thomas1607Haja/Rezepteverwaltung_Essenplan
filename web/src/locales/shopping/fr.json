@@ -1,0 +1,84 @@
+{
+  "title": "Courses",
+  "period_label": "Période",
+  "period_current": "Courses en cours",
+  "period_next": "Prochaines courses",
+  "load_failed": "Liste de courses non chargée : {message}",
+  "range": "{from} au {to}",
+  "dishes": "Plats",
+  "nothing_planned": "Rien de prévu pour cette période.",
+  "to_plan": "Voir le planning",
+  "slot_lunch": "midi",
+  "slot_coffee": "goûter",
+  "menu": "Menu : {title}",
+  "servings_short": {
+    "one": "{count} port.",
+    "other": "{count} port."
+  },
+  "reason": {
+    "no_recipe": "sans recette",
+    "transferred": "déjà envoyé à Bring",
+    "have_ingredients": "ingrédients à la maison",
+    "past": "passé"
+  },
+  "reset_button": "Annuler l'envoi …",
+  "reset_hint": "p. ex. après un envoi vers la mauvaise liste Bring",
+  "list_title": "Liste de courses",
+  "selected": "{selected} sur {total} sélectionnés",
+  "sent": {
+    "one": "{count} article envoyé à Bring.",
+    "other": "{count} articles envoyés à Bring."
+  },
+  "sent_merged": {
+    "one": "{count} article envoyé à Bring, dont {merged} complété(s) sur la liste.",
+    "other": "{count} articles envoyés à Bring, dont {merged} complété(s) sur la liste."
+  },
+  "failed_intro": "Non reçus – renvoyez-les plus tard ou ajoutez-les à la main :",
+  "nothing_to_buy": "Rien à acheter.",
+  "send": "Envoyer à Bring ({count})",
+  "send_to": "Envoyer à Bring : {list} ({count})",
+  "sending": "Envoi …",
+  "to_settings": "Aller aux paramètres",
+  "deselected_hint": "Les articles décochés seront considérés comme faits.",
+  "changed_title": "Modifié après l'envoi",
+  "changed_hint": "Des plats ont été modifiés, déplacés ou supprimés après l'envoi.",
+  "missing_title": "Manque encore sur la liste Bring",
+  "send_missing": "Envoyer la différence ({count})",
+  "to_list": "vers « {name} »",
+  "surplus_title": "Envoyé en trop",
+  "surplus_hint": "Pas supprimé de Bring – peut-être déjà acheté. Le mieux est de le prévoir pour un autre plat.",
+  "reset": {
+    "title": "Annuler l'envoi",
+    "intro": "Les plats redeviennent prévus et peuvent être renvoyés à Bring. Les ingrédients décochés (« ingrédients à la maison ») sont conservés.",
+    "nothing": "Rien n'a été envoyé pour cette période.",
+    "list_name": "« {name} »",
+    "unknown_list": "liste inconnue",
+    "no_items": "aucun article envoyé",
+    "target": "vers {lists}",
+    "items": {
+      "one": "{count} article",
+      "other": "{count} articles"
+    },
+    "remove": "Retirer les articles de l'ancienne liste",
+    "remove_hint": "Ce dont d'autres plats envoyés ont encore besoin reste, en quantité réduite. Les articles déjà cochés ne sont pas touchés.",
+    "unknown_label": {
+      "one": "Pour {count} plat, la liste d'origine n'est pas enregistrée (envoyé avant la version 0.18). Retirer de :",
+      "other": "Pour {count} plats, la liste d'origine n'est pas enregistrée (envoyés avant la version 0.18). Retirer de :"
+    },
+    "dont_remove": "– ne pas retirer –",
+    "lists_error": "Listes non chargées : {message}",
+    "resend_hint": "Le prochain envoi ira vers « {name} » (paramètres).",
+    "resetting": "Annulation …",
+    "confirm": "Annuler l'envoi ({count})",
+    "done": {
+      "one": "{count} plat de nouveau prévu.",
+      "other": "{count} plats de nouveau prévus."
+    },
+    "removed": "Retiré de l'ancienne liste : {items}.",
+    "reduced": "Quantité réduite (d'autres plats en ont encore besoin) : {items}.",
+    "not_found": "Plus ouvert sur la liste, inchangé : {items}.",
+    "skipped": "Non retiré, liste inconnue : {items}.",
+    "failed": "Non retiré (à supprimer à la main) : {items}.",
+    "send_now": "Appuyez maintenant sur « Envoyer à Bring » – l'envoi ira vers « {name} »."
+  }
+}

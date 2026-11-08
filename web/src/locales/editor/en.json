@@ -1,0 +1,96 @@
+{
+  "title_new": "New recipe",
+  "title_variant": "New variant",
+  "title_edit": "Edit recipe",
+  "not_found": "This recipe doesn't exist (anymore).",
+  "url_import": {
+    "heading": "Import from the web",
+    "hint": "Paste the address of a recipe page, e.g. from allrecipes.com. The recipe is filled into the form as a draft.",
+    "address_label": "Address of the recipe page",
+    "scan": "QR code",
+    "scan_title": "Scan a QR code with the camera",
+    "no_url_in_qr": "The QR code doesn't contain a web address (http/https): \"{text}\"",
+    "address_missing": "Please paste an address.",
+    "replace_confirm": "Replace what you've entered with the imported recipe?",
+    "no_recipe": "No recipe found on this page. You can enter it by hand below.",
+    "page_failed": "Couldn't load the page: {message}",
+    "failed": "Import failed: {message}"
+  },
+  "duplicates": {
+    "title": "This recipe already exists:",
+    "hint": "Saving creates another one anyway."
+  },
+  "sections": {
+    "general": "General",
+    "image": "Photo",
+    "categories": "Categories",
+    "ingredients": "Ingredients",
+    "steps": "Steps",
+    "notes": "Notes"
+  },
+  "fields": {
+    "title": "Title",
+    "description": "Description",
+    "amount": "Amount",
+    "servings": "Servings",
+    "unit": "Unit",
+    "prep": "Prep time (min)",
+    "total": "Total time (min)",
+    "source_url": "Source (URL)",
+    "source_name": "Source (name)",
+    "source_name_placeholder": "e.g. HelloFresh card, cookbook"
+  },
+  "ingredients_hint": "Amounts like 1.5 or 1/2. Empty rows are dropped when saving.",
+  "check_fields": "Please check the highlighted fields.",
+  "image_failed": "Recipe saved, but the photo couldn't be added: {message}",
+  "save_error_field": "{message} (field: {field})",
+  "save_failed": "Saving failed: {message}",
+  "discard_variant": "Discard this variant? It will be deleted.",
+  "delete_failed": "Deleting failed: {message}",
+  "discard_changes": "Discard changes?",
+  "validation": {
+    "title_required": "Please enter a title.",
+    "servings_min": "At least 1 serving.",
+    "whole_minutes": "Whole minutes, not negative.",
+    "quantity_unreadable": "Can't read the amount, e.g. 1.5 or 1/2.",
+    "name_required": "Please enter a name."
+  },
+  "ingredients": {
+    "heading_label": "Heading {name}",
+    "ingredient_label": "Ingredient {name}",
+    "unnamed": "(no name)",
+    "empty": "(empty)",
+    "move": "Move {label}",
+    "heading_placeholder": "Heading, e.g. For the sauce",
+    "heading_aria": "Group heading",
+    "remove_heading": "Remove heading",
+    "quantity": "Qty",
+    "unit": "Unit",
+    "name": "Ingredient",
+    "note": "Note",
+    "note_placeholder": "Note, e.g. chopped",
+    "shopping": "buy",
+    "shopping_title": "Put on the shopping list",
+    "remove": "Remove ingredient",
+    "add": "Ingredient",
+    "add_heading": "Heading"
+  },
+  "steps": {
+    "step": "Step {n}",
+    "move": "Move step {n}",
+    "placeholder": "What needs doing?",
+    "remove": "Remove step {n}",
+    "add": "Step"
+  },
+  "image": {
+    "not_image": "Please choose an image file.",
+    "too_large": "The file is too large (max. {max} MB).",
+    "preview_alt": "Preview of the recipe photo",
+    "choose": "Choose photo",
+    "choose_other": "Choose another photo",
+    "remove": "Remove photo",
+    "upload_on_save": "Will be uploaded and resized when saving.",
+    "remote_on_save": "Photo from the source page – added when saving.",
+    "remove_on_save": "Will be removed when saving."
+  }
+}

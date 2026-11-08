@@ -1,0 +1,37 @@
+{
+  "menu_gone": "Ce menu n'existe plus.",
+  "entry_gone": "Cette entrée n'existe plus.",
+  "added": "« {title} » ajouté.",
+  "added_as": "« {title} » ajouté comme {course}.",
+  "added_hint": "Choisissez un autre plat ou « Terminé ».",
+  "heading_menu": "Plat pour le menu",
+  "heading_menu_named": "Plat pour le menu : {title}",
+  "heading_replace": "Remplacer",
+  "heading_replace_named": "Remplacer : {title}",
+  "heading_add": "Plat pour {day}",
+  "course": "Plat",
+  "course_none": "– aucun –",
+  "courses_in_menu": {
+    "one": "{count} plat dans le menu",
+    "other": "{count} plats dans le menu"
+  },
+  "done": "Terminé",
+  "meal": "Repas",
+  "compose_menu": "Composer un menu …",
+  "note_placeholder": "Sans recette, p. ex. Restaurant",
+  "note_label": "Entrée sans recette",
+  "note_submit": "Ajouter",
+  "search_placeholder": "Rechercher une recette",
+  "search_label": "Rechercher des recettes",
+  "favorites_only": "Favoris uniquement",
+  "sort_label": "Tri",
+  "sort": {
+    "name": "Nom",
+    "last_planned": "Dernière planification",
+    "most_planned": "Les plus planifiées",
+    "newest": "Ajoutées récemment"
+  },
+  "no_results": "Aucune recette correspondante.",
+  "variant": "Variante",
+  "replace": "Remplacer"
+}

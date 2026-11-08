@@ -2,7 +2,8 @@
   import { api, imageUrl } from '../lib/api.js';
   import { navigate } from '../lib/router.svelte.js';
   import { focusPlanOn } from '../lib/planFocus.svelte.js';
-  import { dayLabel, planStatus } from '../lib/format.js';
+  import { dayLabel, planStatus, menuTitle } from '../lib/format.js';
+  import { t, errorText } from '../lib/i18n.svelte.js';
   import Icon from '../components/Icon.svelte';
   import TagFilter from '../components/TagFilter.svelte';
   import PlanPreview from '../components/PlanPreview.svelte';
@@ -42,7 +43,7 @@
   /** Slot wählen; beim Kaffee gleich den Reiter „Backen“ zeigen. */
   function chooseSlot(value) {
     slot = value;
-    if (value === 'coffee' && tabs.some((t) => t.key === 'baking')) course = 'baking';
+    if (value === 'coffee' && tabs.some((tab) => tab.key === 'baking')) course = 'baking';
   }
   const tabs = $derived(courseTabs(tagGroups));
   let recipes = $state(null);
@@ -62,12 +63,12 @@
         targetDate = m.date;
         slot = m.slot;
       })
-      .catch((e) => (error = e.status === 404 ? 'Dieses Menü gibt es nicht mehr.' : e.message));
+      .catch((e) => (error = e.status === 404 ? t('picker.menu_gone') : errorText(e)));
   }
   const courseTags = $derived(tagGroups.find((g) => g.role === 'course')?.tags ?? []);
   // Reiter und Gang passen zusammen: „Nachspeisen“ → Nachspeise usw.
   $effect(() => {
-    const tab = tabs.find((t) => t.key === course);
+    const tab = tabs.find((x) => x.key === course);
     if (menuId && tab && tab.ids.length === 1) courseTag = tab.ids[0];
   });
 
@@ -79,7 +80,7 @@
         targetDate = e.date;
         slot = e.slot;
       })
-      .catch((e) => (error = e.status === 404 ? 'Diesen Eintrag gibt es nicht mehr.' : e.message));
+      .catch((e) => (error = e.status === 404 ? t('picker.entry_gone') : errorText(e)));
   }
   api.listTagGroups().then((g) => (tagGroups = g)).catch(() => {});
 
@@ -91,7 +92,7 @@
       favoritesOnly,
       tagIds: [...tagIds],
       sort,
-      courseIds: tabs.find((t) => t.key === course)?.ids ?? [],
+      courseIds: tabs.find((tab) => tab.key === course)?.ids ?? [],
     };
     const id = ++requestCount;
     const timer = setTimeout(async () => {
@@ -99,7 +100,7 @@
         const list = await api.listRecipes(filter);
         if (id === requestCount) recipes = list;
       } catch (e) {
-        if (id === requestCount) error = e.message;
+        if (id === requestCount) error = errorText(e);
       }
     }, filter.query ? 250 : 0);
     return () => clearTimeout(timer);
@@ -155,7 +156,7 @@
       focusPlanOn(targetDate);
       navigate('/');
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
       saving = false;
     }
   }
@@ -177,12 +178,13 @@
     error = '';
     try {
       const entry = await api.createEntry({ menu_id: Number(menuId), recipe_id: recipeId, note: noteText, course_tag_id: Number(courseTag) || null });
-      const name = courseTags.find((t) => t.id === Number(courseTag))?.name;
-      added = `„${entry.recipe?.title ?? entry.note}“${name ? ` als ${name}` : ''} hinzugefügt.`;
+      const name = courseTags.find((tag) => tag.id === Number(courseTag))?.name;
+      const title = entry.recipe?.title ?? entry.note;
+      added = name ? t('picker.added_as', { title, course: name }) : t('picker.added', { title });
       note = '';
       menu = await api.getMenu(menuId);
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     } finally {
       saving = false;
     }
@@ -195,7 +197,7 @@
       const m = await api.createMenu({ date: targetDate, slot });
       navigate(`/plan/menu/${m.id}`);
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
       saving = false;
     }
   }
@@ -206,15 +208,15 @@
   }
 </script>
 
-<p class="back"><button type="button" class="link" onclick={back}>← Essensplan</button></p>
+<p class="back"><button type="button" class="link" onclick={back}>← {t('nav.plan')}</button></p>
 
 <h1>
   {#if menuId}
-    Gang für Menü{#if menu}: {menu.display_title}{/if}
+    {#if menu}{t('picker.heading_menu_named', { title: menuTitle(menu) })}{:else}{t('picker.heading_menu')}{/if}
   {:else if replaceId}
-    Ersetzen{#if entry}: {entry.recipe?.title ?? entry.note}{/if}
+    {#if entry}{t('picker.heading_replace_named', { title: entry.recipe?.title ?? entry.note })}{:else}{t('picker.heading_replace')}{/if}
   {:else}
-    Gericht für {heading}
+    {t('picker.heading_add', { day: heading })}
   {/if}
 </h1>
 
@@ -223,18 +225,18 @@
 {#if menuId}
   <div class="menu-bar">
     <label>
-      Gang
+      {t('picker.course')}
       <select bind:value={courseTag}>
-        <option value={0}>– keiner –</option>
-        {#each courseTags as t (t.id)}<option value={t.id}>{t.name}</option>{/each}
+        <option value={0}>{t('picker.course_none')}</option>
+        {#each courseTags as tag (tag.id)}<option value={tag.id}>{tag.name}</option>{/each}
       </select>
     </label>
-    {#if menu}<span class="muted">{menu.entries.length === 1 ? '1 Gang' : `${menu.entries.length} Gänge`} im Menü</span>{/if}
-    <button type="button" class="primary" onclick={back}>Fertig</button>
+    {#if menu}<span class="muted">{t('picker.courses_in_menu', { count: menu.entries.length })}</span>{/if}
+    <button type="button" class="primary" onclick={back}>{t('picker.done')}</button>
   </div>
-  {#if added}<p class="ok">{added} Weiteren Gang wählen oder „Fertig“.</p>{/if}
+  {#if added}<p class="ok">{added} {t('picker.added_hint')}</p>{/if}
 {:else if !replaceId}
-  <div class="slot-switch" role="group" aria-label="Mahlzeit">
+  <div class="slot-switch" role="group" aria-label={t('picker.meal')}>
     {#each slotChoices(coffeeSlot, slot) as s (s.value)}
       <button type="button" aria-pressed={slot === s.value} onclick={() => chooseSlot(s.value)}>{s.label}</button>
     {/each}
@@ -242,15 +244,17 @@
 {/if}
 
 {#if !menuId && !replaceId}
-  <button type="button" class="secondary menu-start" disabled={saving} onclick={startMenu}>Menü zusammenstellen …</button>
+  <button type="button" class="secondary menu-start" disabled={saving} onclick={startMenu}>{t('picker.compose_menu')}</button>
 {/if}
 
 <form class="note-form" onsubmit={chooseNote}>
-  <input placeholder="Ohne Rezept, z. B. Essen gehen" aria-label="Eintrag ohne Rezept" bind:value={note} maxlength="200" />
-  <button type="submit" class="secondary" disabled={note.trim() === '' || saving}>Eintragen</button>
+  <input placeholder={t('picker.note_placeholder')} aria-label={t('picker.note_label')} bind:value={note} maxlength="200" />
+  <button type="submit" class="secondary" disabled={note.trim() === '' || saving}>{t('picker.note_submit')}</button>
 </form>
 <div class="quick">
-  {#each ['Essen gehen', 'Reste', 'Pizza bestellen'] as text (text)}
+  <!-- Gespeichert wird der übersetzte Text als Notiz (Notizen sind Inhalt). -->
+  {#each ['eating_out', 'leftovers', 'order_pizza'] as key (key)}
+    {@const text = t(`quick.${key}`)}
     <button type="button" class="chip" disabled={saving} onclick={() => (menuId ? addCourse(null, text) : choose(null, text))}>{text}</button>
   {/each}
 </div>
@@ -261,7 +265,7 @@
   <CourseTabs {tabs} value={course} onchange={(key) => (course = key)} />
   <label class="search">
     <Icon name="search" size={18} />
-    <input type="search" placeholder="Rezept suchen" aria-label="Rezepte durchsuchen" bind:value={query} />
+    <input type="search" placeholder={t('picker.search_placeholder')} aria-label={t('picker.search_label')} bind:value={query} />
   </label>
 </div>
 
@@ -269,14 +273,14 @@
   <button type="button" class="toggle" aria-expanded={showTags} onclick={() => (showTags = !showTags)}>
     <Icon name="filter" size={18} />{tagIds.length > 0 ? ` ${tagIds.length}` : ''}
   </button>
-  <button type="button" class="toggle" aria-pressed={favoritesOnly} title="Nur Favoriten" onclick={() => (favoritesOnly = !favoritesOnly)}>
+  <button type="button" class="toggle" aria-pressed={favoritesOnly} title={t('picker.favorites_only')} onclick={() => (favoritesOnly = !favoritesOnly)}>
     <Icon name="heart" size={18} filled={favoritesOnly} />
   </button>
-  <select bind:value={sort} aria-label="Sortierung">
-    <option value="name">Name</option>
-    <option value="last_planned">Zuletzt eingeplant</option>
-    <option value="most_planned">Am häufigsten eingeplant</option>
-    <option value="newest">Neu hinzugefügt</option>
+  <select bind:value={sort} aria-label={t('picker.sort_label')}>
+    <option value="name">{t('picker.sort.name')}</option>
+    <option value="last_planned">{t('picker.sort.last_planned')}</option>
+    <option value="most_planned">{t('picker.sort.most_planned')}</option>
+    <option value="newest">{t('picker.sort.newest')}</option>
   </select>
 </div>
 {#if showTags}
@@ -284,9 +288,9 @@
 {/if}
 
 {#if recipes === null}
-  <p class="muted">Lädt …</p>
+  <p class="muted">{t('common.loading')}</p>
 {:else if recipes.length === 0}
-  <p class="muted">Keine passenden Rezepte.</p>
+  <p class="muted">{t('picker.no_results')}</p>
 {:else}
   <ul class="list">
     {#each recipes as recipe (recipe.id)}
@@ -300,7 +304,7 @@
             {/if}
           </span>
           <span class="text">
-            <span class="title">{recipe.title}{#if recipe.parent_recipe_id != null}<small class="variant-badge">Variante</small>{/if}</span>
+            <span class="title">{recipe.title}{#if recipe.parent_recipe_id != null}<small class="variant-badge">{t('picker.variant')}</small>{/if}</span>
             <span class="status" class:upcoming={recipe.next_planned}>{planStatus(recipe)}</span>
           </span>
           {#if recipe.is_favorite}<span class="fav"><Icon name="heart" size={16} filled /></span>{/if}
@@ -314,7 +318,7 @@
   <PlanPreview
     recipeId={previewId}
     servings={replaceId ? entry?.servings : null}
-    confirmLabel={replaceId ? 'Ersetzen' : 'Hinzufügen'}
+    confirmLabel={replaceId ? t('picker.replace') : t('common.add')}
     busy={saving}
     onconfirm={(choice) => choose(previewId, '', choice)}
     onclose={() => (previewId = null)}

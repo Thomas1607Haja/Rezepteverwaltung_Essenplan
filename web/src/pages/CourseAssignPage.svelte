@@ -2,6 +2,7 @@
   import { api, imageUrl } from '../lib/api.js';
   import { navigate } from '../lib/router.svelte.js';
   import { assignPreset, resetFilter, recipeFilter } from '../lib/recipeFilter.svelte.js';
+  import { t, errorText, noteText } from '../lib/i18n.svelte.js';
 
   // Gänge zuordnen (Schritt 9.1): Der Server schlägt für jedes Rezept ohne
   // Gang einen vor. Häkchen und Auswahl prüfen, dann gesammelt übernehmen.
@@ -20,7 +21,7 @@
       suggestions = list;
       error = '';
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     }
   }
   load();
@@ -51,41 +52,36 @@
         .filter(([, tagId]) => tagId > 0)
         .map(([recipeId, tagId]) => ({ recipe_id: Number(recipeId), tag_id: Number(tagId) }));
       const result = await api.assignCourses(assignments);
-      message = `${result.assigned} ${result.assigned === 1 ? 'Rezept' : 'Rezepte'} zugeordnet.`;
+      message = t('courseassign.assigned', { count: result.assigned });
       await load();
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     } finally {
       busy = false;
     }
   }
 </script>
 
-<p class="back"><a href="#/settings">← Einstellungen</a></p>
-<h1>Gänge zuordnen</h1>
-<p class="hint">
-  Vorschläge für alle Rezepte ohne Gang – nach Wörtern im Titel, den Zutaten und vorhandenen Kategorien. Bitte prüfen;
-  „nicht zuordnen“ lässt ein Rezept aus. Weitere Gänge (z. B. Salat auch als Beilage) lassen sich im Rezept ergänzen.
-</p>
+<p class="back"><a href="#/settings">← {t('courseassign.back')}</a></p>
+<h1>{t('courseassign.title')}</h1>
+<p class="hint">{t('courseassign.intro')}</p>
 
 {#if error}<p class="error">{error}</p>{/if}
 {#if message}<p class="ok">{message}</p>{/if}
 
 {#if byCourse.length > 0}
   <div class="review">
-    <p class="hint">
-      Oder in der Rezeptübersicht mit Bildern prüfen – die Vorschläge sind dort schon ausgewählt (Zuweisungsmodus):
-    </p>
+    <p class="hint">{t('courseassign.review_hint')}</p>
     {#each byCourse as c (c.id)}
-      <button type="button" onclick={() => review(c)}>Vorschläge für {c.name} prüfen ({c.ids.length})</button>
+      <button type="button" onclick={() => review(c)}>{t('courseassign.review', { name: c.name, count: c.ids.length })}</button>
     {/each}
   </div>
 {/if}
 
 {#if suggestions === null && !error}
-  <p>Lädt …</p>
+  <p>{t('common.loading')}</p>
 {:else if suggestions?.length === 0}
-  <p>Alle Rezepte haben einen Gang.</p>
+  <p>{t('courseassign.all_done')}</p>
 {:else if suggestions}
   <ul class="list">
     {#each suggestions as s (s.recipe_id)}
@@ -93,10 +89,10 @@
         {#if s.thumbnail}<img src={imageUrl(s.thumbnail)} alt="" />{:else}<span class="noimg"></span>{/if}
         <span class="text">
           <a href="#/recipes/{s.recipe_id}">{s.title}</a>
-          <small>{s.reason}</small>
+          <small>{noteText({ code: s.reason_code, params: s.reason_params, message: s.reason })}</small>
         </span>
-        <select bind:value={chosen[s.recipe_id]} aria-label="Gang für {s.title}">
-          <option value={0}>nicht zuordnen</option>
+        <select bind:value={chosen[s.recipe_id]} aria-label={t('courseassign.course_for', { title: s.title })}>
+          <option value={0}>{t('courseassign.skip')}</option>
           {#each courses as c (c.id)}<option value={c.id}>{c.name}</option>{/each}
         </select>
       </li>
@@ -104,7 +100,7 @@
   </ul>
   <div class="actions">
     <button type="button" class="primary" disabled={busy || count === 0} onclick={apply}>
-      {busy ? 'Speichert …' : `${count} ${count === 1 ? 'Zuordnung' : 'Zuordnungen'} übernehmen`}
+      {busy ? t('common.saving') : t('courseassign.apply', { count })}
     </button>
   </div>
 {/if}

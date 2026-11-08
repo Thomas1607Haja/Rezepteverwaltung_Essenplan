@@ -1,0 +1,18 @@
+{
+  "back": "Settings",
+  "title": "Assign courses",
+  "intro": "Suggestions for all recipes without a course – based on words in the title, the ingredients and existing categories. Please check them; \"don't assign\" skips a recipe. More courses (e.g. a salad as a side dish too) can be added in the recipe.",
+  "review_hint": "Or review them in the recipe overview with pictures – the suggestions are already selected there (assign mode):",
+  "review": "Review suggestions for {name} ({count})",
+  "all_done": "All recipes have a course.",
+  "course_for": "Course for {title}",
+  "skip": "don't assign",
+  "apply": {
+    "one": "Apply {count} assignment",
+    "other": "Apply {count} assignments"
+  },
+  "assigned": {
+    "one": "{count} recipe assigned.",
+    "other": "{count} recipes assigned."
+  }
+}

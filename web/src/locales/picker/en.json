@@ -1,0 +1,37 @@
+{
+  "menu_gone": "This menu no longer exists.",
+  "entry_gone": "This entry no longer exists.",
+  "added": "“{title}” added.",
+  "added_as": "“{title}” added as {course}.",
+  "added_hint": "Choose another course or “Done”.",
+  "heading_menu": "Course for menu",
+  "heading_menu_named": "Course for menu: {title}",
+  "heading_replace": "Replace",
+  "heading_replace_named": "Replace: {title}",
+  "heading_add": "Dish for {day}",
+  "course": "Course",
+  "course_none": "– none –",
+  "courses_in_menu": {
+    "one": "{count} course in menu",
+    "other": "{count} courses in menu"
+  },
+  "done": "Done",
+  "meal": "Meal",
+  "compose_menu": "Build a menu …",
+  "note_placeholder": "Without recipe, e.g. Eating out",
+  "note_label": "Entry without recipe",
+  "note_submit": "Add",
+  "search_placeholder": "Search recipes",
+  "search_label": "Search recipes",
+  "favorites_only": "Favorites only",
+  "sort_label": "Sort",
+  "sort": {
+    "name": "Name",
+    "last_planned": "Last planned",
+    "most_planned": "Most planned",
+    "newest": "Recently added"
+  },
+  "no_results": "No matching recipes.",
+  "variant": "Variant",
+  "replace": "Replace"
+}

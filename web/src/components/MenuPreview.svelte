@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { api } from '../lib/api.js';
   import { amountText, formatQuantity } from '../lib/format.js';
+  import { t, errorText } from '../lib/i18n.svelte.js';
 
   // Kurzvorschau für ein ganzes Menü (Schritt 9.4): ein Abschnitt je Gang
   // mit Rezept, Häkchen wie in PlanPreview. Gespeichert wird je Gang
@@ -27,7 +28,7 @@
     .then((list) => {
       for (const r of list) recipes[r.id] = r;
     })
-    .catch((e) => (error = e.message));
+    .catch((e) => (error = errorText(e)));
 
   const loaded = $derived(courses.every((e) => recipes[e.recipe_id]));
 
@@ -62,7 +63,7 @@
       }
       onsaved();
     } catch (err) {
-      error = err.message;
+      error = errorText(err);
       busy = false;
     }
   }
@@ -70,11 +71,11 @@
 
 <dialog bind:this={dialog} oncancel={onclose} onclick={(e) => e.target === dialog && onclose()} aria-labelledby="menu-preview-title">
   <div class="content">
-    <h2 id="menu-preview-title">Zutaten vorhanden – ganzes Menü</h2>
-    <p class="hint">Häkchen entfernen, was du noch hast. Gilt nur für dieses Menü.</p>
+    <h2 id="menu-preview-title">{t('menu.preview.title')}</h2>
+    <p class="hint">{t('menu.preview.hint')}</p>
     {#if error}<p class="error">{error}</p>{/if}
     {#if !loaded}
-      <p>Lädt …</p>
+      <p>{t('common.loading')}</p>
     {:else}
       {#each courses as e (e.id)}
         {@const r = recipes[e.recipe_id]}
@@ -83,7 +84,7 @@
             {#if e.course_tag_id && courseName(e.course_tag_id)}<small>{courseName(e.course_tag_id)}</small>{/if}
             {r.title} <span class="servings">{amountText(e.servings, r.yield_unit)}</span>
           </h3>
-          {#if e.status === 'transferred'}<p class="hint">Schon an Bring gesendet – Änderungen erscheinen im Einkauf als Differenz.</p>{/if}
+          {#if e.status === 'transferred'}<p class="hint">{t('menu.preview.already_sent')}</p>{/if}
           <ul>
             {#each r.ingredients.filter((i) => i.shopping_relevant) as ing (ing.id)}
               <li>
@@ -94,19 +95,19 @@
                 </label>
               </li>
             {:else}
-              <li class="hint">Keine Zutaten zum Einkaufen.</li>
+              <li class="hint">{t('menu.preview.nothing_to_buy')}</li>
             {/each}
           </ul>
         </section>
       {:else}
-        <p class="hint">Das Menü hat noch keine Gänge mit Rezept.</p>
+        <p class="hint">{t('menu.preview.no_recipes')}</p>
       {/each}
     {/if}
     <footer>
-      <button type="button" onclick={onclose} disabled={busy}>Abbrechen</button>
-      <button type="button" onclick={() => save(true)} disabled={busy || !loaded}>Alles vorhanden</button>
+      <button type="button" onclick={onclose} disabled={busy}>{t('common.cancel')}</button>
+      <button type="button" onclick={() => save(true)} disabled={busy || !loaded}>{t('menu.preview.all_available')}</button>
       <button type="button" class="primary" onclick={() => save(false)} disabled={busy || !loaded}>
-        {busy ? 'Speichert …' : 'Übernehmen'}
+        {busy ? t('common.saving') : t('common.apply')}
       </button>
     </footer>
   </div>

@@ -1,0 +1,37 @@
+{
+  "menu_gone": "Questo menù non esiste più.",
+  "entry_gone": "Questa voce non esiste più.",
+  "added": "«{title}» aggiunto.",
+  "added_as": "«{title}» aggiunto come {course}.",
+  "added_hint": "Scegli un'altra portata o «Fatto».",
+  "heading_menu": "Portata per il menù",
+  "heading_menu_named": "Portata per il menù: {title}",
+  "heading_replace": "Sostituisci",
+  "heading_replace_named": "Sostituisci: {title}",
+  "heading_add": "Piatto per {day}",
+  "course": "Portata",
+  "course_none": "– nessuna –",
+  "courses_in_menu": {
+    "one": "{count} portata nel menù",
+    "other": "{count} portate nel menù"
+  },
+  "done": "Fatto",
+  "meal": "Pasto",
+  "compose_menu": "Componi un menù …",
+  "note_placeholder": "Senza ricetta, es. Fuori a cena",
+  "note_label": "Voce senza ricetta",
+  "note_submit": "Aggiungi",
+  "search_placeholder": "Cerca ricetta",
+  "search_label": "Cerca ricette",
+  "favorites_only": "Solo preferiti",
+  "sort_label": "Ordina",
+  "sort": {
+    "name": "Nome",
+    "last_planned": "Ultimo pianificato",
+    "most_planned": "Più pianificate",
+    "newest": "Aggiunte di recente"
+  },
+  "no_results": "Nessuna ricetta trovata.",
+  "variant": "Variante",
+  "replace": "Sostituisci"
+}

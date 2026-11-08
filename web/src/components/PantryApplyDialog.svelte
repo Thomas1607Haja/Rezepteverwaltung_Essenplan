@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { t } from '../lib/i18n.svelte.js';
 
   // changes: Vorschau des Servers (siehe api.applyPantry). onchoice wird mit
   // 'apply' oder 'cancel' aufgerufen.
@@ -23,10 +24,12 @@
 
 <dialog bind:this={dialog} oncancel={() => onchoice('cancel')} aria-labelledby="apply-title">
   <div class="content">
-    <h2 id="apply-title">Vorratsliste auf alle Rezepte übertragen?</h2>
+    <h2 id="apply-title">{t('pantry.apply_dialog.title')}</h2>
     <p>
-      {changes.length === 1 ? 'Eine Zutat' : `${changes.length} Zutaten`} in
-      {recipes === 1 ? 'einem Rezept' : `${recipes} Rezepten`} ändern sich. Von Hand gesetzte Häkchen werden dabei überschrieben.
+      {t('pantry.apply_dialog.text', {
+        ingredients: t('pantry.ingredients', { count: changes.length }),
+        recipes: t('pantry.in_recipes', { count: recipes }),
+      })}
     </p>
     <ul class="recipes">
       {#each groups as g (g.id)}
@@ -37,7 +40,7 @@
               <li>
                 {c.ingredient_name}:
                 <span class:in={!c.shopping_relevant} class:out={c.shopping_relevant}>
-                  {c.shopping_relevant ? 'wird wieder eingekauft' : 'kommt in den Vorrat'}
+                  {c.shopping_relevant ? t('pantry.apply_dialog.to_shopping') : t('pantry.apply_dialog.to_pantry')}
                 </span>
               </li>
             {/each}
@@ -46,9 +49,9 @@
       {/each}
     </ul>
     <footer>
-      <button type="button" class="secondary" onclick={() => onchoice('cancel')} disabled={busy}>Abbrechen</button>
+      <button type="button" class="secondary" onclick={() => onchoice('cancel')} disabled={busy}>{t('common.cancel')}</button>
       <button type="button" class="primary" onclick={() => onchoice('apply')} disabled={busy}>
-        {busy ? 'Überträgt …' : 'Übertragen'}
+        {busy ? t('pantry.apply_dialog.applying') : t('pantry.apply_dialog.apply')}
       </button>
     </footer>
   </div>

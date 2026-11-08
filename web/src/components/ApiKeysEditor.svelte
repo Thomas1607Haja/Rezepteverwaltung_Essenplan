@@ -1,6 +1,7 @@
 <script>
   import { api } from '../lib/api.js';
   import { setupUri } from '../lib/appSetup.js';
+  import { t, errorText, noteText, currentLocale } from '../lib/i18n.svelte.js';
   import QrCode from './QrCode.svelte';
   import AppInstallStep from './AppInstallStep.svelte';
 
@@ -34,7 +35,7 @@
   api
     .getSettings()
     .then((s) => (appUrl = savedAppUrl = s.app_url ?? ''))
-    .catch((e) => (loadError = `Einstellungen nicht geladen: ${e.message}`));
+    .catch((e) => (loadError = t('devices.settings_load_failed', { message: errorText(e) })));
 
   let checking = $state(false);
 
@@ -43,10 +44,10 @@
     try {
       const s = await api.updateSettings({ app_url: appUrl });
       appUrl = savedAppUrl = s.app_url;
-      urlMessage = 'Gespeichert.';
+      urlMessage = t('common.saved');
       urlIsError = false;
     } catch (e) {
-      urlMessage = e.message;
+      urlMessage = errorText(e);
       urlIsError = true;
       return;
     }
@@ -57,14 +58,14 @@
 
   async function checkAppUrl() {
     checking = true;
-    urlMessage = 'Prüfe die Adresse …';
+    urlMessage = t('devices.checking_url');
     urlIsError = false;
     try {
       const result = await api.checkAppUrl(appUrl);
-      urlMessage = result.message;
+      urlMessage = noteText(result);
       urlIsError = !result.ok;
     } catch (e) {
-      urlMessage = e.message;
+      urlMessage = errorText(e);
       urlIsError = true;
     } finally {
       checking = false;
@@ -78,7 +79,7 @@
   api
     .listApiKeys()
     .then((list) => (keys = list))
-    .catch((e) => (loadError = `Schlüssel nicht geladen: ${e.message}`));
+    .catch((e) => (loadError = t('devices.keys_load_failed', { message: errorText(e) })));
 
   function showMessage(text, isError = false) {
     message = text;
@@ -86,7 +87,9 @@
   }
 
   function formatDate(value) {
-    return value ? new Date(value).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }) : 'noch nie';
+    return value
+      ? new Date(value).toLocaleString(currentLocale(), { dateStyle: 'medium', timeStyle: 'short' })
+      : t('devices.never');
   }
 
   async function add(event) {
@@ -102,7 +105,7 @@
       name = '';
       message = '';
     } catch (e) {
-      showMessage(e.message, true);
+      showMessage(errorText(e), true);
     } finally {
       busy = false;
     }
@@ -115,36 +118,33 @@
     } catch {
       // Ohne Zugriff auf die Zwischenablage (z. B. ohne HTTPS) bleibt
       // markieren und kopieren von Hand.
-      showMessage('Kopieren nicht möglich – bitte den Schlüssel markieren und kopieren.', true);
+      showMessage(t('devices.copy_failed'), true);
     }
   }
 
   async function remove(key) {
-    if (!confirm(`Schlüssel „${key.name}“ sperren? Das Gerät hat danach keinen Zugriff mehr.`)) return;
+    if (!confirm(t('devices.revoke_confirm', { name: key.name }))) return;
     try {
       await api.deleteApiKey(key.id);
       keys = keys.filter((k) => k.id !== key.id);
       if (created?.name === key.name) created = null;
-      showMessage(`„${key.name}“ gesperrt.`);
+      showMessage(t('devices.revoked', { name: key.name }));
     } catch (e) {
-      showMessage(e.message, true);
+      showMessage(errorText(e), true);
     }
   }
 </script>
 
 <section class="card">
-  <h2>App installieren</h2>
-  <p class="hint">
-    Ein neues Handy in zwei Schritten einrichten: Android-App installieren, dann mit diesem Rezeptplaner verbinden. Jedes
-    Gerät bekommt einen eigenen Schlüssel; ohne gültigen Schlüssel lehnt der App-Zugang jede Anfrage ab.
-  </p>
+  <h2>{t('devices.title')}</h2>
+  <p class="hint">{t('devices.intro')}</p>
 
   <AppInstallStep />
 
-  <h3>Schritt 2 – App verbinden</h3>
+  <h3>{t('devices.step2')}</h3>
 
   <form class="row url" onsubmit={saveAppUrl}>
-    <label for="app-url">Adresse für die App</label>
+    <label for="app-url">{t('devices.app_url')}</label>
     <input
       id="app-url"
       type="url"
@@ -152,44 +152,41 @@
       bind:value={appUrl}
       oninput={() => (urlMessage = '')}
     />
-    <button type="submit" disabled={appUrl.trim() === savedAppUrl}>Speichern</button>
+    <button type="submit" disabled={appUrl.trim() === savedAppUrl}>{t('common.save')}</button>
     <button type="button" disabled={checking || appUrl.trim() === '' || appUrl.trim() !== savedAppUrl} onclick={checkAppUrl}
-      >Adresse prüfen</button
+      >{t('devices.check_url')}</button
     >
   </form>
-  <p class="hint">Hostname im Cloudflare-Tunnel, der auf Port 8100 zeigt (Anleitung in docs/APP-ZUGANG.md). Einmalig eintragen.</p>
+  <p class="hint">{t('devices.app_url_hint')}</p>
   {#if urlMessage}<p class:error={urlIsError} class:ok={!urlIsError}>{urlMessage}</p>{/if}
 
   {#if created}
     <div class="created" role="status">
-      <strong>„{created.name}“ verbinden</strong>
+      <strong>{t('devices.connect_title', { name: created.name })}</strong>
       <p>
-        In der App „Einrichten“ wählen und diesen Code scannen. <strong>Er wird nur jetzt angezeigt</strong> – nach
-        „Fertig“ oder beim Verlassen der Seite ist er weg (dann einfach ein neues Gerät verbinden).
+        {t('devices.connect_scan')} <strong>{t('devices.connect_once')}</strong>
+        {t('devices.connect_gone')}
       </p>
       {#if qrText}
         <div class="qr">
-          <QrCode text={qrText} label="QR-Code zum Verbinden der App" />
+          <QrCode text={qrText} label={t('devices.qr_label')} />
         </div>
       {/if}
       <details bind:open={showCf}>
-        <summary>Cloudflare Access (optional)</summary>
-        <p class="hint">
-          Nur nötig, wenn der App-Hostname mit Cloudflare Access geschützt ist. Die Angaben kommen nur in den QR-Code und
-          werden nicht gespeichert.
-        </p>
+        <summary>{t('devices.cf_summary')}</summary>
+        <p class="hint">{t('devices.cf_hint')}</p>
         <div class="cf">
-          <input type="text" placeholder="Client ID (….access)" bind:value={cfId} autocomplete="off" />
-          <input type="password" placeholder="Client Secret" bind:value={cfSecret} autocomplete="off" />
+          <input type="text" placeholder={t('devices.cf_id')} bind:value={cfId} autocomplete="off" />
+          <input type="password" placeholder={t('devices.cf_secret')} bind:value={cfSecret} autocomplete="off" />
         </div>
       </details>
       <details>
-        <summary>Schlüssel als Text</summary>
+        <summary>{t('devices.key_as_text')}</summary>
         <code>{created.key}</code>
-        <button type="button" onclick={copy}>{copied ? 'Kopiert' : 'Kopieren'}</button>
+        <button type="button" onclick={copy}>{copied ? t('devices.copied') : t('devices.copy')}</button>
       </details>
       <div class="row">
-        <button type="button" class="primary" onclick={() => (created = null)}>Fertig</button>
+        <button type="button" class="primary" onclick={() => (created = null)}>{t('devices.done')}</button>
       </div>
     </div>
   {:else if connecting}
@@ -198,40 +195,40 @@
       <input
         type="text"
         maxlength="60"
-        placeholder="Gerät, z. B. Handy Thomas"
+        placeholder={t('devices.device_placeholder')}
         autofocus
         bind:value={name}
         oninput={() => (message = '')}
       />
-      <button type="submit" class="primary" disabled={busy || name.trim() === ''}>QR-Code erzeugen</button>
-      <button type="button" onclick={() => (connecting = false)}>Abbrechen</button>
+      <button type="submit" class="primary" disabled={busy || name.trim() === ''}>{t('devices.create_qr')}</button>
+      <button type="button" onclick={() => (connecting = false)}>{t('common.cancel')}</button>
     </form>
   {:else}
     <div class="row">
       <button type="button" class="primary" disabled={!savedAppUrl} onclick={() => (connecting = true)}>
-        Neues Gerät verbinden
+        {t('devices.connect_new')}
       </button>
-      {#if !savedAppUrl}<span class="hint">Zuerst die Adresse für die App speichern.</span>{/if}
+      {#if !savedAppUrl}<span class="hint">{t('devices.save_url_first')}</span>{/if}
     </div>
   {/if}
 
-  <h3>Verbundene Geräte</h3>
+  <h3>{t('devices.connected')}</h3>
   {#if loadError}
     <p class="error">{loadError}</p>
   {:else if keys === null}
-    <p>Lädt …</p>
+    <p>{t('common.loading')}</p>
   {:else if keys.length > 0}
     <ul>
       {#each keys as key (key.id)}
         <li>
           <span class="name">{key.name}</span>
-          <small>verbunden {formatDate(key.created_at)} · zuletzt benutzt {formatDate(key.last_used_at)}</small>
-          <button type="button" class="danger" onclick={() => remove(key)}>Sperren</button>
+          <small>{t('devices.key_dates', { created: formatDate(key.created_at), used: formatDate(key.last_used_at) })}</small>
+          <button type="button" class="danger" onclick={() => remove(key)}>{t('devices.revoke')}</button>
         </li>
       {/each}
     </ul>
   {:else}
-    <p class="muted">Noch kein Gerät verbunden.</p>
+    <p class="muted">{t('devices.none')}</p>
   {/if}
   {#if message}<p class:error={messageIsError} class:ok={!messageIsError}>{message}</p>{/if}
 </section>

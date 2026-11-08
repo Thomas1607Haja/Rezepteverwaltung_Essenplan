@@ -2,7 +2,8 @@
   import { flip } from 'svelte/animate';
   import { dragHandleZone } from 'svelte-dnd-action';
   import { api } from '../lib/api.js';
-  import { newIngredient, newHeading } from '../lib/recipeForm.js';
+  import { newIngredient, newHeading, validationText } from '../lib/recipeForm.js';
+  import { t } from '../lib/i18n.svelte.js';
   import { flipDurationMs, dropTargetStyle, isShadow } from '../lib/dnd.js';
   import DragHandle from './DragHandle.svelte';
 
@@ -41,14 +42,16 @@
   }
 
   function label(item) {
-    return item.kind === 'heading' ? `Überschrift ${item.name || '(ohne Namen)'}` : `Zutat ${item.name || '(leer)'}`;
+    return item.kind === 'heading'
+      ? t('editor.ingredients.heading_label', { name: item.name || t('editor.ingredients.unnamed') })
+      : t('editor.ingredients.ingredient_label', { name: item.name || t('editor.ingredients.empty') });
   }
 </script>
 
 <!-- type trennt die Listen: Zutaten lassen sich nicht zu den Schritten ziehen. -->
 <div
   class="list"
-  aria-label="Zutaten"
+  aria-label={t('editor.sections.ingredients')}
   use:dragHandleZone={{ items, flipDurationMs, dropTargetStyle, type: 'ingredients' }}
   onconsider={sort}
   onfinalize={sort}
@@ -58,30 +61,30 @@
     <div class="slot" class:shadow={isShadow(item)} aria-label={label(item)} animate:flip={{ duration: flipDurationMs }}>
       {#if item.kind === 'heading'}
         <div class="card heading">
-          <DragHandle label="{label(item)} verschieben" />
+          <DragHandle label={t('editor.ingredients.move', { label: label(item) })} />
           <input
             class="heading-input"
-            placeholder="Überschrift, z. B. Für die Soße"
-            aria-label="Gruppenüberschrift"
+            placeholder={t('editor.ingredients.heading_placeholder')}
+            aria-label={t('editor.ingredients.heading_aria')}
             bind:value={item.name}
           />
-          <button type="button" class="remove" aria-label="Überschrift entfernen" onclick={() => remove(i)}>×</button>
+          <button type="button" class="remove" aria-label={t('editor.ingredients.remove_heading')} onclick={() => remove(i)}>×</button>
         </div>
       {:else}
         <div class="card ingredient" class:invalid={errors[item.id]}>
-          <span class="grip"><DragHandle label="{label(item)} verschieben" /></span>
-          <input class="quantity" placeholder="Menge" aria-label="Menge" inputmode="decimal" bind:value={item.quantity} />
-          <input class="unit" placeholder="Einheit" aria-label="Einheit" bind:value={item.unit} />
+          <span class="grip"><DragHandle label={t('editor.ingredients.move', { label: label(item) })} /></span>
+          <input class="quantity" placeholder={t('editor.ingredients.quantity')} aria-label={t('editor.ingredients.quantity')} inputmode="decimal" bind:value={item.quantity} />
+          <input class="unit" placeholder={t('editor.ingredients.unit')} aria-label={t('editor.ingredients.unit')} bind:value={item.unit} />
           <!-- change feuert beim Verlassen des Feldes, wenn sich der Text geändert hat. -->
-          <input class="name" placeholder="Zutat" aria-label="Zutat" bind:value={item.name} onchange={() => suggestShopping(item)} />
-          <input class="note" placeholder="Hinweis, z. B. gehackt" aria-label="Hinweis" bind:value={item.note} />
-          <label class="shopping" title="Beim Einkaufen berücksichtigen">
+          <input class="name" placeholder={t('editor.ingredients.name')} aria-label={t('editor.ingredients.name')} bind:value={item.name} onchange={() => suggestShopping(item)} />
+          <input class="note" placeholder={t('editor.ingredients.note_placeholder')} aria-label={t('editor.ingredients.note')} bind:value={item.note} />
+          <label class="shopping" title={t('editor.ingredients.shopping_title')}>
             <input type="checkbox" bind:checked={item.shopping_relevant} />
-            einkaufen
+            {t('editor.ingredients.shopping')}
           </label>
-          <button type="button" class="remove" aria-label="Zutat entfernen" onclick={() => remove(i)}>×</button>
+          <button type="button" class="remove" aria-label={t('editor.ingredients.remove')} onclick={() => remove(i)}>×</button>
           {#if errors[item.id]}
-            <p class="error">{errors[item.id]}</p>
+            <p class="error">{validationText(errors[item.id])}</p>
           {/if}
         </div>
       {/if}
@@ -90,8 +93,8 @@
 </div>
 
 <div class="add">
-  <button type="button" onclick={() => items.push(newIngredient())}>+ Zutat</button>
-  <button type="button" onclick={() => items.push(newHeading())}>+ Überschrift</button>
+  <button type="button" onclick={() => items.push(newIngredient())}>+ {t('editor.ingredients.add')}</button>
+  <button type="button" onclick={() => items.push(newHeading())}>+ {t('editor.ingredients.add_heading')}</button>
 </div>
 
 <style>

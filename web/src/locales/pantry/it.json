@@ -1,0 +1,38 @@
+{
+  "title": "Dispensa",
+  "intro": "Ingredienti che hai sempre in casa. Nelle nuove ricette non vengono messi automaticamente nella lista della spesa.",
+  "load_failed": "Impossibile caricare la dispensa: {message}",
+  "added": "«{name}» aggiunto.",
+  "remove_confirm": "Togliere «{name}» dalla dispensa?",
+  "removed": "«{name}» rimosso.",
+  "nothing_to_apply": "Tutte le ricette corrispondono già alla dispensa.",
+  "ingredients": {
+    "one": "Un ingrediente",
+    "other": "{count} ingredienti"
+  },
+  "in_recipes": {
+    "one": "in una ricetta",
+    "other": "in {count} ricette"
+  },
+  "applied": "Aggiornamento fatto: {ingredients} {recipes}.",
+  "name": "Nome",
+  "synonyms": "Altri nomi",
+  "synonyms_placeholder": "Altri nomi, separati da virgole",
+  "edit_item": "Modifica {name}",
+  "remove_item": "Rimuovi {name}",
+  "empty": "Ancora niente in dispensa.",
+  "new_item": "Nuovo articolo della dispensa",
+  "new_item_placeholder": "Nuovo articolo, ad es. farina",
+  "new_synonyms": "Altri nomi del nuovo articolo",
+  "new_synonyms_placeholder": "Altri nomi, ad es. farina 00, farina di farro",
+  "apply_all": "Applica a tutte le ricette …",
+  "apply_hint": "Le ricette esistenti cambiano solo con questo pulsante. Prima vedi quali ingredienti sono interessati.",
+  "apply_dialog": {
+    "title": "Applicare la dispensa a tutte le ricette?",
+    "text": "Modifiche: {ingredients} {recipes}. Le spunte messe a mano vengono sovrascritte.",
+    "to_shopping": "torna nella lista della spesa",
+    "to_pantry": "va in dispensa",
+    "apply": "Applica",
+    "applying": "Applicazione …"
+  }
+}

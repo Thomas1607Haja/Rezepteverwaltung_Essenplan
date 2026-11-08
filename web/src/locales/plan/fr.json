@@ -1,0 +1,102 @@
+{
+  "title": "Planning des repas",
+  "week_back": "Semaine précédente",
+  "week_forward": "Semaine suivante",
+  "shopped": "Courses faites : {range}",
+  "next_shopping": "Prochaines courses : {range}",
+  "load_failed": "Impossible de charger le planning : {message}",
+  "move_failed": "Déplacement impossible : {message}",
+  "menu_not_created": "Menu non créé : {message}",
+  "bring_sent": {
+    "one": "{count} article envoyé à Bring.",
+    "other": "{count} articles envoyés à Bring."
+  },
+  "bring_failed": {
+    "one": "{count} article n'est pas arrivé (voir Courses).",
+    "other": "{count} articles ne sont pas arrivés (voir Courses)."
+  },
+  "bring_send_failed": "Échec de l'envoi à Bring : {message}",
+  "add_dish": "Planifier un plat pour {day}",
+  "card": {
+    "sent_to_bring": "Envoyé à Bring",
+    "have_ingredients": "Ingrédients à la maison",
+    "servings_short": {
+      "one": "{count} port.",
+      "other": "{count} port."
+    },
+    "excluded_title": "Décoché car déjà à la maison",
+    "excluded_count": {
+      "one": "{count} ingrédient à la maison",
+      "other": "{count} ingrédients à la maison"
+    },
+    "favorite": "Favori",
+    "options": "Options",
+    "options_for": "Options pour {title}"
+  },
+  "entry": {
+    "note_required": "Sans recette, une note est nécessaire.",
+    "favorite_failed": "Favori non enregistré : {message}",
+    "remove_confirm": "Retirer « {title} » du planning ?",
+    "servings": "Portions",
+    "fewer": "Moins",
+    "more": "Plus",
+    "note": "Note",
+    "note_optional": "Note (facultatif)",
+    "note_placeholder": "p. ex. Restaurant",
+    "note_placeholder_recipe": "p. ex. avec salade",
+    "sent_to_bring": "Ingrédients envoyés à Bring.",
+    "undo_sending": "Annuler l'envoi …",
+    "have_ingredients": "Ingrédients à la maison (ne pas acheter)",
+    "excluded_count": {
+      "one": "{count} ingrédient à la maison.",
+      "other": "{count} ingrédients à la maison."
+    },
+    "have_ingredients_open": "Ingrédients à la maison …",
+    "already_sent": "(déjà envoyé à Bring – les modifications apparaissent dans Courses comme différence)",
+    "move_to": "Déplacer au",
+    "move": "Déplacer",
+    "open_cooking_view": "Ouvrir le mode cuisine",
+    "favorite": "Favori",
+    "make_favorite": "Ajouter aux favoris",
+    "replace_recipe": "Remplacer la recette",
+    "choose_recipe": "Choisir une recette",
+    "to_menu": "Transformer en menu"
+  },
+  "add": {
+    "title": "Ajouter au planning",
+    "replace_confirm": "Remplacer « {old} » par « {title} » ?",
+    "done": "« {title} » est prévu pour {day}.",
+    "show_plan": "Voir le planning",
+    "meal": "Repas",
+    "replace": "remplacer",
+    "replace_button": "Remplacer",
+    "free": "libre",
+    "add_more": "+ ajouter",
+    "add": "Planifier"
+  },
+  "preview": {
+    "fewer": "Moins de portions",
+    "more": "Plus de portions",
+    "hint": "Décochez ce que vous avez déjà – pour cette entrée uniquement.",
+    "nothing_to_buy": "Aucun ingrédient à acheter.",
+    "pantry": "Du garde-manger ({count}) – non acheté",
+    "all_available_title": "Tous les ingrédients sont à la maison",
+    "all_available": "Tout est là",
+    "have_count": "({count} à la maison)"
+  },
+  "move": {
+    "title": "Déplacer quand même ?",
+    "have_ingredients": "Ingrédients à la maison",
+    "send_to_bring": "Envoyer à Bring",
+    "move_anyway": "Déplacer quand même"
+  },
+  "dnd": {
+    "drag_started": "{item} saisi. Utilisez les flèches pour le déplacer dans la liste {zone}.",
+    "moved_to_position": "{item} déplacé en position {position}.",
+    "moved_to_end": "{item} déplacé à la fin.",
+    "moved_to_start": "{item} déplacé au début.",
+    "dropped": "{item} déposé, position {position} sur {count}.",
+    "zone_active": "Appuyez sur Tab pour atteindre une poignée, puis sur Espace pour la saisir.",
+    "zone_disabled": "Le déplacement n'est pas possible ici."
+  }
+}

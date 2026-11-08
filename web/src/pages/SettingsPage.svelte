@@ -1,6 +1,7 @@
 <script>
   import { api } from '../lib/api.js';
   import { formatBytes, formatUptime } from '../lib/format.js';
+  import { t, errorText, currentLocale, languageInfo, applyLanguage } from '../lib/i18n.svelte.js';
   import PantryEditor from '../components/PantryEditor.svelte';
   import ApiKeysEditor from '../components/ApiKeysEditor.svelte';
   import TagManager from '../components/TagManager.svelte';
@@ -14,16 +15,35 @@
     system = api.system();
   }
 
-  // Haushalt: Familiengröße und Einkaufstag
-  const weekdays = [
-    ['monday', 'Montag'],
-    ['tuesday', 'Dienstag'],
-    ['wednesday', 'Mittwoch'],
-    ['thursday', 'Donnerstag'],
-    ['friday', 'Freitag'],
-    ['saturday', 'Samstag'],
-    ['sunday', 'Sonntag'],
+  // Haushalt: Familiengröße und Einkaufstag. Gespeichert werden englische
+  // Schlüssel; die Namen der Wochentage liefert Intl in der aktuellen Sprache
+  // (1. 1. 2024 war ein Montag).
+  const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const weekdays = $derived.by(() => {
+    const fmt = new Intl.DateTimeFormat(currentLocale(), { weekday: 'long' });
+    return WEEKDAYS.map((value, i) => [value, fmt.format(new Date(2024, 0, 1 + i))]);
+  });
+
+  // Sprachen der Oberfläche, jeweils im eigenen Namen (nicht übersetzt)
+  const LANGUAGE_NAMES = [
+    ['en', 'English'],
+    ['de', 'Deutsch'],
+    ['fr', 'Français'],
+    ['es', 'Español'],
+    ['it', 'Italiano'],
   ];
+
+  // Sprache, die Home Assistant meldet, als Name in der aktuellen Sprache
+  const haLanguage = $derived.by(() => {
+    const code = languageInfo().homeAssistant;
+    if (!code) return '';
+    try {
+      return new Intl.DisplayNames(currentLocale(), { type: 'language' }).of(code) ?? code;
+    } catch {
+      return code;
+    }
+  });
+
   let household = $state(null);
   let saved = ''; // Stand beim Laden bzw. letzten Speichern
   let message = $state('');
@@ -33,10 +53,11 @@
   api
     .getSettings()
     .then((s) => {
+      s.ui_language ||= 'auto';
       household = s;
       saved = JSON.stringify(s);
     })
-    .catch((e) => showMessage(`Einstellungen nicht geladen: ${e.message}`, true));
+    .catch((e) => showMessage(t('settings.load_failed', { message: errorText(e) }), true));
 
   const changed = $derived(household !== null && JSON.stringify(household) !== saved);
 
@@ -45,7 +66,12 @@
   api
     .homeAssistantStatus()
     .then((s) => (ha = s))
-    .catch((e) => (ha = { mode: '', lists: [], error: e.message }));
+    .catch((e) => (ha = { mode: '', lists: [], error: errorText(e), error_code: '' }));
+
+  /** Fehlertext zum Status von Home Assistant: übersetzter Code, sonst der Text. */
+  function haError(status) {
+    return status.error_code ? errorText({ code: status.error_code, message: status.error }) : status.error;
+  }
 
   // Eine gespeicherte Liste, die Home Assistant nicht (mehr) kennt, bleibt
   // auswählbar, damit sie nicht stillschweigend verloren geht.
@@ -76,90 +102,108 @@
         coffee_time: household.coffee_time,
         dinner_time: household.dinner_time,
         bring_entity: household.bring_entity,
+        ui_language: household.ui_language,
       });
+      household.ui_language ||= 'auto';
       saved = JSON.stringify(household);
-      showMessage('Gespeichert.');
+      // Neue Sprache sofort anwenden, ohne die Seite neu zu laden
+      await applyLanguage(await api.language());
+      showMessage(t('common.saved'));
     } catch (e) {
-      showMessage(e.message, true);
+      showMessage(errorText(e), true);
     } finally {
       saving = false;
     }
   }
 </script>
 
-<h1>Einstellungen</h1>
+<h1>{t('settings.title')}</h1>
 
 <section class="card">
-  <h2>Haushalt</h2>
+  <h2>{t('settings.household.title')}</h2>
   {#if household}
     <form class="household" onsubmit={saveHousehold}>
       <label>
-        <span>Familiengröße</span>
+        <span>{t('settings.household.family_size')}</span>
         <input type="number" min="1" max="50" bind:value={household.family_size} oninput={() => (message = '')} />
-        <small>Standard-Portionen für neue Einträge im Essensplan</small>
+        <small>{t('settings.household.family_size_hint')}</small>
       </label>
       <label>
-        <span>Einkaufstag</span>
+        <span>{t('settings.household.shopping_day')}</span>
         <select bind:value={household.shopping_day} onchange={() => (message = '')}>
           {#each weekdays as [value, name] (value)}
             <option {value}>{name}</option>
           {/each}
         </select>
-        <small>Mit ihm beginnt die eingekaufte Woche</small>
+        <small>{t('settings.household.shopping_day_hint')}</small>
       </label>
       <label>
-        <span>Uhrzeit des Einkaufs</span>
+        <span>{t('settings.household.shopping_time')}</span>
         <input type="time" step="60" bind:value={household.shopping_time} oninput={() => (message = '')} />
-        <small>Ab dieser Uhrzeit gilt am Einkaufstag eingekauft; vorher ist die neue Woche der „nächste Einkauf“</small>
+        <small>{t('settings.household.shopping_time_hint')}</small>
       </label>
       <label>
-        <span>Bring-Liste</span>
+        <span>{t('settings.household.bring_list')}</span>
         <select bind:value={household.bring_entity} onchange={() => (message = '')} disabled={!ha}>
-          <option value="">– keine gewählt –</option>
+          <option value="">{t('settings.household.bring_none')}</option>
           {#each ha?.lists ?? [] as list (list.entity_id)}
             <option value={list.entity_id}>{list.name}</option>
           {/each}
-          {#if missingEntity}<option value={missingEntity}>{missingEntity} (nicht gefunden)</option>{/if}
+          {#if missingEntity}<option value={missingEntity}>{t('settings.household.bring_missing', { entity: missingEntity })}</option>{/if}
         </select>
         {#if !ha}
-          <small>Listen werden geladen …</small>
-        {:else if ha.error}
-          <small class="error">Fehler: {ha.error}</small>
+          <small>{t('settings.household.lists_loading')}</small>
+        {:else if ha.error || ha.error_code}
+          <small class="error">{t('common.error', { message: haError(ha) })}</small>
         {:else if ha.mode === 'test'}
-          <small>Testmodus ohne Home Assistant: Artikel landen nur in einer Testliste.</small>
+          <small>{t('settings.household.test_mode')}</small>
         {:else if ha.lists.length === 0}
-          <small>Keine To-do-Liste gefunden. Bitte die Bring-Integration in Home Assistant einrichten.</small>
+          <small>{t('settings.household.no_lists')}</small>
         {:else}
-          <small>To-do-Liste in Home Assistant, an die die Einkaufsliste geht</small>
+          <small>{t('settings.household.bring_hint')}</small>
         {/if}
+      </label>
+      <label>
+        <span>{t('settings.household.language')}</span>
+        <select bind:value={household.ui_language} onchange={() => (message = '')}>
+          <option value="auto">{t('settings.household.language_auto')}</option>
+          {#each LANGUAGE_NAMES as [value, name] (value)}
+            <option {value} lang={value}>{name}</option>
+          {/each}
+        </select>
+        <small>
+          {haLanguage
+            ? t('settings.household.ha_language', { language: haLanguage })
+            : t('settings.household.ha_language_unknown')}
+        </small>
       </label>
       <label class="toggle">
         <input type="checkbox" bind:checked={household.plan_preview} onchange={() => (message = '')} />
-        <span>Kurzvorschau beim Einplanen</span>
-        <small>Beim Hinzufügen zum Essensplan Portionen wählen und Zutaten abwählen, die noch im Haus sind</small>
+        <span>{t('settings.household.plan_preview')}</span>
+        <small>{t('settings.household.plan_preview_hint')}</small>
       </label>
       <label class="toggle">
         <input type="checkbox" bind:checked={household.coffee_slot} onchange={() => (message = '')} />
-        <span>Slot „Kaffee & Kuchen“</span>
-        <small>Zwischen Mittag- und Abendessen, z. B. für Kuchen am Wochenende</small>
+        <span>{t('settings.household.coffee_slot')}</span>
+        <small>{t('settings.household.coffee_slot_hint')}</small>
       </label>
       <fieldset class="times">
-        <legend>Uhrzeiten im Home-Assistant-Kalender</legend>
-        <label><span>Mittag</span><input type="time" step="60" bind:value={household.lunch_time} oninput={() => (message = '')} /></label>
+        <legend>{t('settings.household.times')}</legend>
+        <label><span>{t('settings.household.time_lunch')}</span><input type="time" step="60" bind:value={household.lunch_time} oninput={() => (message = '')} /></label>
         {#if household.coffee_slot}
-          <label><span>Kaffee</span><input type="time" step="60" bind:value={household.coffee_time} oninput={() => (message = '')} /></label>
+          <label><span>{t('settings.household.time_coffee')}</span><input type="time" step="60" bind:value={household.coffee_time} oninput={() => (message = '')} /></label>
         {/if}
-        <label><span>Abend</span><input type="time" step="60" bind:value={household.dinner_time} oninput={() => (message = '')} /></label>
+        <label><span>{t('settings.household.time_dinner')}</span><input type="time" step="60" bind:value={household.dinner_time} oninput={() => (message = '')} /></label>
       </fieldset>
       <div class="save">
-        <button type="submit" class="primary" disabled={!changed || saving}>{saving ? 'Speichert …' : 'Speichern'}</button>
+        <button type="submit" class="primary" disabled={!changed || saving}>{saving ? t('common.saving') : t('common.save')}</button>
         {#if message}<span class:error={messageIsError} class:ok={!messageIsError}>{message}</span>{/if}
       </div>
     </form>
   {:else if message}
     <p class="error">{message}</p>
   {:else}
-    <p>Lädt …</p>
+    <p>{t('common.loading')}</p>
   {/if}
 </section>
 
@@ -170,35 +214,35 @@
 <ApiKeysEditor />
 
 <section class="card">
-  <h2>System</h2>
+  <h2>{t('settings.system.title')}</h2>
   {#await system}
-    <p>Verbindung wird geprüft …</p>
+    <p>{t('settings.system.checking')}</p>
   {:then info}
     <dl>
-      <dt>Version</dt>
+      <dt>{t('settings.system.version')}</dt>
       <dd>{info.version}</dd>
-      <dt>Läuft seit</dt>
+      <dt>{t('settings.system.uptime')}</dt>
       <dd>{formatUptime(info.uptime_seconds)}</dd>
-      <dt>Arbeitsspeicher</dt>
+      <dt>{t('settings.system.memory')}</dt>
       <dd>{formatBytes(info.memory_bytes)}</dd>
-      <dt>Spitze seit Start</dt>
+      <dt>{t('settings.system.memory_peak')}</dt>
       <dd>{formatBytes(info.memory_peak_bytes)}</dd>
-      <dt>Datenbank</dt>
+      <dt>{t('settings.system.database')}</dt>
       <dd>{formatBytes(info.database_bytes)}</dd>
-      <dt>Bilder</dt>
-      <dd>{formatBytes(info.images_bytes)} ({info.images_count} Dateien)</dd>
+      <dt>{t('settings.system.images')}</dt>
+      <dd>{t('settings.system.images_value', { size: formatBytes(info.images_bytes), count: info.images_count })}</dd>
     </dl>
-    <button type="button" onclick={reload}>Aktualisieren</button>
+    <button type="button" onclick={reload}>{t('common.refresh')}</button>
   {:catch error}
-    <p class="error">Nicht verbunden: {error.message}</p>
+    <p class="error">{t('common.not_connected', { message: errorText(error) })}</p>
   {/await}
 </section>
 
 <section class="card">
-  <h2>Unterstützen</h2>
-  <p>Der Rezeptplaner ist kostenlos. Wenn er dir gefällt, freue ich mich über einen Kaffee.</p>
+  <h2>{t('settings.support.title')}</h2>
+  <p>{t('settings.support.text')}</p>
   <!-- Neuer Tab: Die Oberfläche läuft im Ingress-Rahmen von Home Assistant. -->
-  <a class="support" href={supportUrl} target="_blank" rel="noopener noreferrer">☕ Einen Kaffee spendieren</a>
+  <a class="support" href={supportUrl} target="_blank" rel="noopener noreferrer">☕ {t('settings.support.button')}</a>
 </section>
 
 <style>

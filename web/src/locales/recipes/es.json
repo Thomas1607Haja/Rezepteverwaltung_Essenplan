@@ -1,0 +1,82 @@
+{
+  "title": "Recetas",
+  "import_file": "Importar archivo",
+  "new_recipe": "Nueva receta",
+  "search_placeholder": "Buscar por título, ingrediente o paso",
+  "search_label": "Buscar recetas",
+  "categories": "Categorías",
+  "favorites": "Favoritos",
+  "favorites_only": "Solo favoritos",
+  "illustrations": "Ilustraciones",
+  "illustrations_only": "Solo recetas con imagen dibujada – para cambiarla por una foto",
+  "never_planned": "Nunca previstas",
+  "never_planned_only": "Solo recetas que nunca han estado en el plan de comidas",
+  "course": "Plato",
+  "sort": {
+    "label": "Ordenar por",
+    "name": "Nombre",
+    "newest": "Añadidas recientemente",
+    "last_planned": "Previstas por última vez",
+    "most_planned": "Más previstas"
+  },
+  "assign": {
+    "button": "Asignar plato",
+    "hint": "Asigna un plato a varias recetas a la vez",
+    "label": "Asignar:",
+    "target": "Destino",
+    "add_course": "Añadir plato",
+    "remove_course": "Quitar plato",
+    "add_tag": "Añadir {name}",
+    "remove_tag": "Quitar {name}",
+    "remove_all_courses": "Quitar todos los platos",
+    "add_category": "Añadir categoría: {group}",
+    "remove_category": "Quitar categoría: {group}",
+    "selected": {
+      "one": "{count} seleccionada",
+      "other": "{count} seleccionadas"
+    },
+    "select_visible": "Seleccionar las visibles",
+    "clear_selection": "Quitar selección",
+    "done": "Listo",
+    "other_course": {
+      "one": "1 receta seleccionada ya tiene otro plato: se mantiene y se añade «{name}».",
+      "other": "{count} recetas seleccionadas ya tienen otro plato: se mantiene y se añade «{name}»."
+    }
+  },
+  "notice": {
+    "added": {
+      "one": "«{name}» añadido a 1 receta.",
+      "other": "«{name}» añadido a {count} recetas."
+    },
+    "removed": {
+      "one": "«{name}» quitado de 1 receta.",
+      "other": "«{name}» quitado de {count} recetas."
+    },
+    "removed_all_courses": {
+      "one": "Se quitaron todos los platos de 1 receta.",
+      "other": "Se quitaron todos los platos de {count} recetas."
+    },
+    "unchanged": "No ha cambiado nada: ya estaba así.",
+    "not_saved": "No se ha guardado: {message}",
+    "undone": "Deshecho.",
+    "undo_failed": "No se pudo deshacer: {message}",
+    "undo": "Deshacer"
+  },
+  "load_error": "No se pudieron cargar las recetas: {message}",
+  "empty": {
+    "none_found": "No se encontraron recetas.",
+    "reset_filter": "Restablecer filtros",
+    "no_recipes": "Aún no hay recetas."
+  },
+  "count": {
+    "one": "{count} receta",
+    "other": "{count} recetas"
+  },
+  "tile": {
+    "illustration": "Ilustración",
+    "illustration_hint": "Imagen dibujada: cámbiala por una foto",
+    "no_course": "sin plato",
+    "variant": "Variante",
+    "favorite": "Favorito"
+  }
+}

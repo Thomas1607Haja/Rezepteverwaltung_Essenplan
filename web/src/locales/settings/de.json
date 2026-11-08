@@ -1,0 +1,51 @@
+{
+  "title": "Einstellungen",
+  "load_failed": "Einstellungen nicht geladen: {message}",
+  "household": {
+    "title": "Haushalt",
+    "family_size": "Familiengröße",
+    "family_size_hint": "Standard-Portionen für neue Einträge im Essensplan",
+    "shopping_day": "Einkaufstag",
+    "shopping_day_hint": "Mit ihm beginnt die eingekaufte Woche",
+    "shopping_time": "Uhrzeit des Einkaufs",
+    "shopping_time_hint": "Ab dieser Uhrzeit gilt am Einkaufstag eingekauft; vorher ist die neue Woche der „nächste Einkauf“",
+    "bring_list": "Bring-Liste",
+    "bring_none": "– keine gewählt –",
+    "bring_missing": "{entity} (nicht gefunden)",
+    "lists_loading": "Listen werden geladen …",
+    "test_mode": "Testmodus ohne Home Assistant: Artikel landen nur in einer Testliste.",
+    "no_lists": "Keine To-do-Liste gefunden. Bitte die Bring-Integration in Home Assistant einrichten.",
+    "bring_hint": "To-do-Liste in Home Assistant, an die die Einkaufsliste geht",
+    "language": "Sprache",
+    "language_auto": "Automatisch (Home Assistant)",
+    "ha_language": "Home Assistant meldet: {language}",
+    "ha_language_unknown": "Home Assistant meldet: nicht erkannt",
+    "plan_preview": "Kurzvorschau beim Einplanen",
+    "plan_preview_hint": "Beim Hinzufügen zum Essensplan Portionen wählen und Zutaten abwählen, die noch im Haus sind",
+    "coffee_slot": "Slot „Kaffee & Kuchen“",
+    "coffee_slot_hint": "Zwischen Mittag- und Abendessen, z. B. für Kuchen am Wochenende",
+    "times": "Uhrzeiten im Home-Assistant-Kalender",
+    "time_lunch": "Mittag",
+    "time_coffee": "Kaffee",
+    "time_dinner": "Abend"
+  },
+  "system": {
+    "title": "System",
+    "checking": "Verbindung wird geprüft …",
+    "version": "Version",
+    "uptime": "Läuft seit",
+    "memory": "Arbeitsspeicher",
+    "memory_peak": "Spitze seit Start",
+    "database": "Datenbank",
+    "images": "Bilder",
+    "images_value": {
+      "one": "{size} ({count} Datei)",
+      "other": "{size} ({count} Dateien)"
+    }
+  },
+  "support": {
+    "title": "Unterstützen",
+    "text": "Der Rezeptplaner ist kostenlos. Wenn er dir gefällt, freue ich mich über einen Kaffee.",
+    "button": "Einen Kaffee spendieren"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "document_title": "Menü: {title} – Rezeptplaner",
+  "gone": "Dieses Menü gibt es nicht mehr.",
+  "badge": "Menü",
+  "persons": {
+    "one": "{count} Person",
+    "other": "{count} Personen"
+  },
+  "no_courses_hint": "Noch keine Gänge – im Essensplan über das Menü hinzufügen.",
+  "course_count": {
+    "one": "{count} Gang",
+    "other": "{count} Gänge"
+  },
+  "note": "Notiz",
+  "sent_to_bring": "An Bring übertragen",
+  "partly_sent": "{done} von {total} an Bring",
+  "have_ingredients": "Zutaten vorhanden",
+  "hide_courses": "Gänge ausblenden",
+  "show_courses": "Gänge zeigen",
+  "dissolve_confirm": "Menü auflösen? Die Gänge bleiben als einzelne Gerichte im Plan.",
+  "delete_confirm": {
+    "one": "Menü „{title}“ mit allen {count} Gängen löschen?",
+    "other": "Menü „{title}“ mit allen {count} Gängen löschen?"
+  },
+  "dialog_title": "Menü: {title}",
+  "title_label": "Titel",
+  "title_auto": "{title} (automatisch)",
+  "note_placeholder": "z. B. Suppe vorher kochen, Nachtisch am Vortag",
+  "persons_label": "Personen",
+  "fewer": "Weniger",
+  "more": "Mehr",
+  "apply_to_all": "auf alle Gänge übertragen",
+  "courses": "Gänge",
+  "course": "Gang",
+  "course_placeholder": "– Gang –",
+  "servings_short": {
+    "one": "{count} P.",
+    "other": "{count} P."
+  },
+  "without_recipe": "ohne Rezept",
+  "status_sent": "an Bring",
+  "excluded_count": {
+    "one": "{count} vorhanden",
+    "other": "{count} vorhanden"
+  },
+  "detach_title": "Als einzelnes Gericht im Plan lassen",
+  "detach": "lösen",
+  "no_courses": "Noch keine Gänge.",
+  "add_course": "Gang hinzufügen",
+  "have_ingredients_open": "Zutaten vorhanden …",
+  "cooking_view": "Kochansicht",
+  "move_to": "Verschieben auf",
+  "move": "Verschieben",
+  "dissolve": "Menü auflösen",
+  "delete": "Menü löschen",
+  "preview": {
+    "title": "Zutaten vorhanden – ganzes Menü",
+    "hint": "Häkchen entfernen, was du noch hast. Gilt nur für dieses Menü.",
+    "already_sent": "Schon an Bring gesendet – Änderungen erscheinen im Einkauf als Differenz.",
+    "nothing_to_buy": "Keine Zutaten zum Einkaufen.",
+    "no_recipes": "Das Menü hat noch keine Gänge mit Rezept.",
+    "all_available": "Alles vorhanden"
+  },
+  "untitled": "Menü"
+}

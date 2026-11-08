@@ -1,0 +1,65 @@
+{
+  "document_title": "Menù: {title} – Rezeptplaner",
+  "gone": "Questo menù non esiste più.",
+  "badge": "Menù",
+  "persons": {
+    "one": "{count} persona",
+    "other": "{count} persone"
+  },
+  "no_courses_hint": "Ancora nessuna portata – aggiungile dal menù nel piano.",
+  "course_count": {
+    "one": "{count} portata",
+    "other": "{count} portate"
+  },
+  "note": "Nota",
+  "sent_to_bring": "Inviato a Bring",
+  "partly_sent": "{done} di {total} su Bring",
+  "have_ingredients": "Ingredienti in casa",
+  "hide_courses": "Nascondi portate",
+  "show_courses": "Mostra portate",
+  "dissolve_confirm": "Sciogliere il menù? Le portate restano nel piano come piatti singoli.",
+  "delete_confirm": {
+    "one": "Eliminare il menù «{title}» con {count} portata?",
+    "other": "Eliminare il menù «{title}» con tutte le {count} portate?"
+  },
+  "dialog_title": "Menù: {title}",
+  "title_label": "Titolo",
+  "title_auto": "{title} (automatico)",
+  "note_placeholder": "es. preparare prima la zuppa, il dolce il giorno prima",
+  "persons_label": "Persone",
+  "fewer": "Meno",
+  "more": "Più",
+  "apply_to_all": "applica a tutte le portate",
+  "courses": "Portate",
+  "course": "Portata",
+  "course_placeholder": "– Portata –",
+  "servings_short": {
+    "one": "{count} porz.",
+    "other": "{count} porz."
+  },
+  "without_recipe": "senza ricetta",
+  "status_sent": "inviato a Bring",
+  "excluded_count": {
+    "one": "{count} in casa",
+    "other": "{count} in casa"
+  },
+  "detach_title": "Lascia nel piano come piatto singolo",
+  "detach": "separa",
+  "no_courses": "Ancora nessuna portata.",
+  "add_course": "Aggiungi portata",
+  "have_ingredients_open": "Ingredienti in casa …",
+  "cooking_view": "Modalità cucina",
+  "move_to": "Sposta al",
+  "move": "Sposta",
+  "dissolve": "Sciogli menù",
+  "delete": "Elimina menù",
+  "preview": {
+    "title": "Ingredienti in casa – tutto il menù",
+    "hint": "Togli la spunta a ciò che hai già. Vale solo per questo menù.",
+    "already_sent": "Già inviato a Bring – le modifiche compaiono in Spesa come differenza.",
+    "nothing_to_buy": "Nessun ingrediente da comprare.",
+    "no_recipes": "Il menù non ha ancora portate con ricetta.",
+    "all_available": "Tutto in casa"
+  },
+  "untitled": "Menù"
+}

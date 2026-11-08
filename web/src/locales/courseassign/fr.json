@@ -1,0 +1,18 @@
+{
+  "back": "Paramètres",
+  "title": "Attribuer les plats",
+  "intro": "Suggestions pour toutes les recettes sans plat – d'après les mots du titre, les ingrédients et les catégories existantes. Vérifiez-les ; « ne pas attribuer » ignore une recette. D'autres plats (p. ex. une salade aussi en accompagnement) peuvent être ajoutés dans la recette.",
+  "review_hint": "Ou vérifiez-les dans l'aperçu des recettes avec images – les suggestions y sont déjà sélectionnées (mode attribution) :",
+  "review": "Vérifier les suggestions pour {name} ({count})",
+  "all_done": "Toutes les recettes ont un plat.",
+  "course_for": "Plat pour {title}",
+  "skip": "ne pas attribuer",
+  "apply": {
+    "one": "Appliquer {count} attribution",
+    "other": "Appliquer {count} attributions"
+  },
+  "assigned": {
+    "one": "{count} recette attribuée.",
+    "other": "{count} recettes attribuées."
+  }
+}

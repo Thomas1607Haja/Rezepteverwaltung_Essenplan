@@ -1,0 +1,51 @@
+{
+  "title": "Impostazioni",
+  "load_failed": "Impossibile caricare le impostazioni: {message}",
+  "household": {
+    "title": "Famiglia",
+    "family_size": "Persone in casa",
+    "family_size_hint": "Porzioni predefinite per le nuove voci del piano pasti",
+    "shopping_day": "Giorno della spesa",
+    "shopping_day_hint": "La settimana della spesa inizia da questo giorno",
+    "shopping_time": "Ora della spesa",
+    "shopping_time_hint": "Da quest'ora la spesa del giorno conta come fatta; prima, la nuova settimana è la «prossima spesa»",
+    "bring_list": "Lista Bring",
+    "bring_none": "– nessuna –",
+    "bring_missing": "{entity} (non trovata)",
+    "lists_loading": "Caricamento liste …",
+    "test_mode": "Modalità di prova senza Home Assistant: gli articoli finiscono solo in una lista di prova.",
+    "no_lists": "Nessuna lista di cose da fare trovata. Configura l'integrazione Bring in Home Assistant.",
+    "bring_hint": "Lista di cose da fare in Home Assistant che riceve la lista della spesa",
+    "language": "Lingua",
+    "language_auto": "Automatica (Home Assistant)",
+    "ha_language": "Home Assistant indica: {language}",
+    "ha_language_unknown": "Home Assistant indica: non rilevata",
+    "plan_preview": "Anteprima rapida quando aggiungi al piano",
+    "plan_preview_hint": "Aggiungendo al piano pasti, scegli le porzioni e deseleziona gli ingredienti che hai già in casa",
+    "coffee_slot": "Fascia «Merenda»",
+    "coffee_slot_hint": "Tra pranzo e cena, ad es. per una torta nel fine settimana",
+    "times": "Orari nel calendario di Home Assistant",
+    "time_lunch": "Pranzo",
+    "time_coffee": "Merenda",
+    "time_dinner": "Cena"
+  },
+  "system": {
+    "title": "Sistema",
+    "checking": "Verifica della connessione …",
+    "version": "Versione",
+    "uptime": "Attivo da",
+    "memory": "Memoria",
+    "memory_peak": "Picco dall'avvio",
+    "database": "Database",
+    "images": "Immagini",
+    "images_value": {
+      "one": "{size} ({count} file)",
+      "other": "{size} ({count} file)"
+    }
+  },
+  "support": {
+    "title": "Sostieni",
+    "text": "Rezeptplaner è gratuito. Se ti piace, mi farebbe piacere un caffè.",
+    "button": "Offrimi un caffè"
+  }
+}

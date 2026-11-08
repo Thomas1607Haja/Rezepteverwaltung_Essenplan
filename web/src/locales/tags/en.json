@@ -1,0 +1,73 @@
+{
+  "title": "Categories",
+  "intro": "Groups and categories for filtering recipes. Drag the handle to sort – categories can also move to another group. Each name exists only once (case and accents don't count).",
+  "load_failed": "Couldn't load categories: {message}",
+  "recipes": {
+    "one": "{count} recipe",
+    "other": "{count} recipes"
+  },
+  "group_created": "Group \"{name}\" created.",
+  "course_group_set": "\"{name}\" is now the course group.",
+  "delete_group_confirm": "Delete group \"{name}\"?",
+  "group_deleted": "Group \"{name}\" deleted.",
+  "tag_created": "Category \"{name}\" created.",
+  "merge_confirm": "Merge?",
+  "merge_recipes": {
+    "one": "The recipe with \"{name}\" gets \"{into}\". Then \"{name}\" is deleted.",
+    "other": "All {count} recipes with \"{name}\" get \"{into}\". Then \"{name}\" is deleted."
+  },
+  "merge_empty": "\"{name}\" has no recipes and will be deleted.",
+  "merged": "\"{name}\" merged into \"{into}\".",
+  "delete_tag_used": {
+    "one": "\"{name}\" is assigned to one recipe.\n\nDelete category? The recipe stays as it is, only the assignment is removed.",
+    "other": "\"{name}\" is assigned to {count} recipes.\n\nDelete category? The recipes stay as they are, only the assignment is removed."
+  },
+  "delete_tag_unused": "Delete category \"{name}\"? It isn't assigned to any recipe.",
+  "tag_deleted": "\"{name}\" deleted.",
+  "skill": {
+    "title": "Rezeptplaner categories",
+    "intro": "As of {date}. For \"categories\", use only these names, spelled exactly like this – they replace the skill's categories.md (save as a file and pass it with --categories when building)."
+  },
+  "copied": "Category list copied – paste it into the chat with Claude.",
+  "copy_failed": "Copying isn't possible here – select the text below and copy it.",
+  "groups": "Groups",
+  "group": "Group",
+  "group_label": "Group {name}",
+  "move_group": "Move group {name}",
+  "group_name": "Group name",
+  "course_badge": "Course",
+  "course_badge_title": "Quick filter tabs and courses in menus",
+  "course_on": "Use for courses",
+  "course_off": "No courses",
+  "rename": "Rename",
+  "delete_group": "Delete group {name}",
+  "group_tags": "Categories in group {name}",
+  "tag_label": "Category {name}",
+  "tag_name": "Category name",
+  "merge_with": "Merge with",
+  "merge_with_option": "Merge with …",
+  "merge": "Merge",
+  "move_tag": "Move category {name}",
+  "edit_tag": "Edit {name}",
+  "new_tag_in": "New category in {name}",
+  "new_tag": "New category",
+  "new_group": "New group",
+  "new_group_placeholder": "New group, e.g. Occasion",
+  "create_group": "Create group",
+  "course_hint": "The course group (starter, main course, cakes …) controls the tabs in the recipe overview.",
+  "assign_courses": "Assign courses",
+  "assign_courses_hint": "suggestions for recipes without a course.",
+  "copy_for_claude": "Copy category list for Claude",
+  "claude_hint": "The Claude skill only knows the default categories. After making changes here, copy the list and paste it into the chat with Claude; during import, unknown categories can also be mapped or created.",
+  "claude_list": "Category list for Claude",
+  "delete_dialog": {
+    "title": "Delete group \"{name}\"",
+    "contains": {
+      "one": "It contains one category: {names}.",
+      "other": "It contains {count} categories: {names}."
+    },
+    "move_to": "Move to group:",
+    "with_tags": "Delete categories too ({recipes} lose the assignment, the recipes stay)",
+    "confirm": "Delete group"
+  }
+}

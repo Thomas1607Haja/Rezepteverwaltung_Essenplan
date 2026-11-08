@@ -1,5 +1,6 @@
 <script>
   import { imageUrl, MAX_IMAGE_BYTES } from '../lib/api.js';
+  import { t } from '../lib/i18n.svelte.js';
   import Icon from './Icon.svelte';
 
   // current: Dateiname des gespeicherten Bildes (leer = keins).
@@ -32,11 +33,11 @@
     event.currentTarget.value = ''; // dieselbe Datei später erneut wählbar
     if (!chosen) return;
     if (!chosen.type.startsWith('image/')) {
-      error = 'Bitte eine Bilddatei wählen.';
+      error = t('editor.image.not_image');
       return;
     }
     if (chosen.size > MAX_IMAGE_BYTES) {
-      error = 'Die Datei ist zu groß (höchstens 20 MB).';
+      error = t('editor.image.too_large', { max: Math.round(MAX_IMAGE_BYTES / 1024 / 1024) });
       return;
     }
     error = '';
@@ -57,7 +58,7 @@
   <div class="preview">
     {#if preview}
       <!-- no-referrer: Die Quellseite erfährt nicht, wer ihr Bild anzeigt. -->
-      <img src={preview} alt="Vorschau des Rezeptbildes" referrerpolicy="no-referrer" />
+      <img src={preview} alt={t('editor.image.preview_alt')} referrerpolicy="no-referrer" />
     {:else}
       <Icon name="dish" size={48} />
     {/if}
@@ -67,18 +68,18 @@
     <!-- Das eigentliche Dateifeld ist unsichtbar; das Label dient als Knopf.
          accept="image/*" bietet auf dem Handy auch die Kamera an. -->
     <label class="button">
-      {preview ? 'Anderes Bild wählen' : 'Bild wählen'}
+      {preview ? t('editor.image.choose_other') : t('editor.image.choose')}
       <input type="file" accept="image/*" onchange={choose} />
     </label>
     {#if preview}
-      <button type="button" class="button secondary" onclick={clear}>Bild entfernen</button>
+      <button type="button" class="button secondary" onclick={clear}>{t('editor.image.remove')}</button>
     {/if}
     {#if file}
-      <p class="hint">Wird beim Speichern hochgeladen und verkleinert.</p>
+      <p class="hint">{t('editor.image.upload_on_save')}</p>
     {:else if remoteUrl}
-      <p class="hint">Bild der Quellseite – wird beim Speichern übernommen.</p>
+      <p class="hint">{t('editor.image.remote_on_save')}</p>
     {:else if remove}
-      <p class="hint">Wird beim Speichern entfernt.</p>
+      <p class="hint">{t('editor.image.remove_on_save')}</p>
     {/if}
     {#if error}
       <p class="error">{error}</p>

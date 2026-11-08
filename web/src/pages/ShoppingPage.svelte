@@ -2,6 +2,7 @@
   import { SvelteSet } from 'svelte/reactivity';
   import { api } from '../lib/api.js';
   import { dayLabel } from '../lib/format.js';
+  import { t, errorText, noteText } from '../lib/i18n.svelte.js';
   import ResetTransferDialog from '../components/ResetTransferDialog.svelte';
 
   let next = $state(false); // false = eingekaufte Woche, true = nächster Einkauf
@@ -32,7 +33,7 @@
       }
       firstLoad = false;
     } catch (e) {
-      error = `Einkaufsliste nicht geladen: ${e.message}`;
+      error = t('shopping.load_failed', { message: errorText(e) });
     }
   }
 
@@ -62,7 +63,7 @@
         : await api.sendShopping(next, [...deselected]);
       await load();
     } catch (e) {
-      sendError = e.message;
+      sendError = errorText(e);
       needsList = e.field === 'bring_entity';
     } finally {
       sending = false;
@@ -71,12 +72,13 @@
 
   /** Zusammenfassung wie "12 Artikel gesendet, davon 2 ergänzt". */
   function sentSummary(r) {
-    const n = r.sent.length;
+    const count = r.sent.length;
     const merged = r.sent.filter((s) => s.merged).length;
-    let text = n === 1 ? 'Ein Artikel an Bring gesendet' : `${n} Artikel an Bring gesendet`;
-    if (merged > 0) text += `, davon ${merged} bei schon vorhandenen ergänzt`;
-    return text + '.';
+    return merged > 0 ? t('shopping.sent_merged', { count, merged }) : t('shopping.sent', { count });
   }
+
+  /** Grund, warum ein Artikel nicht angekommen ist (Code vom Server, sonst englischer Text). */
+  const failReason = (f) => noteText({ code: f.code, message: f.error });
 
   load();
 
@@ -86,7 +88,9 @@
 
   /** „An Bring senden: Einkauf Familie (12)“ – die Ziel-Liste steht dabei. */
   const sendLabel = $derived(
-    preview?.list?.entity_id ? `An Bring senden: ${preview.list.name} (${selectedCount})` : `An Bring senden (${selectedCount})`,
+    preview?.list?.entity_id
+      ? t('shopping.send_to', { list: preview.list.name, count: selectedCount })
+      : t('shopping.send', { count: selectedCount }),
   );
 
   const selectedCount = $derived(preview ? preview.items.length - deselected.size : 0);
@@ -109,40 +113,47 @@
 
   /** Warum ein Gericht nicht in die Liste eingeht. */
   function reason(entry) {
-    if (entry.recipe_id == null) return 'ohne Rezept';
-    if (entry.status === 'transferred') return 'schon an Bring gesendet';
-    if (entry.status === 'have_ingredients') return 'Zutaten vorhanden';
-    if (entry.date < preview.today) return 'vorbei';
+    if (entry.recipe_id == null) return t('shopping.reason.no_recipe');
+    if (entry.status === 'transferred') return t('shopping.reason.transferred');
+    if (entry.status === 'have_ingredients') return t('shopping.reason.have_ingredients');
+    if (entry.date < preview.today) return t('shopping.reason.past');
     return '';
+  }
+
+  /** Menge eines Gerichts: „4 Port.“ bzw. mit eigener Einheit „1 Springform 26 cm“. */
+  function servingsText(entry) {
+    if (entry.recipe_id == null) return '';
+    if (entry.yield_unit) return `${entry.servings} ${entry.yield_unit}`;
+    return t('shopping.servings_short', { count: entry.servings });
   }
 </script>
 
-<h1>Einkauf</h1>
+<h1>{t('shopping.title')}</h1>
 
-<div class="period-switch" role="group" aria-label="Zeitraum">
-  <button type="button" aria-pressed={!next} onclick={() => switchPeriod(false)}>Eingekaufte Woche</button>
-  <button type="button" aria-pressed={next} onclick={() => switchPeriod(true)}>Nächster Einkauf</button>
+<div class="period-switch" role="group" aria-label={t('shopping.period_label')}>
+  <button type="button" aria-pressed={!next} onclick={() => switchPeriod(false)}>{t('shopping.period_current')}</button>
+  <button type="button" aria-pressed={next} onclick={() => switchPeriod(true)}>{t('shopping.period_next')}</button>
 </div>
 
 {#if error}
   <p class="error">{error}</p>
 {:else if !preview}
-  <p class="muted">Lädt …</p>
+  <p class="muted">{t('common.loading')}</p>
 {:else}
-  <p class="muted period">{day(preview.period.from)} bis {day(preview.period.to)}</p>
+  <p class="muted period">{t('shopping.range', { from: day(preview.period.from), to: day(preview.period.to) })}</p>
 
   <section class="card">
-    <h2>Gerichte</h2>
+    <h2>{t('shopping.dishes')}</h2>
     {#if preview.entries.length === 0}
-      <p class="muted">Für diesen Zeitraum ist nichts geplant. <a href="#/">Zum Essensplan</a></p>
+      <p class="muted">{t('shopping.nothing_planned')} <a href="#/">{t('shopping.to_plan')}</a></p>
     {:else}
       <ul class="entries">
         {#each preview.entries as entry (entry.id)}
           <li class:excluded={!entry.included}>
             <span class="day">
               {day(entry.date)}
-              {#if entry.slot === 'lunch'}<small>mittags</small>{:else if entry.slot === 'coffee'}<small>nachmittags</small>{/if}
-              {#if entry.menu_title}<small>Menü: {entry.menu_title}</small>{/if}
+              {#if entry.slot === 'lunch'}<small>{t('shopping.slot_lunch')}</small>{:else if entry.slot === 'coffee'}<small>{t('shopping.slot_coffee')}</small>{/if}
+              {#if entry.menu_title}<small>{t('shopping.menu', { title: entry.menu_title })}</small>{/if}
             </span>
             <span class="title">
               {#if entry.recipe_id != null}
@@ -151,15 +162,15 @@
                 {entry.title}
               {/if}
             </span>
-            <span class="servings">{entry.recipe_id != null ? `${entry.servings} ${entry.yield_unit || 'Port.'}` : ''}</span>
+            <span class="servings">{servingsText(entry)}</span>
             {#if !entry.included}<span class="reason">{reason(entry)}</span>{/if}
           </li>
         {/each}
       </ul>
       {#if transferredCount > 0}
         <div class="reset">
-          <button type="button" class="secondary" onclick={() => (resetting = true)}>Übertragung zurücksetzen …</button>
-          <small class="muted">z. B. nach dem Senden an die falsche Bring-Liste</small>
+          <button type="button" class="secondary" onclick={() => (resetting = true)}>{t('shopping.reset_button')}</button>
+          <small class="muted">{t('shopping.reset_hint')}</small>
         </div>
       {/if}
     {/if}
@@ -167,12 +178,12 @@
 
   <section class="card">
     <div class="list-head">
-      <h2>Einkaufsliste</h2>
+      <h2>{t('shopping.list_title')}</h2>
       {#if preview.items.length > 0}
-        <span class="muted">{selectedCount} von {preview.items.length} ausgewählt</span>
+        <span class="muted">{t('shopping.selected', { selected: selectedCount, total: preview.items.length })}</span>
         <span class="bulk">
-          <button type="button" class="link" onclick={() => selectAll(true)}>Alle</button>
-          <button type="button" class="link" onclick={() => selectAll(false)}>Keine</button>
+          <button type="button" class="link" onclick={() => selectAll(true)}>{t('common.all')}</button>
+          <button type="button" class="link" onclick={() => selectAll(false)}>{t('common.none')}</button>
         </span>
       {/if}
     </div>
@@ -181,10 +192,12 @@
       <div class="result" role="status">
         <p>{sentSummary(sendResult)}</p>
         {#if sendResult.failed.length > 0}
-          <p class="error">Nicht angekommen – bitte später nachsenden oder von Hand eintragen:</p>
+          <p class="error">{t('shopping.failed_intro')}</p>
           <ul class="failed">
             {#each sendResult.failed as f (f.name)}
-              <li>{f.name}{f.spec ? ` (${f.spec})` : ''}</li>
+              <li>
+                {f.name}{f.spec ? ` (${f.spec})` : ''}{#if failReason(f)}<small class="muted"> – {failReason(f)}</small>{/if}
+              </li>
             {/each}
           </ul>
         {/if}
@@ -192,7 +205,7 @@
     {/if}
 
     {#if preview.items.length === 0}
-      <p class="muted">Nichts einzukaufen.</p>
+      <p class="muted">{t('shopping.nothing_to_buy')}</p>
     {:else}
       <ul class="items">
         {#each preview.items as item (item.key)}
@@ -209,14 +222,14 @@
 
       <div class="send">
         <button type="button" class="primary" onclick={() => send()} disabled={sending}>
-          {sending ? 'Sendet …' : sendLabel}
+          {sending ? t('shopping.sending') : sendLabel}
         </button>
         {#if sendError}
           <span class="error">
-            {sendError}{#if needsList}: <a href="#/settings">Zu den Einstellungen</a>{/if}
+            {sendError}{#if needsList}: <a href="#/settings">{t('shopping.to_settings')}</a>{/if}
           </span>
         {:else}
-          <small class="muted">Abgewählte Artikel gelten danach als erledigt.</small>
+          <small class="muted">{t('shopping.deselected_hint')}</small>
         {/if}
       </div>
     {/if}
@@ -224,11 +237,11 @@
 
   {#if preview.missing.length > 0 || preview.surplus.length > 0}
     <section class="card">
-      <h2>Nach dem Senden geändert</h2>
-      <p class="muted hint">Gerichte wurden nach dem Senden geändert, verschoben oder entfernt.</p>
+      <h2>{t('shopping.changed_title')}</h2>
+      <p class="muted hint">{t('shopping.changed_hint')}</p>
 
       {#if preview.missing.length > 0}
-        <h3>Fehlt noch auf der Bring-Liste</h3>
+        <h3>{t('shopping.missing_title')}</h3>
         <ul class="items">
           {#each preview.missing as item (item.key)}
             <li>
@@ -247,15 +260,17 @@
         </ul>
         <div class="send">
           <button type="button" class="primary" onclick={() => send(true)} disabled={sending}>
-            {sending ? 'Sendet …' : `Differenz nachsenden (${preview.missing.length - deselectedMissing.size})`}
+            {sending
+              ? t('shopping.sending')
+              : t('shopping.send_missing', { count: preview.missing.length - deselectedMissing.size })}
           </button>
-          {#if preview.list?.entity_id}<small class="muted">an „{preview.list.name}“</small>{/if}
+          {#if preview.list?.entity_id}<small class="muted">{t('shopping.to_list', { name: preview.list.name })}</small>{/if}
         </div>
       {/if}
 
       {#if preview.surplus.length > 0}
-        <h3>Zu viel gesendet</h3>
-        <p class="muted hint">Wird nicht aus Bring gelöscht – vielleicht schon gekauft. Am besten für ein anderes Gericht einplanen.</p>
+        <h3>{t('shopping.surplus_title')}</h3>
+        <p class="muted hint">{t('shopping.surplus_hint')}</p>
         <ul class="surplus">
           {#each preview.surplus as item (item.key)}
             <li><span class="name">{item.name}</span> <span class="spec">{item.spec}</span></li>

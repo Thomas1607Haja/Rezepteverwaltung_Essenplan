@@ -7,6 +7,7 @@
   import { keepScreenOn } from '../lib/wakeLock.js';
   import { focusPlanOn } from '../lib/planFocus.svelte.js';
   import { markFreshVariant } from '../lib/freshVariant.js';
+  import { t, errorText } from '../lib/i18n.svelte.js';
   import Icon from '../components/Icon.svelte';
   import AddToPlanDialog from '../components/AddToPlanDialog.svelte';
 
@@ -44,7 +45,7 @@
     })
     .catch((e) => {
       if (e.status === 404 || e.status === 400) notFound = true;
-      else error = e.message;
+      else error = errorText(e);
     });
 
   /** Nach dem Einplanen den Statushinweis auffrischen. */
@@ -116,26 +117,25 @@
       await api.setFavorite(recipe.id, next);
     } catch (e) {
       recipe.is_favorite = !next;
-      alert(`Favorit konnte nicht gespeichert werden: ${e.message}`);
+      alert(t('recipe.favorite_error', { message: errorText(e) }));
     }
   }
 
   async function remove() {
-    let question = `„${recipe.title}“ wirklich löschen?`;
+    let question = t('recipe.delete.confirm', { title: recipe.title });
     if (recipe.next_planned) {
-      question += '\n\nEs ist noch im Essensplan eingeplant. Dort bleibt der Titel als Notiz stehen.';
+      question += '\n\n' + t('recipe.delete.planned');
     }
     // Ursprungsrezept mit Varianten: Die älteste Variante rückt nach.
     if (recipe.parent_recipe_id == null && variants.length > 0) {
-      const n = variants.length;
-      question += `\n\nZu diesem Rezept gibt es ${n} ${n === 1 ? 'Variante' : 'Varianten'}. ${n === 1 ? 'Sie bleibt' : 'Sie bleiben'} erhalten; „${variants[0].title}“ wird zum neuen Ursprungsrezept.`;
+      question += '\n\n' + t('recipe.delete.variants', { count: variants.length, title: variants[0].title });
     }
     if (!confirm(question)) return;
     try {
       await api.deleteRecipe(recipe.id);
       navigate('/recipes');
     } catch (e) {
-      alert(`Löschen fehlgeschlagen: ${e.message}`);
+      alert(t('recipe.delete.failed', { message: errorText(e) }));
     }
   }
 
@@ -147,7 +147,7 @@
       markFreshVariant(variant.id, recipe.id);
       navigate(`/recipes/${variant.id}/edit`);
     } catch (e) {
-      alert(`Variante konnte nicht angelegt werden: ${e.message}`);
+      alert(t('recipe.variant_error', { message: errorText(e) }));
       creatingVariant = false;
     }
   }
@@ -160,25 +160,25 @@
 
 <p class="back">
   {#if planEntry}
-    <button type="button" class="link back-link" onclick={backToPlan}>← Essensplan</button>
+    <button type="button" class="link back-link" onclick={backToPlan}>← {t('recipe.back_to_plan')}</button>
   {:else}
-    <a href="#/recipes">← Rezepte</a>
+    <a href="#/recipes">← {t('recipe.back_to_recipes')}</a>
   {/if}
 </p>
 
 {#if notFound}
-  <h1>Rezept nicht gefunden</h1>
-  <p>Dieses Rezept gibt es nicht (mehr).</p>
+  <h1>{t('recipe.not_found_title')}</h1>
+  <p>{t('recipe.not_found_text')}</p>
 {:else if error}
-  <p class="error">Rezept konnte nicht geladen werden: {error}</p>
+  <p class="error">{t('recipe.load_error', { message: error })}</p>
 {:else if !recipe}
-  <p class="muted">Lädt …</p>
+  <p class="muted">{t('common.loading')}</p>
 {:else}
   <article>
     {#if recipe.image}
       <img class="photo" src={imageUrl(recipe.image)} alt={recipe.title} />
       {#if recipe.image_kind === 'illustration'}
-        <p class="drawn-note">Gezeichnetes Bild (die Vorlage hatte kein Foto). Unter „Bearbeiten“ lässt es sich durch ein Foto ersetzen.</p>
+        <p class="drawn-note">{t('recipe.drawn_note')}</p>
       {/if}
     {:else}
       <div class="hero">
@@ -193,7 +193,7 @@
           type="button"
           class="icon-button favorite"
           aria-pressed={recipe.is_favorite}
-          title={recipe.is_favorite ? 'Favorit entfernen' : 'Als Favorit markieren'}
+          title={recipe.is_favorite ? t('recipe.favorite_remove') : t('recipe.favorite_add')}
           onclick={toggleFavorite}
         >
           <Icon name="heart" size={26} filled={recipe.is_favorite} />
@@ -201,13 +201,13 @@
       </div>
 
       {#if origin && recipe.parent_recipe_id != null}
-        <p class="variant-of">Variante von <a href="#/recipes/{origin.id}">{origin.title}</a></p>
+        <p class="variant-of">{t('recipe.variant_of')} <a href="#/recipes/{origin.id}">{origin.title}</a></p>
       {/if}
 
       <!-- Die anderen Rezepte der Familie als Mini-Kacheln; passen sie
            nicht in die Breite, scrollt die Leiste seitwärts. -->
       {#if recipe.family.length > 0}
-        <nav class="family" aria-label="Varianten">
+        <nav class="family" aria-label={t('recipe.variants')}>
           {#each recipe.family as member (member.id)}
             <a class="mini" href="#/recipes/{member.id}" title={member.title}>
               {#if member.thumbnail}
@@ -216,7 +216,7 @@
                 <span class="thumb-empty"><Icon name="dish" size={22} /></span>
               {/if}
               <span class="mini-title">{member.title}</span>
-              <small>{member.is_origin ? 'Ursprungsrezept' : 'Variante'}</small>
+              <small>{member.is_origin ? t('recipe.origin') : t('recipe.variant')}</small>
             </a>
           {/each}
         </nav>
@@ -226,7 +226,7 @@
         {@const l = dayLabel(planEntry.date)}
         <p class="from-plan">
           <Icon name="calendar" size={16} />
-          Im Essensplan: {l.weekday} {l.date}, {amountText(planEntry.servings, recipe.yield_unit)}{planEntry.note
+          {t('recipe.in_plan', { day: `${l.weekday} ${l.date}`, amount: amountText(planEntry.servings, recipe.yield_unit) })}{planEntry.note
             ? ` · ${planEntry.note}`
             : ''}
         </p>
@@ -239,14 +239,14 @@
       <div class="facts">
         <span class:upcoming={recipe.next_planned}><Icon name="calendar" size={16} /> {planStatus(recipe)}</span>
         {#if recipe.prep_minutes != null}
-          <span><Icon name="clock" size={16} /> Vorbereitung {formatMinutes(recipe.prep_minutes)}</span>
+          <span><Icon name="clock" size={16} /> {t('recipe.prep_time', { time: formatMinutes(recipe.prep_minutes) })}</span>
         {/if}
         {#if recipe.total_minutes != null}
-          <span><Icon name="clock" size={16} /> Gesamt {formatMinutes(recipe.total_minutes)}</span>
+          <span><Icon name="clock" size={16} /> {t('recipe.total_time', { time: formatMinutes(recipe.total_minutes) })}</span>
         {/if}
         {#if recipe.source_url || recipe.source_name}
           <span>
-            Quelle:
+            {t('recipe.source')}
             {#if isWebUrl(recipe.source_url)}
               <a href={recipe.source_url} target="_blank" rel="noopener noreferrer"
                 >{recipe.source_name || sourceHost(recipe.source_url)}</a
@@ -261,7 +261,7 @@
       {#if recipe.tags.length > 0}
         <div class="tags">
           {#each recipe.tags as tag (tag.id)}
-            <button type="button" class="tag" title="Rezepte mit „{tag.name}“ zeigen" onclick={() => showTag(tag.id)}>
+            <button type="button" class="tag" title={t('recipe.show_tag', { name: tag.name })} onclick={() => showTag(tag.id)}>
               {tag.name}
             </button>
           {/each}
@@ -272,28 +272,28 @@
     <div class="columns">
       <section class="ingredients">
         <div class="section-head">
-          <h2>Zutaten</h2>
-          <div class="servings" role="group" aria-label="Portionen">
+          <h2>{t('recipe.ingredients')}</h2>
+          <div class="servings" role="group" aria-label={t('recipe.servings')}>
             <button
               type="button"
               class="icon-button"
-              aria-label="Eine Portion weniger"
+              aria-label={t('recipe.servings_less')}
               disabled={servings <= 1}
               onclick={() => servings--}>−</button
             >
             <span class="servings-value">{amountText(servings, recipe.yield_unit)}</span>
-            <button type="button" class="icon-button" aria-label="Eine Portion mehr" onclick={() => servings++}>+</button>
+            <button type="button" class="icon-button" aria-label={t('recipe.servings_more')} onclick={() => servings++}>+</button>
           </div>
         </div>
         {#if servings !== recipe.base_servings}
           <p class="hint">
-            Umgerechnet von {amountText(recipe.base_servings, recipe.yield_unit)} ·
-            <button type="button" class="link" onclick={() => (servings = recipe.base_servings)}>zurücksetzen</button>
+            {t('recipe.converted_from', { amount: amountText(recipe.base_servings, recipe.yield_unit) })} ·
+            <button type="button" class="link" onclick={() => (servings = recipe.base_servings)}>{t('recipe.reset_servings')}</button>
           </p>
         {/if}
 
         {#if recipe.ingredients.length === 0}
-          <p class="muted">Keine Zutaten erfasst.</p>
+          <p class="muted">{t('recipe.no_ingredients')}</p>
         {/if}
         {#each ingredientGroups as group, i (i)}
           {#if group.name}
@@ -316,9 +316,9 @@
       </section>
 
       <section class="steps">
-        <h2>Zubereitung</h2>
+        <h2>{t('recipe.steps')}</h2>
         {#if recipe.steps.length === 0}
-          <p class="muted">Keine Schritte erfasst.</p>
+          <p class="muted">{t('recipe.no_steps')}</p>
         {:else}
           <ol>
             {#each recipe.steps as step (step.id)}
@@ -328,19 +328,19 @@
         {/if}
 
         {#if recipe.notes}
-          <h2>Notizen</h2>
+          <h2>{t('recipe.notes')}</h2>
           <p class="notes">{recipe.notes}</p>
         {/if}
       </section>
     </div>
 
     <footer class="actions">
-      <button type="button" class="danger" onclick={remove}>Rezept löschen</button>
+      <button type="button" class="danger" onclick={remove}>{t('recipe.delete.button')}</button>
       <button type="button" class="plan" onclick={saveVariant} disabled={creatingVariant}>
-        {creatingVariant ? 'Legt an …' : 'Variante speichern'}
+        {creatingVariant ? t('recipe.creating_variant') : t('recipe.save_variant')}
       </button>
-      <button type="button" class="plan" onclick={() => (showAddDialog = true)}>Zum Essensplan hinzufügen</button>
-      <a class="edit" href={`#/recipes/${recipe.id}/edit`}>Bearbeiten</a>
+      <button type="button" class="plan" onclick={() => (showAddDialog = true)}>{t('recipe.add_to_plan')}</button>
+      <a class="edit" href={`#/recipes/${recipe.id}/edit`}>{t('common.edit')}</a>
     </footer>
   </article>
 

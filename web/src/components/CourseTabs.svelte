@@ -2,11 +2,13 @@
   // Schnellfilter-Reiter nach Gang (lib/courseTabs.js). value ist der key
   // des gewählten Reiters, onchange(key) meldet den Wechsel; counts
   // ({ key: Anzahl }) zeigt Zahlen hinter Reitern, z. B. „Ohne Gang (214)“.
+  import { t } from '../lib/i18n.svelte.js';
+
   let { tabs, value, onchange, counts = {} } = $props();
 </script>
 
 {#if tabs.length > 1}
-  <div class="tabs" role="tablist" aria-label="Gang">
+  <div class="tabs" role="tablist" aria-label={t('recipes.course')}>
     {#each tabs as tab (tab.key)}
       <button type="button" role="tab" aria-selected={value === tab.key} onclick={() => onchange(tab.key)}
         >{tab.label}{counts[tab.key] != null ? ` (${counts[tab.key]})` : ''}</button

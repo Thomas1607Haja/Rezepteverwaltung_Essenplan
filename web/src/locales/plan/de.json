@@ -1,0 +1,102 @@
+{
+  "title": "Essensplan",
+  "week_back": "Eine Woche zurück",
+  "week_forward": "Eine Woche vor",
+  "shopped": "Eingekauft: {range}",
+  "next_shopping": "Nächster Einkauf: {range}",
+  "load_failed": "Der Plan konnte nicht geladen werden: {message}",
+  "move_failed": "Verschieben fehlgeschlagen: {message}",
+  "menu_not_created": "Menü nicht angelegt: {message}",
+  "bring_sent": {
+    "one": "{count} Artikel an Bring gesendet.",
+    "other": "{count} Artikel an Bring gesendet."
+  },
+  "bring_failed": {
+    "one": "{count} Artikel kam nicht an (siehe Einkauf).",
+    "other": "{count} Artikel kamen nicht an (siehe Einkauf)."
+  },
+  "bring_send_failed": "Senden an Bring fehlgeschlagen: {message}",
+  "add_dish": "Gericht für {day} planen",
+  "card": {
+    "sent_to_bring": "An Bring übertragen",
+    "have_ingredients": "Zutaten vorhanden",
+    "servings_short": {
+      "one": "{count} P.",
+      "other": "{count} P."
+    },
+    "excluded_title": "Abgewählt, weil noch im Haus",
+    "excluded_count": {
+      "one": "{count} Zutat vorhanden",
+      "other": "{count} Zutaten vorhanden"
+    },
+    "favorite": "Favorit",
+    "options": "Menü",
+    "options_for": "Menü für {title}"
+  },
+  "entry": {
+    "note_required": "Ohne Rezept ist eine Notiz nötig.",
+    "favorite_failed": "Favorit nicht gespeichert: {message}",
+    "remove_confirm": "„{title}“ aus dem Plan entfernen?",
+    "servings": "Portionen",
+    "fewer": "Weniger",
+    "more": "Mehr",
+    "note": "Notiz",
+    "note_optional": "Notiz (optional)",
+    "note_placeholder": "z. B. Essen gehen",
+    "note_placeholder_recipe": "z. B. mit Salat",
+    "sent_to_bring": "Zutaten sind an Bring übertragen.",
+    "undo_sending": "Übertragung zurücksetzen …",
+    "have_ingredients": "Zutaten sind vorhanden (nicht einkaufen)",
+    "excluded_count": {
+      "one": "{count} Zutat vorhanden.",
+      "other": "{count} Zutaten vorhanden."
+    },
+    "have_ingredients_open": "Zutaten vorhanden …",
+    "already_sent": "(schon an Bring gesendet – Änderungen erscheinen im Einkauf als Differenz)",
+    "move_to": "Verschieben auf",
+    "move": "Verschieben",
+    "open_cooking_view": "Kochansicht öffnen",
+    "favorite": "Favorit",
+    "make_favorite": "Als Favorit",
+    "replace_recipe": "Rezept ersetzen",
+    "choose_recipe": "Rezept wählen",
+    "to_menu": "Zu einem Menü erweitern"
+  },
+  "add": {
+    "title": "Zum Essensplan hinzufügen",
+    "replace_confirm": "„{old}“ durch „{title}“ ersetzen?",
+    "done": "„{title}“ ist für {day} eingeplant.",
+    "show_plan": "Zum Essensplan",
+    "meal": "Mahlzeit",
+    "replace": "ersetzen",
+    "replace_button": "Ersetzen",
+    "free": "frei",
+    "add_more": "+ dazu",
+    "add": "Einplanen"
+  },
+  "preview": {
+    "fewer": "Weniger Portionen",
+    "more": "Mehr Portionen",
+    "hint": "Häkchen entfernen, was du noch hast – gilt nur für diesen Eintrag.",
+    "nothing_to_buy": "Keine Zutaten zum Einkaufen.",
+    "pantry": "Aus dem Vorrat ({count}) – wird nicht eingekauft",
+    "all_available_title": "Alle Zutaten sind im Haus",
+    "all_available": "Alles vorhanden",
+    "have_count": "({count} vorhanden)"
+  },
+  "move": {
+    "title": "Wirklich verschieben?",
+    "have_ingredients": "Zutaten sind vorhanden",
+    "send_to_bring": "Zutaten an Bring senden",
+    "move_anyway": "Trotzdem verschieben"
+  },
+  "dnd": {
+    "drag_started": "{item} aufgenommen. Mit den Pfeiltasten in der Liste {zone} verschieben.",
+    "moved_to_position": "{item} an Position {position} verschoben.",
+    "moved_to_end": "{item} ans Ende verschoben.",
+    "moved_to_start": "{item} an den Anfang verschoben.",
+    "dropped": "{item} abgelegt, Position {position} von {count}.",
+    "zone_active": "Mit Tab zu einem Griff wechseln und mit Leertaste aufnehmen.",
+    "zone_disabled": "Verschieben ist hier nicht möglich."
+  }
+}

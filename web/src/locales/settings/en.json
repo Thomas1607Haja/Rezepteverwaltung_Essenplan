@@ -1,0 +1,51 @@
+{
+  "title": "Settings",
+  "load_failed": "Couldn't load settings: {message}",
+  "household": {
+    "title": "Household",
+    "family_size": "Household size",
+    "family_size_hint": "Default servings for new meal plan entries",
+    "shopping_day": "Shopping day",
+    "shopping_day_hint": "The shopping week starts on this day",
+    "shopping_time": "Shopping time",
+    "shopping_time_hint": "From this time on the shopping day counts as done; before it, the new week is the \"next shop\"",
+    "bring_list": "Bring list",
+    "bring_none": "– none selected –",
+    "bring_missing": "{entity} (not found)",
+    "lists_loading": "Loading lists …",
+    "test_mode": "Test mode without Home Assistant: items only go to a test list.",
+    "no_lists": "No to-do list found. Set up the Bring integration in Home Assistant.",
+    "bring_hint": "To-do list in Home Assistant that receives the shopping list",
+    "language": "Language",
+    "language_auto": "Automatic (Home Assistant)",
+    "ha_language": "Home Assistant reports: {language}",
+    "ha_language_unknown": "Home Assistant reports: not detected",
+    "plan_preview": "Quick preview when adding to plan",
+    "plan_preview_hint": "When adding to the meal plan, choose servings and untick ingredients you already have",
+    "coffee_slot": "\"Afternoon tea\" slot",
+    "coffee_slot_hint": "Between lunch and dinner, e.g. for cake at the weekend",
+    "times": "Times in the Home Assistant calendar",
+    "time_lunch": "Lunch",
+    "time_coffee": "Afternoon tea",
+    "time_dinner": "Dinner"
+  },
+  "system": {
+    "title": "System",
+    "checking": "Checking connection …",
+    "version": "Version",
+    "uptime": "Running for",
+    "memory": "Memory",
+    "memory_peak": "Peak since start",
+    "database": "Database",
+    "images": "Images",
+    "images_value": {
+      "one": "{size} ({count} file)",
+      "other": "{size} ({count} files)"
+    }
+  },
+  "support": {
+    "title": "Support",
+    "text": "Rezeptplaner is free. If you like it, I'd be glad if you bought me a coffee.",
+    "button": "Buy me a coffee"
+  }
+}

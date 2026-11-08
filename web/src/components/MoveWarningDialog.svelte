@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { noteText, t } from '../lib/i18n.svelte.js';
 
   // warnings: Hinweise des Servers zum Verschieben. onchoice wird mit
   // 'move' (trotzdem verschieben), 'have_ingredients' (verschieben und
@@ -17,17 +18,17 @@
 
 <dialog bind:this={dialog} oncancel={() => onchoice('cancel')} aria-labelledby="move-title">
   <div class="content">
-    <h2 id="move-title">Wirklich verschieben?</h2>
+    <h2 id="move-title">{t('plan.move.title')}</h2>
     {#each warnings as w (w.entry_id + w.type)}
-      <p>{w.message}</p>
+      <p>{noteText({ code: w.type, params: w.params, message: w.message })}</p>
     {/each}
     <footer>
-      <button type="button" class="secondary" onclick={() => onchoice('cancel')}>Abbrechen</button>
+      <button type="button" class="secondary" onclick={() => onchoice('cancel')}>{t('common.cancel')}</button>
       {#if canMarkAvailable}
-        <button type="button" class="secondary" onclick={() => onchoice('have_ingredients')}>Zutaten sind vorhanden</button>
-        <button type="button" class="secondary" onclick={() => onchoice('send')}>Zutaten an Bring senden</button>
+        <button type="button" class="secondary" onclick={() => onchoice('have_ingredients')}>{t('plan.move.have_ingredients')}</button>
+        <button type="button" class="secondary" onclick={() => onchoice('send')}>{t('plan.move.send_to_bring')}</button>
       {/if}
-      <button type="button" class="primary" onclick={() => onchoice('move')}>Trotzdem verschieben</button>
+      <button type="button" class="primary" onclick={() => onchoice('move')}>{t('plan.move.move_anyway')}</button>
     </footer>
   </div>
 </dialog>

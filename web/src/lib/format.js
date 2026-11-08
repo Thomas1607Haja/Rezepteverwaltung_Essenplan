@@ -154,3 +154,6 @@ export function formatTime(hhmm) {
   const [h, m] = hhmm.split(':').map(Number);
   return new Intl.DateTimeFormat(currentLocale(), { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, 0, 1, h, m)));
 }
+
+/** Titel eines Menüs: vom Server (Titel oder Hauptgericht), sonst „Menü“. */
+export const menuTitle = (menu) => menu?.display_title || t('menu.untitled');

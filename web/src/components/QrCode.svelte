@@ -1,11 +1,12 @@
 <script>
   import { encode } from 'uqr';
+  import { t } from '../lib/i18n.svelte.js';
 
   // QR-Code als SVG. Die Module werden zu einem einzigen Pfad
   // zusammengefasst (ein Quadrat je dunklem Modul); weißer Rand und
   // schwarze Module unabhängig vom Farbschema, damit jede Kamera ihn liest.
   // ecc: Fehlerkorrektur; 'L' passt bei langen Texten mehr hinein.
-  let { text, size = 220, label = 'QR-Code', ecc = 'M' } = $props();
+  let { text, size = 220, label = '', ecc = 'M' } = $props();
 
   const qr = $derived(encode(text, { ecc, border: 2 }));
   const path = $derived.by(() => {
@@ -25,7 +26,7 @@
   viewBox="0 0 {qr.size} {qr.size}"
   shape-rendering="crispEdges"
   role="img"
-  aria-label={label}
+  aria-label={label || t('devices.qr_default')}
 >
   <rect width={qr.size} height={qr.size} fill="#fff" />
   <path d={path} fill="#000" />

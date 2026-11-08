@@ -7,6 +7,7 @@
   import PlanPreview from './PlanPreview.svelte';
   import ResetTransferDialog from './ResetTransferDialog.svelte';
   import { slotLabel } from '../lib/slots.js';
+  import { t, errorText } from '../lib/i18n.svelte.js';
 
   // entry: der Planeintrag. onsaved(entry) meldet den neuen Stand,
   // ondeleted(id) das Entfernen, onmove(entry, date) den Wunsch, den
@@ -38,7 +39,7 @@
     try {
       onsaved(await api.getEntry(entry.id));
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     }
   }
 
@@ -53,7 +54,7 @@
   async function save(event) {
     event.preventDefault();
     if (!entry.recipe_id && note.trim() === '') {
-      error = 'Ohne Rezept ist eine Notiz nötig.';
+      error = t('plan.entry.note_required');
       return;
     }
     busy = true;
@@ -68,7 +69,7 @@
       });
       onsaved(saved);
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
       busy = false;
     }
   }
@@ -89,7 +90,7 @@
       showPreview = false;
       onsaved(saved);
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
       busy = false;
     }
   }
@@ -103,18 +104,18 @@
       entry.recipe.is_favorite = next;
     } catch (e) {
       isFavorite = !next;
-      error = `Favorit nicht gespeichert: ${e.message}`;
+      error = t('plan.entry.favorite_failed', { message: errorText(e) });
     }
   }
 
   async function remove() {
-    if (!confirm(`„${title}“ aus dem Plan entfernen?`)) return;
+    if (!confirm(t('plan.entry.remove_confirm', { title }))) return;
     busy = true;
     try {
       await api.deleteEntry(entry.id);
       ondeleted(entry.id);
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
       busy = false;
     }
   }
@@ -133,48 +134,48 @@
         <p class="when">{label.weekday} {label.date} · {slotLabel(entry.slot)}</p>
         <h2 id="entry-title">{title}</h2>
       </div>
-      <button type="button" class="icon-button" title="Schließen" onclick={onclose}>✕</button>
+      <button type="button" class="icon-button" title={t('common.close')} onclick={onclose}>✕</button>
     </header>
 
     {#if entry.recipe_id}
       <div class="row">
-        <span>{entry.recipe?.yield_unit || 'Portionen'}</span>
+        <span>{entry.recipe?.yield_unit || t('plan.entry.servings')}</span>
         <div class="stepper">
-          <button type="button" aria-label="Weniger" disabled={servings <= 1} onclick={() => servings--}>−</button>
+          <button type="button" aria-label={t('plan.entry.fewer')} disabled={servings <= 1} onclick={() => servings--}>−</button>
           <output>{servings}</output>
-          <button type="button" aria-label="Mehr" disabled={servings >= 50} onclick={() => servings++}>+</button>
+          <button type="button" aria-label={t('plan.entry.more')} disabled={servings >= 50} onclick={() => servings++}>+</button>
         </div>
       </div>
     {/if}
 
     <label class="field">
-      <span>{entry.recipe_id ? 'Notiz (optional)' : 'Notiz'}</span>
-      <input bind:value={note} maxlength="200" placeholder={entry.recipe_id ? 'z. B. mit Salat' : 'z. B. Essen gehen'} />
+      <span>{entry.recipe_id ? t('plan.entry.note_optional') : t('plan.entry.note')}</span>
+      <input bind:value={note} maxlength="200" placeholder={entry.recipe_id ? t('plan.entry.note_placeholder_recipe') : t('plan.entry.note_placeholder')} />
     </label>
 
     {#if entry.recipe_id}
       {#if transferred}
         <p class="hint">
-          <Icon name="cart" size={16} /> Zutaten sind an Bring übertragen.
-          <button type="button" class="link" onclick={() => (showReset = true)}>Übertragung zurücksetzen …</button>
+          <Icon name="cart" size={16} /> {t('plan.entry.sent_to_bring')}
+          <button type="button" class="link" onclick={() => (showReset = true)}>{t('plan.entry.undo_sending')}</button>
         </p>
       {:else}
         <label class="check">
           <input type="checkbox" bind:checked={haveIngredients} />
-          Zutaten sind vorhanden (nicht einkaufen)
+          {t('plan.entry.have_ingredients')}
         </label>
       {/if}
       <p class="hint">
         {#if entry.excluded_ingredients?.length}
-          {entry.excluded_ingredients.length === 1 ? '1 Zutat' : `${entry.excluded_ingredients.length} Zutaten`} vorhanden.
+          {t('plan.entry.excluded_count', { count: entry.excluded_ingredients.length })}
         {/if}
-        <button type="button" class="link" onclick={() => (showPreview = true)}>Zutaten vorhanden …</button>
-        {#if transferred}<small>(schon an Bring gesendet – Änderungen erscheinen im Einkauf als Differenz)</small>{/if}
+        <button type="button" class="link" onclick={() => (showPreview = true)}>{t('plan.entry.have_ingredients_open')}</button>
+        {#if transferred}<small>{t('plan.entry.already_sent')}</small>{/if}
       </p>
     {/if}
 
     <div class="move">
-      <label for="move-date">Verschieben auf</label>
+      <label for="move-date">{t('plan.entry.move_to')}</label>
       <input id="move-date" type="date" bind:value={moveDate} />
       <button
         type="button"
@@ -182,7 +183,7 @@
         disabled={!moveDate || moveDate === entry.date || busy}
         onclick={() => onmove(entry, moveDate)}
       >
-        Verschieben
+        {t('plan.entry.move')}
       </button>
     </div>
 
@@ -190,24 +191,24 @@
 
     <div class="links">
       {#if entry.recipe_id}
-        <a href="#/recipes/{entry.recipe_id}/entry/{entry.id}" onclick={onclose}>Kochansicht öffnen</a>
+        <a href="#/recipes/{entry.recipe_id}/entry/{entry.id}" onclick={onclose}>{t('plan.entry.open_cooking_view')}</a>
         <button type="button" class="link" onclick={toggleFavorite}>
           <Icon name="heart" size={16} filled={isFavorite} />
-          {isFavorite ? 'Favorit' : 'Als Favorit'}
+          {isFavorite ? t('plan.entry.favorite') : t('plan.entry.make_favorite')}
         </button>
       {/if}
       <button type="button" class="link" onclick={() => navigate(`/plan/replace/${entry.id}`)}>
-        {entry.recipe_id ? 'Rezept ersetzen' : 'Rezept wählen'}
+        {entry.recipe_id ? t('plan.entry.replace_recipe') : t('plan.entry.choose_recipe')}
       </button>
       {#if ontomenu && !entry.menu_id}
         <!-- Menü (Schritt 9.4): weitere Gänge dazu, z. B. Suppe und Nachtisch -->
-        <button type="button" class="link" onclick={() => ontomenu(entry)}>Zu einem Menü erweitern</button>
+        <button type="button" class="link" onclick={() => ontomenu(entry)}>{t('plan.entry.to_menu')}</button>
       {/if}
     </div>
 
     <footer>
-      <button type="button" class="danger" disabled={busy} onclick={remove}>Entfernen</button>
-      <button type="submit" class="primary" disabled={busy}>Speichern</button>
+      <button type="button" class="danger" disabled={busy} onclick={remove}>{t('common.remove')}</button>
+      <button type="submit" class="primary" disabled={busy}>{t('common.save')}</button>
     </footer>
   </form>
 </dialog>
@@ -217,7 +218,7 @@
     recipeId={entry.recipe_id}
     {servings}
     excluded={entry.excluded_ingredients ?? []}
-    confirmLabel="Übernehmen"
+    confirmLabel={t('common.apply')}
     {busy}
     onconfirm={saveChoice}
     onclose={() => (showPreview = false)}

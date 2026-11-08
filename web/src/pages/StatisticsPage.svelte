@@ -1,16 +1,14 @@
 <script>
   import { api, imageUrl } from '../lib/api.js';
   import { daysBetween } from '../lib/format.js';
+  import { t, errorText, currentLocale } from '../lib/i18n.svelte.js';
   import { navigate } from '../lib/router.svelte.js';
   import { recipeFilter, resetFilter, filterByTag } from '../lib/recipeFilter.svelte.js';
 
   // Statistik (Schritt 8.D). Der Server rechnet bei jedem Aufruf; gezählt
   // werden Planeinträge bis einschließlich heute.
-  const periods = [
-    ['3m', 'Letzte 3 Monate'],
-    ['12m', 'Letztes Jahr'],
-    ['all', 'Gesamt'],
-  ];
+  // Texte stehen unter stats.periods.<wert>.
+  const periods = ['3m', '12m', 'all'];
   let period = $state('3m');
   let stats = $state(null);
   let error = $state('');
@@ -23,19 +21,34 @@
         // Inzwischen umgeschaltet? Dann gilt die neuere Antwort.
         if (p === period) stats = s;
       })
-      .catch((e) => (error = `Statistik nicht geladen: ${e.message}`));
+      .catch((e) => (error = t('stats.load_failed', { message: errorText(e) })));
   });
 
   const percent = (part, whole) => (whole === 0 ? 0 : Math.round((100 * part) / whole));
   const times = (n) => (n === 1 ? '1×' : `${n}×`);
 
-  function ago(date) {
-    if (!date) return 'noch nie';
+  /** „zuletzt vor 3 Wochen“ bzw. „noch nie eingeplant“. */
+  function lastText(date) {
+    if (!date) return t('stats.last.never');
     const days = daysBetween(date, stats.today);
-    if (days === 0) return 'heute';
-    if (days < 14) return `vor ${days} Tagen`;
-    if (days < 60) return `vor ${Math.round(days / 7)} Wochen`;
-    return `vor ${Math.round(days / 30)} Monaten`;
+    if (days === 0) return t('stats.last.today');
+    if (days < 14) return t('stats.last.days', { count: days });
+    if (days < 60) return t('stats.last.weeks', { count: Math.round(days / 7) });
+    return t('stats.last.months', { count: Math.round(days / 30) });
+  }
+
+  /** Datum kurz in der Schreibweise der Sprache; reine Tage ("2026-10-21") ohne Zeitzonen-Versatz. */
+  function shortDate(value) {
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+    return new Intl.DateTimeFormat(currentLocale(), dateOnly ? { timeZone: 'UTC' } : {}).format(new Date(value));
+  }
+
+  /** Zeile unter „Am häufigsten gegessen“: Anzahl, Zeitraum, Menüs. */
+  function entriesSummary(s) {
+    const text = s.from
+      ? t('stats.entries_since', { count: s.entries, date: shortDate(s.from) })
+      : t('stats.entries_total', { count: s.entries });
+    return s.menus ? text + t('stats.menus', { count: s.menus }) : text;
   }
 
   /** Rezeptübersicht mit einem Filter öffnen. */
@@ -46,55 +59,52 @@
   }
 
   // Größte Zahl der Kategorien, damit die Balken vergleichbar sind.
-  const maxTagCount = $derived(Math.max(1, ...(stats?.categories ?? []).flatMap((g) => g.tags.map((t) => t.count))));
+  const maxTagCount = $derived(Math.max(1, ...(stats?.categories ?? []).flatMap((g) => g.tags.map((tag) => tag.count))));
   const maxTop = $derived(Math.max(1, ...(stats?.top ?? []).map((r) => r.count)));
 </script>
 
-<h1>Statistik</h1>
+<h1>{t('stats.title')}</h1>
 
 {#if error}<p class="error">{error}</p>{/if}
 
 {#if stats}
-  <section class="tiles" aria-label="Kennzahlen">
+  <section class="tiles" aria-label={t('stats.key_figures')}>
     <div class="tile">
       <strong>{stats.recipes}</strong>
-      <span>Rezepte</span>
+      <span>{t('stats.recipes', { count: stats.recipes })}</span>
     </div>
     <div class="tile">
       <strong>{stats.planned}</strong>
-      <span>schon eingeplant ({percent(stats.planned, stats.recipes)} %)</span>
+      <span>{t('stats.planned', { percent: percent(stats.planned, stats.recipes) })}</span>
     </div>
     <button type="button" class="tile link" onclick={() => openRecipes(() => (recipeFilter.neverPlanned = true))}>
       <strong>{stats.never_planned}</strong>
-      <span>noch nie eingeplant ({percent(stats.never_planned, stats.recipes)} %) →</span>
+      <span>{t('stats.never_planned', { percent: percent(stats.never_planned, stats.recipes) })} →</span>
     </button>
     <button type="button" class="tile link" onclick={() => openRecipes(() => (recipeFilter.illustrationsOnly = true))}>
       <strong>{stats.illustrated}</strong>
-      <span>mit Illustration statt Foto →</span>
+      <span>{t('stats.illustrated')} →</span>
     </button>
     <button type="button" class="tile link" onclick={() => openRecipes(() => (recipeFilter.favoritesOnly = true))}>
       <strong>{stats.favorites}</strong>
-      <span>Favoriten →</span>
+      <span>{t('stats.favorites')} →</span>
     </button>
   </section>
 
   <section class="card">
     <div class="head">
-      <h2>Am häufigsten gegessen</h2>
-      <div class="period-switch" role="group" aria-label="Zeitraum">
-        {#each periods as [value, label] (value)}
-          <button type="button" aria-pressed={period === value} onclick={() => (period = value)}>{label}</button>
+      <h2>{t('stats.top_title')}</h2>
+      <div class="period-switch" role="group" aria-label={t('stats.period_label')}>
+        {#each periods as value (value)}
+          <button type="button" aria-pressed={period === value} onclick={() => (period = value)}>
+            {t(`stats.periods.${value}`)}
+          </button>
         {/each}
       </div>
     </div>
-    <p class="muted">
-      {stats.entries} {stats.entries === 1 ? 'Gericht' : 'Gerichte'} im Essensplan
-      {stats.from ? `seit ${new Date(stats.from).toLocaleDateString('de-DE')}` : 'insgesamt'} (bis heute){stats.menus
-        ? `, davon ${stats.menus === 1 ? 'ein Menü' : `${stats.menus} Menüs`}`
-        : ''}
-    </p>
+    <p class="muted">{entriesSummary(stats)}</p>
     {#if stats.top.length === 0}
-      <p class="muted">In diesem Zeitraum stand noch nichts im Essensplan.</p>
+      <p class="muted">{t('stats.top_empty')}</p>
     {:else}
       <ol class="top">
         {#each stats.top as r, i (r.id)}
@@ -112,8 +122,8 @@
 
   {#if stats.without_recipe.length > 0}
     <section class="card">
-      <h2>Ohne Rezept</h2>
-      <p class="muted">Einträge wie „Essen gehen“ im gewählten Zeitraum – sie zählen nicht als Rezept.</p>
+      <h2>{t('stats.without_recipe_title')}</h2>
+      <p class="muted">{t('stats.without_recipe_hint', { example: t('quick.eating_out') })}</p>
       <ul class="plain">
         {#each stats.without_recipe as n (n.note)}<li><span class="count">{times(n.count)}</span> {n.note}</li>{/each}
       </ul>
@@ -121,48 +131,48 @@
   {/if}
 
   <section class="card">
-    <h2>Lieblingsgerichte, die lange nicht dran waren</h2>
+    <h2>{t('stats.favorites_waiting_title')}</h2>
     {#if stats.favorites_waiting.length === 0}
-      <p class="muted">Alle Favoriten waren in den letzten 8 Wochen dran oder sind schon eingeplant.</p>
+      <p class="muted">{t('stats.favorites_waiting_empty')}</p>
     {:else}
       <ul class="plain">
         {#each stats.favorites_waiting as r (r.id)}
-          <li><a href="#/recipes/{r.id}">{r.title}</a> <span class="muted">– zuletzt {ago(r.last_planned)}</span></li>
+          <li><a href="#/recipes/{r.id}">{r.title}</a> <span class="muted">– {lastText(r.last_planned)}</span></li>
         {/each}
       </ul>
     {/if}
   </section>
 
   <section class="card">
-    <h2>Zuletzt hinzugefügt</h2>
+    <h2>{t('stats.recent_title')}</h2>
     <ul class="plain">
       {#each stats.recently_added as r (r.id)}
         <li>
           <a href="#/recipes/{r.id}">{r.title}</a>
-          <span class="muted">– {new Date(r.created_at).toLocaleDateString('de-DE')}, {r.last_planned ? `zuletzt ${ago(r.last_planned)}` : 'noch nie eingeplant'}</span>
+          <span class="muted">– {shortDate(r.created_at)}, {lastText(r.last_planned)}</span>
         </li>
       {/each}
     </ul>
   </section>
 
   <section class="card">
-    <h2>Rezepte nach Kategorien</h2>
+    <h2>{t('stats.categories_title')}</h2>
     {#each stats.categories as g (g.name)}
       <h3>{g.name}</h3>
       <ul class="bars">
-        {#each g.tags as t (t.id)}
+        {#each g.tags as tag (tag.id)}
           <li>
-            <button type="button" class="linklike" onclick={() => { filterByTag(t.id); navigate('/recipes'); }}>{t.name}</button>
-            <span class="bar" style:width="{(100 * t.count) / maxTagCount}%"></span>
-            <span class="count">{t.count}</span>
+            <button type="button" class="linklike" onclick={() => { filterByTag(tag.id); navigate('/recipes'); }}>{tag.name}</button>
+            <span class="bar" style:width="{(100 * tag.count) / maxTagCount}%"></span>
+            <span class="count">{tag.count}</span>
           </li>
         {/each}
       </ul>
     {/each}
-    <p class="muted">{stats.without_category} {stats.without_category === 1 ? 'Rezept' : 'Rezepte'} ohne Kategorie</p>
+    <p class="muted">{t('stats.without_category', { count: stats.without_category })}</p>
   </section>
 {:else if !error}
-  <p>Lädt …</p>
+  <p>{t('common.loading')}</p>
 {/if}
 
 <style>

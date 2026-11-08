@@ -1,0 +1,18 @@
+{
+  "back": "Impostazioni",
+  "title": "Assegna portate",
+  "intro": "Suggerimenti per tutte le ricette senza portata, in base alle parole nel titolo, agli ingredienti e alle categorie esistenti. Controllali; «non assegnare» salta una ricetta. Altre portate (ad es. un'insalata anche come contorno) si possono aggiungere nella ricetta.",
+  "review_hint": "Oppure controllali nella panoramica delle ricette con le immagini: lì i suggerimenti sono già selezionati (modalità assegnazione):",
+  "review": "Controlla i suggerimenti per {name} ({count})",
+  "all_done": "Tutte le ricette hanno una portata.",
+  "course_for": "Portata per {title}",
+  "skip": "non assegnare",
+  "apply": {
+    "one": "Applica {count} assegnazione",
+    "other": "Applica {count} assegnazioni"
+  },
+  "assigned": {
+    "one": "{count} ricetta assegnata.",
+    "other": "{count} ricette assegnate."
+  }
+}

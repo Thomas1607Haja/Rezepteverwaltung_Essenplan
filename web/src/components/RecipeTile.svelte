@@ -2,6 +2,7 @@
   import Icon from './Icon.svelte';
   import { formatMinutes, planStatus } from '../lib/format.js';
   import { imageUrl } from '../lib/api.js';
+  import { t } from '../lib/i18n.svelte.js';
 
   // recipe ist eine Kurzfassung aus der Rezeptliste.
   //   courses   Namen der Gänge des Rezepts (Etikett auf der Kachel)
@@ -18,7 +19,7 @@
       <!-- loading="lazy": Bilder weiter unten lädt der Browser erst beim Scrollen. -->
       <img src={imageUrl(recipe.thumbnail)} alt="" loading="lazy" />
       {#if recipe.image_kind === 'illustration'}
-        <span class="drawn" title="Gezeichnetes Bild – durch ein Foto ersetzen">Illustration</span>
+        <span class="drawn" title={t('recipes.tile.illustration_hint')}>{t('recipes.tile.illustration')}</span>
       {/if}
     {:else}
       <Icon name="dish" size={40} />
@@ -28,17 +29,17 @@
     {#if courses.length > 0}
       <span class="courses">{courses.join(' · ')}</span>
     {:else if onselect}
-      <span class="courses none">ohne Gang</span>
+      <span class="courses none">{t('recipes.tile.no_course')}</span>
     {/if}
     <h2 class="title">{recipe.title}</h2>
-    {#if recipe.parent_recipe_id != null}<span class="variant-badge">Variante</span>{/if}
+    {#if recipe.parent_recipe_id != null}<span class="variant-badge">{t('recipes.tile.variant')}</span>{/if}
     <p class="status" class:upcoming={recipe.next_planned}>{planStatus(recipe)}</p>
     <div class="meta">
       {#if minutes != null}
         <span class="time"><Icon name="clock" size={15} /> {formatMinutes(minutes)}</span>
       {/if}
       {#if recipe.is_favorite}
-        <span class="favorite" title="Favorit"><Icon name="heart" size={16} filled /></span>
+        <span class="favorite" title={t('recipes.tile.favorite')}><Icon name="heart" size={16} filled /></span>
       {/if}
     </div>
   </div>

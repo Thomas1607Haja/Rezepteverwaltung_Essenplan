@@ -3,7 +3,8 @@
   import { api, ApiError } from '../lib/api.js';
   import { navigate } from '../lib/router.svelte.js';
   import { takeFreshVariant } from '../lib/freshVariant.js';
-  import { toForm, toPayload } from '../lib/recipeForm.js';
+  import { toForm, toPayload, validationText } from '../lib/recipeForm.js';
+  import { t, errorText } from '../lib/i18n.svelte.js';
   import { yieldUnits } from '../lib/format.js';
   import TagFilter from '../components/TagFilter.svelte';
   import IngredientEditor from '../components/IngredientEditor.svelte';
@@ -51,7 +52,7 @@
     scanning = false;
     const match = text.trim().match(/https?:\/\/\S+/i);
     if (!match) {
-      importError = `Der QR-Code enthält keine Webadresse (http/https): „${text.slice(0, 80)}“`;
+      importError = t('editor.url_import.no_url_in_qr', { text: text.slice(0, 80) });
       return;
     }
     importAddress = match[0];
@@ -77,7 +78,7 @@
         // Neue Variante: Titel markieren, damit man ihn gleich überschreibt.
         if (variantSource !== null) tick().then(() => titleInput?.select());
       })
-      .catch((e) => (loadError = e.status === 404 ? 'Dieses Rezept gibt es nicht (mehr).' : e.message));
+      .catch((e) => (loadError = e.status === 404 ? t('editor.not_found') : errorText(e)));
   }
 
   function start(f) {
@@ -90,10 +91,10 @@
     event.preventDefault();
     importError = '';
     if (importAddress.trim() === '') {
-      importError = 'Bitte eine Adresse einfügen.';
+      importError = t('editor.url_import.address_missing');
       return;
     }
-    if (JSON.stringify(form) !== initial && !confirm('Bisherige Eingaben durch das importierte Rezept ersetzen?')) return;
+    if (JSON.stringify(form) !== initial && !confirm(t('editor.url_import.replace_confirm'))) return;
 
     importing = true;
     try {
@@ -117,13 +118,14 @@
   function importMessage(e) {
     switch (e.status) {
       case 0:
-        return e.message;
+        return errorText(e);
       case 422:
-        return 'Auf dieser Seite wurde kein Rezept gefunden. Das Rezept lässt sich unten von Hand eingeben.';
+        return t('editor.url_import.no_recipe');
       case 502:
-        return `Die Seite ließ sich nicht laden: ${e.message}`;
+        // Mit Code ist der Text schon vollständig (z. B. „Die Seite ließ sich nicht laden“).
+        return e.code ? errorText(e) : t('editor.url_import.page_failed', { message: errorText(e) });
       default:
-        return `Import fehlgeschlagen: ${e.message}`;
+        return t('editor.url_import.failed', { message: errorText(e) });
     }
   }
 
@@ -139,7 +141,7 @@
     const result = toPayload(form);
     errors = result.errors ?? {};
     if (result.errors) {
-      saveError = 'Bitte die markierten Felder prüfen.';
+      saveError = t('editor.check_fields');
       // tick wartet, bis Svelte die Markierungen angezeigt hat; dann zum
       // ersten markierten Feld scrollen.
       await tick();
@@ -157,12 +159,15 @@
         else if (removeImage) await api.deleteImage(saved.id);
       } catch (e) {
         // Das Rezept selbst ist gespeichert; nur das Bild hat nicht geklappt.
-        alert(`Rezept gespeichert, aber das Bild konnte nicht übernommen werden: ${e.message}`);
+        alert(t('editor.image_failed', { message: errorText(e) }));
       }
       navigate(`/recipes/${saved.id}`);
     } catch (e) {
       // Prüfregeln des Servers melden das betroffene Feld mit.
-      saveError = e instanceof ApiError && e.field ? `${e.message} (Feld: ${e.field})` : `Speichern fehlgeschlagen: ${e.message}`;
+      saveError =
+        e instanceof ApiError && e.field
+          ? t('editor.save_error_field', { message: errorText(e), field: e.field })
+          : t('editor.save_failed', { message: errorText(e) });
     } finally {
       saving = false;
     }
@@ -170,49 +175,49 @@
 
   async function cancel() {
     // Gerade angelegte Variante: Abbrechen heißt, sie wieder zu verwerfen.
-    if (variantSource !== null && confirm('Variante wieder verwerfen? Sie wird gelöscht.')) {
+    if (variantSource !== null && confirm(t('editor.discard_variant'))) {
       try {
         await api.deleteRecipe(recipeId);
         navigate(`/recipes/${variantSource}`);
       } catch (e) {
-        alert(`Löschen fehlgeschlagen: ${e.message}`);
+        alert(t('editor.delete_failed', { message: errorText(e) }));
       }
       return;
     }
     const changed = JSON.stringify(form) !== initial || imageFile !== null || removeImage || remoteImage !== '';
-    if (changed && !confirm('Änderungen verwerfen?')) return;
+    if (changed && !confirm(t('editor.discard_changes'))) return;
     navigate(isNew ? '/recipes' : `/recipes/${recipeId}`);
   }
 </script>
 
-<p class="back"><button type="button" class="link" onclick={cancel}>← Zurück</button></p>
-<h1>{isNew ? 'Neues Rezept' : variantSource !== null ? 'Neue Variante' : 'Rezept bearbeiten'}</h1>
+<p class="back"><button type="button" class="link" onclick={cancel}>← {t('common.back')}</button></p>
+<h1>{isNew ? t('editor.title_new') : variantSource !== null ? t('editor.title_variant') : t('editor.title_edit')}</h1>
 
 {#if loadError}
   <p class="error">{loadError}</p>
 {:else if !form}
-  <p class="muted">Lädt …</p>
+  <p class="muted">{t('common.loading')}</p>
 {:else}
-  <!-- novalidate: Die Prüfung macht toPayload, mit deutschen Meldungen. -->
+  <!-- novalidate: Die Prüfung macht toPayload, mit übersetzten Meldungen. -->
   {#if isNew}
     <form class="import" onsubmit={importRecipe} novalidate>
-      <h2>Aus dem Internet übernehmen</h2>
-      <p class="hint">Adresse einer Rezeptseite einfügen, z. B. von chefkoch.de. Das Rezept landet als Entwurf im Formular.</p>
+      <h2>{t('editor.url_import.heading')}</h2>
+      <p class="hint">{t('editor.url_import.hint')}</p>
       <div class="import-row">
         <input
           type="url"
           placeholder="https://…"
-          aria-label="Adresse der Rezeptseite"
+          aria-label={t('editor.url_import.address_label')}
           bind:value={importAddress}
           class:invalid={importError}
           disabled={importing}
         />
         {#if canScan}
-          <button type="button" class="secondary" disabled={importing} onclick={() => (scanning = true)} title="QR-Code mit der Kamera scannen">
-            QR-Code
+          <button type="button" class="secondary" disabled={importing} onclick={() => (scanning = true)} title={t('editor.url_import.scan_title')}>
+            {t('editor.url_import.scan')}
           </button>
         {/if}
-        <button type="submit" class="primary" disabled={importing}>{importing ? 'Lädt …' : 'Übernehmen'}</button>
+        <button type="submit" class="primary" disabled={importing}>{importing ? t('common.loading') : t('common.apply')}</button>
       </div>
       {#if importError}<p class="error">{importError}</p>{/if}
     </form>
@@ -224,96 +229,96 @@
 
   {#if duplicates.length > 0}
     <div class="duplicates" role="status">
-      <strong>Dieses Rezept gibt es schon:</strong>
+      <strong>{t('editor.duplicates.title')}</strong>
       <ul>
         {#each duplicates as d (d.id)}
           <li><a href="#/recipes/{d.id}">{d.title}</a></li>
         {/each}
       </ul>
-      <span>Speichern legt trotzdem ein weiteres an.</span>
+      <span>{t('editor.duplicates.hint')}</span>
     </div>
   {/if}
 
   <form onsubmit={save} novalidate>
     <section>
-      <h2>Allgemein</h2>
+      <h2>{t('editor.sections.general')}</h2>
       <label class="field">
-        <span>Titel</span>
+        <span>{t('editor.fields.title')}</span>
         <input bind:value={form.title} bind:this={titleInput} class:invalid={errors.title} />
-        {#if errors.title}<small class="error">{errors.title}</small>{/if}
+        {#if errors.title}<small class="error">{validationText(errors.title)}</small>{/if}
       </label>
 
       <label class="field">
-        <span>Beschreibung</span>
+        <span>{t('editor.fields.description')}</span>
         <textarea rows="2" bind:value={form.description}></textarea>
       </label>
 
       <div class="row">
         <label class="field">
-          <span>{form.yield_unit.trim() ? 'Menge' : 'Portionen'}</span>
+          <span>{form.yield_unit.trim() ? t('editor.fields.amount') : t('editor.fields.servings')}</span>
           <input type="number" min="1" step="1" bind:value={form.base_servings} class:invalid={errors.base_servings} />
-          {#if errors.base_servings}<small class="error">{errors.base_servings}</small>{/if}
+          {#if errors.base_servings}<small class="error">{validationText(errors.base_servings)}</small>{/if}
         </label>
         <label class="field">
-          <span>Einheit</span>
+          <span>{t('editor.fields.unit')}</span>
           <!-- Leer = Portionen; für Kuchen & Co. z. B. „Springform 26 cm“ -->
-          <input list="yield-units" maxlength="40" placeholder="Portionen" bind:value={form.yield_unit} />
+          <input list="yield-units" maxlength="40" placeholder={t('editor.fields.servings')} bind:value={form.yield_unit} />
           <datalist id="yield-units">
             {#each yieldUnits() as u (u)}<option value={u}></option>{/each}
           </datalist>
         </label>
         <label class="field">
-          <span>Vorbereitung (Min.)</span>
+          <span>{t('editor.fields.prep')}</span>
           <input type="number" min="0" step="1" bind:value={form.prep_minutes} class:invalid={errors.prep_minutes} />
-          {#if errors.prep_minutes}<small class="error">{errors.prep_minutes}</small>{/if}
+          {#if errors.prep_minutes}<small class="error">{validationText(errors.prep_minutes)}</small>{/if}
         </label>
         <label class="field">
-          <span>Gesamt (Min.)</span>
+          <span>{t('editor.fields.total')}</span>
           <input type="number" min="0" step="1" bind:value={form.total_minutes} class:invalid={errors.total_minutes} />
-          {#if errors.total_minutes}<small class="error">{errors.total_minutes}</small>{/if}
+          {#if errors.total_minutes}<small class="error">{validationText(errors.total_minutes)}</small>{/if}
         </label>
       </div>
 
       <label class="field">
-        <span>Quelle (URL)</span>
+        <span>{t('editor.fields.source_url')}</span>
         <input type="url" placeholder="https://…" bind:value={form.source_url} />
       </label>
       <label class="field">
-        <span>Quelle (Name)</span>
-        <input type="text" maxlength="200" placeholder="z. B. HelloFresh-Karte, Kochbuch" bind:value={form.source_name} />
+        <span>{t('editor.fields.source_name')}</span>
+        <input type="text" maxlength="200" placeholder={t('editor.fields.source_name_placeholder')} bind:value={form.source_name} />
       </label>
     </section>
 
     <section>
-      <h2>Bild</h2>
+      <h2>{t('editor.sections.image')}</h2>
       <ImagePicker current={currentImage} bind:file={imageFile} bind:remove={removeImage} bind:remoteUrl={remoteImage} />
     </section>
 
     <section>
-      <h2>Kategorien</h2>
+      <h2>{t('editor.sections.categories')}</h2>
       <TagFilter groups={tagGroups} selected={form.tagIds} ontoggle={toggleTag} />
     </section>
 
     <section>
-      <h2>Zutaten</h2>
-      <p class="hint">Mengen als 1,5 oder 1/2. Leere Zeilen werden beim Speichern weggelassen.</p>
+      <h2>{t('editor.sections.ingredients')}</h2>
+      <p class="hint">{t('editor.ingredients_hint')}</p>
       <IngredientEditor bind:items={form.items} {errors} />
     </section>
 
     <section>
-      <h2>Zubereitung</h2>
+      <h2>{t('editor.sections.steps')}</h2>
       <StepEditor bind:steps={form.steps} />
     </section>
 
     <section>
-      <h2>Notizen</h2>
-      <textarea rows="3" aria-label="Notizen" bind:value={form.notes}></textarea>
+      <h2>{t('editor.sections.notes')}</h2>
+      <textarea rows="3" aria-label={t('editor.sections.notes')} bind:value={form.notes}></textarea>
     </section>
 
     <div class="actions">
       {#if saveError}<p class="error">{saveError}</p>{/if}
-      <button type="button" class="secondary" onclick={cancel}>Abbrechen</button>
-      <button type="submit" class="primary" disabled={saving}>{saving ? 'Speichert …' : 'Speichern'}</button>
+      <button type="button" class="secondary" onclick={cancel}>{t('common.cancel')}</button>
+      <button type="submit" class="primary" disabled={saving}>{saving ? t('common.saving') : t('common.save')}</button>
     </div>
   </form>
 {/if}

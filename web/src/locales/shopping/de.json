@@ -1,0 +1,84 @@
+{
+  "title": "Einkauf",
+  "period_label": "Zeitraum",
+  "period_current": "Eingekaufte Woche",
+  "period_next": "Nächster Einkauf",
+  "load_failed": "Einkaufsliste nicht geladen: {message}",
+  "range": "{from} bis {to}",
+  "dishes": "Gerichte",
+  "nothing_planned": "Für diesen Zeitraum ist nichts geplant.",
+  "to_plan": "Zum Essensplan",
+  "slot_lunch": "mittags",
+  "slot_coffee": "nachmittags",
+  "menu": "Menü: {title}",
+  "servings_short": {
+    "one": "{count} Port.",
+    "other": "{count} Port."
+  },
+  "reason": {
+    "no_recipe": "ohne Rezept",
+    "transferred": "schon an Bring gesendet",
+    "have_ingredients": "Zutaten vorhanden",
+    "past": "vorbei"
+  },
+  "reset_button": "Übertragung zurücksetzen …",
+  "reset_hint": "z. B. nach dem Senden an die falsche Bring-Liste",
+  "list_title": "Einkaufsliste",
+  "selected": "{selected} von {total} ausgewählt",
+  "sent": {
+    "one": "Ein Artikel an Bring gesendet.",
+    "other": "{count} Artikel an Bring gesendet."
+  },
+  "sent_merged": {
+    "one": "Ein Artikel an Bring gesendet, davon {merged} bei schon vorhandenen ergänzt.",
+    "other": "{count} Artikel an Bring gesendet, davon {merged} bei schon vorhandenen ergänzt."
+  },
+  "failed_intro": "Nicht angekommen – bitte später nachsenden oder von Hand eintragen:",
+  "nothing_to_buy": "Nichts einzukaufen.",
+  "send": "An Bring senden ({count})",
+  "send_to": "An Bring senden: {list} ({count})",
+  "sending": "Sendet …",
+  "to_settings": "Zu den Einstellungen",
+  "deselected_hint": "Abgewählte Artikel gelten danach als erledigt.",
+  "changed_title": "Nach dem Senden geändert",
+  "changed_hint": "Gerichte wurden nach dem Senden geändert, verschoben oder entfernt.",
+  "missing_title": "Fehlt noch auf der Bring-Liste",
+  "send_missing": "Differenz nachsenden ({count})",
+  "to_list": "an „{name}“",
+  "surplus_title": "Zu viel gesendet",
+  "surplus_hint": "Wird nicht aus Bring gelöscht – vielleicht schon gekauft. Am besten für ein anderes Gericht einplanen.",
+  "reset": {
+    "title": "Übertragung zurücksetzen",
+    "intro": "Die Gerichte gelten danach wieder als geplant und lassen sich neu an Bring senden. Abgewählte Zutaten („Zutaten vorhanden“) bleiben erhalten.",
+    "nothing": "In diesem Zeitraum ist nichts übertragen.",
+    "list_name": "„{name}“",
+    "unknown_list": "unbekannte Liste",
+    "no_items": "keine Artikel gesendet",
+    "target": "an {lists}",
+    "items": {
+      "one": "{count} Artikel",
+      "other": "{count} Artikel"
+    },
+    "remove": "Artikel aus der alten Liste entfernen",
+    "remove_hint": "Was andere, weiter übertragene Gerichte brauchen, bleibt mit kleinerer Menge stehen. Schon abgehakte Artikel bleiben unberührt.",
+    "unknown_label": {
+      "one": "Für {count} Gericht ist die damalige Liste nicht gespeichert (vor Version 0.18 gesendet). Entfernen aus:",
+      "other": "Für {count} Gerichte ist die damalige Liste nicht gespeichert (vor Version 0.18 gesendet). Entfernen aus:"
+    },
+    "dont_remove": "– nicht entfernen –",
+    "lists_error": "Listen nicht geladen: {message}",
+    "resend_hint": "Neu senden geht danach an „{name}“ (Einstellungen).",
+    "resetting": "Setzt zurück …",
+    "confirm": "Zurücksetzen ({count})",
+    "done": {
+      "one": "{count} Gericht wieder geplant.",
+      "other": "{count} Gerichte wieder geplant."
+    },
+    "removed": "Von der alten Liste entfernt: {items}.",
+    "reduced": "Menge verringert (andere Gerichte brauchen sie noch): {items}.",
+    "not_found": "Nicht mehr offen auf der Liste, unverändert: {items}.",
+    "skipped": "Nicht entfernt, Liste unbekannt: {items}.",
+    "failed": "Nicht entfernt (bitte von Hand löschen): {items}.",
+    "send_now": "Jetzt „An Bring senden“ – es geht an „{name}“."
+  }
+}

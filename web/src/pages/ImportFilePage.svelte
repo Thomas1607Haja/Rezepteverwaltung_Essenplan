@@ -1,6 +1,7 @@
 <script>
   import { api } from '../lib/api.js';
   import { amountText, formatMinutes } from '../lib/format.js';
+  import { t, errorText, noteText, formatNumber } from '../lib/i18n.svelte.js';
 
   // Datei-Import (ZIP oder JSON, z. B. von der Claude-Skill). Ablauf:
   // Dateien wählen → Server prüft und liefert eine Vorschau (noch nichts
@@ -17,7 +18,7 @@
   let categoryChoice = $state({});
   let tagGroups = $state([]);
 
-  const importable = (r) => r.errors.length === 0;
+  const importable = (r) => (r.error_details ?? []).length === 0;
 
   async function upload(files) {
     if (!files || files.length === 0) return;
@@ -33,7 +34,7 @@
       );
       step = 'preview';
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
       step = 'choose';
     }
   }
@@ -52,7 +53,7 @@
       result = await api.confirmImport(preview.token, [...selected].sort((a, b) => a - b), categoryChoices());
       step = 'done';
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
       // Abgelaufen o. Ä.: zurück zur Auswahl, sonst Vorschau behalten.
       step = e.status === 404 ? 'choose' : 'preview';
     }
@@ -69,8 +70,20 @@
     return out;
   }
 
-  // Hinweise zu unbekannten Kategorien stehen gesammelt im eigenen Abschnitt.
-  const isCategoryHint = (w) => w.startsWith('Kategorie „') && w.includes('gibt es nicht');
+  // Hinweise zu unbekannten Kategorien stehen gesammelt im eigenen Abschnitt;
+  // das Foto der Quellseite steht als Info mit Link da (r.web_image).
+  const WEB_PHOTO_CODES = ['import_web_photo', 'import_web_photo_replaces'];
+  const shownWarnings = (r) =>
+    (r.warning_details ?? []).filter(
+      (w) => w.code !== 'import_unknown_category' && !(r.web_image && WEB_PHOTO_CODES.includes(w.code)),
+    );
+
+  /** Text mit Link: teilt die Übersetzung an der Stelle des Platzhalters {site}. */
+  function webPhotoParts() {
+    const mark = '\u0000';
+    const [before, after = ''] = t('import.web_photo', { site: mark }).split(mark);
+    return { before, after };
+  }
 
   function restart() {
     preview = null;
@@ -85,13 +98,11 @@
     upload(event.dataTransfer?.files);
   }
 
-  const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-
   function amounts(r) {
     const parts = [
       amountText(r.recipe.base_servings, r.recipe.yield_unit),
-      count(r.recipe.ingredients.length, 'Zutat', 'Zutaten'),
-      count(r.recipe.steps.length, 'Schritt', 'Schritte'),
+      t('import.ingredient_count', { count: (r.recipe.ingredients ?? []).length }),
+      t('import.step_count', { count: (r.recipe.steps ?? []).length }),
     ];
     if (r.recipe.total_minutes != null) parts.push(formatMinutes(r.recipe.total_minutes));
     return parts.join(' · ');
@@ -99,13 +110,13 @@
 
   function quantity(ing) {
     if (ing.quantity == null) return ing.unit;
-    return `${ing.quantity.toLocaleString('de-DE')} ${ing.unit}`.trim();
+    return `${formatNumber(ing.quantity)} ${ing.unit}`.trim();
   }
 </script>
 
 <div class="page-head">
-  <h1>Datei importieren</h1>
-  <a href="#/recipes">Zurück zu den Rezepten</a>
+  <h1>{t('import.title')}</h1>
+  <a href="#/recipes">{t('import.back')}</a>
 </div>
 
 {#if error}<p class="error" role="alert">{error}</p>{/if}
@@ -115,7 +126,7 @@
     class="drop"
     class:dragging
     role="region"
-    aria-label="Dateien hier ablegen"
+    aria-label={t('import.drop_label')}
     ondragover={(e) => {
       e.preventDefault();
       dragging = true;
@@ -123,10 +134,7 @@
     ondragleave={() => (dragging = false)}
     ondrop={onDrop}
   >
-    <p>
-      ZIP-Datei (z. B. von der Claude-Skill „rezeptplaner-import“) oder JSON-Datei hier ablegen oder auswählen. Es wird
-      noch nichts gespeichert – zuerst kommt eine Vorschau.
-    </p>
+    <p>{t('import.drop_hint')}</p>
     <input
       bind:this={input}
       type="file"
@@ -136,18 +144,18 @@
       onchange={(e) => upload(e.currentTarget.files)}
     />
     <button type="button" class="primary" disabled={step === 'uploading'} onclick={() => input.click()}>
-      {step === 'uploading' ? 'Wird geprüft (Fotos von Rezeptseiten laden kann bis zu 20 s dauern) …' : 'Datei auswählen'}
+      {step === 'uploading' ? t('import.checking') : t('import.choose_file')}
     </button>
   </section>
 {/if}
 
 {#if (step === 'preview' || step === 'importing') && preview}
-  {#each preview.file_errors as fe (fe.file + fe.error)}
-    <p class="error">{fe.file}: {fe.error}</p>
+  {#each preview.file_errors ?? [] as fe (fe.file + fe.error)}
+    <p class="error">{fe.file}: {noteText(fe.error_detail ?? fe.error)}</p>
   {/each}
 
   {#if preview.recipes.length === 0}
-    <p>Keine Rezepte gefunden.</p>
+    <p>{t('import.no_recipes')}</p>
   {/if}
 
   <ul class="recipes">
@@ -160,31 +168,31 @@
             disabled={!importable(r) || step === 'importing'}
             onchange={() => toggle(r.index)}
           />
-          <span class="sr-only">Importieren</span>
+          <span class="sr-only">{t('import.select')}</span>
         </label>
         {#if r.thumbnail}
           <figure>
             <img src={api.importThumbnailUrl(preview.token, r.index)} alt="" />
-            {#if r.web_image}<figcaption>Foto aus Link</figcaption>{/if}
+            {#if r.web_image}<figcaption>{t('import.photo_from_link')}</figcaption>{/if}
           </figure>
         {:else}
           <div class="noimg" aria-hidden="true"></div>
         {/if}
         <div class="info">
-          <strong>{r.recipe.title || '(ohne Titel)'}</strong>
+          <strong>{r.recipe.title || t('import.untitled')}</strong>
           <small>{amounts(r)}</small>
           {#if r.recipe.source_name || r.recipe.source_url}
-            <small>Quelle: {r.recipe.source_name || r.recipe.source_url}</small>
+            <small>{t('import.source', { source: r.recipe.source_name || r.recipe.source_url })}</small>
           {/if}
           {#if r.recipe.tags.length > 0}
             <div class="tags">
               {#each r.recipe.tags as tag (tag.id)}<span>{tag.name}</span>{/each}
             </div>
           {/if}
-          {#each r.errors as msg, i (i)}<p class="error">{msg}</p>{/each}
+          {#each r.error_details ?? [] as note, i (i)}<p class="error">{noteText(note)}</p>{/each}
           {#if r.duplicates.length > 0}
             <p class="warning">
-              Gibt es schon:
+              {t('import.exists')}
               {#each r.duplicates as d, i (d.id)}{i > 0 ? ', ' : ''}<a
                   href="#/recipes/{d.id}"
                   target="_blank"
@@ -194,19 +202,18 @@
           {/if}
           {#if r.web_image}
             <!-- Der Server meldet das auch als Hinweis; hier als Info mit Link statt als Warnung. -->
+            {@const parts = webPhotoParts()}
             <p class="from-web">
-              Foto von <a href={r.recipe.source_url} target="_blank" rel="noopener noreferrer">{r.web_image}</a> wird übernommen
+              {parts.before}<a href={r.recipe.source_url} target="_blank" rel="noopener noreferrer">{r.web_image}</a>{parts.after}
             </p>
           {/if}
           {#if r.unknown_categories.length > 0}
-            <p class="warning">Unbekannte Kategorien: {r.unknown_categories.join(', ')} (siehe unten)</p>
+            <p class="warning">{t('import.unknown_in_recipe', { names: r.unknown_categories.join(', ') })}</p>
           {/if}
-          {#each r.warnings.filter((w) => !(r.web_image && w.startsWith('Foto von ')) && !isCategoryHint(w)) as msg, i (i)}<p class="warning">
-              {msg}
-            </p>{/each}
+          {#each shownWarnings(r) as note, i (i)}<p class="warning">{noteText(note)}</p>{/each}
           {#if importable(r)}
             <details>
-              <summary>Zutaten und Schritte</summary>
+              <summary>{t('import.details')}</summary>
               <ul class="ingredients">
                 {#each r.recipe.ingredients as ing, i (i)}
                   <li class:pantry={!ing.shopping_relevant}>
@@ -215,14 +222,14 @@
                     {/if}
                     {quantity(ing)}
                     {ing.name}{ing.note ? `, ${ing.note}` : ''}
-                    {#if !ing.shopping_relevant}<small>(nicht einkaufen)</small>{/if}
+                    {#if !ing.shopping_relevant}<small>{t('import.not_shopping')}</small>{/if}
                   </li>
                 {/each}
               </ul>
               <ol>
                 {#each r.recipe.steps as s, i (i)}<li>{s.text}</li>{/each}
               </ol>
-              {#if r.recipe.notes}<p class="notes">Notizen: {r.recipe.notes}</p>{/if}
+              {#if r.recipe.notes}<p class="notes">{t('import.notes', { notes: r.recipe.notes })}</p>{/if}
             </details>
           {/if}
         </div>
@@ -232,22 +239,22 @@
 
   {#if preview.unknown_categories.length > 0}
     <section class="unknown">
-      <h2>Unbekannte Kategorien</h2>
-      <p class="hint">Diese Kategorien gibt es im Rezeptplaner nicht. Einer vorhandenen zuordnen, neu anlegen oder weglassen.</p>
+      <h2>{t('import.unknown.title')}</h2>
+      <p class="hint">{t('import.unknown.hint')}</p>
       {#each preview.unknown_categories as name (name)}
         <label class="mapping">
-          <span>„{name}“</span>
+          <span>{t('import.unknown.quoted', { name })}</span>
           <select bind:value={categoryChoice[name]} disabled={step === 'importing'}>
-            <option value="">Weglassen</option>
+            <option value="">{t('import.unknown.skip')}</option>
             {#each tagGroups as g (g.id)}
               {#if g.tags.length > 0}
-                <optgroup label="Zuordnen – {g.name}">
-                  {#each g.tags as t (t.id)}<option value="tag:{t.id}">{t.name}</option>{/each}
+                <optgroup label={t('import.unknown.assign', { group: g.name })}>
+                  {#each g.tags as tag (tag.id)}<option value="tag:{tag.id}">{tag.name}</option>{/each}
                 </optgroup>
               {/if}
             {/each}
-            <optgroup label="Neu anlegen in Gruppe">
-              {#each tagGroups as g (g.id)}<option value="new:{g.id}">„{name}“ in {g.name}</option>{/each}
+            <optgroup label={t('import.unknown.create')}>
+              {#each tagGroups as g (g.id)}<option value="new:{g.id}">{t('import.unknown.create_in', { name, group: g.name })}</option>{/each}
             </optgroup>
           </select>
         </label>
@@ -257,39 +264,37 @@
 
   <div class="actions">
     <button type="button" class="primary" disabled={selected.size === 0 || step === 'importing'} onclick={confirmImport}>
-      {step === 'importing'
-        ? 'Importiert …'
-        : `${selected.size} ${selected.size === 1 ? 'Rezept' : 'Rezepte'} importieren`}
+      {step === 'importing' ? t('import.importing') : t('import.import_count', { count: selected.size })}
     </button>
-    <button type="button" disabled={step === 'importing'} onclick={restart}>Andere Datei</button>
+    <button type="button" disabled={step === 'importing'} onclick={restart}>{t('import.other_file')}</button>
   </div>
 {/if}
 
 {#if step === 'done' && result}
   <section class="result">
-    {#if result.created.length > 0}
-      <h2>{result.created.length} {result.created.length === 1 ? 'Rezept' : 'Rezepte'} importiert</h2>
+    {#if (result.created ?? []).length > 0}
+      <h2>{t('import.imported', { count: result.created.length })}</h2>
       <ul>
         {#each result.created as c (c.id)}
           <li>
             <a href="#/recipes/{c.id}">{c.title}</a>
-            {#each c.warnings as w, i (i)}<span class="warning"> – {w}</span>{/each}
+            {#each c.warning_details ?? [] as note, i (i)}<span class="warning"> – {noteText(note)}</span>{/each}
           </li>
         {/each}
       </ul>
     {/if}
-    {#each result.warnings ?? [] as w, i (i)}<p class="warning">{w}</p>{/each}
-    {#if result.failed.length > 0}
-      <h2>Nicht importiert</h2>
+    {#each result.warning_details ?? [] as note, i (i)}<p class="warning">{noteText(note)}</p>{/each}
+    {#if (result.failed ?? []).length > 0}
+      <h2>{t('import.not_imported')}</h2>
       <ul>
         {#each result.failed as f (f.index)}
-          <li class="error">{f.title || `Rezept ${f.index + 1}`}: {f.error}</li>
+          <li class="error">{f.title || t('import.recipe_n', { n: f.index + 1 })}: {noteText(f.error_detail ?? f.error)}</li>
         {/each}
       </ul>
     {/if}
     <div class="actions">
-      <a class="button primary" href="#/recipes">Zu den Rezepten</a>
-      <button type="button" onclick={restart}>Weitere Datei importieren</button>
+      <a class="button primary" href="#/recipes">{t('import.to_recipes')}</a>
+      <button type="button" onclick={restart}>{t('import.import_more')}</button>
     </div>
   </section>
 {/if}

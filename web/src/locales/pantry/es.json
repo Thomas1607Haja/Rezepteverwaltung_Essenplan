@@ -1,0 +1,38 @@
+{
+  "title": "Despensa",
+  "intro": "Ingredientes que siempre tienes en casa. En las recetas nuevas no se añaden automáticamente a la lista de la compra.",
+  "load_failed": "No se pudo cargar la despensa: {message}",
+  "added": "«{name}» añadido.",
+  "remove_confirm": "¿Quitar «{name}» de la despensa?",
+  "removed": "«{name}» quitado.",
+  "nothing_to_apply": "Todas las recetas ya coinciden con la despensa.",
+  "ingredients": {
+    "one": "Un ingrediente",
+    "other": "{count} ingredientes"
+  },
+  "in_recipes": {
+    "one": "en una receta",
+    "other": "en {count} recetas"
+  },
+  "applied": "Actualización hecha: {ingredients} {recipes}.",
+  "name": "Nombre",
+  "synonyms": "Otros nombres",
+  "synonyms_placeholder": "Otros nombres, separados por comas",
+  "edit_item": "Editar {name}",
+  "remove_item": "Quitar {name}",
+  "empty": "Aún no hay nada en la despensa.",
+  "new_item": "Nuevo artículo de la despensa",
+  "new_item_placeholder": "Nuevo artículo, p. ej. harina",
+  "new_synonyms": "Otros nombres del nuevo artículo",
+  "new_synonyms_placeholder": "Otros nombres, p. ej. harina de trigo, harina de espelta",
+  "apply_all": "Aplicar a todas las recetas …",
+  "apply_hint": "Las recetas existentes solo cambian con este botón. Antes verás qué ingredientes se ven afectados.",
+  "apply_dialog": {
+    "title": "¿Aplicar la despensa a todas las recetas?",
+    "text": "Cambios: {ingredients} {recipes}. Las marcas puestas a mano se sobrescriben.",
+    "to_shopping": "vuelve a la lista de la compra",
+    "to_pantry": "pasa a la despensa",
+    "apply": "Aplicar",
+    "applying": "Aplicando …"
+  }
+}

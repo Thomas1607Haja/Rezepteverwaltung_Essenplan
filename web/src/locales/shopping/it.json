@@ -1,0 +1,84 @@
+{
+  "title": "Spesa",
+  "period_label": "Periodo",
+  "period_current": "Spesa attuale",
+  "period_next": "Prossima spesa",
+  "load_failed": "Lista della spesa non caricata: {message}",
+  "range": "{from} – {to}",
+  "dishes": "Piatti",
+  "nothing_planned": "Niente di previsto per questo periodo.",
+  "to_plan": "Vai al piano pasti",
+  "slot_lunch": "pranzo",
+  "slot_coffee": "merenda",
+  "menu": "Menù: {title}",
+  "servings_short": {
+    "one": "{count} porz.",
+    "other": "{count} porz."
+  },
+  "reason": {
+    "no_recipe": "senza ricetta",
+    "transferred": "già inviato a Bring",
+    "have_ingredients": "ingredienti in casa",
+    "past": "passato"
+  },
+  "reset_button": "Annulla l'invio …",
+  "reset_hint": "ad es. dopo l'invio alla lista Bring sbagliata",
+  "list_title": "Lista della spesa",
+  "selected": "{selected} di {total} selezionati",
+  "sent": {
+    "one": "{count} articolo inviato a Bring.",
+    "other": "{count} articoli inviati a Bring."
+  },
+  "sent_merged": {
+    "one": "{count} articolo inviato a Bring, {merged} aggiunto/i a voci esistenti.",
+    "other": "{count} articoli inviati a Bring, {merged} aggiunto/i a voci esistenti."
+  },
+  "failed_intro": "Non arrivati – inviali più tardi o aggiungili a mano:",
+  "nothing_to_buy": "Niente da comprare.",
+  "send": "Invia a Bring ({count})",
+  "send_to": "Invia a Bring: {list} ({count})",
+  "sending": "Invio …",
+  "to_settings": "Vai alle impostazioni",
+  "deselected_hint": "Gli articoli deselezionati verranno considerati fatti.",
+  "changed_title": "Modificato dopo l'invio",
+  "changed_hint": "Dopo l'invio alcuni piatti sono stati modificati, spostati o rimossi.",
+  "missing_title": "Manca ancora sulla lista Bring",
+  "send_missing": "Invia la differenza ({count})",
+  "to_list": "a «{name}»",
+  "surplus_title": "Inviato in più",
+  "surplus_hint": "Non viene eliminato da Bring – forse è già stato comprato. Meglio pianificarlo per un altro piatto.",
+  "reset": {
+    "title": "Annulla l'invio",
+    "intro": "I piatti tornano previsti e possono essere inviati di nuovo a Bring. Gli ingredienti deselezionati («ingredienti in casa») restano.",
+    "nothing": "Niente è stato inviato in questo periodo.",
+    "list_name": "«{name}»",
+    "unknown_list": "lista sconosciuta",
+    "no_items": "nessun articolo inviato",
+    "target": "a {lists}",
+    "items": {
+      "one": "{count} articolo",
+      "other": "{count} articoli"
+    },
+    "remove": "Rimuovi gli articoli dalla vecchia lista",
+    "remove_hint": "Ciò che serve ancora ad altri piatti inviati resta con una quantità minore. Gli articoli già spuntati non vengono toccati.",
+    "unknown_label": {
+      "one": "Per {count} piatto la lista originale non è salvata (inviato prima della versione 0.18). Rimuovi da:",
+      "other": "Per {count} piatti la lista originale non è salvata (inviati prima della versione 0.18). Rimuovi da:"
+    },
+    "dont_remove": "– non rimuovere –",
+    "lists_error": "Liste non caricate: {message}",
+    "resend_hint": "Il prossimo invio andrà a «{name}» (impostazioni).",
+    "resetting": "Annullamento …",
+    "confirm": "Annulla ({count})",
+    "done": {
+      "one": "{count} piatto di nuovo previsto.",
+      "other": "{count} piatti di nuovo previsti."
+    },
+    "removed": "Rimosso dalla vecchia lista: {items}.",
+    "reduced": "Quantità ridotta (servono ancora ad altri piatti): {items}.",
+    "not_found": "Non più aperto sulla lista, invariato: {items}.",
+    "skipped": "Non rimosso, lista sconosciuta: {items}.",
+    "failed": "Non rimosso (eliminalo a mano): {items}.",
+    "send_now": "Ora tocca «Invia a Bring» – andrà a «{name}»."
+  }
+}

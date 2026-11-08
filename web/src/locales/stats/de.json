@@ -1,0 +1,59 @@
+{
+  "title": "Statistik",
+  "load_failed": "Statistik nicht geladen: {message}",
+  "key_figures": "Kennzahlen",
+  "period_label": "Zeitraum",
+  "periods": {
+    "3m": "Letzte 3 Monate",
+    "12m": "Letztes Jahr",
+    "all": "Gesamt"
+  },
+  "recipes": {
+    "one": "Rezept",
+    "other": "Rezepte"
+  },
+  "planned": "schon eingeplant ({percent} %)",
+  "never_planned": "noch nie eingeplant ({percent} %)",
+  "illustrated": "mit Illustration statt Foto",
+  "favorites": "Favoriten",
+  "top_title": "Am häufigsten gegessen",
+  "entries_since": {
+    "one": "{count} Gericht im Essensplan seit {date} (bis heute)",
+    "other": "{count} Gerichte im Essensplan seit {date} (bis heute)"
+  },
+  "entries_total": {
+    "one": "{count} Gericht im Essensplan insgesamt (bis heute)",
+    "other": "{count} Gerichte im Essensplan insgesamt (bis heute)"
+  },
+  "menus": {
+    "one": ", davon ein Menü",
+    "other": ", davon {count} Menüs"
+  },
+  "top_empty": "In diesem Zeitraum stand noch nichts im Essensplan.",
+  "without_recipe_title": "Ohne Rezept",
+  "without_recipe_hint": "Einträge wie „{example}“ im gewählten Zeitraum – sie zählen nicht als Rezept.",
+  "favorites_waiting_title": "Lieblingsgerichte, die lange nicht dran waren",
+  "favorites_waiting_empty": "Alle Favoriten waren in den letzten 8 Wochen dran oder sind schon eingeplant.",
+  "recent_title": "Zuletzt hinzugefügt",
+  "categories_title": "Rezepte nach Kategorien",
+  "without_category": {
+    "one": "{count} Rezept ohne Kategorie",
+    "other": "{count} Rezepte ohne Kategorie"
+  },
+  "last": {
+    "today": "zuletzt heute",
+    "days": {
+      "one": "zuletzt vor {count} Tag",
+      "other": "zuletzt vor {count} Tagen"
+    },
+    "weeks": {
+      "one": "zuletzt vor {count} Woche",
+      "other": "zuletzt vor {count} Wochen"
+    },
+    "months": {
+      "one": "zuletzt vor {count} Monat",
+      "other": "zuletzt vor {count} Monaten"
+    },
+    "never": "noch nie eingeplant"
+  }
+}

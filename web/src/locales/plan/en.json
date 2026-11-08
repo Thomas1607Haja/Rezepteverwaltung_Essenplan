@@ -1,0 +1,102 @@
+{
+  "title": "Meal plan",
+  "week_back": "Previous week",
+  "week_forward": "Next week",
+  "shopped": "Shopped: {range}",
+  "next_shopping": "Next shopping: {range}",
+  "load_failed": "Couldn't load the plan: {message}",
+  "move_failed": "Couldn't move: {message}",
+  "menu_not_created": "Menu not created: {message}",
+  "bring_sent": {
+    "one": "{count} item sent to Bring.",
+    "other": "{count} items sent to Bring."
+  },
+  "bring_failed": {
+    "one": "{count} item didn't arrive (see Shopping).",
+    "other": "{count} items didn't arrive (see Shopping)."
+  },
+  "bring_send_failed": "Couldn't send to Bring: {message}",
+  "add_dish": "Plan a dish for {day}",
+  "card": {
+    "sent_to_bring": "Sent to Bring",
+    "have_ingredients": "Ingredients at home",
+    "servings_short": {
+      "one": "{count} serv.",
+      "other": "{count} serv."
+    },
+    "excluded_title": "Unchecked because you already have it",
+    "excluded_count": {
+      "one": "{count} ingredient at home",
+      "other": "{count} ingredients at home"
+    },
+    "favorite": "Favorite",
+    "options": "Options",
+    "options_for": "Options for {title}"
+  },
+  "entry": {
+    "note_required": "A note is required without a recipe.",
+    "favorite_failed": "Favorite not saved: {message}",
+    "remove_confirm": "Remove “{title}” from the plan?",
+    "servings": "Servings",
+    "fewer": "Fewer",
+    "more": "More",
+    "note": "Note",
+    "note_optional": "Note (optional)",
+    "note_placeholder": "e.g. Eating out",
+    "note_placeholder_recipe": "e.g. with salad",
+    "sent_to_bring": "Ingredients sent to Bring.",
+    "undo_sending": "Undo sending …",
+    "have_ingredients": "Ingredients at home (don't buy)",
+    "excluded_count": {
+      "one": "{count} ingredient at home.",
+      "other": "{count} ingredients at home."
+    },
+    "have_ingredients_open": "Ingredients at home …",
+    "already_sent": "(already sent to Bring – changes show up in Shopping as a difference)",
+    "move_to": "Move to",
+    "move": "Move",
+    "open_cooking_view": "Open cooking view",
+    "favorite": "Favorite",
+    "make_favorite": "Add to favorites",
+    "replace_recipe": "Replace recipe",
+    "choose_recipe": "Choose recipe",
+    "to_menu": "Turn into a menu"
+  },
+  "add": {
+    "title": "Add to meal plan",
+    "replace_confirm": "Replace “{old}” with “{title}”?",
+    "done": "“{title}” is planned for {day}.",
+    "show_plan": "Go to meal plan",
+    "meal": "Meal",
+    "replace": "replace",
+    "replace_button": "Replace",
+    "free": "free",
+    "add_more": "+ add",
+    "add": "Add"
+  },
+  "preview": {
+    "fewer": "Fewer servings",
+    "more": "More servings",
+    "hint": "Uncheck what you already have – applies to this entry only.",
+    "nothing_to_buy": "No ingredients to buy.",
+    "pantry": "From the pantry ({count}) – not bought",
+    "all_available_title": "All ingredients are at home",
+    "all_available": "All at home",
+    "have_count": "({count} at home)"
+  },
+  "move": {
+    "title": "Move anyway?",
+    "have_ingredients": "Ingredients at home",
+    "send_to_bring": "Send ingredients to Bring",
+    "move_anyway": "Move anyway"
+  },
+  "dnd": {
+    "drag_started": "{item} picked up. Use the arrow keys to move it in the list {zone}.",
+    "moved_to_position": "{item} moved to position {position}.",
+    "moved_to_end": "{item} moved to the end.",
+    "moved_to_start": "{item} moved to the beginning.",
+    "dropped": "{item} dropped, position {position} of {count}.",
+    "zone_active": "Tab to a handle and press Space to pick it up.",
+    "zone_disabled": "Moving isn't possible here."
+  }
+}

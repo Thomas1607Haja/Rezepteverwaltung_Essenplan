@@ -1,0 +1,38 @@
+{
+  "title": "Pantry list",
+  "intro": "Ingredients you always have at home. In new recipes they are automatically left off the shopping list.",
+  "load_failed": "Couldn't load pantry list: {message}",
+  "added": "\"{name}\" added.",
+  "remove_confirm": "Remove \"{name}\" from the pantry list?",
+  "removed": "\"{name}\" removed.",
+  "nothing_to_apply": "All recipes already match the pantry list.",
+  "ingredients": {
+    "one": "One ingredient",
+    "other": "{count} ingredients"
+  },
+  "in_recipes": {
+    "one": "in one recipe",
+    "other": "in {count} recipes"
+  },
+  "applied": "{ingredients} {recipes} updated.",
+  "name": "Name",
+  "synonyms": "Alternative names",
+  "synonyms_placeholder": "Alternative names, comma-separated",
+  "edit_item": "Edit {name}",
+  "remove_item": "Remove {name}",
+  "empty": "Nothing in the pantry yet.",
+  "new_item": "New pantry item",
+  "new_item_placeholder": "New item, e.g. flour",
+  "new_synonyms": "Alternative names of the new item",
+  "new_synonyms_placeholder": "Alternative names, e.g. plain flour, spelt flour",
+  "apply_all": "Apply to all recipes …",
+  "apply_hint": "Existing recipes only change with this button. You'll see which ingredients are affected first.",
+  "apply_dialog": {
+    "title": "Apply pantry list to all recipes?",
+    "text": "{ingredients} {recipes} will change. Ticks set by hand will be overwritten.",
+    "to_shopping": "back on the shopping list",
+    "to_pantry": "moves to the pantry",
+    "apply": "Apply",
+    "applying": "Applying …"
+  }
+}

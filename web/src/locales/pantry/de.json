@@ -1,0 +1,38 @@
+{
+  "title": "Vorratsliste",
+  "intro": "Zutaten, die immer im Haus sind. Sie werden in neuen Rezepten automatisch nicht zum Einkaufen vorgemerkt.",
+  "load_failed": "Vorratsliste nicht geladen: {message}",
+  "added": "„{name}“ hinzugefügt.",
+  "remove_confirm": "„{name}“ von der Vorratsliste nehmen?",
+  "removed": "„{name}“ entfernt.",
+  "nothing_to_apply": "Alle Rezepte passen schon zur Vorratsliste.",
+  "ingredients": {
+    "one": "Eine Zutat",
+    "other": "{count} Zutaten"
+  },
+  "in_recipes": {
+    "one": "in einem Rezept",
+    "other": "in {count} Rezepten"
+  },
+  "applied": "{ingredients} {recipes} aktualisiert.",
+  "name": "Name",
+  "synonyms": "Synonyme",
+  "synonyms_placeholder": "Synonyme, durch Komma getrennt",
+  "edit_item": "{name} bearbeiten",
+  "remove_item": "{name} entfernen",
+  "empty": "Noch nichts im Vorrat.",
+  "new_item": "Neuer Vorratsartikel",
+  "new_item_placeholder": "Neuer Artikel, z. B. Mehl",
+  "new_synonyms": "Synonyme des neuen Artikels",
+  "new_synonyms_placeholder": "Synonyme, z. B. Weizenmehl, Dinkelmehl",
+  "apply_all": "Auf alle Rezepte übertragen …",
+  "apply_hint": "Bestehende Rezepte ändern sich erst mit diesem Knopf. Vorher siehst du, welche Zutaten betroffen sind.",
+  "apply_dialog": {
+    "title": "Vorratsliste auf alle Rezepte übertragen?",
+    "text": "{ingredients} {recipes} ändern sich. Von Hand gesetzte Häkchen werden dabei überschrieben.",
+    "to_shopping": "wird wieder eingekauft",
+    "to_pantry": "kommt in den Vorrat",
+    "apply": "Übertragen",
+    "applying": "Überträgt …"
+  }
+}

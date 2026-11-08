@@ -1,0 +1,73 @@
+{
+  "title": "Catégories",
+  "intro": "Groupes et catégories pour filtrer les recettes. Faites glisser la poignée pour trier – les catégories peuvent aussi changer de groupe. Chaque nom n'existe qu'une fois (majuscules et accents ne comptent pas).",
+  "load_failed": "Impossible de charger les catégories : {message}",
+  "recipes": {
+    "one": "{count} recette",
+    "other": "{count} recettes"
+  },
+  "group_created": "Groupe « {name} » créé.",
+  "course_group_set": "« {name} » est maintenant le groupe des plats.",
+  "delete_group_confirm": "Supprimer le groupe « {name} » ?",
+  "group_deleted": "Groupe « {name} » supprimé.",
+  "tag_created": "Catégorie « {name} » créée.",
+  "merge_confirm": "Fusionner ?",
+  "merge_recipes": {
+    "one": "La recette avec « {name} » reçoit « {into} ». Ensuite, « {name} » est supprimée.",
+    "other": "Les {count} recettes avec « {name} » reçoivent « {into} ». Ensuite, « {name} » est supprimée."
+  },
+  "merge_empty": "« {name} » n'a aucune recette et sera supprimée.",
+  "merged": "« {name} » fusionnée dans « {into} ».",
+  "delete_tag_used": {
+    "one": "« {name} » est attribuée à une recette.\n\nSupprimer la catégorie ? La recette reste inchangée, seule l'attribution disparaît.",
+    "other": "« {name} » est attribuée à {count} recettes.\n\nSupprimer la catégorie ? Les recettes restent inchangées, seule l'attribution disparaît."
+  },
+  "delete_tag_unused": "Supprimer la catégorie « {name} » ? Elle n'est attribuée à aucune recette.",
+  "tag_deleted": "« {name} » supprimée.",
+  "skill": {
+    "title": "Catégories du Rezeptplaner",
+    "intro": "État au {date}. Pour « categories », utilise uniquement ces noms, écrits exactement ainsi – ils remplacent categories.md de la skill (enregistrer comme fichier et l'indiquer avec --categories lors de la génération)."
+  },
+  "copied": "Liste des catégories copiée – collez-la dans le chat avec Claude.",
+  "copy_failed": "Copie impossible ici – sélectionnez le texte ci-dessous et copiez-le.",
+  "groups": "Groupes",
+  "group": "Groupe",
+  "group_label": "Groupe {name}",
+  "move_group": "Déplacer le groupe {name}",
+  "group_name": "Nom du groupe",
+  "course_badge": "Plat",
+  "course_badge_title": "Onglets de filtre rapide et plats des menus",
+  "course_on": "Pour les plats",
+  "course_off": "Pas de plats",
+  "rename": "Renommer",
+  "delete_group": "Supprimer le groupe {name}",
+  "group_tags": "Catégories du groupe {name}",
+  "tag_label": "Catégorie {name}",
+  "tag_name": "Nom de la catégorie",
+  "merge_with": "Fusionner avec",
+  "merge_with_option": "Fusionner avec …",
+  "merge": "Fusionner",
+  "move_tag": "Déplacer la catégorie {name}",
+  "edit_tag": "Modifier {name}",
+  "new_tag_in": "Nouvelle catégorie dans {name}",
+  "new_tag": "Nouvelle catégorie",
+  "new_group": "Nouveau groupe",
+  "new_group_placeholder": "Nouveau groupe, p. ex. Occasion",
+  "create_group": "Créer le groupe",
+  "course_hint": "Le groupe des plats (entrée, plat principal, gâteaux …) définit les onglets de l'aperçu des recettes.",
+  "assign_courses": "Attribuer les plats",
+  "assign_courses_hint": "suggestions pour les recettes sans plat.",
+  "copy_for_claude": "Copier les catégories pour Claude",
+  "claude_hint": "La skill Claude ne connaît que les catégories de départ. Après des modifications ici, copiez la liste et collez-la dans le chat avec Claude ; à l'import, les catégories inconnues peuvent aussi être attribuées ou créées.",
+  "claude_list": "Liste des catégories pour Claude",
+  "delete_dialog": {
+    "title": "Supprimer le groupe « {name} »",
+    "contains": {
+      "one": "Il contient une catégorie : {names}.",
+      "other": "Il contient {count} catégories : {names}."
+    },
+    "move_to": "Déplacer vers le groupe :",
+    "with_tags": "Supprimer aussi les catégories ({recipes} perdent l'attribution, les recettes restent)",
+    "confirm": "Supprimer le groupe"
+  }
+}

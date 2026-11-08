@@ -1,0 +1,73 @@
+{
+  "title": "Categorie",
+  "intro": "Gruppi e categorie per filtrare le ricette. Trascina la maniglia per ordinare: le categorie possono anche passare a un altro gruppo. Ogni nome esiste una sola volta (maiuscole e accenti non contano).",
+  "load_failed": "Impossibile caricare le categorie: {message}",
+  "recipes": {
+    "one": "{count} ricetta",
+    "other": "{count} ricette"
+  },
+  "group_created": "Gruppo «{name}» creato.",
+  "course_group_set": "«{name}» è ora il gruppo delle portate.",
+  "delete_group_confirm": "Eliminare il gruppo «{name}»?",
+  "group_deleted": "Gruppo «{name}» eliminato.",
+  "tag_created": "Categoria «{name}» creata.",
+  "merge_confirm": "Unire?",
+  "merge_recipes": {
+    "one": "La ricetta con «{name}» riceve «{into}». Poi «{name}» viene eliminata.",
+    "other": "Tutte le {count} ricette con «{name}» ricevono «{into}». Poi «{name}» viene eliminata."
+  },
+  "merge_empty": "«{name}» non ha ricette e verrà eliminata.",
+  "merged": "«{name}» unita a «{into}».",
+  "delete_tag_used": {
+    "one": "«{name}» è assegnata a una ricetta.\n\nEliminare la categoria? La ricetta resta invariata, si toglie solo l'assegnazione.",
+    "other": "«{name}» è assegnata a {count} ricette.\n\nEliminare la categoria? Le ricette restano invariate, si toglie solo l'assegnazione."
+  },
+  "delete_tag_unused": "Eliminare la categoria «{name}»? Non è assegnata a nessuna ricetta.",
+  "tag_deleted": "«{name}» eliminata.",
+  "skill": {
+    "title": "Categorie del Rezeptplaner",
+    "intro": "Aggiornato al {date}. Per «categories» usa solo questi nomi, scritti esattamente così: sostituiscono categories.md della skill (salvalo come file e indicalo con --categories durante la generazione)."
+  },
+  "copied": "Elenco categorie copiato: incollalo nella chat con Claude.",
+  "copy_failed": "Qui non si può copiare: seleziona il testo qui sotto e copialo.",
+  "groups": "Gruppi",
+  "group": "Gruppo",
+  "group_label": "Gruppo {name}",
+  "move_group": "Sposta il gruppo {name}",
+  "group_name": "Nome del gruppo",
+  "course_badge": "Portata",
+  "course_badge_title": "Schede del filtro rapido e portate dei menù",
+  "course_on": "Per le portate",
+  "course_off": "Niente portate",
+  "rename": "Rinomina",
+  "delete_group": "Elimina il gruppo {name}",
+  "group_tags": "Categorie del gruppo {name}",
+  "tag_label": "Categoria {name}",
+  "tag_name": "Nome della categoria",
+  "merge_with": "Unisci a",
+  "merge_with_option": "Unisci a …",
+  "merge": "Unisci",
+  "move_tag": "Sposta la categoria {name}",
+  "edit_tag": "Modifica {name}",
+  "new_tag_in": "Nuova categoria in {name}",
+  "new_tag": "Nuova categoria",
+  "new_group": "Nuovo gruppo",
+  "new_group_placeholder": "Nuovo gruppo, ad es. Occasione",
+  "create_group": "Crea gruppo",
+  "course_hint": "Il gruppo delle portate (antipasto, piatto principale, torte …) determina le schede della panoramica ricette.",
+  "assign_courses": "Assegna portate",
+  "assign_courses_hint": "suggerimenti per le ricette senza portata.",
+  "copy_for_claude": "Copia categorie per Claude",
+  "claude_hint": "La skill di Claude conosce solo le categorie iniziali. Dopo le modifiche qui, copia l'elenco e incollalo nella chat con Claude; durante l'importazione puoi anche assegnare o creare le categorie sconosciute.",
+  "claude_list": "Elenco categorie per Claude",
+  "delete_dialog": {
+    "title": "Elimina il gruppo «{name}»",
+    "contains": {
+      "one": "Contiene una categoria: {names}.",
+      "other": "Contiene {count} categorie: {names}."
+    },
+    "move_to": "Sposta nel gruppo:",
+    "with_tags": "Elimina anche le categorie ({recipes} perdono l'assegnazione, le ricette restano)",
+    "confirm": "Elimina gruppo"
+  }
+}

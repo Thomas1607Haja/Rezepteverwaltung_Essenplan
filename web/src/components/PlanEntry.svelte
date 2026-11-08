@@ -1,6 +1,7 @@
 <script>
   import Icon from './Icon.svelte';
   import { imageUrl } from '../lib/api.js';
+  import { t } from '../lib/i18n.svelte.js';
 
   // entry ist ein Eintrag aus GET /meal-plan; onmenu(entry) öffnet das
   // Menü (Portionen, Notiz, Ersetzen, Entfernen). dropTarget hebt den
@@ -11,9 +12,10 @@
   // Bei einem Rezept ist die Notiz eine Zusatzangabe (z. B. „mit Salat“).
   const extra = $derived(entry.recipe ? entry.note : '');
 
+  // Texte als Schlüssel; übersetzt wird beim Anzeigen.
   const statusInfo = {
-    transferred: { icon: 'cart', label: 'An Bring übertragen' },
-    have_ingredients: { icon: 'check', label: 'Zutaten vorhanden' },
+    transferred: { icon: 'cart', label: 'plan.card.sent_to_bring' },
+    have_ingredients: { icon: 'check', label: 'plan.card.have_ingredients' },
   };
   const status = $derived(statusInfo[entry.status]);
 </script>
@@ -44,17 +46,17 @@
       <span class="title">{title}</span>
       {#if extra}<span class="extra">{extra}</span>{/if}
       <span class="meta">
-        {#if entry.recipe}<span>{entry.recipe.yield_unit ? `${entry.servings} ${entry.recipe.yield_unit}` : `${entry.servings} P.`}</span>{/if}
+        {#if entry.recipe}<span>{entry.recipe.yield_unit ? `${entry.servings} ${entry.recipe.yield_unit}` : t('plan.card.servings_short', { count: entry.servings })}</span>{/if}
         {#if entry.excluded_ingredients?.length}
-          <span class="excluded" title="Abgewählt, weil noch im Haus">
-            {entry.excluded_ingredients.length === 1 ? '1 Zutat' : `${entry.excluded_ingredients.length} Zutaten`} vorhanden
+          <span class="excluded" title={t('plan.card.excluded_title')}>
+            {t('plan.card.excluded_count', { count: entry.excluded_ingredients.length })}
           </span>
         {/if}
         {#if entry.recipe?.is_favorite}
-          <span class="favorite" title="Favorit"><Icon name="heart" size={13} filled /></span>
+          <span class="favorite" title={t('plan.card.favorite')}><Icon name="heart" size={13} filled /></span>
         {/if}
         {#if status}
-          <span class="status" title={status.label}><Icon name={status.icon} size={14} /></span>
+          <span class="status" title={t(status.label)}><Icon name={status.icon} size={14} /></span>
         {/if}
       </span>
     </span>
@@ -64,7 +66,7 @@
   {:else}
     <button type="button" class="main" onclick={() => onmenu(entry)}>{@render content()}</button>
   {/if}
-  <button type="button" class="menu" title="Menü" aria-label="Menü für {title}" onclick={() => onmenu(entry)}>
+  <button type="button" class="menu" title={t('plan.card.options')} aria-label={t('plan.card.options_for', { title })} onclick={() => onmenu(entry)}>
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <circle cx="12" cy="5" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="12" cy="19" r="1.8" />
     </svg>

@@ -1,6 +1,7 @@
 <script>
   import Icon from './Icon.svelte';
-  import { amountText } from '../lib/format.js';
+  import { amountText, menuTitle } from '../lib/format.js';
+  import { t } from '../lib/i18n.svelte.js';
 
   // Ein Menü im Plan (Schritt 9.4): eine kompakte Karte statt vieler
   // Einträge, ausklappbar. menu kommt aus GET /meal-plan, entries sind seine
@@ -18,24 +19,24 @@
 <!-- data-*: zieht als ganzer Block (lib/planDrag.js) -->
 <div class="menu-card" class:drop-target={dropTarget} data-menu-id={menu.id} data-date={menu.date} data-slot={menu.slot}>
   <button type="button" class="main" onclick={() => onopen(menu)}>
-    <span class="badge">Menü</span>
-    <span class="title">{menu.display_title}</span>
+    <span class="badge">{t('menu.badge')}</span>
+    <span class="title">{menuTitle(menu)}</span>
     <span class="meta">
-      <span>{entries.length === 1 ? '1 Gang' : `${entries.length} Gänge`}</span>
+      <span>{t('menu.course_count', { count: entries.length })}</span>
       <span>{amountText(menu.servings, '')}</span>
-      {#if menu.note}<span title={menu.note}><Icon name="clock" size={13} /> Notiz</span>{/if}
+      {#if menu.note}<span title={menu.note}><Icon name="clock" size={13} /> {t('menu.note')}</span>{/if}
       {#if withRecipe > 0 && transferred === withRecipe}
-        <span class="status" title="An Bring übertragen"><Icon name="cart" size={14} /></span>
+        <span class="status" title={t('menu.sent_to_bring')}><Icon name="cart" size={14} /></span>
       {:else if transferred > 0}
-        <span>{transferred} von {withRecipe} an Bring</span>
+        <span>{t('menu.partly_sent', { done: transferred, total: withRecipe })}</span>
       {:else if withRecipe > 0 && have === withRecipe}
-        <span class="status" title="Zutaten vorhanden"><Icon name="check" size={14} /></span>
+        <span class="status" title={t('menu.have_ingredients')}><Icon name="check" size={14} /></span>
       {/if}
     </span>
   </button>
   {#if entries.length > 0}
     <button type="button" class="toggle" aria-expanded={open} onclick={() => (open = !open)}>
-      {open ? 'Gänge ausblenden' : 'Gänge zeigen'}
+      {open ? t('menu.hide_courses') : t('menu.show_courses')}
     </button>
   {/if}
   {#if open}

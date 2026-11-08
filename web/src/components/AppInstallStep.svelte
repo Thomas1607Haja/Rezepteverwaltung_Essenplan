@@ -1,5 +1,6 @@
 <script>
   import { api } from '../lib/api.js';
+  import { t, errorText } from '../lib/i18n.svelte.js';
   import QrCode from './QrCode.svelte';
 
   // Schritt 1 der Einrichtung eines Handys: App installieren. Die Links
@@ -10,98 +11,99 @@
   api
     .appInstall()
     .then((l) => (links = l))
-    .catch((e) => (error = `Links nicht geladen: ${e.message}`));
+    .catch((e) => (error = t('devices.install.load_failed', { message: errorText(e) })));
+
+  /**
+   * Zerlegt einen übersetzten Text mit **fett** und *kursiv* in Stücke,
+   * damit die Hervorhebungen ohne {@html} erhalten bleiben.
+   */
+  function rich(text) {
+    return text
+      .split(/(\*\*[^*]+\*\*|\*[^*]+\*)/)
+      .filter(Boolean)
+      .map((part) =>
+        part.startsWith('**')
+          ? { bold: part.slice(2, -2) }
+          : part.startsWith('*') && part.length > 2
+            ? { em: part.slice(1, -1) }
+            : { text: part },
+      );
+  }
 </script>
 
-<h3>Schritt 1 – App installieren</h3>
+{#snippet richText(text)}{#each rich(text) as part, i (i)}{#if part.bold}<strong>{part.bold}</strong>{:else if part.em}<em
+      >{part.em}</em
+    >{:else}{part.text}{/if}{/each}{/snippet}
+
+<h3>{t('devices.install.step1')}</h3>
 
 {#if error}
   <p class="error">{error}</p>
 {:else if !links}
-  <p>Lädt …</p>
+  <p>{t('common.loading')}</p>
 {:else}
-  <p class="hint">
-    Empfohlen über <strong>Obtainium</strong>: Es installiert den Rezeptplaner und meldet später jedes Update. Die
-    Codes mit der Kamera des Handys scannen.
-  </p>
+  <p class="hint">{@render richText(t('devices.install.recommended'))}</p>
   <div class="codes">
     <figure>
       <a href={links.obtainium_download_url} target="_blank" rel="noopener noreferrer">
-        <QrCode text={links.obtainium_download_url} size={150} label="QR-Code: Obtainium herunterladen" />
+        <QrCode text={links.obtainium_download_url} size={150} label={t('devices.install.qr_obtainium')} />
       </a>
       <figcaption>
-        <strong>a)</strong> Obtainium herunterladen<br /><small>lädt direkt <code>app-arm64-v8a-release.apk</code></small>
+        <strong>a)</strong>
+        {t('devices.install.obtainium_download')}<br /><small
+          >{t('devices.install.loads_directly')} <code>app-arm64-v8a-release.apk</code></small
+        >
       </figcaption>
     </figure>
     <figure>
       <a href={links.obtainium_url} target="_blank" rel="noopener noreferrer">
-        <QrCode text={links.obtainium_url} size={200} label="QR-Code: Rezeptplaner in Obtainium eintragen" />
+        <QrCode text={links.obtainium_url} size={200} label={t('devices.install.qr_obtainium_add')} />
       </a>
       <figcaption>
-        <strong>b)</strong> Rezeptplaner in Obtainium eintragen<br /><small>dann dort „Installieren“</small>
+        <strong>b)</strong>
+        {t('devices.install.obtainium_add')}<br /><small>{t('devices.install.obtainium_add_hint')}</small>
       </figcaption>
     </figure>
   </div>
 
   <details>
-    <summary>Ohne Obtainium: APK direkt herunterladen</summary>
+    <summary>{t('devices.install.apk_summary')}</summary>
     <div class="codes">
       <figure>
         <a href={links.apk_url}>
-          <QrCode text={links.apk_url} size={150} label="QR-Code: neueste APK herunterladen" />
+          <QrCode text={links.apk_url} size={150} label={t('devices.install.qr_apk')} />
         </a>
-        <figcaption>Immer die neueste Version.<br /><small>Updates dann von Hand.</small></figcaption>
+        <figcaption>{t('devices.install.apk_latest')}<br /><small>{t('devices.install.apk_updates')}</small></figcaption>
       </figure>
     </div>
   </details>
 
   <details>
-    <summary>Anleitung für das Galaxy A54 (Android 16)</summary>
+    <summary>{t('devices.install.guide_summary')}</summary>
     <ol class="steps">
-      <li>
-        <strong>Automatische Sperre ausschalten:</strong> Einstellungen → Sicherheit und Datenschutz → Automatische Sperre →
-        Aus. Sie blockiert Apps, die nicht aus dem Play Store oder Galaxy Store kommen – auch Updates über Obtainium.
-      </li>
-      <li>
-        <strong>„Unbekannte Apps installieren“ erlauben:</strong> Beim ersten Öffnen der heruntergeladenen Datei fragt
-        Android, ob der Browser (bzw. später Obtainium) Apps installieren darf → <em>Einstellungen</em> → Schalter an →
-        zurück.
-      </li>
-      <li>
-        <strong>Play-Protect-Hinweis bestätigen:</strong> Meldet Google Play Protect eine „unbekannte App“, auf
-        <em>Weitere Details</em> → <em>Trotzdem installieren</em> tippen. Die Frage, ob die App zur Prüfung gesendet
-        werden soll, kann man ablehnen.
-      </li>
-      <li>Rezeptplaner öffnen und mit Schritt 2 verbinden.</li>
+      <li>{@render richText(t('devices.install.guide_auto_blocker'))}</li>
+      <li>{@render richText(t('devices.install.guide_unknown_apps'))}</li>
+      <li>{@render richText(t('devices.install.guide_play_protect'))}</li>
+      <li>{t('devices.install.guide_open')}</li>
     </ol>
   </details>
   <p class="hint">
-    Quelle: <a href={links.releases_url} target="_blank" rel="noopener noreferrer">{links.repository}</a> (GitHub-Releases)
+    {t('devices.install.source')}
+    <a href={links.releases_url} target="_blank" rel="noopener noreferrer">{links.repository}</a>
+    ({t('devices.install.releases')})
   </p>
 
-  <h3>Claude-Skill (optional)</h3>
-  <p class="hint">
-    Mit der Skill „rezeptplaner-import“ erfasst Claude Rezepte aus Fotos (Rezeptkarten, Kochbuchseiten) und erzeugt eine
-    Importdatei, die du per Teilen an die App schickst oder unter Rezepte → Datei importieren hochlädst.
-  </p>
-  <p><a class="download" href={links.skill_url}>rezeptplaner-import-skill.zip herunterladen</a></p>
+  <h3>{t('devices.install.skill_title')}</h3>
+  <p class="hint">{t('devices.install.skill_text')}</p>
+  <p><a class="download" href={links.skill_url}>{t('devices.install.skill_download')}</a></p>
   <details>
-    <summary>So kommt die Skill in Claude</summary>
+    <summary>{t('devices.install.skill_summary')}</summary>
     <ol class="steps">
-      <li>
-        In Claude (claude.ai oder App) unter <em>Einstellungen → Funktionen</em> „Code execution and file creation“
-        (Codeausführung und Dateierstellung) einschalten.
-      </li>
-      <li><em>Customize → Skills</em> → Skill hochladen → die heruntergeladene ZIP-Datei wählen (nicht entpacken).</li>
-      <li>
-        Fotos der Rezepte in einen Chat schicken, z. B. „Erfasse diese Rezepte für den Rezeptplaner“. Claude liefert
-        eine ZIP-Datei zum Teilen.
-      </li>
+      <li>{@render richText(t('devices.install.skill_step1'))}</li>
+      <li>{@render richText(t('devices.install.skill_step2'))}</li>
+      <li>{t('devices.install.skill_step3')}</li>
     </ol>
-    <p class="hint">
-      Funktioniert auch mit der kostenlosen Claude-Version; größere Stapel von Fotos stoßen dort aber schneller an die
-      Nutzungsgrenzen. Bei einer neuen Version der Skill die ZIP erneut herunterladen und in Claude ersetzen.
-    </p>
+    <p class="hint">{t('devices.install.skill_free')}</p>
   </details>
 {/if}
 

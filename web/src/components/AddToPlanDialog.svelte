@@ -5,6 +5,7 @@
   import { focusPlanOn } from '../lib/planFocus.svelte.js';
   import { addDays, dayLabel, todayString } from '../lib/format.js';
   import PlanPreview from './PlanPreview.svelte';
+  import { t, errorText } from '../lib/i18n.svelte.js';
   import { slotChoices } from '../lib/slots.js';
   import { previewEnabled, createWithChoice, replaceWithChoice } from '../lib/planPreview.js';
 
@@ -38,7 +39,7 @@
       }
       days = list;
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     }
   }
   load();
@@ -58,7 +59,7 @@
       pending = { entry };
       return;
     }
-    if (!confirm(`„${label(entry)}“ durch „${recipe.title}“ ersetzen?`)) return;
+    if (!confirm(t('plan.add.replace_confirm', { old: label(entry), title: recipe.title }))) return;
     await run(entry.date, () => replaceWithChoice(entry, recipe.id, null));
   }
 
@@ -78,11 +79,14 @@
       done = date;
       onadded();
     } catch (e) {
-      error = e.message;
+      error = errorText(e);
     } finally {
       busy = false;
     }
   }
+
+  // Satz „… ist für <Tag> eingeplant.“ in Teilen: der Tag wird fett gesetzt.
+  const doneParts = $derived(done ? t('plan.add.done', { title: recipe.title, day: '{day}' }).split('{day}') : []);
 
   function showPlan() {
     focusPlanOn(done);
@@ -98,19 +102,19 @@
 >
   <div class="content">
     <header>
-      <h2 id="add-title">Zum Essensplan hinzufügen</h2>
-      <button type="button" class="close" title="Schließen" onclick={onclose}>✕</button>
+      <h2 id="add-title">{t('plan.add.title')}</h2>
+      <button type="button" class="close" title={t('common.close')} onclick={onclose}>✕</button>
     </header>
 
     {#if done}
       {@const l = dayLabel(done)}
-      <p>„{recipe.title}“ ist für <strong>{l.weekday} {l.date}</strong> eingeplant.</p>
+      <p>{doneParts[0]}<strong>{l.weekday} {l.date}</strong>{doneParts.slice(1).join('')}</p>
       <footer>
-        <button type="button" class="secondary" onclick={onclose}>Schließen</button>
-        <button type="button" class="primary" onclick={showPlan}>Zum Essensplan</button>
+        <button type="button" class="secondary" onclick={onclose}>{t('common.close')}</button>
+        <button type="button" class="primary" onclick={showPlan}>{t('plan.add.show_plan')}</button>
       </footer>
     {:else}
-      <div class="slot-switch" role="group" aria-label="Mahlzeit">
+      <div class="slot-switch" role="group" aria-label={t('plan.add.meal')}>
         {#each slotChoices(coffeeSlot, slot) as s (s.value)}
           <button type="button" aria-pressed={slot === s.value} onclick={() => (slot = s.value)}>{s.label}</button>
         {/each}
@@ -128,14 +132,14 @@
               {#each taken as entry (entry.id)}
                 <span class="dish">
                   {label(entry)}
-                  <button type="button" class="link" disabled={busy} onclick={() => replace(entry)}>ersetzen</button>
+                  <button type="button" class="link" disabled={busy} onclick={() => replace(entry)}>{t('plan.add.replace')}</button>
                 </span>
               {:else}
-                <span class="free">frei</span>
+                <span class="free">{t('plan.add.free')}</span>
               {/each}
             </span>
             <button type="button" class="add" disabled={busy} onclick={() => add(day.date)}>
-              {taken.length > 0 ? '+ dazu' : 'Einplanen'}
+              {taken.length > 0 ? t('plan.add.add_more') : t('plan.add.add')}
             </button>
           </li>
         {/each}
@@ -148,7 +152,7 @@
   <PlanPreview
     recipeId={recipe.id}
     servings={pending.entry ? pending.entry.servings : null}
-    confirmLabel={pending.entry ? 'Ersetzen' : 'Hinzufügen'}
+    confirmLabel={pending.entry ? t('plan.add.replace_button') : t('common.add')}
     {busy}
     onconfirm={confirmPreview}
     onclose={() => (pending = null)}
