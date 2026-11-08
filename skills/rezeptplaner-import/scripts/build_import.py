@@ -55,7 +55,7 @@ from pathlib import Path
 SKILL_DIR = Path(__file__).resolve().parent.parent
 SCHEMA_PATH = SKILL_DIR / "schema.json"
 CATEGORIES_PATH = SKILL_DIR / "categories.md"
-GENERATOR = "claude-skill rezeptplaner-import 2.3"
+GENERATOR = "claude-skill rezeptplaner-import 2.4"
 FORMAT_VERSION = 3
 
 MAX_SIDE = 1600       # längste Bildkante in Pixeln

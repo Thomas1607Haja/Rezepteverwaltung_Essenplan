@@ -6,13 +6,22 @@ description: Erfasst Rezepte aus Fotos (Rezeptkarten wie HelloFresh mit Vorder- 
 # Rezeptplaner-Import
 
 Du erfasst Rezepte aus Fotos und lieferst **eine ZIP-Datei** im Format
-„rezeptplaner-import“, Version 3 (Skill-Version 2.3; braucht Rezeptplaner
+„rezeptplaner-import“, Version 3 (Skill-Version 2.4; braucht Rezeptplaner
 0.14.0 oder neuer – ältere melden „Formatversion 3 wird nicht unterstützt“; das
 Foto aus dem gefundenen Link übernimmt der Rezeptplaner ab 0.8.0). Der Nutzer schickt sie per Teilen an die
 Rezeptplaner-App (oder lädt sie in der Weboberfläche hoch); dort erscheint
 eine Vorschau, erst danach wird gespeichert.
 
-Sprache: **Deutsch** – im Chat und in allen Rezepttexten.
+Sprache:
+
+- **Im Chat** Deutsch – oder die Sprache, in der der Nutzer schreibt.
+- **Rezepttexte in der Sprache der Vorlage, nicht übersetzen:** Ein
+  französisches Rezept bleibt französisch (Titel, Zutaten, Schritte,
+  Notizen), ein italienisches italienisch. Der Rezeptplaner übersetzt
+  Inhalte nie; er kennt Deutsch, Englisch, Französisch, Spanisch und
+  Italienisch.
+- **Kategorien** dagegen immer genau so, wie sie in der Kategorieliste
+  stehen (das ist die Sprache des Rezeptplaners, nicht die der Vorlage).
 
 Dateien dieser Skill (Pfade relativ zum Skill-Ordner):
 
@@ -89,18 +98,35 @@ Nicht angegeben → weglassen (nicht schätzen).
 
 - `quantity`: Zahl für die gewählten Grundportionen (`½` → 0.5,
   `1 ½` → 1.5). Bereiche wie „1–2“: kleinere Zahl als Menge, den Bereich in
-  `note` („1–2“). Ohne Zahl („nach Geschmack“, „etwas“) → `null`, den Text
-  in `note`.
-- `unit` in dieser Schreibweise: `g`, `kg`, `ml`, `l`, `EL`, `TL`,
-  `Msp.`, `Pck.` (auch für „Pckg.“, „Päckchen“), `Stück`; Wörter wie
-  `Prise`, `Zehe`/`Zehen`, `Dose`, `Becher`, `Bund`, `Scheibe`/`Scheiben`,
-  `Glas`, `Zweig` bleiben als Wort stehen. Ohne Einheit → `""`.
+  `note` („1–2“). Ohne Zahl („nach Geschmack“, „etwas“, „to taste“,
+  „au goût“, „al gusto“, „q.b.“) → `null`, den Text in `note`.
+- `unit` in der Sprache der Vorlage und in dieser Schreibweise (dieselbe,
+  die der Rezeptplaner beim Webseiten-Import verwendet – so lassen sich
+  gleiche Zutaten auf der Einkaufsliste zusammenzählen). Ohne Einheit → `""`.
+  Mengen nie umrechnen (Tassen, Unzen und Pfund bleiben, wie sie sind).
+  - Überall: `g`, `kg`, `mg`, `ml`, `cl`, `dl`, `l`, `cm`.
+  - Deutsch: `EL`, `TL`, `Msp.`, `Pck.` (auch für „Pckg.“, „Päckchen“),
+    `Stück`; Wörter wie `Prise`, `Zehe`/`Zehen`, `Dose`, `Becher`, `Bund`,
+    `Scheibe`/`Scheiben`, `Glas`, `Zweig` bleiben als Wort stehen.
+  - Englisch: `tbsp`, `tsp`, `oz`, `lb`, `fl oz`; `cup`/`cups`, `pinch`,
+    `clove`/`cloves`, `can`, `slice`, `bunch`, `piece` als Wort.
+  - Französisch: `c. à s.` (cuillère à soupe), `c. à c.` (cuillère à café);
+    `pincée`, `gousse`/`gousses`, `boîte`, `sachet`, `tranche`, `botte`,
+    `pièce` als Wort.
+  - Spanisch: `cda` (cucharada), `cdta` (cucharadita); `pizca`,
+    `diente`/`dientes`, `lata`, `sobre`, `rebanada`, `manojo`, `pieza` als Wort.
+  - Italienisch: `cucchiaio`/`cucchiai`, `cucchiaino`/`cucchiaini`,
+    `pizzico`, `spicchio`/`spicchi`, `lattina`, `bustina`, `fetta`/`fette`,
+    `mazzo`, `pezzo`/`pezzi` als Wort.
+  - „of“, „de“, „d’“, „di“ zwischen Einheit und Zutat gehören zu keinem
+    Feld: „2 cuillères à soupe d’huile“ → `unit` `c. à s.`, `name` „huile“.
 - `name`: nur die Zutat („Zwiebel“, „Cherrytomaten“). Zusätze wie
   „fein gehackt“ oder „TK“ gehören in `note`.
 - `group`: Gruppenüberschrift der Vorlage („Für die Soße“). Zutaten, die
   die Karte als **„Aus deiner Vorratskammer“ / „Das brauchst du noch“ /
   „Haben wir zu Hause“** ausweist, in die Gruppe
-  `"Aus deiner Vorratskammer"`.
+  `"Aus deiner Vorratskammer"` (bei Vorlagen in anderen Sprachen die
+  Überschrift der Vorlage, z. B. „From your pantry“).
 - `shopping_relevant: false` für alles, was die Vorlage als
   Vorrat/„selbst im Haus“ ausweist, und für Grundzutaten wie Salz, Pfeffer,
   Öl, Zucker, Wasser. Sonst weglassen (Standard: einkaufen).
@@ -113,7 +139,9 @@ dürfen als ein Schritt bleiben. Weglassen: Kopfzeilen, Werbung,
 Nährwerte, Allergene, Bestellhinweise, QR-Code-Texte, Weinempfehlungen.
 Ein „Tipp“ der Vorlage kommt in `notes`.
 
-**Kategorien:** nur Namen aus `categories.md`, genau so geschrieben.
+**Kategorien:** nur Namen aus `categories.md` (bzw. der eingefügten
+Kategorieliste, siehe unten), genau so geschrieben – auch bei Rezepten in
+anderen Sprachen.
 Lieber zu wenige als falsche. **Immer genau einen Gang** aus der Gruppe
 „Gang“ vergeben (Hauptgericht, Nachspeise, Kuchen & Torten …, siehe
 Hinweise in `categories.md`) – der Rezeptplaner filtert danach. Nicht passende Begriffe der Vorlage
@@ -122,7 +150,13 @@ Hinweise in `categories.md`) – der Rezeptplaner filtert danach. Nicht passende
 **Eigene Kategorieliste:** Fügt der Nutzer im Chat eine Kategorieliste ein
 (aus dem Rezeptplaner: Einstellungen → Kategorien → „Kategorieliste für
 Claude kopieren“; Überschriften `## Gruppe`, darunter `- Name`), gilt **nur
-diese Liste** statt `categories.md` – sie ist aktueller. Speichere sie als
+diese Liste** statt `categories.md` – sie ist aktueller. Ist der
+Rezeptplaner auf Englisch, Französisch, Spanisch oder Italienisch
+eingerichtet, heißen die Kategorien dort anders als in `categories.md`;
+dann ist diese Liste unbedingt nötig – sonst bitte den Nutzer, sie
+einzufügen. Der Gang ist dann die Gruppe mit den Gängen (in der
+Startliste „Course“, „Plat“, „Plato“ bzw. „Portata“, meist an erster
+Stelle). Speichere sie als
 Datei (z. B. `/tmp/kategorien.md`) und gib sie beim Bauen mit
 `--categories /tmp/kategorien.md` an. Sie gilt für das ganze Gespräch.
 
