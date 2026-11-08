@@ -1,11 +1,16 @@
 package io.github.thomas1607haja.rezeptplaner.api
 
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.data.ServerConfig
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -29,11 +34,23 @@ data class SystemInfo(
 )
 
 /**
- * Fehler beim Zugriff auf den Rezeptplaner, mit Meldung für die Anzeige.
- * [offline]: keine Verbindung (Netz weg, Server nicht erreichbar) – dann
- * zeigt die App den gespeicherten Stand mit Hinweis.
+ * Fehler beim Zugriff auf den Rezeptplaner. [code] ist ein Fehlercode des
+ * Servers (server/internal/apierr, Texte in strings_errors.xml) oder ein
+ * Code der App ("client_…", Texte in strings_api.xml); [message] liefert
+ * den Text in der Sprache der App. [serverText] ist der englische Text des
+ * Servers als Rückfall. [offline]: keine Verbindung (Netz weg, Server nicht
+ * erreichbar) – dann zeigt die App den gespeicherten Stand mit Hinweis.
  */
-class ApiException(message: String, cause: Throwable? = null, val offline: Boolean = false) : Exception(message, cause)
+class ApiException(
+    val code: String,
+    val params: Map<String, Any?> = emptyMap(),
+    private val serverText: String = "",
+    cause: Throwable? = null,
+    val offline: Boolean = false,
+) : Exception(serverText.ifEmpty { code }, cause) {
+    override val message: String
+        get() = Texts.errorOrNull(code, params) ?: serverText.ifEmpty { code }
+}
 
 /**
  * Zugriff auf die REST-API des Rezeptplaners über den App-Zugang. Jede
@@ -51,10 +68,7 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
     suspend fun system(config: ServerConfig): SystemInfo {
         val info: SystemInfo = get(config, "/api/v1/system")
         if (info.apiVersion < SUPPORTED_API_VERSION) {
-            throw ApiException(
-                "Der Rezeptplaner auf dem Server ist zu alt (Version ${info.version}). " +
-                    "Bitte in Home Assistant aktualisieren.",
-            )
+            throw ApiException("client_server_too_old", mapOf("version" to info.version))
         }
         return info
     }
@@ -148,7 +162,7 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
             try {
                 json.decodeFromString<ImportPreview>(text)
             } catch (e: Exception) {
-                throw ApiException("Unerwartete Antwort beim Import.", e)
+                throw ApiException("client_unexpected_import", cause = e)
             }
         }
     }
@@ -234,7 +248,7 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
             try {
                 json.decodeFromString<T>(text)
             } catch (e: Exception) {
-                throw ApiException("Unter dieser Adresse antwortet kein Rezeptplaner.", e)
+                throw ApiException("client_not_rezeptplaner", cause = e)
             }
         }
 
@@ -267,11 +281,11 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
         } catch (e: ApiException) {
             throw e
         } catch (e: UnknownHostException) {
-            throw ApiException("Server nicht gefunden – Adresse und Internetverbindung prüfen.", e, offline = true)
+            throw ApiException("client_host_not_found", cause = e, offline = true)
         } catch (e: SSLException) {
-            throw ApiException("Sichere Verbindung fehlgeschlagen (Zertifikat).", e)
+            throw ApiException("client_tls_failed", cause = e)
         } catch (e: IOException) {
-            throw ApiException("Server nicht erreichbar – Internetverbindung prüfen.", e, offline = true)
+            throw ApiException("client_unreachable", cause = e, offline = true)
         }
     }
 
@@ -280,39 +294,43 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
         val location = response.header("Location").orEmpty()
         // Anfang der Antwort, um Home Assistant zu erkennen (siehe unten).
         val start = runCatching { response.peekBody(64).string().trim() }.getOrDefault("")
-        throw ApiException(
-            when {
-                response.isRedirect && "cloudflareaccess.com" in location ->
-                    "Cloudflare Access verlangt eine Anmeldung – Service Token (Client ID/Secret) fehlt oder ist falsch."
-                response.code == 403 && response.header("cf-ray") != null && response.header("content-type")?.startsWith("application/json") != true ->
-                    "Cloudflare Access hat die Anfrage abgelehnt – Service Token prüfen."
-                response.code == 401 -> "Der API-Schlüssel ist ungültig oder gesperrt. Gerät in der Weboberfläche neu verbinden."
-                // So antwortet Home Assistant (aiohttp) auf unbekannte Pfade – die
-                // Adresse von Home Assistant statt der des App-Zugangs.
-                response.code == 404 && start.startsWith("404: Not Found") ->
-                    "Diese Adresse führt zu Home Assistant, nicht zum App-Zugang des Rezeptplaners. " +
-                        "In der Weboberfläche die Adresse für die App prüfen (eigener Hostname, Port 8100)."
-                response.code == 404 && !start.startsWith("{") -> "Unter dieser Adresse antwortet kein Rezeptplaner (oder er ist zu alt)."
-                response.isRedirect -> "Der Server leitet um ($location) – Adresse prüfen."
-                // 502: Home Assistant (Bring) nicht erreichbar, Grund steht in der Antwort.
-                response.code == 502 && start.startsWith("{") -> serverMessage(response)
-                response.code in 500..599 -> "Fehler auf dem Server (${response.code}). Später erneut versuchen."
-                // Prüffehler des Servers, z. B. {"error":"servings: muss mindestens 1 sein"}
-                response.code in 400..499 && start.startsWith("{") -> serverMessage(response)
-                else -> "Unerwartete Antwort vom Server (${response.code})."
-            },
-        )
+        throw when {
+            response.isRedirect && "cloudflareaccess.com" in location -> ApiException("client_cloudflare_login")
+            response.code == 403 && response.header("cf-ray") != null && response.header("content-type")?.startsWith("application/json") != true ->
+                ApiException("client_cloudflare_denied")
+            response.code == 401 -> ApiException("client_key_invalid")
+            // So antwortet Home Assistant (aiohttp) auf unbekannte Pfade – die
+            // Adresse von Home Assistant statt der des App-Zugangs.
+            response.code == 404 && start.startsWith("404: Not Found") -> ApiException("client_home_assistant_address")
+            response.code == 404 && !start.startsWith("{") -> ApiException("client_not_rezeptplaner_or_old")
+            response.isRedirect -> ApiException("client_redirect", mapOf("location" to location))
+            // 502: Home Assistant (Bring) nicht erreichbar, Grund steht in der Antwort.
+            response.code == 502 && start.startsWith("{") -> serverError(response)
+            response.code in 500..599 -> ApiException("client_server_error", mapOf("status" to response.code))
+            // Prüffehler des Servers: {"error": "…", "code": "out_of_range", "params": {…}}
+            response.code in 400..499 && start.startsWith("{") -> serverError(response)
+            else -> ApiException("client_unexpected_status", mapOf("status" to response.code))
+        }
     }
 
-    private fun serverMessage(response: Response): String {
+    /** Fehlerantwort des Servers als [ApiException] mit seinem Code. */
+    private fun serverError(response: Response): ApiException {
         val text = runCatching { response.peekBody(4096).string() }.getOrDefault("")
-        val error = runCatching { json.decodeFromString<ErrorBody>(text).error }.getOrNull()
-        return error?.takeIf { it.isNotEmpty() }?.replaceFirstChar { it.uppercase() }
-            ?: "Der Server hat die Änderung abgelehnt (${response.code})."
+        val body = runCatching { json.decodeFromString<ErrorBody>(text) }.getOrNull()
+        if (body == null || (body.code.isEmpty() && body.error.isEmpty())) {
+            return ApiException("client_rejected", mapOf("status" to response.code))
+        }
+        val params = body.params.mapValues { (_, v) -> (v as? JsonPrimitive)?.contentOrNull ?: v.toString() }
+        // Ältere Server ohne Code: ihr Text (deutsch) wird angezeigt.
+        return ApiException(body.code, params, body.error.replaceFirstChar { it.uppercase() })
     }
 
     @Serializable
-    private data class ErrorBody(val error: String = "")
+    private data class ErrorBody(
+        val error: String = "",
+        val code: String = "",
+        val params: Map<String, JsonElement> = emptyMap(),
+    )
 
     companion object {
         private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -323,3 +341,22 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
             .build()
     }
 }
+
+/** Codes der App für Fehler, die nicht vom Server kommen (strings_api.xml). */
+internal val clientErrorTexts: Map<String, Int> = mapOf(
+    "client_server_too_old" to R.string.api_server_too_old,
+    "client_unexpected_import" to R.string.api_unexpected_import,
+    "client_not_rezeptplaner" to R.string.api_not_rezeptplaner,
+    "client_host_not_found" to R.string.api_host_not_found,
+    "client_tls_failed" to R.string.api_tls_failed,
+    "client_unreachable" to R.string.api_unreachable,
+    "client_cloudflare_login" to R.string.api_cloudflare_login,
+    "client_cloudflare_denied" to R.string.api_cloudflare_denied,
+    "client_key_invalid" to R.string.api_key_invalid,
+    "client_home_assistant_address" to R.string.api_home_assistant_address,
+    "client_not_rezeptplaner_or_old" to R.string.api_not_rezeptplaner_or_old,
+    "client_redirect" to R.string.api_redirect,
+    "client_server_error" to R.string.api_server_error,
+    "client_unexpected_status" to R.string.api_unexpected_status,
+    "client_rejected" to R.string.api_rejected,
+)

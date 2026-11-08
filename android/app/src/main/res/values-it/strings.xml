@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_meal_plan">Piano pasti</string>
+    <string name="nav_recipes">Ricette</string>
+    <string name="nav_shopping">Spesa</string>
+    <string name="nav_statistics">Statistiche</string>
+    <string name="nav_settings">Impostazioni</string>
+    <string name="support_title">Sostieni</string>
+    <string name="support_text">Rezeptplaner è gratuito. Se ti piace, mi farebbe piacere un caffè.</string>
+    <string name="support_button">Offrimi un caffè</string>
+</resources>

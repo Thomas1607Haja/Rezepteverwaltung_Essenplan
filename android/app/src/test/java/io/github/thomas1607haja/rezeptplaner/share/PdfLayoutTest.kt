@@ -1,12 +1,18 @@
 package io.github.thomas1607haja.rezeptplaner.share
 
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
+import org.robolectric.annotation.Config
+import org.junit.runner.RunWith
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.thomas1607haja.rezeptplaner.api.Tag
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+// Robolectric: Texte und Formate kommen aus den Ressourcen (Deutsch).
+@RunWith(AndroidJUnit4::class)
+@Config(sdk = [36], qualifiers = "de")
 class PdfLayoutTest {
 
     private fun rows(vararg h: Float) = h.toList()

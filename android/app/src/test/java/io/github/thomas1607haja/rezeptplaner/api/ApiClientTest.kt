@@ -39,7 +39,7 @@ class ApiClientTest {
             api.system(config())
             "kein Fehler"
         } catch (e: ApiException) {
-            e.message.orEmpty()
+            (e as? ApiException)?.code ?: e.message.orEmpty()
         }
     }
 
@@ -58,22 +58,22 @@ class ApiClientTest {
 
     @Test
     fun explainsErrors() = runTest {
-        assertTrue(errorFor(MockResponse.Builder().code(401).build()).contains("ungültig oder gesperrt"))
-        assertTrue(errorFor(MockResponse.Builder().code(404).build()).contains("kein Rezeptplaner"))
-        assertTrue(errorFor(MockResponse.Builder().code(404).body("404: Not Found").build()).contains("Home Assistant"))
+        assertTrue(errorFor(MockResponse.Builder().code(401).build()).contains("client_key_invalid"))
+        assertTrue(errorFor(MockResponse.Builder().code(404).build()).contains("client_not_rezeptplaner_or_old"))
+        assertTrue(errorFor(MockResponse.Builder().code(404).body("404: Not Found").build()).contains("client_home_assistant_address"))
         assertTrue(
             errorFor(
                 MockResponse.Builder().code(302)
                     .addHeader("Location", "https://team.cloudflareaccess.com/cdn-cgi/access/login").build(),
-            ).contains("Cloudflare Access"),
+            ).contains("client_cloudflare_login"),
         )
         assertTrue(
             errorFor(MockResponse.Builder().code(403).addHeader("cf-ray", "abc").body("<html>Forbidden</html>").build())
-                .contains("Cloudflare Access"),
+                .contains("client_cloudflare_denied"),
         )
-        assertTrue(errorFor(MockResponse.Builder().body("<html>Home Assistant</html>").build()).contains("kein Rezeptplaner"))
+        assertTrue(errorFor(MockResponse.Builder().body("<html>Home Assistant</html>").build()).contains("client_not_rezeptplaner"))
         // Server vor 0.6.0 kennt api_version nicht.
-        assertTrue(errorFor(MockResponse.Builder().body("""{"version":"0.5.1"}""").build()).contains("zu alt"))
+        assertTrue(errorFor(MockResponse.Builder().body("""{"version":"0.5.1"}""").build()).contains("client_server_too_old"))
     }
 
     // Übertragung zurücksetzen (Server 0.18): Antwort wie vom Server, Anfrage mit Ersatzliste.

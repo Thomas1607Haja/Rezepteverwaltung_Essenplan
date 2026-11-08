@@ -37,7 +37,7 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [36], qualifiers = "w411dp-h891dp-xxhdpi")
+@Config(sdk = [36], qualifiers = "de-w411dp-h891dp-xxhdpi")
 class PickerLayoutTest {
 
     @get:Rule
@@ -110,7 +110,7 @@ class PickerLayoutTest {
     }
 
     @Test
-    @Config(qualifiers = "w891dp-h411dp-land-xxhdpi")
+    @Config(qualifiers = "de-w891dp-h411dp-land-xxhdpi")
     fun landscape() {
         picker(fontScale = 1.3f)
         shot("picker-quer")

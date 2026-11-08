@@ -1,6 +1,9 @@
 package io.github.thomas1607haja.rezeptplaner.ui
 
 import io.github.thomas1607haja.rezeptplaner.api.MealPlanEntry
+import org.robolectric.annotation.Config
+import org.junit.runner.RunWith
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.thomas1607haja.rezeptplaner.ui.plan.recentNotes
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipeFilter
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipeSort
@@ -69,6 +72,9 @@ class CourseTabsTest {
     }
 }
 
+// Robolectric: Texte und Formate kommen aus den Ressourcen (Deutsch).
+@RunWith(AndroidJUnit4::class)
+@Config(sdk = [36], qualifiers = "de")
 class YieldUnitTest {
     @Test
     fun amountsAndCompatibility() {
@@ -86,6 +92,9 @@ class YieldUnitTest {
     }
 }
 
+// Robolectric: Texte und Formate kommen aus den Ressourcen (Deutsch).
+@RunWith(AndroidJUnit4::class)
+@Config(sdk = [36], qualifiers = "de")
 class SlotTest {
     @Test
     fun coffeeBetweenLunchAndDinner() {

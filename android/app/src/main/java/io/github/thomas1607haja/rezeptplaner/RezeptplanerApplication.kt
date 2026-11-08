@@ -12,6 +12,7 @@ import io.github.thomas1607haja.rezeptplaner.data.ShoppingRepository
 import io.github.thomas1607haja.rezeptplaner.data.StatisticsRepository
 import io.github.thomas1607haja.rezeptplaner.data.SyncRepository
 import io.github.thomas1607haja.rezeptplaner.share.cleanSharedFiles
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipeFilter
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
@@ -44,6 +45,7 @@ class RezeptplanerApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        Texts.init(this)
         CrashLog.install(this)
         // Alte geteilte PDFs löschen, ohne den Start aufzuhalten.
         Thread { cleanSharedFiles(this) }.start()

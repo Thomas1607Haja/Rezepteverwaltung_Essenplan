@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Erzeugt von android/tools/gen_errors.py aus web/src/locales/{common,slots,courses,quick,format} – nicht von Hand ändern. -->
+<resources>
+    <string name="common_add" formatted="false">Añadir</string>
+    <string name="common_all" formatted="false">Todo</string>
+    <string name="common_apply" formatted="false">Aplicar</string>
+    <string name="common_back" formatted="false">Atrás</string>
+    <string name="common_cancel" formatted="false">Cancelar</string>
+    <string name="common_close" formatted="false">Cerrar</string>
+    <string name="common_confirm" formatted="false">Confirmar</string>
+    <string name="common_delete" formatted="false">Eliminar</string>
+    <string name="common_drag_to_move" formatted="false">Arrastra para mover</string>
+    <string name="common_edit" formatted="false">Editar</string>
+    <string name="common_error" formatted="false">Error: {message}</string>
+    <string name="common_loading" formatted="false">Cargando…</string>
+    <string name="common_more" formatted="false">Más</string>
+    <string name="common_no" formatted="false">No</string>
+    <string name="common_none" formatted="false">Ninguno</string>
+    <string name="common_not_connected" formatted="false">Sin conexión: {message}</string>
+    <string name="common_ok" formatted="false">Aceptar</string>
+    <string name="common_refresh" formatted="false">Actualizar</string>
+    <string name="common_reload" formatted="false">Recargar</string>
+    <string name="common_remove" formatted="false">Quitar</string>
+    <string name="common_save" formatted="false">Guardar</string>
+    <string name="common_saved" formatted="false">Guardado</string>
+    <string name="common_saving" formatted="false">Guardando…</string>
+    <string name="common_search" formatted="false">Buscar</string>
+    <string name="common_today" formatted="false">Hoy</string>
+    <string name="common_tomorrow" formatted="false">Mañana</string>
+    <string name="common_yes" formatted="false">Sí</string>
+    <string name="common_yesterday" formatted="false">Ayer</string>
+    <string name="slots_coffee" formatted="false">Merienda</string>
+    <string name="slots_coffee_short" formatted="false">Merienda</string>
+    <string name="slots_coffee_when" formatted="false">por la tarde</string>
+    <string name="slots_dinner" formatted="false">Cena</string>
+    <string name="slots_dinner_short" formatted="false">Cena</string>
+    <string name="slots_dinner_when" formatted="false">por la noche</string>
+    <string name="slots_lunch" formatted="false">Comida</string>
+    <string name="slots_lunch_short" formatted="false">Comida</string>
+    <string name="slots_lunch_when" formatted="false">a mediodía</string>
+    <string name="courses_all" formatted="false">Todo</string>
+    <string name="courses_baking" formatted="false">Repostería</string>
+    <string name="courses_desserts" formatted="false">Postres</string>
+    <string name="courses_main" formatted="false">Platos principales</string>
+    <string name="courses_none" formatted="false">Sin plato</string>
+    <string name="courses_starters" formatted="false">Entrantes, sopas y ensaladas</string>
+    <string name="quick_eating_out" formatted="false">Comer fuera</string>
+    <string name="quick_leftovers" formatted="false">Sobras</string>
+    <string name="quick_order_pizza" formatted="false">Pedir pizza</string>
+    <plurals name="format_days_hours">
+        <item quantity="one">{count} día {hours} h</item>
+        <item quantity="many">{count} días {hours} h</item>
+        <item quantity="other">{count} días {hours} h</item>
+    </plurals>
+    <string name="format_hours" formatted="false">{count} h</string>
+    <string name="format_hours_minutes" formatted="false">{hours} h {minutes} min</string>
+    <plurals name="format_last_days">
+        <item quantity="one">hecho hace {count} día</item>
+        <item quantity="many">hecho hace {count} días</item>
+        <item quantity="other">hecho hace {count} días</item>
+    </plurals>
+    <plurals name="format_last_months">
+        <item quantity="one">hecho hace {count} mes</item>
+        <item quantity="many">hecho hace {count} meses</item>
+        <item quantity="other">hecho hace {count} meses</item>
+    </plurals>
+    <plurals name="format_last_weeks">
+        <item quantity="one">hecho hace {count} semana</item>
+        <item quantity="many">hecho hace {count} semanas</item>
+        <item quantity="other">hecho hace {count} semanas</item>
+    </plurals>
+    <plurals name="format_last_years">
+        <item quantity="one">hecho hace más de un año</item>
+        <item quantity="many">hecho hace más de {count} años</item>
+        <item quantity="other">hecho hace más de {count} años</item>
+    </plurals>
+    <string name="format_last_yesterday" formatted="false">hecho ayer</string>
+    <string name="format_minutes" formatted="false">{count} min</string>
+    <string name="format_never_planned" formatted="false">nunca previsto</string>
+    <plurals name="format_planned_in_days">
+        <item quantity="one">previsto en {count} día</item>
+        <item quantity="many">previsto en {count} días</item>
+        <item quantity="other">previsto en {count} días</item>
+    </plurals>
+    <plurals name="format_planned_in_weeks">
+        <item quantity="one">previsto en {count} semana</item>
+        <item quantity="many">previsto en {count} semanas</item>
+        <item quantity="other">previsto en {count} semanas</item>
+    </plurals>
+    <string name="format_planned_today" formatted="false">previsto para hoy</string>
+    <string name="format_planned_tomorrow" formatted="false">previsto para mañana</string>
+    <plurals name="format_servings">
+        <item quantity="one">{count} ración</item>
+        <item quantity="many">{count} raciones</item>
+        <item quantity="other">{count} raciones</item>
+    </plurals>
+    <string name="format_yield_units" formatted="false">unidades|bizcocho|bandeja|molde desmontable 26 cm|molde rectangular|hogaza</string>
+</resources>

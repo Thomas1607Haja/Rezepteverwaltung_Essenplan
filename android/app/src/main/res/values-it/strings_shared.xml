@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Erzeugt von android/tools/gen_errors.py aus web/src/locales/{common,slots,courses,quick,format} – nicht von Hand ändern. -->
+<resources>
+    <string name="common_add" formatted="false">Aggiungi</string>
+    <string name="common_all" formatted="false">Tutto</string>
+    <string name="common_apply" formatted="false">Applica</string>
+    <string name="common_back" formatted="false">Indietro</string>
+    <string name="common_cancel" formatted="false">Annulla</string>
+    <string name="common_close" formatted="false">Chiudi</string>
+    <string name="common_confirm" formatted="false">Conferma</string>
+    <string name="common_delete" formatted="false">Elimina</string>
+    <string name="common_drag_to_move" formatted="false">Trascina per spostare</string>
+    <string name="common_edit" formatted="false">Modifica</string>
+    <string name="common_error" formatted="false">Errore: {message}</string>
+    <string name="common_loading" formatted="false">Caricamento…</string>
+    <string name="common_more" formatted="false">Altro</string>
+    <string name="common_no" formatted="false">No</string>
+    <string name="common_none" formatted="false">Nessuno</string>
+    <string name="common_not_connected" formatted="false">Non connesso: {message}</string>
+    <string name="common_ok" formatted="false">OK</string>
+    <string name="common_refresh" formatted="false">Aggiorna</string>
+    <string name="common_reload" formatted="false">Ricarica</string>
+    <string name="common_remove" formatted="false">Rimuovi</string>
+    <string name="common_save" formatted="false">Salva</string>
+    <string name="common_saved" formatted="false">Salvato</string>
+    <string name="common_saving" formatted="false">Salvataggio…</string>
+    <string name="common_search" formatted="false">Cerca</string>
+    <string name="common_today" formatted="false">Oggi</string>
+    <string name="common_tomorrow" formatted="false">Domani</string>
+    <string name="common_yes" formatted="false">Sì</string>
+    <string name="common_yesterday" formatted="false">Ieri</string>
+    <string name="slots_coffee" formatted="false">Merenda</string>
+    <string name="slots_coffee_short" formatted="false">Merenda</string>
+    <string name="slots_coffee_when" formatted="false">il pomeriggio</string>
+    <string name="slots_dinner" formatted="false">Cena</string>
+    <string name="slots_dinner_short" formatted="false">Cena</string>
+    <string name="slots_dinner_when" formatted="false">la sera</string>
+    <string name="slots_lunch" formatted="false">Pranzo</string>
+    <string name="slots_lunch_short" formatted="false">Pranzo</string>
+    <string name="slots_lunch_when" formatted="false">a pranzo</string>
+    <string name="courses_all" formatted="false">Tutte</string>
+    <string name="courses_baking" formatted="false">Forno e dolci</string>
+    <string name="courses_desserts" formatted="false">Dolci</string>
+    <string name="courses_main" formatted="false">Piatti principali</string>
+    <string name="courses_none" formatted="false">Senza portata</string>
+    <string name="courses_starters" formatted="false">Antipasti, zuppe e insalate</string>
+    <string name="quick_eating_out" formatted="false">Fuori a cena</string>
+    <string name="quick_leftovers" formatted="false">Avanzi</string>
+    <string name="quick_order_pizza" formatted="false">Ordinare la pizza</string>
+    <plurals name="format_days_hours">
+        <item quantity="one">{count} giorno {hours} h</item>
+        <item quantity="many">{count} giorni {hours} h</item>
+        <item quantity="other">{count} giorni {hours} h</item>
+    </plurals>
+    <string name="format_hours" formatted="false">{count} h</string>
+    <string name="format_hours_minutes" formatted="false">{hours} h {minutes} min</string>
+    <plurals name="format_last_days">
+        <item quantity="one">fatto {count} giorno fa</item>
+        <item quantity="many">fatto {count} giorni fa</item>
+        <item quantity="other">fatto {count} giorni fa</item>
+    </plurals>
+    <plurals name="format_last_months">
+        <item quantity="one">fatto {count} mese fa</item>
+        <item quantity="many">fatto {count} mesi fa</item>
+        <item quantity="other">fatto {count} mesi fa</item>
+    </plurals>
+    <plurals name="format_last_weeks">
+        <item quantity="one">fatto {count} settimana fa</item>
+        <item quantity="many">fatto {count} settimane fa</item>
+        <item quantity="other">fatto {count} settimane fa</item>
+    </plurals>
+    <plurals name="format_last_years">
+        <item quantity="one">fatto più di un anno fa</item>
+        <item quantity="many">fatto più di {count} anni fa</item>
+        <item quantity="other">fatto più di {count} anni fa</item>
+    </plurals>
+    <string name="format_last_yesterday" formatted="false">fatto ieri</string>
+    <string name="format_minutes" formatted="false">{count} min</string>
+    <string name="format_never_planned" formatted="false">mai previsto</string>
+    <plurals name="format_planned_in_days">
+        <item quantity="one">previsto tra {count} giorno</item>
+        <item quantity="many">previsto tra {count} giorni</item>
+        <item quantity="other">previsto tra {count} giorni</item>
+    </plurals>
+    <plurals name="format_planned_in_weeks">
+        <item quantity="one">previsto tra {count} settimana</item>
+        <item quantity="many">previsto tra {count} settimane</item>
+        <item quantity="other">previsto tra {count} settimane</item>
+    </plurals>
+    <string name="format_planned_today" formatted="false">previsto per oggi</string>
+    <string name="format_planned_tomorrow" formatted="false">previsto per domani</string>
+    <plurals name="format_servings">
+        <item quantity="one">{count} porzione</item>
+        <item quantity="many">{count} porzioni</item>
+        <item quantity="other">{count} porzioni</item>
+    </plurals>
+    <string name="format_yield_units" formatted="false">pezzi|torta|teglia|tortiera apribile 26 cm|stampo da plumcake|pagnotta</string>
+</resources>

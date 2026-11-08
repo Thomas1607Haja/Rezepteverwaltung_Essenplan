@@ -32,7 +32,7 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [36], qualifiers = "w411dp-h891dp-xxhdpi") // etwa Galaxy A54
+@Config(sdk = [36], qualifiers = "de-w411dp-h891dp-xxhdpi") // etwa Galaxy A54
 class ScreensTest {
 
     @get:Rule

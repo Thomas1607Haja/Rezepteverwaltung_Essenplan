@@ -306,10 +306,42 @@ func TestAndroidStrings(t *testing.T) {
 		if lang == "en" {
 			dir = "values"
 		}
-		data, err := os.ReadFile(filepath.Join(res, dir, "strings.xml"))
-		if os.IsNotExist(err) {
+		paths, err := filepath.Glob(filepath.Join(res, dir, "strings*.xml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(paths) == 0 {
 			continue
 		}
+		e := entries{}
+		for _, path := range paths {
+			readAndroid(t, path, e)
+		}
+		files[lang] = e
+	}
+	if len(files) < 2 {
+		t.Skip("App hat noch keine Übersetzungen")
+	}
+	compare(t, "android strings*.xml", files)
+
+	// Die Fehlertexte erzeugt android/tools/gen_errors.py aus denen des Webs.
+	web := readNamespaces(t, filepath.Join(repo, "web/src/locales"))["en"]
+	for key := range web {
+		code, ok := strings.CutPrefix(key, "errors.")
+		if !ok {
+			continue
+		}
+		if _, ok := files["en"]["error_"+code]; !ok {
+			t.Errorf("Android: error_%s fehlt – python android/tools/gen_errors.py ausführen", code)
+		}
+	}
+}
+
+// readAndroid liest eine strings*.xml nach e (Plurals als name#form).
+func readAndroid(t *testing.T, path string, e entries) {
+	t.Helper()
+	{
+		data, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -328,9 +360,8 @@ func TestAndroidStrings(t *testing.T) {
 			} `xml:"plurals"`
 		}
 		if err := xml.Unmarshal(data, &doc); err != nil {
-			t.Fatalf("%s/strings.xml: %v", dir, err)
+			t.Fatalf("%s: %v", path, err)
 		}
-		e := entries{}
 		for _, s := range doc.Strings {
 			if s.Translatable == "false" {
 				continue
@@ -342,10 +373,5 @@ func TestAndroidStrings(t *testing.T) {
 				e[p.Name+"#"+it.Quantity] = it.Text
 			}
 		}
-		files[lang] = e
 	}
-	if len(files) < 2 {
-		t.Skip("App hat noch keine Übersetzungen")
-	}
-	compare(t, "android strings.xml", files)
 }

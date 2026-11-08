@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Erzeugt von android/tools/gen_errors.py aus web/src/locales/errors – nicht von Hand ändern. -->
+<resources>
+    <string name="error_address_forbidden" formatted="false">Les adresses du réseau local ne sont pas autorisées</string>
+    <string name="error_api_key_not_found" formatted="false">Clé API introuvable</string>
+    <string name="error_api_key_required" formatted="false">Une clé API valide est requise</string>
+    <string name="error_api_only" formatted="false">Seule l\'API est disponible ici</string>
+    <string name="error_app_check_cloudflare" formatted="false">Cloudflare Access protège cette adresse. Lors de la connexion de l\'application, saisissez le Client ID et le Secret sous « Cloudflare Access ».</string>
+    <string name="error_app_check_home_assistant" formatted="false">Cette adresse mène à Home Assistant, pas à l\'accès de l\'application. Créez dans le tunnel un nom d\'hôte distinct pointant vers le port 8100 de Rezeptplaner (docs/APP-ZUGANG.md).</string>
+    <string name="error_app_check_home_network" formatted="false">L\'adresse pointe vers le réseau local. L\'application a besoin de l\'adresse publique (nom d\'hôte du tunnel Cloudflare).</string>
+    <string name="error_app_check_no_key" formatted="false">L\'adresse répond sans clé : ce n\'est pas l\'accès de l\'application (port 8100).</string>
+    <string name="error_app_check_no_url" formatted="false">Aucune adresse saisie.</string>
+    <string name="error_app_check_not_found" formatted="false">Aucun Rezeptplaner ne répond à cette adresse. Le nom d\'hôte est-il configuré dans le tunnel ?</string>
+    <string name="error_app_check_ok" formatted="false">L\'accès de l\'application répond. L\'application peut se connecter avec cette adresse.</string>
+    <string name="error_app_check_tunnel" formatted="false">Le tunnel n\'atteint pas Rezeptplaner (erreur {status}). Vérifiez le nom d\'hôte et le port 8100 dans la configuration du tunnel.</string>
+    <string name="error_app_check_unexpected" formatted="false">Réponse inattendue (statut {status}) : ce n\'est probablement pas l\'accès de l\'application.</string>
+    <string name="error_app_check_unreachable" formatted="false">Injoignable : vérifiez le nom d\'hôte et le tunnel.</string>
+    <string name="error_app_check_web_port" formatted="false">L\'adresse mène à l\'interface web (port 8099). Dans le tunnel, le nom d\'hôte doit pointer vers le port 8100.</string>
+    <string name="error_categories_duplicate" formatted="false">Indiquez chaque catégorie une seule fois</string>
+    <string name="error_category_exists" formatted="false">La catégorie « {name} » existe déjà</string>
+    <string name="error_category_not_found" formatted="false">La catégorie {id} n\'existe pas</string>
+    <string name="error_category_not_in_order" formatted="false">La catégorie {id} manque : déplacez-la d\'abord dans un autre groupe</string>
+    <string name="error_category_or_group_gone" formatted="false">Catégorie ou groupe introuvable</string>
+    <string name="error_contains_comma" formatted="false">Ne doit pas contenir de virgule</string>
+    <string name="error_course_reason_baking" formatted="false">Farine, levure et sucre</string>
+    <string name="error_course_reason_bread" formatted="false">Farine et levure sans sucre</string>
+    <string name="error_course_reason_none" formatted="false">Aucun indice particulier</string>
+    <string name="error_course_reason_sweet" formatted="false">Catégorie « Sucré »</string>
+    <string name="error_course_reason_title" formatted="false">Le titre contient « {word} »</string>
+    <string name="error_entry_in_menu" formatted="false">Le plat fait déjà partie d\'un menu</string>
+    <string name="error_entry_not_found" formatted="false">Entrée introuvable</string>
+    <string name="error_entry_not_sent" formatted="false">Ce plat n\'a pas été envoyé à Bring</string>
+    <string name="error_format_unsupported" formatted="false">Version de format {version} non prise en charge ({min} à {max} attendu) : Rezeptplaner est-il à jour ?</string>
+    <string name="error_group_exists" formatted="false">Le groupe « {name} » existe déjà</string>
+    <string name="error_group_not_empty" formatted="false">Le groupe contient encore des catégories : déplacez-les ou supprimez-les aussi</string>
+    <string name="error_group_not_found" formatted="false">Le groupe {id} n\'existe pas</string>
+    <string name="error_groups_incomplete" formatted="false">Indiquez chaque groupe une seule fois</string>
+    <string name="error_home_assistant_down" formatted="false">Home Assistant est injoignable</string>
+    <string name="error_home_assistant_only" formatted="false">Accès uniquement via Home Assistant</string>
+    <string name="error_http_status" formatted="false">Erreur {status}</string>
+    <string name="error_image_not_found" formatted="false">Image introuvable</string>
+    <string name="error_image_too_many_pixel" formatted="false">Image trop grande ({max} mégapixels maximum)</string>
+    <string name="error_image_unsupported" formatted="false">Format d\'image non pris en charge (JPEG, PNG, WebP, GIF)</string>
+    <string name="error_import_category_gone" formatted="false">La catégorie pour « {name} » n\'existe plus : ignorée</string>
+    <string name="error_import_category_not_made" formatted="false">La catégorie « {name} » n\'a pas été créée</string>
+    <string name="error_import_description_too_long" formatted="false">La description dépasse {max} caractères</string>
+    <string name="error_import_expired" formatted="false">Import expiré : envoyez à nouveau le fichier</string>
+    <string name="error_import_image_kind" formatted="false">Type d\'image « {name} » inconnu : l\'image est considérée comme une photo</string>
+    <string name="error_import_image_missing" formatted="false">L\'image {name} manque dans le fichier ZIP</string>
+    <string name="error_import_image_not_saved" formatted="false">Image non enregistrée</string>
+    <string name="error_import_image_path" formatted="false">Chemin d\'image « {name} » non valide : l\'image est ignorée</string>
+    <string name="error_import_image_unreadable" formatted="false">Impossible de lire l\'image {name}</string>
+    <string name="error_import_image_unusable" formatted="false">L\'image {name} est inutilisable : la recette sera importée sans image</string>
+    <string name="error_import_images_need_zip" formatted="false">Les images ne sont possibles que dans un ZIP : l\'image est ignorée</string>
+    <string name="error_import_ingredient_name" formatted="false">Ingrédient {n} : nom manquant</string>
+    <string name="error_import_ingredient_negative" formatted="false">Ingrédient {n} ({name}) : la quantité ne peut pas être négative</string>
+    <string name="error_import_ingredient_too_long" formatted="false">Ingrédient {n} ({name}) : un champ est trop long</string>
+    <string name="error_import_no_image" formatted="false">Pas d\'image</string>
+    <string name="error_import_no_ingredients" formatted="false">Aucun ingrédient</string>
+    <string name="error_import_no_steps" formatted="false">Aucune étape</string>
+    <string name="error_import_no_such_recipe" formatted="false">Cette recette ne fait pas partie de l\'import</string>
+    <string name="error_import_notes_too_long" formatted="false">Les notes dépassent {max} caractères</string>
+    <string name="error_import_prep_minutes" formatted="false">La préparation doit durer entre 0 et {max} minutes</string>
+    <string name="error_import_recipe_failed" formatted="false">Impossible de créer la recette</string>
+    <string name="error_import_same_title" formatted="false">Même titre que la recette {index} de cet import</string>
+    <string name="error_import_servings" formatted="false">Portions manquantes ou hors de {min} à {max}</string>
+    <string name="error_import_source_too_long" formatted="false">La source dépasse {max} caractères</string>
+    <string name="error_import_source_url" formatted="false">L\'adresse source « {url} » n\'est pas une adresse web et est ignorée</string>
+    <string name="error_import_step_empty" formatted="false">L\'étape {n} est vide</string>
+    <string name="error_import_step_too_long" formatted="false">L\'étape {n} dépasse {max} caractères</string>
+    <string name="error_import_title_missing" formatted="false">Titre manquant</string>
+    <string name="error_import_title_too_long" formatted="false">Le titre dépasse {max} caractères</string>
+    <string name="error_import_too_many_categories" formatted="false">{max} catégories maximum</string>
+    <string name="error_import_too_many_in_upload" formatted="false">Plus de {max} recettes dans un même import</string>
+    <string name="error_import_too_many_ingredients" formatted="false">{max} ingrédients maximum</string>
+    <string name="error_import_too_many_steps" formatted="false">{max} étapes maximum</string>
+    <string name="error_import_total_minutes" formatted="false">Le temps total doit être entre 0 et {max} minutes</string>
+    <string name="error_import_unknown_category" formatted="false">La catégorie « {name} » n\'existe pas : associez-la ou ignorez-la</string>
+    <string name="error_import_web_photo" formatted="false">La photo de {site} sera utilisée</string>
+    <string name="error_import_web_photo_failed" formatted="false">Impossible de charger la photo de {site}</string>
+    <string name="error_import_web_photo_not_saved" formatted="false">Photo de la page source non enregistrée</string>
+    <string name="error_import_web_photo_replaces" formatted="false">La photo de {site} sera utilisée (remplace l\'illustration)</string>
+    <string name="error_import_yield_unit_too_long" formatted="false">L\'unité de rendement dépasse {max} caractères</string>
+    <string name="error_internal_error" formatted="false">Erreur interne</string>
+    <string name="error_invalid_app_url" formatted="false">Doit être une adresse comme https://recettes.example.org</string>
+    <string name="error_invalid_date" formatted="false">Doit être une date comme 2026-10-24</string>
+    <string name="error_invalid_id" formatted="false">Identifiant non valide</string>
+    <string name="error_invalid_json" formatted="false">JSON non valide : {detail}</string>
+    <string name="error_invalid_language" formatted="false">Langue inconnue</string>
+    <string name="error_invalid_slot" formatted="false">Repas non valide</string>
+    <string name="error_invalid_status" formatted="false">Statut non valide</string>
+    <string name="error_invalid_time" formatted="false">Doit être une heure comme 18:00</string>
+    <string name="error_invalid_timestamp" formatted="false">Horodatage non valide</string>
+    <string name="error_invalid_todo_entity" formatted="false">Doit être une liste de tâches, p. ex. todo.courses</string>
+    <string name="error_invalid_url" formatted="false">Doit commencer par http:// ou https://</string>
+    <string name="error_invalid_value" formatted="false">Valeur attendue : {expected}</string>
+    <string name="error_invalid_weekday" formatted="false">Jour de la semaine non valide</string>
+    <string name="error_menu_not_found" formatted="false">Menu introuvable</string>
+    <string name="error_merge_into_self" formatted="false">Une catégorie ne peut pas être fusionnée avec elle-même</string>
+    <string name="error_missing" formatted="false">Manquant</string>
+    <string name="error_move_to_other_group" formatted="false">Les catégories doivent aller dans un autre groupe</string>
+    <string name="error_must_be_positive" formatted="false">Doit être supérieur à 0</string>
+    <string name="error_name_length" formatted="false">Le nom est obligatoire ({max} caractères maximum)</string>
+    <string name="error_negative" formatted="false">Ne peut pas être négatif</string>
+    <string name="error_network" formatted="false">Serveur injoignable</string>
+    <string name="error_no_bring_list" formatted="false">Choisissez d\'abord une liste Bring dans les paramètres</string>
+    <string name="error_no_course_group" formatted="false">Aucun groupe de plats : marquez un groupe comme « Plat » dans Catégories</string>
+    <string name="error_no_entries_selected" formatted="false">Aucun plat envoyé sélectionné</string>
+    <string name="error_no_file" formatted="false">Aucun fichier envoyé</string>
+    <string name="error_no_image_on_page" formatted="false">La page n\'indique aucune image</string>
+    <string name="error_no_recipe_on_page" formatted="false">Aucune recette trouvée sur cette page</string>
+    <string name="error_no_recipe_selected" formatted="false">Aucune recette sélectionnée</string>
+    <string name="error_no_recipes_in_file" formatted="false">Le fichier ne contient aucune recette</string>
+    <string name="error_not_a_course" formatted="false">La catégorie {id} n\'est pas un plat</string>
+    <string name="error_not_an_image" formatted="false">Cette adresse ne renvoie pas d\'image</string>
+    <string name="error_not_found" formatted="false">Introuvable</string>
+    <string name="error_not_import_file" formatted="false">Ce n\'est pas un fichier d\'import Rezeptplaner</string>
+    <string name="error_not_utf8" formatted="false">Le fichier n\'est pas encodé en UTF-8</string>
+    <string name="error_not_zip_or_json" formatted="false">Ni un fichier ZIP ni un fichier JSON</string>
+    <string name="error_note_required" formatted="false">Sans recette, saisissez une note, p. ex. « Restaurant »</string>
+    <string name="error_nothing_to_send" formatted="false">Rien à envoyer pour cette période</string>
+    <string name="error_out_of_range" formatted="false">Doit être entre {min} et {max}</string>
+    <string name="error_page_status" formatted="false">La page a répondu avec le statut {status}</string>
+    <string name="error_page_unreachable" formatted="false">Impossible de charger la page</string>
+    <string name="error_pantry_duplicate" formatted="false">Déjà dans le garde-manger</string>
+    <string name="error_pantry_item_not_found" formatted="false">Article du garde-manger introuvable</string>
+    <string name="error_plan_changed" formatted="false">Le planning a changé entre-temps : veuillez recharger</string>
+    <string name="error_planned_into_period" formatted="false">« {title} » passe dans la semaine déjà achetée, mais ses ingrédients n\'ont pas encore été achetés.</string>
+    <string name="error_range_reversed" formatted="false">La fin ne peut pas précéder le début</string>
+    <string name="error_range_too_long" formatted="false">{max} jours maximum</string>
+    <string name="error_recipe_gone" formatted="false">Cette recette n\'existe plus</string>
+    <string name="error_recipe_not_found" formatted="false">Recette introuvable</string>
+    <string name="error_recipes_json_missing" formatted="false">recipes.json manque dans le fichier ZIP</string>
+    <string name="error_recipes_json_multiple" formatted="false">Plusieurs recipes.json dans le fichier ZIP</string>
+    <string name="error_recipes_json_unreadable" formatted="false">Impossible de lire recipes.json</string>
+    <string name="error_required" formatted="false">Obligatoire</string>
+    <string name="error_response_too_large" formatted="false">La réponse est trop volumineuse</string>
+    <string name="error_status_transferred" formatted="false">« Envoyé à Bring » n\'est défini que par l\'envoi</string>
+    <string name="error_swap_target_missing" formatted="false">Cette entrée n\'existe plus</string>
+    <string name="error_swap_with_self" formatted="false">Une entrée ne peut pas être échangée avec elle-même</string>
+    <string name="error_too_long" formatted="false">{max} caractères maximum</string>
+    <string name="error_too_many" formatted="false">{max} maximum à la fois</string>
+    <string name="error_too_many_recipes" formatted="false">{max} recettes maximum par fichier</string>
+    <string name="error_transferred_out_of_period" formatted="false">Les ingrédients de « {title} » sont déjà achetés et ne se conserveront peut-être pas aussi longtemps.</string>
+    <string name="error_unknown_api_path" formatted="false">Chemin d\'API inconnu</string>
+    <string name="error_unknown_id" formatted="false">Identifiant inconnu</string>
+    <string name="error_unknown_sort" formatted="false">Tri inconnu « {value} »</string>
+    <string name="error_upload_incomplete" formatted="false">Envoi incomplet ou endommagé</string>
+    <string name="error_upload_not_multipart" formatted="false">Envoi non reconnu : choisissez à nouveau les fichiers</string>
+    <string name="error_upload_too_large" formatted="false">Fichier trop volumineux ({max_mb} Mo maximum)</string>
+    <string name="error_web_only_api_keys" formatted="false">Les clés se gèrent uniquement dans l\'interface web</string>
+    <string name="error_web_only_categories" formatted="false">Les catégories se gèrent uniquement dans l\'interface web</string>
+    <string name="error_zip_bad_path" formatted="false">Chemin non valide dans le fichier ZIP : « {name} »</string>
+    <string name="error_zip_corrupt" formatted="false">Le fichier ZIP est endommagé</string>
+    <string name="error_zip_file_too_large" formatted="false">{name} est trop volumineux ({max_mb} Mo maximum)</string>
+    <string name="error_zip_too_many_entries" formatted="false">Trop d\'éléments dans le fichier ZIP ({max} maximum)</string>
+    <string name="error_zip_unpacked_too_large" formatted="false">Trop volumineux une fois décompressé ({max_mb} Mo maximum par import)</string>
+</resources>

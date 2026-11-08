@@ -128,6 +128,13 @@ android {
         disable += "OldTargetApi"
     }
 
+    androidResources {
+        // Sprachauswahl pro App ab Android 13 (Einstellungen → Apps →
+        // Rezeptplaner → Sprache): Die Liste der Sprachen entsteht aus den
+        // Ordnern values-*; die Grundsprache steht in res/resources.properties.
+        generateLocaleConfig = true
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true // BuildConfig.VERSION_NAME für die Anzeige der Version

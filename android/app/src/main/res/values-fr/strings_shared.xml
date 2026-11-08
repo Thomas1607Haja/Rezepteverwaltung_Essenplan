@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Erzeugt von android/tools/gen_errors.py aus web/src/locales/{common,slots,courses,quick,format} – nicht von Hand ändern. -->
+<resources>
+    <string name="common_add" formatted="false">Ajouter</string>
+    <string name="common_all" formatted="false">Tout</string>
+    <string name="common_apply" formatted="false">Appliquer</string>
+    <string name="common_back" formatted="false">Retour</string>
+    <string name="common_cancel" formatted="false">Annuler</string>
+    <string name="common_close" formatted="false">Fermer</string>
+    <string name="common_confirm" formatted="false">Confirmer</string>
+    <string name="common_delete" formatted="false">Supprimer</string>
+    <string name="common_drag_to_move" formatted="false">Faire glisser pour déplacer</string>
+    <string name="common_edit" formatted="false">Modifier</string>
+    <string name="common_error" formatted="false">Erreur : {message}</string>
+    <string name="common_loading" formatted="false">Chargement …</string>
+    <string name="common_more" formatted="false">Plus</string>
+    <string name="common_no" formatted="false">Non</string>
+    <string name="common_none" formatted="false">Aucun</string>
+    <string name="common_not_connected" formatted="false">Non connecté : {message}</string>
+    <string name="common_ok" formatted="false">OK</string>
+    <string name="common_refresh" formatted="false">Actualiser</string>
+    <string name="common_reload" formatted="false">Recharger</string>
+    <string name="common_remove" formatted="false">Retirer</string>
+    <string name="common_save" formatted="false">Enregistrer</string>
+    <string name="common_saved" formatted="false">Enregistré</string>
+    <string name="common_saving" formatted="false">Enregistrement …</string>
+    <string name="common_search" formatted="false">Rechercher</string>
+    <string name="common_today" formatted="false">Aujourd\'hui</string>
+    <string name="common_tomorrow" formatted="false">Demain</string>
+    <string name="common_yes" formatted="false">Oui</string>
+    <string name="common_yesterday" formatted="false">Hier</string>
+    <string name="slots_coffee" formatted="false">Goûter</string>
+    <string name="slots_coffee_short" formatted="false">Goûter</string>
+    <string name="slots_coffee_when" formatted="false">l\'après-midi</string>
+    <string name="slots_dinner" formatted="false">Dîner</string>
+    <string name="slots_dinner_short" formatted="false">Dîner</string>
+    <string name="slots_dinner_when" formatted="false">le soir</string>
+    <string name="slots_lunch" formatted="false">Déjeuner</string>
+    <string name="slots_lunch_short" formatted="false">Déjeuner</string>
+    <string name="slots_lunch_when" formatted="false">le midi</string>
+    <string name="courses_all" formatted="false">Tout</string>
+    <string name="courses_baking" formatted="false">Pâtisserie</string>
+    <string name="courses_desserts" formatted="false">Desserts</string>
+    <string name="courses_main" formatted="false">Plats principaux</string>
+    <string name="courses_none" formatted="false">Sans plat</string>
+    <string name="courses_starters" formatted="false">Entrées, soupes &amp; salades</string>
+    <string name="quick_eating_out" formatted="false">Restaurant</string>
+    <string name="quick_leftovers" formatted="false">Restes</string>
+    <string name="quick_order_pizza" formatted="false">Commander une pizza</string>
+    <plurals name="format_days_hours">
+        <item quantity="one">{count} jour {hours} h</item>
+        <item quantity="many">{count} jours {hours} h</item>
+        <item quantity="other">{count} jours {hours} h</item>
+    </plurals>
+    <string name="format_hours" formatted="false">{count} h</string>
+    <string name="format_hours_minutes" formatted="false">{hours} h {minutes} min</string>
+    <plurals name="format_last_days">
+        <item quantity="one">fait il y a {count} jour</item>
+        <item quantity="many">fait il y a {count} jours</item>
+        <item quantity="other">fait il y a {count} jours</item>
+    </plurals>
+    <plurals name="format_last_months">
+        <item quantity="one">fait il y a {count} mois</item>
+        <item quantity="many">fait il y a {count} mois</item>
+        <item quantity="other">fait il y a {count} mois</item>
+    </plurals>
+    <plurals name="format_last_weeks">
+        <item quantity="one">fait il y a {count} semaine</item>
+        <item quantity="many">fait il y a {count} semaines</item>
+        <item quantity="other">fait il y a {count} semaines</item>
+    </plurals>
+    <plurals name="format_last_years">
+        <item quantity="one">fait il y a plus d\'un an</item>
+        <item quantity="many">fait il y a plus de {count} ans</item>
+        <item quantity="other">fait il y a plus de {count} ans</item>
+    </plurals>
+    <string name="format_last_yesterday" formatted="false">fait hier</string>
+    <string name="format_minutes" formatted="false">{count} min</string>
+    <string name="format_never_planned" formatted="false">jamais prévu</string>
+    <plurals name="format_planned_in_days">
+        <item quantity="one">prévu dans {count} jour</item>
+        <item quantity="many">prévu dans {count} jours</item>
+        <item quantity="other">prévu dans {count} jours</item>
+    </plurals>
+    <plurals name="format_planned_in_weeks">
+        <item quantity="one">prévu dans {count} semaine</item>
+        <item quantity="many">prévu dans {count} semaines</item>
+        <item quantity="other">prévu dans {count} semaines</item>
+    </plurals>
+    <string name="format_planned_today" formatted="false">prévu aujourd\'hui</string>
+    <string name="format_planned_tomorrow" formatted="false">prévu demain</string>
+    <plurals name="format_servings">
+        <item quantity="one">{count} portion</item>
+        <item quantity="many">{count} portions</item>
+        <item quantity="other">{count} portions</item>
+    </plurals>
+    <string name="format_yield_units" formatted="false">pièces|gâteau|plaque|moule à charnière 26 cm|moule à cake|pain</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Meldungen der Verbindung zum Server (api/ApiClient.kt). -->
+<resources>
+    <string name="api_server_too_old">Rezeptplaner on the server is too old (version {version}). Please update it in Home Assistant.</string>
+    <string name="api_unexpected_import">Unexpected response during import.</string>
+    <string name="api_not_rezeptplaner">No Rezeptplaner answers at this address.</string>
+    <string name="api_host_not_found">Server not found – check the address and internet connection.</string>
+    <string name="api_tls_failed">Secure connection failed (certificate).</string>
+    <string name="api_unreachable">Server not reachable – check the internet connection.</string>
+    <string name="api_cloudflare_login">Cloudflare Access requires a login – the service token (Client ID/Secret) is missing or wrong.</string>
+    <string name="api_cloudflare_denied">Cloudflare Access rejected the request – check the service token.</string>
+    <string name="api_key_invalid">The API key is invalid or blocked. Reconnect the device in the web interface.</string>
+    <string name="api_home_assistant_address">This address leads to Home Assistant, not to Rezeptplaner\'s app access. Check the address for the app in the web interface (separate host name, port 8100).</string>
+    <string name="api_not_rezeptplaner_or_old">No Rezeptplaner answers at this address (or it is too old).</string>
+    <string name="api_redirect">The server redirects ({location}) – check the address.</string>
+    <string name="api_server_error">Error on the server ({status}). Try again later.</string>
+    <string name="api_unexpected_status">Unexpected response from the server ({status}).</string>
+    <string name="api_rejected">The server rejected the change ({status}).</string>
+</resources>

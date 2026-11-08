@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Erzeugt von android/tools/gen_errors.py aus web/src/locales/{common,slots,courses,quick,format} – nicht von Hand ändern. -->
+<resources>
+    <string name="common_add" formatted="false">Add</string>
+    <string name="common_all" formatted="false">All</string>
+    <string name="common_apply" formatted="false">Apply</string>
+    <string name="common_back" formatted="false">Back</string>
+    <string name="common_cancel" formatted="false">Cancel</string>
+    <string name="common_close" formatted="false">Close</string>
+    <string name="common_confirm" formatted="false">Confirm</string>
+    <string name="common_delete" formatted="false">Delete</string>
+    <string name="common_drag_to_move" formatted="false">Drag to move</string>
+    <string name="common_edit" formatted="false">Edit</string>
+    <string name="common_error" formatted="false">Error: {message}</string>
+    <string name="common_loading" formatted="false">Loading …</string>
+    <string name="common_more" formatted="false">More</string>
+    <string name="common_no" formatted="false">No</string>
+    <string name="common_none" formatted="false">None</string>
+    <string name="common_not_connected" formatted="false">Not connected: {message}</string>
+    <string name="common_ok" formatted="false">OK</string>
+    <string name="common_refresh" formatted="false">Refresh</string>
+    <string name="common_reload" formatted="false">Reload</string>
+    <string name="common_remove" formatted="false">Remove</string>
+    <string name="common_save" formatted="false">Save</string>
+    <string name="common_saved" formatted="false">Saved</string>
+    <string name="common_saving" formatted="false">Saving …</string>
+    <string name="common_search" formatted="false">Search</string>
+    <string name="common_today" formatted="false">Today</string>
+    <string name="common_tomorrow" formatted="false">Tomorrow</string>
+    <string name="common_yes" formatted="false">Yes</string>
+    <string name="common_yesterday" formatted="false">Yesterday</string>
+    <string name="slots_coffee" formatted="false">Afternoon tea</string>
+    <string name="slots_coffee_short" formatted="false">Tea</string>
+    <string name="slots_coffee_when" formatted="false">in the afternoon</string>
+    <string name="slots_dinner" formatted="false">Dinner</string>
+    <string name="slots_dinner_short" formatted="false">Dinner</string>
+    <string name="slots_dinner_when" formatted="false">in the evening</string>
+    <string name="slots_lunch" formatted="false">Lunch</string>
+    <string name="slots_lunch_short" formatted="false">Lunch</string>
+    <string name="slots_lunch_when" formatted="false">at lunchtime</string>
+    <string name="courses_all" formatted="false">All</string>
+    <string name="courses_baking" formatted="false">Baking</string>
+    <string name="courses_desserts" formatted="false">Desserts</string>
+    <string name="courses_main" formatted="false">Main courses</string>
+    <string name="courses_none" formatted="false">No course</string>
+    <string name="courses_starters" formatted="false">Starters, soups &amp; salads</string>
+    <string name="quick_eating_out" formatted="false">Eating out</string>
+    <string name="quick_leftovers" formatted="false">Leftovers</string>
+    <string name="quick_order_pizza" formatted="false">Order pizza</string>
+    <plurals name="format_days_hours">
+        <item quantity="one">{count} day {hours} h</item>
+        <item quantity="other">{count} days {hours} h</item>
+    </plurals>
+    <string name="format_hours" formatted="false">{count} h</string>
+    <string name="format_hours_minutes" formatted="false">{hours} h {minutes} min</string>
+    <plurals name="format_last_days">
+        <item quantity="one">last made {count} day ago</item>
+        <item quantity="other">last made {count} days ago</item>
+    </plurals>
+    <plurals name="format_last_months">
+        <item quantity="one">last made {count} month ago</item>
+        <item quantity="other">last made {count} months ago</item>
+    </plurals>
+    <plurals name="format_last_weeks">
+        <item quantity="one">last made {count} week ago</item>
+        <item quantity="other">last made {count} weeks ago</item>
+    </plurals>
+    <plurals name="format_last_years">
+        <item quantity="one">last made over a year ago</item>
+        <item quantity="other">last made over {count} years ago</item>
+    </plurals>
+    <string name="format_last_yesterday" formatted="false">last made yesterday</string>
+    <string name="format_minutes" formatted="false">{count} min</string>
+    <string name="format_never_planned" formatted="false">never planned</string>
+    <plurals name="format_planned_in_days">
+        <item quantity="one">planned in {count} day</item>
+        <item quantity="other">planned in {count} days</item>
+    </plurals>
+    <plurals name="format_planned_in_weeks">
+        <item quantity="one">planned in {count} week</item>
+        <item quantity="other">planned in {count} weeks</item>
+    </plurals>
+    <string name="format_planned_today" formatted="false">planned for today</string>
+    <string name="format_planned_tomorrow" formatted="false">planned for tomorrow</string>
+    <plurals name="format_servings">
+        <item quantity="one">{count} serving</item>
+        <item quantity="other">{count} servings</item>
+    </plurals>
+    <string name="format_yield_units" formatted="false">pieces|cake|tray|26 cm springform|loaf tin|loaf</string>
+</resources>
