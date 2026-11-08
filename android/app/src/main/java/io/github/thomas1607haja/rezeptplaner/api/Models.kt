@@ -1,9 +1,13 @@
 package io.github.thomas1607haja.rezeptplaner.api
 
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 // Datenmodelle wie in der API des Servers (server/internal/...). Felder,
 // die die App nicht braucht, fehlen hier; der JSON-Leser ignoriert sie.
@@ -53,7 +57,14 @@ data class Ingredient(
 data class Step(val text: String)
 
 @Serializable
-data class Tag(val id: Long, val name: String, val group: String = "", val position: Int = 0)
+data class Tag(
+    val id: Long,
+    val name: String,
+    val group: String = "",
+    val position: Int = 0,
+    /** Fester Schlüssel eines Gangs der Startliste ("main", "dessert" …, Server 0.20); Namen sind Daten. */
+    @SerialName("course_key") val courseKey: String = "",
+)
 
 @Serializable
 data class TagGroup(val name: String, val tags: List<Tag>, val id: Long = 0, val role: String = "")
@@ -210,7 +221,29 @@ data class MoveRequest(
 )
 
 @Serializable
-data class MoveWarning(val type: String, @SerialName("entry_id") val entryId: Long, val message: String)
+data class MoveWarning(
+    val type: String,
+    @SerialName("entry_id") val entryId: Long,
+    val message: String,
+    /** Ab Server 0.20: Parameter zum Code [type] ({title}). */
+    val params: Map<String, JsonElement> = emptyMap(),
+) {
+    /** Text in der Sprache der App (Rückfall: englischer Text des Servers). */
+    fun text(): String = Texts.error(type, params.asTextParams(), message)
+}
+
+/**
+ * Hinweis oder Fehler des Servers als Code mit Parametern (Server 0.20,
+ * server/internal/apierr). [text] liefert ihn in der Sprache der App.
+ */
+@Serializable
+data class Note(val code: String = "", val params: Map<String, JsonElement> = emptyMap(), val message: String = "") {
+    fun text(): String = Texts.error(code, params.asTextParams(), message)
+}
+
+/** JSON-Parameter als Texte für Texts.error. */
+fun Map<String, JsonElement>.asTextParams(): Map<String, Any?> =
+    mapValues { (_, v) -> (v as? JsonPrimitive)?.contentOrNull ?: v.toString() }
 
 /** Applied = false: Es gibt Warnungen, nichts ist gespeichert. */
 @Serializable
@@ -251,8 +284,12 @@ data class ImportCandidate(
     val recipe: Recipe,
     /** Vorschaubild unter GET /api/v1/import/file/{token}/images/{index}. */
     val thumbnail: Boolean = false,
+    /** Englische Texte (ältere Server: deutsche); zur Anzeige [errorDetails] nehmen. */
     val errors: List<String> = emptyList(),
     val warnings: List<String> = emptyList(),
+    /** Ab Server 0.20: Fehler und Hinweise als Codes (Note.text()). */
+    @SerialName("error_details") val errorDetails: List<Note> = emptyList(),
+    @SerialName("warning_details") val warningDetails: List<Note> = emptyList(),
     val duplicates: List<DuplicateRecipe> = emptyList(),
     @SerialName("unknown_categories") val unknownCategories: List<String> = emptyList(),
 ) {
@@ -263,20 +300,27 @@ data class ImportCandidate(
 data class DuplicateRecipe(val id: Long, val title: String)
 
 @Serializable
-data class ImportFileError(val file: String, val error: String)
+data class ImportFileError(val file: String, val error: String, @SerialName("error_detail") val errorDetail: Note? = null)
 
 @Serializable
 data class ImportResult(
     val created: List<ImportCreated> = emptyList(),
     val failed: List<ImportFailed> = emptyList(),
     val warnings: List<String> = emptyList(),
+    @SerialName("warning_details") val warningDetails: List<Note> = emptyList(),
 )
 
 @Serializable
-data class ImportCreated(val index: Int, val id: Long, val title: String, val warnings: List<String> = emptyList())
+data class ImportCreated(
+    val index: Int,
+    val id: Long,
+    val title: String,
+    val warnings: List<String> = emptyList(),
+    @SerialName("warning_details") val warningDetails: List<Note> = emptyList(),
+)
 
 @Serializable
-data class ImportFailed(val index: Int, val title: String = "", val error: String)
+data class ImportFailed(val index: Int, val title: String = "", val error: String, @SerialName("error_detail") val errorDetail: Note? = null)
 
 // Rezepte ändern (server/internal/recipes, importer).
 
@@ -363,7 +407,10 @@ data class ShoppingSend(
 data class SentItem(val name: String, val spec: String = "", val merged: Boolean = false)
 
 @Serializable
-data class FailedItem(val name: String, val spec: String = "", val error: String = "")
+data class FailedItem(val name: String, val spec: String = "", val error: String = "", val code: String = "") {
+    /** Grund in der Sprache der App (Code ab Server 0.20). */
+    fun reason(): String = Texts.error(code, emptyMap(), error)
+}
 
 @Serializable
 data class SendResult(
@@ -400,6 +447,8 @@ data class ResetPreview(
     /** Alle To-do-Listen, zur Auswahl für Gerichte ohne gespeicherte Liste. */
     val lists: List<TodoList> = emptyList(),
     @SerialName("lists_error") val listsError: String = "",
+    /** Ab Server 0.20: Code zu [listsError]. */
+    @SerialName("lists_error_code") val listsErrorCode: String = "",
 )
 
 @Serializable

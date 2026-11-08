@@ -3,6 +3,10 @@ package io.github.thomas1607haja.rezeptplaner.api
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.data.ServerConfig
 import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
+import java.io.IOException
+import java.net.UnknownHostException
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -18,10 +22,6 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import java.io.IOException
-import java.net.UnknownHostException
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLException
 
 /** Version der Server-Schnittstelle, die diese App kennt (server/internal/system, APIVersion). */
 const val SUPPORTED_API_VERSION = 1
