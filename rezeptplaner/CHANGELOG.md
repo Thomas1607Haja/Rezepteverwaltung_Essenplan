@@ -1,4 +1,23 @@
-# Änderungen
+# Änderungen / Changes
+
+## 0.20.0
+
+**English**
+
+- **Five languages:** English, German, French, Spanish and Italian. The web interface follows the Home Assistant system language (or a fixed language under Settings → Household → Language); English is the fallback.
+- Your recipes, ingredients and categories are never translated. A new installation creates its default categories and pantry list in the Home Assistant language; existing data stays unchanged.
+- Recipe import from English, French, Spanish and Italian web pages: quantities and units are recognized in all five languages.
+- The sidebar entry is now called “Rezeptplaner”.
+- **App 0.21.0** and **integration 0.7.0** (HACS) are translated as well; the integration now has its own icon (Home Assistant 2026.3 or newer). Older apps show server messages in English.
+
+**Deutsch**
+
+- **Fünf Sprachen:** Deutsch, Englisch, Französisch, Spanisch und Italienisch. Die Weboberfläche folgt der Systemsprache von Home Assistant (oder einer festen Sprache unter Einstellungen → Haushalt → Sprache); Rückfall ist Englisch.
+- Rezepte, Zutaten und Kategorien werden nie übersetzt. Eine neue Installation legt Startkategorien und Vorratsliste in der Sprache von Home Assistant an; vorhandene Daten bleiben unverändert.
+- Import von englischen, französischen, spanischen und italienischen Rezeptseiten: Mengen und Einheiten werden in allen fünf Sprachen erkannt.
+- Der Eintrag in der Seitenleiste heißt jetzt „Rezeptplaner“.
+- **App 0.21.0** und **Integration 0.7.0** (HACS) sind ebenfalls übersetzt; die Integration hat jetzt ein eigenes Icon (ab Home Assistant 2026.3). Ältere Apps zeigen Meldungen des Servers auf Englisch.
+- Die Datenbank wird beim ersten Start erweitert (Gang-Schlüssel); alle Daten bleiben erhalten.
 
 ## 0.19.0
 

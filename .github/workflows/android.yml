@@ -131,4 +131,4 @@ jobs:
           gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/rezeptplaner.apk" "$RUNNER_TEMP/rezeptplaner-import-skill.zip" \
             --latest \
             --title "Android-App $VERSION" \
-            --notes "Rezeptplaner für Android, Version $VERSION. Installation und Updates über Obtainium (siehe docs/ANDROID.md)."
+            --notes "Rezeptplaner for Android, version $VERSION. Install and update via Obtainium (see docs/ANDROID.md). — Rezeptplaner für Android, Version $VERSION. Installation und Updates über Obtainium (siehe docs/ANDROID.md)."
