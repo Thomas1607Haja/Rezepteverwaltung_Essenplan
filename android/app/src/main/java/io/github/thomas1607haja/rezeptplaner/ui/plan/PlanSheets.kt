@@ -53,7 +53,9 @@ import io.github.thomas1607haja.rezeptplaner.api.MoveWarning
 import io.github.thomas1607haja.rezeptplaner.data.Outcome
 import io.github.thomas1607haja.rezeptplaner.data.Snapshot
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import io.github.thomas1607haja.rezeptplaner.ui.slotLabel
 import io.github.thomas1607haja.rezeptplaner.ui.amountText
@@ -79,7 +81,7 @@ fun upcomingDays(snapshot: Snapshot, today: LocalDate, count: Int): List<PlanDay
 
 fun itemTitle(item: PlanItem) = when (item) {
     is PlanItem.Single -> entryTitle(item.entry)
-    is PlanItem.MenuBlock -> "Menü: ${item.menu.displayTitle}"
+    is PlanItem.MenuBlock -> Texts.get(R.string.plan_menu_heading, "title" to menuTitle(item.menu))
 }
 
 fun itemDate(item: PlanItem) = when (item) {
@@ -93,9 +95,9 @@ internal fun SlotChooser(slot: String, onChange: (String) -> Unit) {
     // Kaffee nur, wenn in den Einstellungen eingeschaltet (oder schon gewählt).
     val coffee = app().localStore.snapshot.collectAsStateWithLifecycle().value.settings.coffeeSlot || slot == "coffee"
     val options = buildList {
-        add("dinner" to "Abend")
-        add("lunch" to "Mittag")
-        if (coffee) add("coffee" to "Kaffee")
+        add("dinner" to tr(R.string.slots_dinner_short))
+        add("lunch" to tr(R.string.slots_lunch_short))
+        if (coffee) add("coffee" to tr(R.string.slots_coffee_short))
     }
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         options.forEachIndexed { i, (value, label) ->
@@ -135,9 +137,9 @@ private fun DayChooser(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(dayLabel(day.date), fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                     if (inSlot.isEmpty()) {
-                        Text("frei", color = MaterialTheme.colorScheme.primary)
+                        Text(tr(R.string.plan_free), color = MaterialTheme.colorScheme.primary)
                     } else {
-                        TextButton(onClick = { onAppend(day.date) }) { Text("Dazu") }
+                        TextButton(onClick = { onAppend(day.date) }) { Text(tr(R.string.plan_add_more)) }
                     }
                 }
                 inSlot.forEach { item ->
@@ -176,15 +178,16 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
             busy = false
             if (error == null) {
                 onDismiss()
-                snackbar.showSnackbar("„$recipeTitle“ eingeplant am ${dayLabel(date)}")
+                snackbar.showSnackbar(Texts.get(R.string.plan_planned_on, "title" to recipeTitle, "day" to dayLabel(date)))
             }
         }
     }
 
+    val replaceLabel = tr(R.string.plan_replace)
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Zum Essensplan hinzufügen", style = MaterialTheme.typography.titleMedium)
+                Text(tr(R.string.plan_add_title), style = MaterialTheme.typography.titleMedium)
                 SlotChooser(slot) { slot = it }
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 if (busy) CircularProgressIndicator(Modifier.size(24.dp))
@@ -192,7 +195,7 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
             DayChooser(
                 days = upcomingDays(snapshot, today, 14), slot = slot, exclude = null,
                 // Ersetzen nur bei einzelnen Gerichten; ein Menü ergänzt man im Menü.
-                action = { if (it is PlanItem.Single) "Ersetzen" else null },
+                action = { if (it is PlanItem.Single) replaceLabel else null },
                 onAppend = { date ->
                     when {
                         busy -> {}
@@ -214,7 +217,7 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
             recipe = recipe,
             servings = target?.servings ?: if (recipe.yieldUnit.isNotEmpty()) recipe.baseServings else snapshot.settings.familySize,
             excluded = emptyList(),
-            confirmLabel = if (target != null) "Ersetzen" else "Hinzufügen",
+            confirmLabel = tr(if (target != null) R.string.plan_replace else R.string.plan_add),
             busy = busy,
             error = error,
             onConfirm = { choice ->
@@ -228,15 +231,15 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
     replacing?.let { e ->
         AlertDialog(
             onDismissRequest = { replacing = null },
-            title = { Text("Ersetzen?") },
-            text = { Text("„${entryTitle(e)}“ am ${dayLabel(e.date)} durch „$recipeTitle“ ersetzen?") },
+            title = { Text(tr(R.string.plan_replace_title)) },
+            text = { Text(tr(R.string.plan_replace_confirm, "old" to entryTitle(e), "day" to dayLabel(e.date), "title" to recipeTitle)) },
             confirmButton = {
                 TextButton(onClick = {
                     replacing = null
                     run(e.date) { app.planRepository.replace(e, recipeId) }
-                }) { Text("Ersetzen") }
+                }) { Text(tr(R.string.plan_replace)) }
             },
-            dismissButton = { TextButton(onClick = { replacing = null }) { Text("Abbrechen") } },
+            dismissButton = { TextButton(onClick = { replacing = null }) { Text(tr(R.string.common_cancel)) } },
         )
     }
 }
@@ -287,7 +290,7 @@ fun EntrySheet(
                 Column(Modifier.weight(1f)) {
                     Text(wrapTitle(entryTitle(entry)), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        slotLabel(entry.slot) + " am ${dayLabel(entry.date)}",
+                        tr(R.string.plan_slot_on_day, "slot" to slotLabel(entry.slot), "day" to dayLabel(entry.date)),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -307,7 +310,7 @@ fun EntrySheet(
                     ) {
                         Icon(
                             painterResource(if (favorite) R.drawable.ic_heart_filled else R.drawable.ic_heart),
-                            contentDescription = if (favorite) "Favorit entfernen" else "Als Favorit merken",
+                            contentDescription = tr(if (favorite) R.string.plan_favorite_remove else R.string.plan_favorite_add),
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }
@@ -322,22 +325,22 @@ fun EntrySheet(
             }
             OutlinedTextField(
                 note, { note = it },
-                label = { Text(if (entry.recipeId != null) "Notiz" else "Text (z. B. Essen gehen)") },
+                label = { Text(tr(if (entry.recipeId != null) R.string.plan_note else R.string.plan_note_text)) },
                 modifier = Modifier.fillMaxWidth(),
             )
             if (entry.recipeId != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("Zutaten sind im Haus")
+                        Text(tr(R.string.plan_have_ingredients))
                         Text(
-                            if (transferred) "Schon an Bring gesendet." else "Wird dann nicht eingekauft.",
+                            tr(if (transferred) R.string.plan_already_sent_short else R.string.plan_not_bought),
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     Switch(checked = haveIngredients, onCheckedChange = { haveIngredients = it }, enabled = !transferred)
                 }
                 if (transferred) {
-                    TextButton(onClick = { showReset = true }, enabled = !busy) { Text("Übertragung zurücksetzen …") }
+                    TextButton(onClick = { showReset = true }, enabled = !busy) { Text(tr(R.string.plan_undo_sending)) }
                 }
             }
             // „Zutaten vorhanden …“: dieselbe Kurzvorschau wie beim Einplanen.
@@ -346,11 +349,11 @@ fun EntrySheet(
                     excludedLabel(entry.excludedIngredients.size)?.let {
                         Text(it, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
                     }
-                    TextButton(onClick = { showPreview = true }, enabled = !busy) { Text("Zutaten vorhanden …") }
+                    TextButton(onClick = { showPreview = true }, enabled = !busy) { Text(tr(R.string.plan_have_ingredients_open)) }
                 }
                 if (transferred) {
                     Text(
-                        "Schon an Bring gesendet – Änderungen erscheinen im Einkauf als Differenz.",
+                        tr(R.string.plan_already_sent),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -360,15 +363,15 @@ fun EntrySheet(
                 onClick = { run { app.planRepository.update(entry, servings, note, haveIngredients) } },
                 enabled = changed && !busy && (entry.recipeId != null || note.isNotBlank()),
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text(if (busy) "Speichert …" else "Speichern") }
+            ) { Text(tr(if (busy) R.string.common_saving else R.string.common_save)) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Ohne Rezept: „Rezept wählen“ macht daraus ein Gericht (wie im Web).
                 OutlinedButton(onClick = onReplace, enabled = !busy) {
-                    Text(if (entry.recipeId != null) "Ersetzen" else "Rezept wählen")
+                    Text(tr(if (entry.recipeId != null) R.string.plan_replace else R.string.plan_choose_recipe))
                 }
-                OutlinedButton(onClick = onMove, enabled = !busy) { Text("Verschieben") }
+                OutlinedButton(onClick = onMove, enabled = !busy) { Text(tr(R.string.plan_move)) }
                 OutlinedButton(onClick = { confirmDelete = true }, enabled = !busy) {
-                    Text("Entfernen", color = MaterialTheme.colorScheme.error)
+                    Text(tr(R.string.common_remove), color = MaterialTheme.colorScheme.error)
                 }
             }
             // Menüs (Schritt 9.4, Server 0.16)
@@ -376,11 +379,11 @@ fun EntrySheet(
             if (menu != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "Gang im Menü „${menu.displayTitle}“", Modifier.weight(1f),
+                        tr(R.string.plan_course_in_menu, "title" to menuTitle(menu)), Modifier.weight(1f),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    TextButton(onClick = { onDismiss(); onMenu(menu.id) }, enabled = !busy) { Text("Menü") }
-                    TextButton(onClick = { run { app.planRepository.detach(entry) } }, enabled = !busy) { Text("Aus Menü lösen") }
+                    TextButton(onClick = { onDismiss(); onMenu(menu.id) }, enabled = !busy) { Text(tr(R.string.plan_menu_untitled)) }
+                    TextButton(onClick = { run { app.planRepository.detach(entry) } }, enabled = !busy) { Text(tr(R.string.plan_detach_from_menu)) }
                 }
             } else if (snapshot.menusSupported && entry.menuId == null) {
                 TextButton(
@@ -390,7 +393,7 @@ fun EntrySheet(
                             // Gang des Rezepts (z. B. Kuchen & Torten), sonst Hauptgericht;
                             // ein Text (z. B. „Grillen“) bleibt ohne Gang.
                             val courses = courseTags(snapshot)
-                            val main = courses.firstOrNull { it.name.equals("Hauptgericht", ignoreCase = true) }
+                            val main = courses.firstOrNull { it.courseKey == "main" }
                             val own = recipe?.tags?.firstOrNull { t -> courses.any { it.id == t.id } }
                             val course = if (entry.recipeId != null) (own ?: main)?.id ?: 0 else 0
                             val (created, err) = app.planRepository.toMenu(entry, course)
@@ -400,7 +403,7 @@ fun EntrySheet(
                         }
                     },
                     enabled = !busy,
-                ) { Text("Zu einem Menü erweitern") }
+                ) { Text(tr(R.string.plan_to_menu)) }
             }
         }
     }
@@ -410,7 +413,7 @@ fun EntrySheet(
             recipe = recipe,
             servings = servings,
             excluded = entry.excludedIngredients,
-            confirmLabel = "Übernehmen",
+            confirmLabel = tr(R.string.common_apply),
             busy = busy,
             error = error,
             onConfirm = { choice -> run { app.planRepository.setChoice(entry, choice) } },
@@ -431,12 +434,12 @@ fun EntrySheet(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Entfernen?") },
-            text = { Text("„${entryTitle(entry)}“ am ${dayLabel(entry.date)} aus dem Plan entfernen?") },
+            title = { Text(tr(R.string.plan_remove_title)) },
+            text = { Text(tr(R.string.plan_remove_confirm, "title" to entryTitle(entry), "day" to dayLabel(entry.date))) },
             confirmButton = {
-                TextButton(onClick = { confirmDelete = false; run { app.planRepository.delete(entry) } }) { Text("Entfernen") }
+                TextButton(onClick = { confirmDelete = false; run { app.planRepository.delete(entry) } }) { Text(tr(R.string.common_remove)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Abbrechen") } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(tr(R.string.common_cancel)) } },
         )
     }
 }
@@ -460,9 +463,10 @@ fun MoveSheet(subject: PlanItem, snapshot: Snapshot, today: LocalDate, onDismiss
     var pending by remember { mutableStateOf<Triple<String, PlanItem?, List<MoveWarning>>?>(null) }
     var pickDate by remember { mutableStateOf(false) }
     val title = when (subject) {
-        is PlanItem.Single -> "„${entryTitle(subject.entry)}“"
-        is PlanItem.MenuBlock -> "Menü „${subject.menu.displayTitle}“"
+        is PlanItem.Single -> tr(R.string.plan_quoted, "title" to entryTitle(subject.entry))
+        is PlanItem.MenuBlock -> tr(R.string.plan_menu_quoted, "title" to menuTitle(subject.menu))
     }
+    val swapLabel = tr(R.string.plan_swap)
 
     /** [sendEntries]: danach die Zutaten dieser Gerichte an Bring senden. */
     fun move(
@@ -488,12 +492,12 @@ fun MoveSheet(subject: PlanItem, snapshot: Snapshot, today: LocalDate, onDismiss
                     pending = Triple(date, target, result.warnings)
                 }
                 else -> {
-                    var message = "$title ist jetzt am ${dayLabel(date)}"
+                    var message = Texts.get(R.string.plan_moved_to, "title" to title, "day" to dayLabel(date))
                     if (sendEntries.isNotEmpty()) {
                         message = when (val sent = app.shoppingRepository.sendEntries(sendEntries)) {
-                            is Outcome.Error -> "Verschoben, aber Senden an Bring fehlgeschlagen: ${sent.message}"
-                            is Outcome.Ok -> "Verschoben, ${sent.value.sent.size} Artikel an Bring gesendet" +
-                                if (sent.value.failed.isNotEmpty()) " (${sent.value.failed.size} nicht angekommen, siehe Einkauf)" else ""
+                            is Outcome.Error -> Texts.get(R.string.plan_moved_send_failed, "message" to sent.message)
+                            is Outcome.Ok -> Texts.plural(R.plurals.plan_moved_sent, sent.value.sent.size) +
+                                if (sent.value.failed.isNotEmpty()) " " + Texts.plural(R.plurals.plan_moved_not_arrived, sent.value.failed.size) else ""
                         }
                     }
                     busy = false
@@ -507,15 +511,15 @@ fun MoveSheet(subject: PlanItem, snapshot: Snapshot, today: LocalDate, onDismiss
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("$title verschieben", style = MaterialTheme.typography.titleMedium)
+                Text(tr(R.string.plan_move_title, "title" to title), style = MaterialTheme.typography.titleMedium)
                 SlotChooser(slot) { slot = it }
                 // Die Liste zeigt vier Wochen; jedes andere Datum über den Kalender (wie im Web).
-                TextButton(onClick = { pickDate = true }, enabled = !busy) { Text("Anderes Datum wählen …") }
+                TextButton(onClick = { pickDate = true }, enabled = !busy) { Text(tr(R.string.plan_other_date)) }
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 if (busy) CircularProgressIndicator(Modifier.size(24.dp))
             }
             DayChooser(
-                days = upcomingDays(snapshot, today, 28), slot = slot, exclude = subject.key, action = { "Tauschen" },
+                days = upcomingDays(snapshot, today, 28), slot = slot, exclude = subject.key, action = { swapLabel },
                 onAppend = { date -> if (!busy) move(date, null, confirm = false) },
                 onItem = { other -> if (!busy) move(itemDate(other), other, confirm = false) },
             )
@@ -526,23 +530,23 @@ fun MoveSheet(subject: PlanItem, snapshot: Snapshot, today: LocalDate, onDismiss
         val canMarkAvailable = warnings.any { it.type == "planned_into_period" }
         AlertDialog(
             onDismissRequest = { pending = null },
-            title = { Text("Wirklich verschieben?") },
-            text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { warnings.forEach { Text(it.message) } } },
+            title = { Text(tr(R.string.plan_move_confirm_title)) },
+            text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { warnings.forEach { Text(it.text()) } } },
             confirmButton = {
                 Column(horizontalAlignment = Alignment.End) {
-                    TextButton(onClick = { pending = null; move(date, target, confirm = true) }) { Text("Trotzdem verschieben") }
+                    TextButton(onClick = { pending = null; move(date, target, confirm = true) }) { Text(tr(R.string.plan_move_anyway)) }
                     if (canMarkAvailable) {
                         val ids = warnings.filter { it.type == "planned_into_period" }.map { it.entryId }
                         TextButton(onClick = {
                             pending = null
                             move(date, target, confirm = true, have = ids)
-                        }) { Text("Zutaten sind vorhanden") }
+                        }) { Text(tr(R.string.plan_move_have)) }
                         TextButton(onClick = {
                             pending = null
                             move(date, target, confirm = true, sendEntries = ids)
-                        }) { Text("Zutaten an Bring senden") }
+                        }) { Text(tr(R.string.plan_move_send)) }
                     }
-                    TextButton(onClick = { pending = null }) { Text("Abbrechen") }
+                    TextButton(onClick = { pending = null }) { Text(tr(R.string.common_cancel)) }
                 }
             },
         )
@@ -565,9 +569,9 @@ fun MoveSheet(subject: PlanItem, snapshot: Snapshot, today: LocalDate, onDismiss
                         }
                     },
                     enabled = state.selectedDateMillis != null,
-                ) { Text("Verschieben") }
+                ) { Text(tr(R.string.plan_move)) }
             },
-            dismissButton = { TextButton(onClick = { pickDate = false }) { Text("Abbrechen") } },
+            dismissButton = { TextButton(onClick = { pickDate = false }) { Text(tr(R.string.common_cancel)) } },
         ) { DatePicker(state) }
     }
 }

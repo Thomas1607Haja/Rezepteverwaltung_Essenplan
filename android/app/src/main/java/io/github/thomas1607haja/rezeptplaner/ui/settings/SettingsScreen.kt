@@ -1,5 +1,11 @@
 package io.github.thomas1607haja.rezeptplaner.ui.settings
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,8 +35,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -38,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.thomas1607haja.rezeptplaner.BuildConfig
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.ui.CrashReportCard
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 import kotlinx.coroutines.launch
 
 @Composable
@@ -53,12 +60,12 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("Einstellungen", style = MaterialTheme.typography.headlineSmall)
+        Text(tr(R.string.nav_settings), style = MaterialTheme.typography.headlineSmall)
         CrashReportCard()
 
         Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Verbindung", style = MaterialTheme.typography.titleMedium)
+                Text(tr(R.string.settings_connection), style = MaterialTheme.typography.titleMedium)
                 Text(config?.host ?: "–", fontWeight = FontWeight.SemiBold)
                 config?.let { Text(it.url, style = MaterialTheme.typography.bodySmall) }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -66,34 +73,35 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
                         SettingsViewModel.Check.None -> {}
                         SettingsViewModel.Check.Running -> {
                             CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                            Text("Prüfe …")
+                            Text(tr(R.string.settings_checking))
                         }
-                        is SettingsViewModel.Check.Ok -> Text("Verbunden · Rezeptplaner ${c.serverVersion}", color = MaterialTheme.colorScheme.primary)
+                        is SettingsViewModel.Check.Ok -> Text(tr(R.string.settings_connected_version, "version" to c.serverVersion), color = MaterialTheme.colorScheme.primary)
                         is SettingsViewModel.Check.Failed -> Text(c.message, color = MaterialTheme.colorScheme.error)
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = viewModel::testConnection, enabled = check != SettingsViewModel.Check.Running) {
-                        Text("Verbindung testen")
+                        Text(tr(R.string.settings_test_connection))
                     }
-                    OutlinedButton(onClick = onReconnect) { Text("Neu verbinden") }
+                    OutlinedButton(onClick = onReconnect) { Text(tr(R.string.settings_reconnect)) }
                 }
             }
         }
 
         SyncCard()
 
+        LanguageCard()
+
         CloudflareCard(viewModel, configured = config?.hasCloudflareAccess == true)
 
         Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Gerät trennen", style = MaterialTheme.typography.titleMedium)
+                Text(tr(R.string.settings_disconnect_title), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Entfernt die Verbindung und alle Rezepte und Bilder von diesem Handy. Den Schlüssel in der Weboberfläche unter " +
-                        "„Verbundene Geräte“ zusätzlich sperren, wenn das Gerät weitergegeben wird.",
+                    tr(R.string.settings_disconnect_text),
                     style = MaterialTheme.typography.bodySmall,
                 )
-                OutlinedButton(onClick = { confirmDisconnect = true }) { Text("Verbindung trennen") }
+                OutlinedButton(onClick = { confirmDisconnect = true }) { Text(tr(R.string.settings_disconnect_button)) }
             }
         }
 
@@ -101,7 +109,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
         if (BuildConfig.SUPPORT_URL.isNotEmpty()) SupportCard(BuildConfig.SUPPORT_URL)
 
         Text(
-            "Rezeptplaner für Android ${BuildConfig.VERSION_NAME}",
+            tr(R.string.settings_app_version, "version" to BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -110,12 +118,12 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
     if (confirmDisconnect) {
         AlertDialog(
             onDismissRequest = { confirmDisconnect = false },
-            title = { Text("Verbindung trennen?") },
-            text = { Text("Danach muss die App neu verbunden werden.") },
+            title = { Text(tr(R.string.settings_disconnect_confirm_title)) },
+            text = { Text(tr(R.string.settings_disconnect_confirm_text)) },
             confirmButton = {
-                TextButton(onClick = { confirmDisconnect = false; viewModel.disconnect() }) { Text("Trennen") }
+                TextButton(onClick = { confirmDisconnect = false; viewModel.disconnect() }) { Text(tr(R.string.settings_disconnect_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDisconnect = false }) { Text("Abbrechen") } },
+            dismissButton = { TextButton(onClick = { confirmDisconnect = false }) { Text(tr(R.string.common_cancel)) } },
         )
     }
 }
@@ -126,9 +134,9 @@ private fun SupportCard(url: String) {
     val uriHandler = LocalUriHandler.current
     Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.support_title), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(R.string.support_text), style = MaterialTheme.typography.bodySmall)
-            OutlinedButton(onClick = { uriHandler.openUri(url) }) { Text(stringResource(R.string.support_button)) }
+            Text(tr(R.string.support_title), style = MaterialTheme.typography.titleMedium)
+            Text(tr(R.string.support_text), style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(onClick = { uriHandler.openUri(url) }) { Text(tr(R.string.support_button)) }
         }
     }
 }
@@ -145,12 +153,12 @@ private fun CloudflareCard(viewModel: SettingsViewModel, configured: Boolean) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Cloudflare Access", style = MaterialTheme.typography.titleMedium)
             Text(
-                if (configured) "Service Token ist eingerichtet." else "Kein Service Token (nur nötig, wenn Access aktiv ist).",
+                tr(if (configured) R.string.settings_cf_configured else R.string.settings_cf_none),
                 style = MaterialTheme.typography.bodySmall,
             )
             if (!editing) {
                 OutlinedButton(onClick = { editing = true; id = ""; secret = ""; error = null }) {
-                    Text(if (configured) "Ändern" else "Einrichten")
+                    Text(tr(if (configured) R.string.settings_cf_change else R.string.settings_cf_setup))
                 }
             } else {
                 OutlinedTextField(id, { id = it }, label = { Text("Client ID") }, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -158,18 +166,48 @@ private fun CloudflareCard(viewModel: SettingsViewModel, configured: Boolean) {
                     secret, { secret = it }, label = { Text("Client Secret") }, singleLine = true,
                     visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
                 )
-                Text("Beide leer lassen und speichern = ohne Cloudflare Access.", style = MaterialTheme.typography.bodySmall)
+                Text(tr(R.string.settings_cf_empty_hint), style = MaterialTheme.typography.bodySmall)
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { editing = false }) { Text("Abbrechen") }
+                    OutlinedButton(onClick = { editing = false }) { Text(tr(R.string.common_cancel)) }
                     Button(onClick = {
                         scope.launch {
                             error = viewModel.saveCloudflareAccess(id, secret)
                             if (error == null) editing = false
                         }
-                    }) { Text("Speichern") }
+                    }) { Text(tr(R.string.common_save)) }
                 }
             }
         }
     }
+}
+
+/**
+ * Sprache: Die App folgt Android. Ab Android 13 lässt sie sich pro App in den
+ * Android-Einstellungen wählen; der Knopf öffnet diese Seite (darunter fehlt er).
+ */
+@Composable
+private fun LanguageCard() {
+    val context = LocalContext.current
+    Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(tr(R.string.settings_language_title), style = MaterialTheme.typography.titleMedium)
+            Text(tr(R.string.settings_language_text), style = MaterialTheme.typography.bodySmall)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                OutlinedButton(onClick = { openAppLanguageSettings(context) }) { Text(tr(R.string.settings_language_button)) }
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+private fun openAppLanguageSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null))
+    // Manche Hersteller kennen die Seite nicht: dann die allgemeine App-Info.
+    runCatching { context.startActivity(intent) }
+        .onFailure {
+            runCatching {
+                context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)))
+            }
+        }
 }

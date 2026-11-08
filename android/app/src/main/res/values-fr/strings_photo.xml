@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rezept aus Foto (ui/photo). -->
+<resources>
+    <string name="photo_title">Recette depuis une photo</string>
+    <string name="photo_intro">Photographiez la ou les pages de la recette – bien droites, bien éclairées, une page par photo. Le texte est reconnu sur le téléphone ; vous attribuez ensuite les lignes.</string>
+    <string name="photo_take_page">Photographier une page</string>
+    <string name="photo_take_another">+ Photographier une page</string>
+    <string name="photo_from_gallery">Depuis la galerie</string>
+    <string name="photo_tap_hint">Touchez une ligne pour lui donner le type choisi. Appui long : toutes les lignes depuis la dernière touchée.</string>
+    <string name="photo_page">Page {n}</string>
+    <string name="photo_dish_chosen">Photo du plat choisie</string>
+    <string name="photo_dish_optional">Photo du plat (facultatif) :</string>
+    <string name="photo_camera">Appareil photo</string>
+    <string name="photo_gallery">Galerie</string>
+    <string name="photo_next">Continuer vers l\'édition</string>
+    <string name="photo_leave_title">Annuler l\'import photo ?</string>
+    <string name="photo_leave_text">Les lignes reconnues seront perdues.</string>
+    <string name="photo_discard">Abandonner</string>
+    <string name="photo_keep">Continuer</string>
+    <string name="photo_kind_title">Titre</string>
+    <string name="photo_kind_ingredient">Ingrédient</string>
+    <string name="photo_kind_step">Étape</string>
+    <string name="photo_kind_ignore">Ignorer</string>
+    <string name="photo_recognizing">Reconnaissance du texte …</string>
+    <string name="photo_no_text">Aucun texte reconnu sur une photo. Photographiez bien droit et avec un bon éclairage.</string>
+    <string name="photo_mark_first">Marquez d\'abord des lignes comme titre, ingrédient ou étape.</string>
+    <string name="photo_parsing">Analyse des ingrédients …</string>
+    <string name="photo_note">Saisie avec l\'import photo – vérifiez les quantités et les étapes.</string>
+    <string name="photo_not_parsed">Ingrédients non analysés ({message}).</string>
+    <string name="photo_ocr_loading">Les services Google Play chargent encore la reconnaissance de texte. Réessayez dans un instant.</string>
+    <string name="photo_open_failed">Impossible d\'ouvrir la photo.</string>
+    <string name="photo_ocr_failed">Échec de la reconnaissance du texte : {message}</string>
+</resources>

@@ -10,6 +10,9 @@ import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipeSort
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+// Robolectric: recentNotes vergleicht mit der Schnellauswahl aus den Ressourcen (Deutsch).
+@RunWith(AndroidJUnit4::class)
+@Config(sdk = [36], qualifiers = "de")
 class PlanNotesTest {
     private fun note(id: Long, date: String, text: String) = MealPlanEntry(id, date, servings = 2, note = text)
 
@@ -49,12 +52,16 @@ class QrUrlTest {
 class CourseTabsTest {
     @Test
     fun tabsFromCourseGroup() {
-        val kuchen = io.github.thomas1607haja.rezeptplaner.api.Tag(31, "Kuchen & Torten", "Gang")
-        val haupt = io.github.thomas1607haja.rezeptplaner.api.Tag(28, "Hauptgericht", "Gang")
-        val groups = listOf(io.github.thomas1607haja.rezeptplaner.api.TagGroup("Gang", listOf(haupt, kuchen), id = 5, role = "course"))
+        // Erkannt am festen Schlüssel, nicht am Namen (Namen sind Daten, z. B. englisch).
+        val kuchen = io.github.thomas1607haja.rezeptplaner.api.Tag(31, "Cakes & tarts", "Gang", courseKey = "cake")
+        val haupt = io.github.thomas1607haja.rezeptplaner.api.Tag(28, "Hauptgericht", "Gang", courseKey = "main")
+        // Ohne Schlüssel (eigener Gang) kein Reiter, auch wenn der Name passt.
+        val eigene = io.github.thomas1607haja.rezeptplaner.api.Tag(40, "Nachspeise", "Gang")
+        val groups = listOf(io.github.thomas1607haja.rezeptplaner.api.TagGroup("Gang", listOf(haupt, kuchen, eigene), id = 5, role = "course"))
         val tabs = io.github.thomas1607haja.rezeptplaner.ui.recipes.courseTabs(groups)
         assertEquals(listOf("all", "main", "baking"), tabs.map { it.key })
         assertEquals(setOf(31L), tabs.last().ids)
+        assertEquals(io.github.thomas1607haja.rezeptplaner.R.string.courses_baking, tabs.last().label)
         // Ohne Gang-Gruppe nur „Alle“.
         assertEquals(1, io.github.thomas1607haja.rezeptplaner.ui.recipes.courseTabs(emptyList()).size)
 

@@ -25,6 +25,7 @@ import io.github.thomas1607haja.rezeptplaner.data.SyncLog
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /** Zugriff auf die gemeinsamen Objekte der App aus einer Composable. */
 @Composable
@@ -55,16 +56,29 @@ fun RecipeImage(name: String, modifier: Modifier = Modifier, load: Boolean = fal
     }
 }
 
-private val timeFormat = DateTimeFormatter.ofPattern("dd.MM. HH:mm").withZone(ZoneId.systemDefault())
+// Tag, Monat und Uhrzeit in der Form der Sprache (de „08.11., 14:30“,
+// en-US „11/08, 2:30 PM“); je Sprache einmal gebaut.
+private var timeFormat: Pair<Locale, DateTimeFormatter>? = null
 
-fun formatTime(millis: Long?): String = millis?.let { timeFormat.format(Instant.ofEpochMilli(it)) } ?: "noch nie"
+private fun timeFormatter(): DateTimeFormatter {
+    val locale = Texts.locale()
+    timeFormat?.takeIf { it.first == locale }?.let { return it.second }
+    val formatter = runCatching {
+        DateTimeFormatter.ofPattern(android.text.format.DateFormat.getBestDateTimePattern(locale, "ddMMjjmm"), locale)
+    }.getOrElse { DateTimeFormatter.ofPattern("dd.MM. HH:mm", locale) }.withZone(ZoneId.systemDefault())
+    timeFormat = locale to formatter
+    return formatter
+}
+
+fun formatTime(millis: Long?): String =
+    millis?.let { timeFormatter().format(Instant.ofEpochMilli(it)) } ?: Texts.get(R.string.settings_never)
 
 /** „Offline – Stand von …“, wenn der letzte Abgleich keine Verbindung bekam. */
 @Composable
 fun OfflineBanner(log: SyncLog) {
     if (!log.offline) return
     Text(
-        "Offline – Stand von ${formatTime(log.lastSuccess)}",
+        tr(R.string.settings_offline, "time" to formatTime(log.lastSuccess)),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSecondaryContainer,
         modifier = Modifier

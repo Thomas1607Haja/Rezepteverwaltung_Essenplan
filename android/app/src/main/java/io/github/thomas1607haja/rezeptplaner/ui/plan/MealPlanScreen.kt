@@ -52,6 +52,7 @@ import io.github.thomas1607haja.rezeptplaner.data.SyncTrigger
 import io.github.thomas1607haja.rezeptplaner.ui.common.OfflineBanner
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import io.github.thomas1607haja.rezeptplaner.ui.slotPrefix
 import io.github.thomas1607haja.rezeptplaner.ui.amountText
@@ -124,7 +125,7 @@ fun MealPlanScreen(
         Row(Modifier.fillMaxWidth().padding(end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f)) { if (periods != null) Legend(periods) }
             if (days.isNotEmpty()) {
-                TextButton(onClick = { scope.launch { listState.animateScrollToItem(todayIndex) } }) { Text("Heute") }
+                TextButton(onClick = { scope.launch { listState.animateScrollToItem(todayIndex) } }) { Text(tr(R.string.common_today)) }
             }
         }
         PullToRefreshBox(
@@ -135,7 +136,7 @@ fun MealPlanScreen(
             if (days.isEmpty()) {
                 Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp)) {
                     Text(
-                        if (sync.running) "Essensplan wird geladen …" else "Noch keine Daten – nach unten ziehen zum Laden.",
+                        tr(if (sync.running) R.string.plan_loading else R.string.plan_no_data),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -199,8 +200,8 @@ private fun Legend(periods: ShoppingPeriods) {
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        LegendItem(MaterialTheme.colorScheme.primaryContainer, "Eingekauft: ${range(periods.bought)}")
-        LegendItem(nextShoppingColor(), "Nächster Einkauf: ${range(periods.next)}")
+        LegendItem(MaterialTheme.colorScheme.primaryContainer, tr(R.string.plan_shopped, "range" to range(periods.bought)))
+        LegendItem(nextShoppingColor(), tr(R.string.plan_next_shopping, "range" to range(periods.next)))
     }
 }
 
@@ -242,11 +243,11 @@ private fun DayRow(
                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
                 color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
             )
-            if (isToday) Text("Heute", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            if (isToday) Text(tr(R.string.common_today), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.weight(1f))
             if (canAdd) {
                 IconButton(onClick = onAdd, modifier = Modifier.size(32.dp)) {
-                    Icon(painterResource(R.drawable.ic_plus), contentDescription = "Gericht für ${dayLabel(day.date)} einplanen")
+                    Icon(painterResource(R.drawable.ic_plus), contentDescription = tr(R.string.plan_add_dish, "day" to dayLabel(day.date)))
                 }
             }
         }
@@ -291,7 +292,7 @@ private fun EntryCard(entry: MealPlanEntry, onOpenRecipe: (Long, Long) -> Unit, 
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        painterResource(R.drawable.ic_utensils), contentDescription = "Ohne Rezept",
+                        painterResource(R.drawable.ic_utensils), contentDescription = tr(R.string.plan_without_recipe),
                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
                 }
@@ -307,8 +308,8 @@ private fun EntryCard(entry: MealPlanEntry, onOpenRecipe: (Long, Long) -> Unit, 
                     excludedLabel(entry.excludedIngredients.size)?.let(::add)
                     if (entry.recipe != null && entry.note.isNotEmpty()) add(entry.note)
                     when (entry.status) {
-                        "transferred" -> add("an Bring gesendet")
-                        "have_ingredients" -> add("Zutaten im Haus")
+                        "transferred" -> add(tr(R.string.plan_status_sent))
+                        "have_ingredients" -> add(tr(R.string.plan_status_have))
                     }
                 }
                 if (details.isNotEmpty()) {
@@ -319,10 +320,10 @@ private fun EntryCard(entry: MealPlanEntry, onOpenRecipe: (Long, Long) -> Unit, 
                 Icon(painterResource(R.drawable.ic_check), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
             if (entry.recipe?.isFavorite == true) {
-                Icon(painterResource(R.drawable.ic_heart_filled), contentDescription = "Favorit", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                Icon(painterResource(R.drawable.ic_heart_filled), contentDescription = tr(R.string.plan_favorite), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
             }
             IconButton(onClick = { onEdit(entry) }) {
-                Icon(painterResource(R.drawable.ic_more), contentDescription = "Eintrag bearbeiten")
+                Icon(painterResource(R.drawable.ic_more), contentDescription = tr(R.string.plan_edit_entry))
             }
         }
     }

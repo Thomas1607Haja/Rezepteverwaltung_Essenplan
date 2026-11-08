@@ -28,29 +28,35 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.ResetEntry
 import io.github.thomas1607haja.rezeptplaner.api.ResetPreview
 import io.github.thomas1607haja.rezeptplaner.api.ResetResult
 import io.github.thomas1607haja.rezeptplaner.data.Outcome
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
+import io.github.thomas1607haja.rezeptplaner.ui.common.trPlural
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import kotlinx.coroutines.launch
 
 /** „an „Testliste““; unbekannt = vor Server 0.18 gesendet. */
 fun resetTarget(e: ResetEntry): String {
-    val names = e.lists.map { "„${it.name}“" } + if (e.unknownList) listOf("unbekannte Liste") else emptyList()
-    return if (names.isEmpty()) "keine Artikel gesendet" else "an " + names.joinToString(", ")
+    val names = e.lists.map { Texts.get(R.string.shopping_reset_list_name, "name" to it.name) } +
+        if (e.unknownList) listOf(Texts.get(R.string.shopping_reset_unknown_list)) else emptyList()
+    return if (names.isEmpty()) Texts.get(R.string.shopping_reset_no_items)
+    else Texts.get(R.string.shopping_reset_target, "lists" to names.joinToString(", "))
 }
 
 /** Ergebnis als Zeilen, wie in der Weboberfläche (ResetTransferDialog.svelte). */
 fun resetSummary(r: ResetResult, current: String): List<String> = listOfNotNull(
-    if (r.entries == 1) "1 Gericht wieder geplant." else "${r.entries} Gerichte wieder geplant.",
-    r.removed.takeIf { it.isNotEmpty() }?.let { "Von der alten Liste entfernt: ${it.joinToString(", ")}." },
-    r.reduced.takeIf { it.isNotEmpty() }?.let { "Menge verringert (andere Gerichte brauchen sie noch): ${it.joinToString(", ")}." },
-    r.notFound.takeIf { it.isNotEmpty() }?.let { "Nicht mehr offen auf der Liste, unverändert: ${it.joinToString(", ")}." },
-    r.skipped.takeIf { it.isNotEmpty() }?.let { "Nicht entfernt, Liste unbekannt: ${it.joinToString(", ")}." },
-    r.failed.takeIf { it.isNotEmpty() }?.let { "Nicht entfernt (bitte von Hand löschen): ${it.joinToString(", ") { f -> f.name }}." },
-    current.takeIf { it.isNotEmpty() }?.let { "Jetzt „An Bring senden“ – es geht an „$it“." },
+    Texts.plural(R.plurals.shopping_reset_done, r.entries),
+    r.removed.takeIf { it.isNotEmpty() }?.let { Texts.get(R.string.shopping_reset_removed, "items" to it.joinToString(", ")) },
+    r.reduced.takeIf { it.isNotEmpty() }?.let { Texts.get(R.string.shopping_reset_reduced, "items" to it.joinToString(", ")) },
+    r.notFound.takeIf { it.isNotEmpty() }?.let { Texts.get(R.string.shopping_reset_not_found, "items" to it.joinToString(", ")) },
+    r.skipped.takeIf { it.isNotEmpty() }?.let { Texts.get(R.string.shopping_reset_skipped, "items" to it.joinToString(", ")) },
+    r.failed.takeIf { it.isNotEmpty() }?.let { Texts.get(R.string.shopping_reset_failed, "items" to it.joinToString(", ") { f -> f.name }) },
+    current.takeIf { it.isNotEmpty() }?.let { Texts.get(R.string.shopping_reset_send_now, "name" to it) },
 )
 
 /**
@@ -86,15 +92,15 @@ fun ResetTransferDialog(next: Boolean, entryId: Long?, onDone: () -> Unit, onDis
     val done = result
     AlertDialog(
         onDismissRequest = { if (!busy) onDismiss() },
-        title = { Text("Übertragung zurücksetzen") },
+        title = { Text(tr(R.string.shopping_reset_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 when {
                     done != null -> resetSummary(done, p?.currentList?.name.orEmpty()).forEach { Text(it) }
-                    p == null -> Text(error ?: "Lädt …", color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                    p == null -> Text(error ?: tr(R.string.common_loading), color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
                     else -> {
-                        Text("Die Gerichte gelten danach wieder als geplant und lassen sich neu an Bring senden. Abgewählte Zutaten („Zutaten vorhanden“) bleiben erhalten.")
-                        if (p.entries.isEmpty()) Text("In diesem Zeitraum ist nichts übertragen.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(tr(R.string.shopping_reset_intro))
+                        if (p.entries.isEmpty()) Text(tr(R.string.shopping_reset_nothing), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         p.entries.forEach { e ->
                             val on = e.id in selected
                             Row(
@@ -105,7 +111,8 @@ fun ResetTransferDialog(next: Boolean, entryId: Long?, onDone: () -> Unit, onDis
                                 Column {
                                     Text(e.title, fontWeight = FontWeight.SemiBold)
                                     Text(
-                                        "${dayLabel(e.date)} · ${resetTarget(e)}" + if (e.items > 0) " · ${e.items} Artikel" else "",
+                                        "${dayLabel(e.date)} · ${resetTarget(e)}" +
+                                            if (e.items > 0) " · " + trPlural(R.plurals.shopping_reset_items, e.items) else "",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
@@ -115,40 +122,41 @@ fun ResetTransferDialog(next: Boolean, entryId: Long?, onDone: () -> Unit, onDis
                         if (p.entries.isNotEmpty()) {
                             Row(Modifier.fillMaxWidth().clickable { remove = !remove }, verticalAlignment = Alignment.CenterVertically) {
                                 Checkbox(checked = remove, onCheckedChange = { remove = it })
-                                Text("Artikel aus der alten Liste entfernen")
+                                Text(tr(R.string.shopping_reset_remove))
                             }
                             val unknown = p.entries.count { it.id in selected && it.unknownList }
                             if (remove) {
                                 Text(
-                                    "Was andere, weiter übertragene Gerichte brauchen, bleibt mit kleinerer Menge stehen. Schon abgehakte Artikel bleiben unberührt.",
+                                    tr(R.string.shopping_reset_remove_hint),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             if (remove && unknown > 0) {
                                 Text(
-                                    (if (unknown == 1) "Für 1 Gericht" else "Für $unknown Gerichte") +
-                                        " ist die damalige Liste nicht gespeichert (vor Version 0.18 gesendet). Entfernen aus:",
+                                    trPlural(R.plurals.shopping_reset_unknown_label, unknown),
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                                 Box {
                                     OutlinedButton(onClick = { chooseFallback = true }, modifier = Modifier.fillMaxWidth()) {
-                                        Text(p.lists.firstOrNull { it.entityId == fallback }?.name ?: "– nicht entfernen –")
+                                        Text(p.lists.firstOrNull { it.entityId == fallback }?.name ?: tr(R.string.shopping_reset_dont_remove))
                                     }
                                     DropdownMenu(expanded = chooseFallback, onDismissRequest = { chooseFallback = false }) {
-                                        DropdownMenuItem(text = { Text("– nicht entfernen –") }, onClick = { fallback = ""; chooseFallback = false })
+                                        DropdownMenuItem(text = { Text(tr(R.string.shopping_reset_dont_remove)) }, onClick = { fallback = ""; chooseFallback = false })
                                         p.lists.forEach { l ->
                                             DropdownMenuItem(text = { Text(l.name) }, onClick = { fallback = l.entityId; chooseFallback = false })
                                         }
                                     }
                                 }
-                                if (p.listsError.isNotEmpty()) {
-                                    Text("Home Assistant nicht erreichbar – Listen nicht geladen.", color = MaterialTheme.colorScheme.error)
+                                if (p.listsError.isNotEmpty() || p.listsErrorCode.isNotEmpty()) {
+                                    // Grund in der Sprache der App (Code ab Server 0.20), sonst der Text des Servers.
+                                    val reason = Texts.error(p.listsErrorCode, emptyMap(), p.listsError)
+                                    Text(tr(R.string.shopping_reset_lists_error, "message" to reason), color = MaterialTheme.colorScheme.error)
                                 }
                             }
                             if (p.currentList.entityId.isNotEmpty()) {
                                 Text(
-                                    "Neu senden geht danach an „${p.currentList.name}“ (Einstellungen).",
+                                    tr(R.string.shopping_reset_resend_hint, "name" to p.currentList.name),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -161,7 +169,7 @@ fun ResetTransferDialog(next: Boolean, entryId: Long?, onDone: () -> Unit, onDis
         },
         confirmButton = {
             when {
-                done != null -> TextButton(onClick = onDismiss) { Text("Schließen") }
+                done != null -> TextButton(onClick = onDismiss) { Text(tr(R.string.common_close)) }
                 p != null && p.entries.isNotEmpty() -> TextButton(
                     onClick = {
                         busy = true
@@ -178,11 +186,11 @@ fun ResetTransferDialog(next: Boolean, entryId: Long?, onDone: () -> Unit, onDis
                         }
                     },
                     enabled = !busy && selected.isNotEmpty(),
-                ) { Text(if (busy) "Setzt zurück …" else "Zurücksetzen (${selected.size})") }
+                ) { Text(if (busy) tr(R.string.shopping_reset_resetting) else tr(R.string.shopping_reset_confirm, "count" to selected.size)) }
             }
         },
         dismissButton = {
-            if (done == null) TextButton(onClick = onDismiss, enabled = !busy) { Text("Abbrechen") }
+            if (done == null) TextButton(onClick = onDismiss, enabled = !busy) { Text(tr(R.string.common_cancel)) }
         },
     )
 }

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Einstellungen, Abgleich, Absturzbericht, QR-Scanner (ui/settings, ui/common, ui/CrashReportCard.kt). -->
+<resources>
+    <string name="settings_connection">Conexión</string>
+    <string name="settings_checking">Comprobando …</string>
+    <string name="settings_connected_version">Conectado · Rezeptplaner {version}</string>
+    <string name="settings_test_connection">Probar conexión</string>
+    <string name="settings_reconnect">Volver a conectar</string>
+    <string name="settings_error_generic">Error</string>
+    <string name="settings_not_connected">No conectado.</string>
+    <string name="settings_disconnect_title">Desconectar dispositivo</string>
+    <string name="settings_disconnect_text">Elimina la conexión y todas las recetas e imágenes de este móvil. Si vas a dar el dispositivo a otra persona, revoca también su clave en la interfaz web, en «Dispositivos conectados».</string>
+    <string name="settings_disconnect_button">Desconectar</string>
+    <string name="settings_disconnect_confirm_title">¿Desconectar?</string>
+    <string name="settings_disconnect_confirm_text">Después tendrás que volver a conectar la app.</string>
+    <string name="settings_disconnect_confirm">Desconectar</string>
+    <string name="settings_app_version">Rezeptplaner para Android {version}</string>
+    <string name="settings_cf_configured">El service token está configurado.</string>
+    <string name="settings_cf_none">Sin service token (solo hace falta si Access está activo).</string>
+    <string name="settings_cf_change">Cambiar</string>
+    <string name="settings_cf_setup">Configurar</string>
+    <string name="settings_cf_empty_hint">Deja ambos vacíos y guarda para no usar Cloudflare Access.</string>
+    <string name="settings_language_title">Idioma</string>
+    <string name="settings_language_text">La app sigue el idioma de Android.</string>
+    <string name="settings_language_button">Cambiar idioma</string>
+    <string name="settings_sync_title">Sincronización</string>
+    <string name="settings_sync_last">Última: {time}</string>
+    <string name="settings_sync_last_trigger">Última: {time} ({trigger})</string>
+    <string name="settings_sync_background">En segundo plano: {time}</string>
+    <string name="settings_sync_running">Sincronizando …</string>
+    <string name="settings_sync_now">Sincronizar ahora</string>
+    <string name="settings_sync_stalled">La sincronización en segundo plano no funciona: One UI detiene la app. Desactiva la optimización de batería.</string>
+    <string name="settings_sync_battery_hint">Para que la sincronización en segundo plano funcione bien, desactiva la optimización de batería para la app.</string>
+    <string name="settings_sync_battery_button">Desactivar optimización de batería</string>
+    <string name="settings_sync_samsung_hint">Si hace falta, además: Información de la aplicación → Batería → «Sin restricciones» y Ajustes → Batería → Límites de uso en segundo plano → «Aplicaciones que nunca entran en suspensión» → añadir Rezeptplaner.</string>
+    <string name="settings_sync_unrestricted">La optimización de batería está desactivada: se sincroniza cada 4 horas.</string>
+    <string name="settings_trigger_start">al iniciar</string>
+    <string name="settings_trigger_pull">al deslizar hacia abajo</string>
+    <string name="settings_trigger_background">en segundo plano</string>
+    <string name="settings_trigger_manual">manualmente</string>
+    <string name="settings_never">nunca</string>
+    <string name="settings_offline">Sin conexión – datos del {time}</string>
+    <string name="settings_crash_title">La app se cerró inesperadamente la última vez</string>
+    <string name="settings_crash_text">El informe solo contiene el error y datos del dispositivo, sin recetas ni clave.</string>
+    <string name="settings_crash_subject">Informe de error de Rezeptplaner</string>
+    <string name="settings_crash_share">Compartir informe</string>
+    <string name="settings_crash_discard">Descartar</string>
+    <string name="settings_qr_unavailable">El escáner de QR no está disponible ahora en este dispositivo (servicios de Google Play).</string>
+    <string name="settings_qr_no_text">El código QR no contiene texto.</string>
+    <string name="settings_qr_installing">Los servicios de Google Play están descargando el escáner de QR. Vuelve a intentarlo en uno o dos minutos (hace falta conexión a internet).</string>
+</resources>

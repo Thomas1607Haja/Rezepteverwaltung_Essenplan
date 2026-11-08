@@ -2,12 +2,14 @@ package io.github.thomas1607haja.rezeptplaner.ui.shopping
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.SendResult
 import io.github.thomas1607haja.rezeptplaner.api.ShoppingEntry
 import io.github.thomas1607haja.rezeptplaner.api.ShoppingPreview
 import io.github.thomas1607haja.rezeptplaner.api.TodoList
 import io.github.thomas1607haja.rezeptplaner.data.Outcome
 import io.github.thomas1607haja.rezeptplaner.data.ShoppingRepository
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,10 +42,10 @@ fun nothingLeft(p: ShoppingPreview) = p.items.isEmpty() && p.missing.isEmpty()
 /** Warum ein Gericht nicht in die Liste eingeht (leer = es geht ein). */
 fun entryReason(entry: ShoppingEntry, today: String): String = when {
     entry.included -> ""
-    entry.recipeId == null -> "ohne Rezept"
-    entry.status == "transferred" -> "schon an Bring gesendet"
-    entry.status == "have_ingredients" -> "Zutaten vorhanden"
-    entry.date < today -> "vorbei"
+    entry.recipeId == null -> Texts.get(R.string.shopping_reason_no_recipe)
+    entry.status == "transferred" -> Texts.get(R.string.shopping_reason_transferred)
+    entry.status == "have_ingredients" -> Texts.get(R.string.shopping_reason_have_ingredients)
+    entry.date < today -> Texts.get(R.string.shopping_reason_past)
     else -> ""
 }
 
@@ -51,10 +53,16 @@ fun entryReason(entry: ShoppingEntry, today: String): String = when {
 fun sentSummary(r: SendResult): String {
     val n = r.sent.size
     val merged = r.sent.count { it.merged }
-    var text = if (n == 1) "Ein Artikel an Bring gesendet" else "$n Artikel an Bring gesendet"
-    if (merged > 0) text += ", davon $merged bei schon vorhandenen ergänzt"
-    return "$text."
+    return if (merged > 0) Texts.plural(R.plurals.shopping_sent_merged, n, "merged" to merged)
+    else Texts.plural(R.plurals.shopping_sent, n)
 }
+
+/**
+ * Fehlt die Bring-Liste? Code no_bring_list (übersetzter Text); ältere
+ * Server ohne Code melden den deutschen Text mit „Bring-Liste“.
+ */
+private fun needsBringList(message: String): Boolean =
+    message == Texts.get(R.string.error_no_bring_list) || "bring-liste" in message.lowercase()
 
 /**
  * Einkauf wie in der Weboberfläche (web/src/pages/ShoppingPage.svelte):
@@ -113,7 +121,7 @@ class ShoppingViewModel(private val repo: ShoppingRepository) : ViewModel() {
         viewModelScope.launch {
             when (val r = repo.send(s.next, if (missing) s.deselectedMissing else s.deselected, missing)) {
                 is Outcome.Error -> _ui.update {
-                    it.copy(sending = false, sendError = r.message, needsList = "bring-liste" in r.message.lowercase())
+                    it.copy(sending = false, sendError = r.message, needsList = needsBringList(r.message))
                 }
                 is Outcome.Ok -> {
                     _ui.update { it.copy(sending = false, result = r.value) }
@@ -129,7 +137,7 @@ class ShoppingViewModel(private val repo: ShoppingRepository) : ViewModel() {
             when (val r = repo.lists()) {
                 is Outcome.Error -> _ui.update { it.copy(sendError = r.message) }
                 is Outcome.Ok -> _ui.update {
-                    if (r.value.isEmpty()) it.copy(sendError = "In Home Assistant gibt es keine To-do-Liste. Die Bring-Integration einrichten.")
+                    if (r.value.isEmpty()) it.copy(sendError = Texts.get(R.string.shopping_no_todo_lists))
                     else it.copy(lists = r.value)
                 }
             }
@@ -144,7 +152,7 @@ class ShoppingViewModel(private val repo: ShoppingRepository) : ViewModel() {
             when (val r = repo.setList(list.entityId)) {
                 is Outcome.Error -> _ui.update { it.copy(sendError = r.message) }
                 is Outcome.Ok -> _ui.update {
-                    it.copy(needsList = false, sendError = null, notice = "Bring-Liste „${list.name}“ gewählt – jetzt senden.")
+                    it.copy(needsList = false, sendError = null, notice = Texts.get(R.string.shopping_list_chosen, "name" to list.name))
                 }
             }
         }

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Datei-Import (ui/importer, data/ImportRepository). Texte wie web/src/locales/import. -->
+<resources>
+    <string name="import_title">Datei importieren</string>
+    <string name="import_reading">Datei wird gelesen …</string>
+    <string name="import_checking">Wird geprüft …</string>
+    <string name="import_waiting_setup">Erst die App mit dem Rezeptplaner verbinden – danach geht es weiter.</string>
+    <string name="import_intro">Importdatei (ZIP oder JSON, z. B. von der Claude-Skill „rezeptplaner-import“) wählen. Gespeichert wird erst nach einer Vorschau.</string>
+    <string name="import_choose_file">Datei auswählen</string>
+    <string name="import_whatsapp_title">Aus WhatsApp</string>
+    <string name="import_whatsapp_share">Datei lange drücken → Teilen → Rezeptplaner.</string>
+    <string name="import_whatsapp_folder">Oder hier „Datei auswählen“: WhatsApp-Dokumente liegen unter Android → media → com.whatsapp → WhatsApp → Media → WhatsApp Documents (meist auch unter „Zuletzt“).</string>
+    <string name="import_no_recipes">Keine Rezepte gefunden.</string>
+    <string name="import_other_file">Andere Datei</string>
+    <string name="import_importing">Importiert …</string>
+    <plurals name="import_import_count">
+        <item quantity="one">{count} Rezept importieren</item>
+        <item quantity="other">{count} Rezepte importieren</item>
+    </plurals>
+    <string name="import_untitled">(ohne Titel)</string>
+    <plurals name="import_ingredient_count">
+        <item quantity="one">{count} Zutat</item>
+        <item quantity="other">{count} Zutaten</item>
+    </plurals>
+    <plurals name="import_step_count">
+        <item quantity="one">{count} Schritt</item>
+        <item quantity="other">{count} Schritte</item>
+    </plurals>
+    <string name="import_source">Quelle: {source}</string>
+    <string name="import_exists">Gibt es schon: {titles}</string>
+    <string name="import_unknown_in_recipe">Unbekannte Kategorien: {names} (siehe unten)</string>
+    <string name="import_unknown_title">Unbekannte Kategorien</string>
+    <string name="import_unknown_hint">Gibt es im Rezeptplaner nicht. Einer vorhandenen zuordnen, neu anlegen oder weglassen.</string>
+    <string name="import_quoted">„{name}“</string>
+    <string name="import_skip">Weglassen</string>
+    <string name="import_assign_to">Zuordnen: {name}</string>
+    <string name="import_assign_group">Zuordnen – {group}</string>
+    <string name="import_create">Neu anlegen in Gruppe</string>
+    <string name="import_new_in">Neu: „{name}“ in {group}</string>
+    <plurals name="import_imported">
+        <item quantity="one">{count} Rezept importiert</item>
+        <item quantity="other">{count} Rezepte importiert</item>
+    </plurals>
+    <string name="import_not_imported">Nicht importiert</string>
+    <string name="import_recipe_n">Rezept {n}</string>
+    <string name="import_item_error">{item}: {error}</string>
+    <string name="import_done">Fertig</string>
+    <string name="import_another">Weitere Datei</string>
+    <string name="import_too_large">„{name}“ ist zu groß (höchstens {mb} MB zusammen).</string>
+    <string name="import_unreadable">„{name}“ ließ sich nicht lesen.</string>
+    <string name="import_not_import_file">„{name}“ ist keine Rezeptplaner-Importdatei.</string>
+    <string name="import_too_many_files">Höchstens {max} Dateien auf einmal.</string>
+    <string name="import_no_file">Keine Datei erhalten.</string>
+    <string name="import_upload_failed">Fehler beim Hochladen.</string>
+    <string name="import_offline">Import geht nur mit Verbindung zum Rezeptplaner.</string>
+    <string name="import_default_file_name">Datei</string>
+</resources>

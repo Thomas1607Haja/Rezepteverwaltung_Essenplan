@@ -61,6 +61,8 @@ import io.github.thomas1607haja.rezeptplaner.data.SyncTrigger
 import io.github.thomas1607haja.rezeptplaner.ui.common.OfflineBanner
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
+import io.github.thomas1607haja.rezeptplaner.ui.common.trPlural
 import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
 import io.github.thomas1607haja.rezeptplaner.ui.planStatus
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -144,11 +146,11 @@ fun RecipesScreen(
                 }
                 when {
                     snapshot.isEmpty -> item {
-                        Message(if (sync.running) "Rezepte werden geladen …" else "Noch keine Daten – nach unten ziehen zum Laden.")
+                        Message(tr(if (sync.running) R.string.recipe_list_loading else R.string.recipe_list_no_data))
                     }
                     items.isEmpty() -> item {
                         Message(
-                            if (filter.isActive) "Keine Rezepte zu dieser Suche." else "Noch keine Rezepte.",
+                            tr(if (filter.isActive) R.string.recipe_list_none_found else R.string.recipe_list_empty),
                             onReset = if (filter.isActive) ({ state.value = filter.reset() }) else null,
                         )
                     }
@@ -156,7 +158,7 @@ fun RecipesScreen(
                         // Trefferzahl wie im Web, über die ganze Breite.
                         item(contentType = "count") {
                             Text(
-                                if (items.size == 1) "1 Rezept" else "${items.size} Rezepte",
+                                trPlural(R.plurals.recipe_count, items.size),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -182,14 +184,14 @@ fun RecipesScreen(
                 var menu by remember { mutableStateOf(false) }
                 Box(Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
                     FloatingActionButton(onClick = { menu = true }) {
-                        Icon(painterResource(R.drawable.ic_plus), contentDescription = "Rezept hinzufügen")
+                        Icon(painterResource(R.drawable.ic_plus), contentDescription = tr(R.string.recipe_add))
                     }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                        DropdownMenuItem(text = { Text("Neues Rezept") }, onClick = { menu = false; onNew() })
-                        DropdownMenuItem(text = { Text("Rezept aus Internetadresse") }, onClick = { menu = false; onFromUrl() })
-                        DropdownMenuItem(text = { Text("Rezept aus QR-Code") }, onClick = { menu = false; onFromQr() })
-                        DropdownMenuItem(text = { Text("Rezept aus Foto") }, onClick = { menu = false; onFromPhoto() })
-                        DropdownMenuItem(text = { Text("Datei importieren") }, onClick = { menu = false; onImport() })
+                        DropdownMenuItem(text = { Text(tr(R.string.recipe_new)) }, onClick = { menu = false; onNew() })
+                        DropdownMenuItem(text = { Text(tr(R.string.recipe_from_url)) }, onClick = { menu = false; onFromUrl() })
+                        DropdownMenuItem(text = { Text(tr(R.string.recipe_from_qr)) }, onClick = { menu = false; onFromQr() })
+                        DropdownMenuItem(text = { Text(tr(R.string.recipe_from_photo)) }, onClick = { menu = false; onFromPhoto() })
+                        DropdownMenuItem(text = { Text(tr(R.string.recipe_import_file)) }, onClick = { menu = false; onImport() })
                     }
                 }
             }
@@ -219,8 +221,8 @@ fun RecipesScreen(
                     }
                 }
                 Row {
-                    TextButton(onClick = { state.value = filter.copy(tagIds = emptySet()) }) { Text("Zurücksetzen") }
-                    TextButton(onClick = { showTags = false }) { Text("Fertig") }
+                    TextButton(onClick = { state.value = filter.copy(tagIds = emptySet()) }) { Text(tr(R.string.recipe_tags_reset)) }
+                    TextButton(onClick = { showTags = false }) { Text(tr(R.string.recipe_done)) }
                 }
             }
         }
@@ -241,7 +243,7 @@ private fun SearchBar(filter: RecipeFilter, tabs: List<CourseTab>, onChange: (Re
                     FilterChip(
                         selected = filter.course == tab.key,
                         onClick = { onChange(filter.copy(course = tab.key)) },
-                        label = { Text(tab.label) },
+                        label = { Text(tr(tab.label)) },
                     )
                 }
             }
@@ -249,7 +251,7 @@ private fun SearchBar(filter: RecipeFilter, tabs: List<CourseTab>, onChange: (Re
         OutlinedTextField(
             value = filter.query,
             onValueChange = { q -> onChange(filter.copy(query = q)) },
-            placeholder = { Text("Suchen nach Titel oder Zutat") },
+            placeholder = { Text(tr(R.string.recipe_search_placeholder)) },
             leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().onFocusChanged { if (it.isFocused) onFocus() },
@@ -271,33 +273,33 @@ private fun Filters(filter: RecipeFilter, hasIllustrations: Boolean, onChange: (
         FilterChip(
             selected = filter.tagIds.isNotEmpty(),
             onClick = onTags,
-            label = { Text(if (filter.tagIds.isEmpty()) "Kategorien" else "Kategorien (${filter.tagIds.size})") },
+            label = { Text(if (filter.tagIds.isEmpty()) tr(R.string.recipe_categories) else tr(R.string.recipe_categories_count, "count" to filter.tagIds.size)) },
             leadingIcon = { Icon(painterResource(R.drawable.ic_filter), contentDescription = null, Modifier.size(18.dp)) },
         )
         FilterChip(
             selected = filter.favoritesOnly,
             onClick = { onChange(filter.copy(favoritesOnly = !filter.favoritesOnly)) },
-            label = { Text("Favoriten") },
+            label = { Text(tr(R.string.recipe_favorites)) },
             leadingIcon = { Icon(painterResource(R.drawable.ic_heart), contentDescription = null, Modifier.size(18.dp)) },
         )
         FilterChip(
             selected = filter.neverPlanned,
             onClick = { onChange(filter.copy(neverPlanned = !filter.neverPlanned)) },
-            label = { Text("Nie eingeplant") },
+            label = { Text(tr(R.string.recipe_never_planned)) },
         )
         // Nur anbieten, wenn es gezeichnete Bilder gibt.
         if (filter.illustrationsOnly || hasIllustrations) {
             FilterChip(
                 selected = filter.illustrationsOnly,
                 onClick = { onChange(filter.copy(illustrationsOnly = !filter.illustrationsOnly)) },
-                label = { Text("Illustrationen") },
+                label = { Text(tr(R.string.recipe_illustrations)) },
             )
         }
         Box {
-            TextButton(onClick = { showSort = true }) { Text(filter.sort.label) }
+            TextButton(onClick = { showSort = true }) { Text(tr(filter.sort.label)) }
             DropdownMenu(expanded = showSort, onDismissRequest = { showSort = false }) {
                 RecipeSort.entries.forEach { sort ->
-                    DropdownMenuItem(text = { Text(sort.label) }, onClick = {
+                    DropdownMenuItem(text = { Text(tr(sort.label)) }, onClick = {
                         onChange(filter.copy(sort = sort))
                         showSort = false
                     })
@@ -318,13 +320,13 @@ private fun RecipeTile(item: RecipeItem, today: LocalDate, onClick: () -> Unit) 
             RecipeImage(r.thumbnail, Modifier.fillMaxWidth().aspectRatio(4f / 3f).clip(MaterialTheme.shapes.medium))
             if (r.isFavorite) {
                 Icon(
-                    painterResource(R.drawable.ic_heart_filled), contentDescription = "Favorit",
+                    painterResource(R.drawable.ic_heart_filled), contentDescription = tr(R.string.recipe_favorite),
                     tint = MaterialTheme.colorScheme.primary, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
                 )
             }
             if (r.isIllustrated) {
                 Text(
-                    "Illustration",
+                    tr(R.string.recipe_illustration),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.align(Alignment.BottomStart).padding(6.dp)
@@ -336,7 +338,7 @@ private fun RecipeTile(item: RecipeItem, today: LocalDate, onClick: () -> Unit) 
         Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(wrapTitle(r.title), style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val time = formatMinutes(r.totalMinutes ?: r.prepMinutes)
-            val details = listOfNotNull(time.ifEmpty { null }, if (r.parentRecipeId != null) "Variante" else null)
+            val details = listOfNotNull(time.ifEmpty { null }, if (r.parentRecipeId != null) tr(R.string.recipe_variant) else null)
             if (details.isNotEmpty()) {
                 Text(details.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -350,6 +352,6 @@ private fun Message(text: String, onReset: (() -> Unit)? = null) {
     // Steht in der Liste, damit Herunterziehen auch hier lädt.
     Column(Modifier.fillMaxWidth().padding(32.dp)) {
         Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (onReset != null) TextButton(onClick = onReset) { Text("Filter zurücksetzen") }
+        if (onReset != null) TextButton(onClick = onReset) { Text(tr(R.string.recipe_reset_filter)) }
     }
 }

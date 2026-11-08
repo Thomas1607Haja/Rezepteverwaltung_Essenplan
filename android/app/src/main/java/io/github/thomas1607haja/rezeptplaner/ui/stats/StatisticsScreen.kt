@@ -42,19 +42,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.StatRecipe
 import io.github.thomas1607haja.rezeptplaner.api.Statistics
 import io.github.thomas1607haja.rezeptplaner.data.localStatistics
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
+import io.github.thomas1607haja.rezeptplaner.ui.common.trPlural
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipeFilter
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 
 /** Zeiträume wie in der Weboberfläche. */
-private val periods = listOf("3m" to "3 Monate", "12m" to "1 Jahr", "all" to "Gesamt")
+private val periods = listOf("3m" to R.string.stats_period_3m, "12m" to R.string.stats_period_12m, "all" to R.string.stats_period_all)
 
 /**
  * Statistik (Schritt 8.D), nur lesend. Online rechnet der Server für jeden
@@ -95,10 +100,10 @@ fun StatisticsScreen(onRecipes: (RecipeFilter) -> Unit, onOpen: (Long) -> Unit) 
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Statistik", style = MaterialTheme.typography.headlineSmall)
+            Text(tr(R.string.nav_statistics), style = MaterialTheme.typography.headlineSmall)
             if (offline) {
                 Text(
-                    "Ohne Verbindung: Stand des letzten Abgleichs, nur „Gesamt“. Zeitraum und Einträge ohne Rezept gibt es online.",
+                    tr(R.string.stats_offline_hint),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary,
                 )
             }
@@ -111,15 +116,15 @@ fun StatisticsScreen(onRecipes: (RecipeFilter) -> Unit, onOpen: (Long) -> Unit) 
                 maxItemsInEachRow = 2,
             ) {
                 val tile = Modifier.weight(1f)
-                Tile(tile, stats.recipes, "Rezepte")
-                Tile(tile, stats.planned, "schon eingeplant (${percent(stats.planned, stats.recipes)} %)")
-                Tile(tile, stats.neverPlanned, "noch nie eingeplant →") { onRecipes(RecipeFilter(neverPlanned = true)) }
-                Tile(tile, stats.illustrated, "mit Illustration →") { onRecipes(RecipeFilter(illustrationsOnly = true)) }
-                Tile(tile, stats.favorites, "Favoriten →") { onRecipes(RecipeFilter(favoritesOnly = true)) }
+                Tile(tile, stats.recipes, trPlural(R.plurals.stats_recipes, stats.recipes))
+                Tile(tile, stats.planned, tr(R.string.stats_planned, "percent" to percent(stats.planned, stats.recipes)))
+                Tile(tile, stats.neverPlanned, tr(R.string.stats_never_planned)) { onRecipes(RecipeFilter(neverPlanned = true)) }
+                Tile(tile, stats.illustrated, tr(R.string.stats_illustrated)) { onRecipes(RecipeFilter(illustrationsOnly = true)) }
+                Tile(tile, stats.favorites, tr(R.string.stats_favorites)) { onRecipes(RecipeFilter(favoritesOnly = true)) }
                 Box(tile) // Platzhalter, damit die letzte Kachel nicht die ganze Breite nimmt
             }
 
-            Section("Am häufigsten gegessen") {
+            Section(tr(R.string.stats_top_title)) {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     periods.forEachIndexed { i, (value, label) ->
                         SegmentedButton(
@@ -127,46 +132,47 @@ fun StatisticsScreen(onRecipes: (RecipeFilter) -> Unit, onOpen: (Long) -> Unit) 
                             onClick = { period = value },
                             enabled = !offline || value == "all",
                             shape = SegmentedButtonDefaults.itemShape(i, periods.size),
-                        ) { Text(label) }
+                        ) { Text(tr(label)) }
                     }
                 }
+                val entries = stats.from?.let { trPlural(R.plurals.stats_entries_since, stats.entries, "date" to formatDate(it)) }
+                    ?: trPlural(R.plurals.stats_entries_total, stats.entries)
+                val menus = if (stats.menus > 0) trPlural(R.plurals.stats_menus, stats.menus) else ""
                 Text(
-                    "${stats.entries} ${if (stats.entries == 1) "Gericht" else "Gerichte"} im Essensplan " +
-                        (stats.from?.let { "seit ${formatDate(it)}" } ?: "insgesamt") + " (bis heute)" +
-                        when (stats.menus) {
-                            0 -> ""
-                            1 -> ", davon ein Menü"
-                            else -> ", davon ${stats.menus} Menüs"
-                        },
+                    entries + menus,
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (stats.top.isEmpty()) Muted("In diesem Zeitraum stand noch nichts im Essensplan.")
+                if (stats.top.isEmpty()) Muted(tr(R.string.stats_top_empty))
                 val max = stats.top.maxOfOrNull { it.count }?.coerceAtLeast(1) ?: 1
                 stats.top.forEachIndexed { i, r -> TopRow(i + 1, r, max) { onOpen(r.id) } }
             }
 
             if (stats.withoutRecipe.isNotEmpty()) {
-                Section("Ohne Rezept") {
-                    Muted("Einträge wie „Essen gehen“ im Zeitraum – sie zählen nicht als Rezept.")
+                Section(tr(R.string.stats_without_recipe_title)) {
+                    Muted(tr(R.string.stats_without_recipe_hint, "example" to tr(R.string.quick_eating_out)))
                     stats.withoutRecipe.forEach { Text("${it.count}×  ${it.note}") }
                 }
             }
 
-            Section("Lieblingsgerichte, die lange nicht dran waren") {
-                if (stats.favoritesWaiting.isEmpty()) Muted("Alle Favoriten waren in den letzten 8 Wochen dran oder sind eingeplant.")
+            Section(tr(R.string.stats_favorites_waiting_title)) {
+                if (stats.favoritesWaiting.isEmpty()) Muted(tr(R.string.stats_favorites_waiting_empty))
                 stats.favoritesWaiting.forEach { r ->
-                    LinkRow(r.title, "zuletzt ${ago(r.lastPlanned, stats.today)}") { onOpen(r.id) }
+                    LinkRow(r.title, lastMade(r.lastPlanned, stats.today)) { onOpen(r.id) }
                 }
             }
 
-            Section("Zuletzt hinzugefügt") {
+            Section(tr(R.string.stats_recent_title)) {
                 stats.recentlyAdded.forEach { r ->
-                    val planned = r.lastPlanned?.let { "zuletzt ${ago(it, stats.today)}" } ?: "noch nie eingeplant"
-                    LinkRow(r.title, "${formatDate(r.createdAt.take(10))}, $planned") { onOpen(r.id) }
+                    val detail = tr(
+                        R.string.stats_recent_detail,
+                        "date" to formatDate(r.createdAt.take(10)),
+                        "last" to lastMade(r.lastPlanned, stats.today),
+                    )
+                    LinkRow(r.title, detail) { onOpen(r.id) }
                 }
             }
 
-            Section("Rezepte nach Kategorien") {
+            Section(tr(R.string.stats_categories_title)) {
                 val max = stats.categories.flatMap { g -> g.tags.map { it.count } }.maxOrNull()?.coerceAtLeast(1) ?: 1
                 stats.categories.forEach { g ->
                     Text(g.name, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -174,7 +180,7 @@ fun StatisticsScreen(onRecipes: (RecipeFilter) -> Unit, onOpen: (Long) -> Unit) 
                         BarRow(t.name, t.count, max) { onRecipes(RecipeFilter(tagIds = setOf(t.id))) }
                     }
                 }
-                Muted("${stats.withoutCategory} ${if (stats.withoutCategory == 1) "Rezept" else "Rezepte"} ohne Kategorie")
+                Muted(trPlural(R.plurals.stats_without_category, stats.withoutCategory))
             }
         }
     }
@@ -182,19 +188,20 @@ fun StatisticsScreen(onRecipes: (RecipeFilter) -> Unit, onOpen: (Long) -> Unit) 
 
 private fun percent(part: Int, whole: Int) = if (whole == 0) 0 else Math.round(100.0 * part / whole).toInt()
 
-private val dateFormat = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+/** Datum in der Sprache der App, z. B. „24.10.2026“ bzw. „Oct 24, 2026“. */
+private fun formatDate(date: String) = runCatching {
+    LocalDate.parse(date).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Texts.locale()))
+}.getOrDefault(date)
 
-private fun formatDate(date: String) = runCatching { LocalDate.parse(date).format(dateFormat) }.getOrDefault(date)
-
-/** „vor 3 Wochen“ wie im Web. */
-private fun ago(date: String?, today: String): String {
-    if (date == null) return "noch nie"
-    val days = runCatching { ChronoUnit.DAYS.between(LocalDate.parse(date), LocalDate.parse(today)) }.getOrDefault(0)
+/** „zuletzt vor 3 Wochen“ wie im Web; ohne Datum „noch nie eingeplant“. */
+private fun lastMade(date: String?, today: String): String {
+    if (date == null) return Texts.get(R.string.stats_last_never)
+    val days = runCatching { ChronoUnit.DAYS.between(LocalDate.parse(date), LocalDate.parse(today)) }.getOrDefault(0L)
     return when {
-        days == 0L -> "heute"
-        days < 14 -> "vor $days Tagen"
-        days < 60 -> "vor ${Math.round(days / 7.0)} Wochen"
-        else -> "vor ${Math.round(days / 30.0)} Monaten"
+        days == 0L -> Texts.get(R.string.stats_last_today)
+        days < 14 -> Texts.plural(R.plurals.stats_last_days, days.toInt())
+        days < 60 -> Texts.plural(R.plurals.stats_last_weeks, Math.round(days / 7.0).toInt())
+        else -> Texts.plural(R.plurals.stats_last_months, Math.round(days / 30.0).toInt())
     }
 }
 

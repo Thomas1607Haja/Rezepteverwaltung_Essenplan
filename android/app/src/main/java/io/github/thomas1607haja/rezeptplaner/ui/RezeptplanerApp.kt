@@ -49,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.sync.SyncWorker
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import io.github.thomas1607haja.rezeptplaner.ui.plan.MealPlanScreen
 import io.github.thomas1607haja.rezeptplaner.ui.plan.MenuScreen
 import io.github.thomas1607haja.rezeptplaner.ui.plan.PickRecipeScreen
@@ -336,7 +337,7 @@ internal fun MainScaffold(
                         // Kochansicht des gespeicherten Rezepts statt der Bearbeitung.
                         navController.popBackStack()
                         if (route.id == 0L || route.freshVariant) navController.navigate(RecipeRoute(id)) { launchSingleTop = true }
-                        scope.launch { snackbar.showSnackbar(warning ?: "Gespeichert") }
+                        scope.launch { snackbar.showSnackbar(warning ?: Texts.get(R.string.common_saved)) }
                     },
                     onCancel = { navController.popBackStack() },
                     onOpenRecipe = { id -> navController.navigate(RecipeRoute(id)) },

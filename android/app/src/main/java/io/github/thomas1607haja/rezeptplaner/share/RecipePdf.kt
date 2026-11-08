@@ -16,13 +16,14 @@ import android.text.TextPaint
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withClip
 import androidx.core.graphics.withTranslation
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
 import io.github.thomas1607haja.rezeptplaner.ui.amountText
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import io.github.thomas1607haja.rezeptplaner.ui.formatQuantity
 import io.github.thomas1607haja.rezeptplaner.ui.wrapTitle
 import java.io.File
 import java.io.OutputStream
-import java.util.Locale
 import kotlin.math.max
 
 /** Was ins PDF kommt. [image]: Datei des Rezeptbilds, null = ohne Bild. */
@@ -120,7 +121,7 @@ private fun paint(size: Float, color: Int = INK, weight: Int = 400) = TextPaint(
     textSize = size
     this.color = color
     typeface = Typeface.create(Typeface.DEFAULT, weight, false)
-    textLocale = Locale.GERMANY // Silbentrennung nach deutschen Regeln
+    textLocale = Texts.locale() // Silbentrennung nach den Regeln der App-Sprache
 }
 
 private fun layout(text: CharSequence, paint: TextPaint, width: Float, align: Layout.Alignment = Layout.Alignment.ALIGN_NORMAL) =
@@ -160,7 +161,7 @@ private class RecipePdfBlocks(private val input: PdfInput, private val image: Bi
     fun build(): List<DrawBlock> {
         // Titel, „Variante von …“, Zeiten/Gang/Kategorien bleiben zusammen.
         val head = layout(wrapTitle(recipe.title), title, CONTENT_WIDTH)
-        val parent = input.parentTitle?.let { layout("Variante von $it", variant, CONTENT_WIDTH) }
+        val parent = input.parentTitle?.let { layout(Texts.get(R.string.share_variant_of, "title" to it), variant, CONTENT_WIDTH) }
         val metaLines = pdfMeta(recipe, input.courseGroup)
         val metaLayout = metaLines.takeIf { it.isNotEmpty() }?.let { layout(it.joinToString("\n"), meta, CONTENT_WIDTH) }
         textBlock(head, keepWithNext = true)
@@ -182,15 +183,18 @@ private class RecipePdfBlocks(private val input: PdfInput, private val image: Bi
         }
 
         if (recipe.ingredients.isNotEmpty()) {
-            sectionHeading("Zutaten", "für " + amountText(recipe.baseServings, recipe.yieldUnit))
+            sectionHeading(
+                Texts.get(R.string.share_ingredients),
+                Texts.get(R.string.share_for, "amount" to amountText(recipe.baseServings, recipe.yieldUnit)),
+            )
             ingredients()
         }
         if (recipe.steps.isNotEmpty()) {
-            sectionHeading("Zubereitung")
+            sectionHeading(Texts.get(R.string.share_steps))
             recipe.steps.forEachIndexed { i, step -> step(i + 1, step.text) }
         }
         if (input.withNotes && recipe.notes.isNotBlank()) {
-            sectionHeading("Notizen")
+            sectionHeading(Texts.get(R.string.share_notes))
             textBlock(layout(recipe.notes.trim(), body, CONTENT_WIDTH), spaceBefore = 6f, keepTogether = false)
         }
         pdfSource(recipe)?.let { textBlock(layout(it, meta, CONTENT_WIDTH), spaceBefore = 20f) }
@@ -281,8 +285,8 @@ private fun drawFooter(canvas: Canvas, page: Int, pages: Int) {
     val small = paint(8f, MUTED)
     val y = PAGE_HEIGHT - MARGIN
     canvas.drawLine(MARGIN, y - 14f, PAGE_WIDTH - MARGIN, y - 14f, Paint().apply { color = LINE; strokeWidth = 0.5f })
-    canvas.drawText("Erstellt mit Rezeptplaner", MARGIN, y, small)
-    val label = "Seite $page von $pages"
+    canvas.drawText(Texts.get(R.string.share_footer), MARGIN, y, small)
+    val label = Texts.get(R.string.share_page, "page" to page, "pages" to pages)
     canvas.drawText(label, PAGE_WIDTH - MARGIN - small.measureText(label), y, small)
 }
 

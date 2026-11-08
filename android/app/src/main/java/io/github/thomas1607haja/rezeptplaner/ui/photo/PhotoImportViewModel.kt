@@ -10,6 +10,7 @@ import com.google.mlkit.common.MlKitException
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.RezeptplanerApplication
 import io.github.thomas1607haja.rezeptplaner.api.Ingredient
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
@@ -17,6 +18,7 @@ import io.github.thomas1607haja.rezeptplaner.api.Step
 import io.github.thomas1607haja.rezeptplaner.api.UrlDraft
 import io.github.thomas1607haja.rezeptplaner.data.ImageChange
 import io.github.thomas1607haja.rezeptplaner.data.Outcome
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,14 +51,14 @@ class PhotoImportViewModel(private val app: RezeptplanerApplication) : ViewModel
 
     fun addPages(uris: List<Uri>) {
         if (uris.isEmpty()) return
-        _state.update { it.copy(busy = "Text wird erkannt …", error = null) }
+        _state.update { it.copy(busy = Texts.get(R.string.photo_recognizing), error = null) }
         viewModelScope.launch {
             var error: String? = null
             for (uri in uris) {
                 val page = _state.value.pages
                 try {
                     val found = recognizeText(app, uri, page)
-                    if (found.isEmpty()) error = "Auf einem Foto wurde kein Text erkannt. Gerade und gut beleuchtet fotografieren."
+                    if (found.isEmpty()) error = Texts.get(R.string.photo_no_text)
                     _state.update { s ->
                         val all = s.lines + found
                         // Vorschläge nur für die neuen Zeilen; Korrekturen bleiben.
@@ -93,18 +95,18 @@ class PhotoImportViewModel(private val app: RezeptplanerApplication) : ViewModel
         val s = _state.value
         val draft = buildDraft(s.lines, s.kinds)
         if (draft.title.isEmpty() && draft.ingredientLines.isEmpty() && draft.steps.isEmpty()) {
-            _state.update { it.copy(error = "Bitte zuerst Zeilen als Titel, Zutat oder Schritt markieren.") }
+            _state.update { it.copy(error = Texts.get(R.string.photo_mark_first)) }
             return
         }
-        _state.update { it.copy(busy = "Zutaten werden zerlegt …", error = null) }
+        _state.update { it.copy(busy = Texts.get(R.string.photo_parsing), error = null) }
         viewModelScope.launch {
-            val notes = mutableListOf("Mit dem Foto-Import erfasst – bitte Mengen und Schritte prüfen.")
+            val notes = mutableListOf(Texts.get(R.string.photo_note))
             val ingredients = if (draft.ingredientLines.isEmpty()) emptyList() else {
                 when (val r = app.recipeRepository.parseIngredients(draft.ingredientLines)) {
                     is Outcome.Ok -> r.value
                     // Ohne Server: Zeilen unzerlegt als Zutatennamen.
                     is Outcome.Error -> {
-                        notes += "Zutaten nicht zerlegt (${r.message})."
+                        notes += Texts.get(R.string.photo_not_parsed, "message" to r.message)
                         draft.ingredientLines.map { Ingredient(name = it.take(200)) }
                     }
                 }
@@ -144,9 +146,9 @@ suspend fun recognizeText(context: Context, uri: Uri, page: Int): List<OcrLine> 
 
 private fun ocrMessage(e: Exception): String = when {
     e is MlKitException && e.errorCode == MlKitException.UNAVAILABLE ->
-        "Die Texterkennung wird gerade von den Google-Play-Diensten geladen. Bitte gleich noch einmal versuchen."
-    e is java.io.IOException -> "Das Foto ließ sich nicht öffnen."
-    else -> "Texterkennung fehlgeschlagen: ${e.message ?: e.javaClass.simpleName}"
+        Texts.get(R.string.photo_ocr_loading)
+    e is java.io.IOException -> Texts.get(R.string.photo_open_failed)
+    else -> Texts.get(R.string.photo_ocr_failed, "message" to (e.message ?: e.javaClass.simpleName))
 }
 
 private suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { cont ->

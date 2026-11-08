@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Einkauf (ui/shopping, data/ShoppingRepository); Formulierungen wie web/src/locales/shopping. -->
+<resources>
+    <string name="shopping_period_current" formatted="false">Spesa attuale</string>
+    <string name="shopping_period_next" formatted="false">Prossima spesa</string>
+    <string name="shopping_range" formatted="false">{from} – {to}</string>
+    <string name="shopping_sending" formatted="false">Invio …</string>
+    <string name="shopping_send" formatted="false">Invia a Bring ({count})</string>
+    <string name="shopping_send_to" formatted="false">Invia a Bring: {list} ({count})</string>
+    <string name="shopping_choose_list" formatted="false">Scegli la lista Bring</string>
+    <string name="shopping_dishes" formatted="false">Piatti</string>
+    <string name="shopping_nothing_planned" formatted="false">Niente di previsto per questo periodo.</string>
+    <plurals name="shopping_servings_short">
+        <item quantity="one">{count} porz.</item>
+        <item quantity="many">{count} porz.</item>
+        <item quantity="other">{count} porz.</item>
+    </plurals>
+    <string name="shopping_reset_button" formatted="false">Annulla l\'invio …</string>
+    <string name="shopping_list_title" formatted="false">Lista della spesa</string>
+    <string name="shopping_select_all" formatted="false">Tutti</string>
+    <string name="shopping_select_none" formatted="false">Nessuno</string>
+    <string name="shopping_failed_intro" formatted="false">Non arrivati – inviali più tardi o aggiungili a mano:</string>
+    <string name="shopping_nothing_to_buy" formatted="false">Niente da comprare.</string>
+    <string name="shopping_selected_hint" formatted="false">{selected} di {total} selezionati. Gli articoli deselezionati verranno considerati fatti dopo l\'invio.</string>
+    <string name="shopping_changed_title" formatted="false">Modificato dopo l\'invio</string>
+    <string name="shopping_changed_hint" formatted="false">Dopo l\'invio alcuni piatti sono stati modificati, spostati o rimossi.</string>
+    <string name="shopping_missing_title" formatted="false">Manca ancora sulla lista Bring</string>
+    <string name="shopping_send_missing" formatted="false">Invia la differenza ({count})</string>
+    <string name="shopping_to_list" formatted="false">a «{name}»</string>
+    <string name="shopping_surplus_title" formatted="false">Inviato in più</string>
+    <string name="shopping_surplus_hint" formatted="false">Non viene eliminato da Bring – forse è già stato comprato. Meglio pianificarlo per un altro piatto.</string>
+    <string name="shopping_reason_no_recipe" formatted="false">senza ricetta</string>
+    <string name="shopping_reason_transferred" formatted="false">già inviato a Bring</string>
+    <string name="shopping_reason_have_ingredients" formatted="false">ingredienti in casa</string>
+    <string name="shopping_reason_past" formatted="false">passato</string>
+    <plurals name="shopping_sent">
+        <item quantity="one">{count} articolo inviato a Bring.</item>
+        <item quantity="many">{count} articoli inviati a Bring.</item>
+        <item quantity="other">{count} articoli inviati a Bring.</item>
+    </plurals>
+    <plurals name="shopping_sent_merged">
+        <item quantity="one">{count} articolo inviato a Bring, {merged} aggiunto/i a voci esistenti.</item>
+        <item quantity="many">{count} articoli inviati a Bring, {merged} aggiunto/i a voci esistenti.</item>
+        <item quantity="other">{count} articoli inviati a Bring, {merged} aggiunto/i a voci esistenti.</item>
+    </plurals>
+    <string name="shopping_no_todo_lists" formatted="false">In Home Assistant non c\'è nessuna lista di cose da fare. Configura l\'integrazione Bring.</string>
+    <string name="shopping_list_chosen" formatted="false">Lista Bring «{name}» scelta – ora puoi inviare.</string>
+    <string name="shopping_not_connected" formatted="false">Non connesso.</string>
+    <string name="shopping_offline" formatted="false">La spesa funziona solo con una connessione a Rezeptplaner.</string>
+    <string name="shopping_ha_unreachable" formatted="false">Home Assistant non raggiungibile: {message}</string>
+
+    <!-- Übertragung zurücksetzen -->
+    <string name="shopping_reset_title" formatted="false">Annulla l\'invio</string>
+    <string name="shopping_reset_intro" formatted="false">I piatti tornano previsti e possono essere inviati di nuovo a Bring. Gli ingredienti deselezionati («ingredienti in casa») restano.</string>
+    <string name="shopping_reset_nothing" formatted="false">Niente è stato inviato in questo periodo.</string>
+    <string name="shopping_reset_list_name" formatted="false">«{name}»</string>
+    <string name="shopping_reset_unknown_list" formatted="false">lista sconosciuta</string>
+    <string name="shopping_reset_no_items" formatted="false">nessun articolo inviato</string>
+    <string name="shopping_reset_target" formatted="false">a {lists}</string>
+    <plurals name="shopping_reset_items">
+        <item quantity="one">{count} articolo</item>
+        <item quantity="many">{count} articoli</item>
+        <item quantity="other">{count} articoli</item>
+    </plurals>
+    <string name="shopping_reset_remove" formatted="false">Rimuovi gli articoli dalla vecchia lista</string>
+    <string name="shopping_reset_remove_hint" formatted="false">Ciò che serve ancora ad altri piatti inviati resta con una quantità minore. Gli articoli già spuntati non vengono toccati.</string>
+    <plurals name="shopping_reset_unknown_label">
+        <item quantity="one">Per {count} piatto la lista originale non è salvata (inviato prima della versione 0.18). Rimuovi da:</item>
+        <item quantity="many">Per {count} piatti la lista originale non è salvata (inviati prima della versione 0.18). Rimuovi da:</item>
+        <item quantity="other">Per {count} piatti la lista originale non è salvata (inviati prima della versione 0.18). Rimuovi da:</item>
+    </plurals>
+    <string name="shopping_reset_dont_remove" formatted="false">– non rimuovere –</string>
+    <string name="shopping_reset_lists_error" formatted="false">Liste non caricate: {message}</string>
+    <string name="shopping_reset_resend_hint" formatted="false">Il prossimo invio andrà a «{name}» (impostazioni).</string>
+    <string name="shopping_reset_resetting" formatted="false">Annullamento …</string>
+    <string name="shopping_reset_confirm" formatted="false">Annulla ({count})</string>
+    <plurals name="shopping_reset_done">
+        <item quantity="one">{count} piatto di nuovo previsto.</item>
+        <item quantity="many">{count} piatti di nuovo previsti.</item>
+        <item quantity="other">{count} piatti di nuovo previsti.</item>
+    </plurals>
+    <string name="shopping_reset_removed" formatted="false">Rimosso dalla vecchia lista: {items}.</string>
+    <string name="shopping_reset_reduced" formatted="false">Quantità ridotta (servono ancora ad altri piatti): {items}.</string>
+    <string name="shopping_reset_not_found" formatted="false">Non più aperto sulla lista, invariato: {items}.</string>
+    <string name="shopping_reset_skipped" formatted="false">Non rimosso, lista sconosciuta: {items}.</string>
+    <string name="shopping_reset_failed" formatted="false">Non rimosso (eliminalo a mano): {items}.</string>
+    <string name="shopping_reset_send_now" formatted="false">Ora tocca «Invia a Bring» – andrà a «{name}».</string>
+</resources>

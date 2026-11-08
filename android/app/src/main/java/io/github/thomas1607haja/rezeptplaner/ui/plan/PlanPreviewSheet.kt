@@ -34,10 +34,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.Ingredient
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
 import io.github.thomas1607haja.rezeptplaner.data.PlanChoice
 import io.github.thomas1607haja.rezeptplaner.data.Snapshot
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 import io.github.thomas1607haja.rezeptplaner.ui.formatQuantity
 import io.github.thomas1607haja.rezeptplaner.ui.amountText
 
@@ -51,11 +54,8 @@ fun wantsPreview(snapshot: Snapshot, recipe: Recipe?): Boolean =
         recipe.ingredients.filter { it.shoppingRelevant }.all { it.itemKey.isNotEmpty() }
 
 /** „2 Zutaten vorhanden“ für den Hinweis am Eintrag; null = nichts abgewählt. */
-fun excludedLabel(count: Int): String? = when (count) {
-    0 -> null
-    1 -> "1 Zutat vorhanden"
-    else -> "$count Zutaten vorhanden"
-}
+fun excludedLabel(count: Int): String? =
+    if (count == 0) null else Texts.plural(R.plurals.plan_excluded_count, count)
 
 /**
  * Kurzvorschau beim Einplanen (Schritt 8.E), wie PlanPreview.svelte im Web:
@@ -107,10 +107,10 @@ fun PlanPreviewSheet(
             }
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
                 if (toBuy.isEmpty()) {
-                    Text("Keine Zutaten zum Einkaufen.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(tr(R.string.plan_nothing_to_buy), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     Text(
-                        "Häkchen entfernen, was du noch hast – gilt nur für diesen Eintrag.",
+                        tr(R.string.plan_preview_hint),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -136,7 +136,7 @@ fun PlanPreviewSheet(
                 }
                 if (pantry.isNotEmpty()) {
                     TextButton(onClick = { showPantry = !showPantry }) {
-                        Text((if (showPantry) "▾ " else "▸ ") + "Aus dem Vorrat (${pantry.size}) – wird nicht eingekauft")
+                        Text((if (showPantry) "▾ " else "▸ ") + tr(R.string.plan_pantry, "count" to pantry.size))
                     }
                     if (showPantry) {
                         pantry.forEach { ing ->
@@ -150,9 +150,9 @@ fun PlanPreviewSheet(
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp)) }
             Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { confirm(true) }, enabled = !busy, modifier = Modifier.weight(1f)) { Text("Alles vorhanden") }
+                OutlinedButton(onClick = { confirm(true) }, enabled = !busy, modifier = Modifier.weight(1f)) { Text(tr(R.string.plan_all_available)) }
                 Button(onClick = { confirm(false) }, enabled = !busy, modifier = Modifier.weight(1f)) {
-                    Text(if (busy) "Speichert …" else confirmLabel + if (offCount > 0) " ($offCount)" else "")
+                    Text(if (busy) tr(R.string.common_saving) else confirmLabel + if (offCount > 0) " ($offCount)" else "")
                 }
             }
         }

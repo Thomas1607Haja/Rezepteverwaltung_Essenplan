@@ -1,26 +1,51 @@
 package io.github.thomas1607haja.rezeptplaner.ui.photo
 
+import androidx.annotation.StringRes
+import io.github.thomas1607haja.rezeptplaner.R
+
 /** Eine erkannte Textzeile; [block] ist der Absatz der Texterkennung auf Seite [page]. */
 data class OcrLine(val text: String, val page: Int, val block: Int)
 
-/** Wozu eine Zeile gehört. */
-enum class LineKind(val label: String) {
-    Title("Titel"),
-    Ingredient("Zutat"),
-    Step("Schritt"),
-    Ignore("Ignorieren"),
+/** Wozu eine Zeile gehört; [label] ist der angezeigte Name (strings_photo.xml). */
+enum class LineKind(@StringRes val label: Int) {
+    Title(R.string.photo_kind_title),
+    Ingredient(R.string.photo_kind_ingredient),
+    Step(R.string.photo_kind_step),
+    Ignore(R.string.photo_kind_ignore),
 }
 
 /** Ergebnis der Zuordnung, bevor der Server die Zutaten zerlegt. */
 data class PhotoDraft(val title: String, val ingredientLines: List<String>, val steps: List<String>)
 
-private val ingredientsHeading = Regex("""^(zutaten(liste)?|einkaufsliste|das brauchst du( noch)?|für \d+ (personen|portionen))\b.*""", RegexOption.IGNORE_CASE)
-private val stepsHeading = Regex("""^(zubereitung|so geht'?s|anleitung|und so wird'?s gemacht|arbeitsschritte)\b.*""", RegexOption.IGNORE_CASE)
+// Erkennungsmerkmale, keine Anzeige: Rezepte können in jeder Sprache
+// fotografiert werden – unabhängig von der Sprache der App. Deshalb stehen
+// hier Wörter aus Deutsch, Englisch, Französisch, Spanisch und Italienisch
+// nebeneinander (Akzente optional, die Texterkennung verliert sie oft).
+private val ingredientsHeading = Regex(
+    """^(zutaten(liste)?|einkaufsliste|das brauchst du( noch)?|für \d+ (personen|portionen)""" +
+        """|ingr[eé]dients?|ingredientes|ingredienti""" +
+        """|for \d+ (servings|people|persons)|pour \d+ (personnes|portions)""" +
+        """|para \d+ (personas|raciones|porciones)|per \d+ (persone|porzioni))\b.*""",
+    RegexOption.IGNORE_CASE,
+)
+// Deutsche Überschriften dürfen weiteren Text haben; die anderen nur allein
+// stehen (auch mit Doppelpunkt) – „Préparation : 15 min“ oder „Preparation
+// time 20 min“ sind Zeitangaben im Kopf, keine Überschrift.
+private val stepsHeading = Regex(
+    """^(?:(zubereitung|so geht'?s|anleitung|und so wird'?s gemacht|arbeitsschritte)\b.*""" +
+        """|(preparation|steps|method|instructions|directions""" +
+        """|pr[eé]paration|[eé]tapes""" +
+        """|preparaci[oó]n|elaboraci[oó]n|pasos|modo de preparaci[oó]n""" +
+        """|preparazione|procedimento)\s*:?)$""",
+    RegexOption.IGNORE_CASE,
+)
 private val quantityStart = Regex("""^(\d|[½¼¾⅓⅔⅛]|eine?\b|etwas\b|evtl\.|prise\b|n\.\s?b\.|nach belieben)""", RegexOption.IGNORE_CASE)
+// Wort vor einer Schrittnummer: „Schritt 3“, „Step 3“, „Étape 3“, „Paso 3“, „Passaggio 3“.
+private const val STEP_WORD = """(?:schritt|step|[eé]tape|paso|passaggio)"""
 // „1.“, „2)“, „Schritt 3“ – nicht „200 g“ oder „1,5 l“.
-private val stepNumber = Regex("""^\s*(?:schritt\s*\d{1,2}\s*[.):]?|\d{1,2}\s*[.):])\s*""", RegexOption.IGNORE_CASE)
-private val stepNumberOnly = Regex("""^\s*(?:schritt\s*)?\d{1,2}\s*[.):]?\s*$""", RegexOption.IGNORE_CASE)
-private val noise = Regex("""^(www\.|https?://|©|seite \d+|\d+$|[^\p{L}\d]*$)""", RegexOption.IGNORE_CASE)
+private val stepNumber = Regex("""^\s*(?:$STEP_WORD\s*\d{1,2}\s*[.):]?|\d{1,2}\s*[.):])\s*""", RegexOption.IGNORE_CASE)
+private val stepNumberOnly = Regex("""^\s*(?:$STEP_WORD\s*)?\d{1,2}\s*[.):]?\s*$""", RegexOption.IGNORE_CASE)
+private val noise = Regex("""^(www\.|https?://|©|(seite|page|p[aá]gina) \d+|\d+$|[^\p{L}\d]*$)""", RegexOption.IGNORE_CASE)
 
 /**
  * Schlägt für jede Zeile eine Art vor. Überschriften wie „Zutaten“ und

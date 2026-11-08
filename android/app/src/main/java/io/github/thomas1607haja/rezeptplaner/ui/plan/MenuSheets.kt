@@ -71,7 +71,10 @@ import io.github.thomas1607haja.rezeptplaner.data.Snapshot
 import io.github.thomas1607haja.rezeptplaner.ui.amountText
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
+import io.github.thomas1607haja.rezeptplaner.ui.common.trPlural
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import io.github.thomas1607haja.rezeptplaner.ui.formatQuantity
 import io.github.thomas1607haja.rezeptplaner.ui.slotLabel
@@ -118,7 +121,10 @@ fun courseTags(snapshot: Snapshot): List<Tag> = snapshot.tagGroups.firstOrNull {
 
 fun courseName(courses: List<Tag>, id: Long?): String = courses.firstOrNull { it.id == id }?.name.orEmpty()
 
-fun courseCount(n: Int) = if (n == 1) "1 Gang" else "$n Gänge"
+fun courseCount(n: Int) = Texts.plural(R.plurals.plan_course_count, n)
+
+/** Titel eines Menüs; ohne Titel vom Server „Menü“ in der Sprache der App. */
+fun menuTitle(menu: Menu): String = menu.displayTitle.ifBlank { Texts.get(R.string.plan_menu_untitled) }
 
 /** Karte eines Menüs im Plan: Titel, Gänge darunter; Antippen öffnet das Menü. */
 @OptIn(ExperimentalFoundationApi::class)
@@ -139,20 +145,20 @@ fun MenuCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        "MENÜ", style = MaterialTheme.typography.labelSmall,
+                        tr(R.string.plan_menu_badge), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        slotPrefix(menu.slot) + menu.displayTitle,
+                        slotPrefix(menu.slot) + menuTitle(menu),
                         style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold,
                         maxLines = 2, overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        "${courseCount(block.courses.size)} · ${if (menu.servings == 1) "1 Person" else "${menu.servings} Personen"}",
+                        "${courseCount(block.courses.size)} · ${trPlural(R.plurals.plan_persons, menu.servings)}",
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                IconButton(onClick = onOpen) { Icon(painterResource(R.drawable.ic_more), contentDescription = "Menü bearbeiten") }
+                IconButton(onClick = onOpen) { Icon(painterResource(R.drawable.ic_more), contentDescription = tr(R.string.plan_edit_menu)) }
             }
             block.courses.forEach { e ->
                 Row(
@@ -173,7 +179,7 @@ fun MenuCard(
                 }
             }
             if (block.courses.isEmpty()) {
-                Text("Noch keine Gänge", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(tr(R.string.plan_no_courses_card), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (menu.note.isNotEmpty()) {
                 Text(
@@ -194,7 +200,7 @@ private fun CourseImage(e: MealPlanEntry, size: Int) {
             Modifier.size(size.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.secondaryContainer),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(painterResource(R.drawable.ic_utensils), contentDescription = "Ohne Rezept", tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            Icon(painterResource(R.drawable.ic_utensils), contentDescription = tr(R.string.plan_without_recipe), tint = MaterialTheme.colorScheme.onSecondaryContainer)
         }
     }
 }
@@ -205,10 +211,10 @@ fun CourseChooser(current: Long?, courses: List<Tag>, enabled: Boolean, onChoose
     var open by remember { mutableStateOf(false) }
     Box {
         TextButton(onClick = { open = true }, enabled = enabled) {
-            Text(courseName(courses, current).ifEmpty { "Gang wählen" } + " ▾", style = MaterialTheme.typography.labelMedium)
+            Text(courseName(courses, current).ifEmpty { tr(R.string.plan_choose_course) } + " ▾", style = MaterialTheme.typography.labelMedium)
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            DropdownMenuItem(text = { Text("– kein Gang –") }, onClick = { open = false; onChoose(0) })
+            DropdownMenuItem(text = { Text(tr(R.string.plan_no_course)) }, onClick = { open = false; onChoose(0) })
             courses.forEach { t -> DropdownMenuItem(text = { Text(t.name) }, onClick = { open = false; onChoose(t.id) }) }
         }
     }
@@ -273,27 +279,27 @@ fun MenuSheet(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Column {
-                Text("Menü: ${menu.displayTitle}", style = MaterialTheme.typography.titleMedium)
-                Text("${slotLabel(menu.slot)} am ${dayLabel(menu.date)}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(tr(R.string.plan_menu_heading, "title" to menuTitle(menu)), style = MaterialTheme.typography.titleMedium)
+                Text(tr(R.string.plan_slot_on_day, "slot" to slotLabel(menu.slot), "day" to dayLabel(menu.date)), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             OutlinedTextField(
                 title, { if (it.length <= 200) title = it },
-                label = { Text("Titel") }, placeholder = { Text("${menu.displayTitle} (automatisch)") },
+                label = { Text(tr(R.string.plan_menu_title_label)) }, placeholder = { Text(tr(R.string.plan_menu_title_auto, "title" to menuTitle(menu))) },
                 singleLine = true, modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 note, { if (it.length <= 2000) note = it },
-                label = { Text("Notiz") }, placeholder = { Text("z. B. Suppe vorher kochen") },
+                label = { Text(tr(R.string.plan_note)) }, placeholder = { Text(tr(R.string.plan_menu_note_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
             )
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedIconButton(onClick = { if (servings > 1) servings-- }, enabled = servings > 1) { Text("−") }
-                Text(if (servings == 1) "1 Person" else "$servings Personen", style = MaterialTheme.typography.titleMedium)
+                Text(trPlural(R.plurals.plan_persons, servings), style = MaterialTheme.typography.titleMedium)
                 OutlinedIconButton(onClick = { if (servings < 50) servings++ }, enabled = servings < 50) { Text("+") }
             }
             if (servings != menu.servings) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Auf alle Gänge übertragen", Modifier.weight(1f))
+                    Text(tr(R.string.plan_apply_to_all), Modifier.weight(1f))
                     Switch(checked = applyServings, onCheckedChange = { applyServings = it })
                 }
             }
@@ -301,12 +307,12 @@ fun MenuSheet(
                 Button(
                     onClick = { run { app.planRepository.updateMenu(menu, title, note, servings, applyServings && servings != menu.servings) } },
                     enabled = !busy, modifier = Modifier.fillMaxWidth(),
-                ) { Text(if (busy) "Speichert …" else "Speichern") }
+                ) { Text(tr(if (busy) R.string.common_saving else R.string.common_save)) }
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Text("Gänge", style = MaterialTheme.typography.titleSmall)
-            if (entries.isEmpty()) Text("Noch keine Gänge.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr(R.string.plan_courses), style = MaterialTheme.typography.titleSmall)
+            if (entries.isEmpty()) Text(tr(R.string.plan_no_courses), color = MaterialTheme.colorScheme.onSurfaceVariant)
             entries.forEach { e ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     CourseImage(e, 40)
@@ -317,34 +323,34 @@ fun MenuSheet(
                             color = if (e.recipeId != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         )
                         val details = buildList {
-                            add(if (e.recipe != null) amountText(e.servings, e.recipe.yieldUnit) else "ohne Rezept")
+                            add(if (e.recipe != null) amountText(e.servings, e.recipe.yieldUnit) else tr(R.string.plan_without_recipe_short))
                             excludedLabel(e.excludedIngredients.size)?.let(::add)
                             when (e.status) {
-                                "transferred" -> add("an Bring")
-                                "have_ingredients" -> add("Zutaten im Haus")
+                                "transferred" -> add(tr(R.string.plan_status_sent_short))
+                                "have_ingredients" -> add(tr(R.string.plan_status_have))
                             }
                         }
                         Text(details.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         CourseChooser(e.courseTagId, courses, enabled = !busy) { id -> run { app.planRepository.setCourse(e, id) } }
                     }
                     TextButton(
-                        onClick = { run(message = "„${entryTitle(e)}“ steht jetzt einzeln im Plan") { app.planRepository.detach(e) } },
+                        onClick = { run(message = Texts.get(R.string.plan_detached, "title" to entryTitle(e))) { app.planRepository.detach(e) } },
                         enabled = !busy,
-                    ) { Text("Lösen") }
+                    ) { Text(tr(R.string.plan_detach)) }
                 }
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { onAddCourse(menu) }, enabled = !busy) { Text("+ Gang hinzufügen") }
-                if (canPreview) OutlinedButton(onClick = { error = null; showPreview = true }, enabled = !busy) { Text("Zutaten vorhanden …") }
-                if (entries.isNotEmpty()) OutlinedButton(onClick = { onCook(menu) }) { Text("Kochansicht") }
+                Button(onClick = { onAddCourse(menu) }, enabled = !busy) { Text(tr(R.string.plan_add_course)) }
+                if (canPreview) OutlinedButton(onClick = { error = null; showPreview = true }, enabled = !busy) { Text(tr(R.string.plan_have_ingredients_open)) }
+                if (entries.isNotEmpty()) OutlinedButton(onClick = { onCook(menu) }) { Text(tr(R.string.plan_cooking_view)) }
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { onMove(PlanItem.MenuBlock(menu, entries)) }, enabled = !busy) { Text("Verschieben") }
-                OutlinedButton(onClick = { confirm = "dissolve" }, enabled = !busy) { Text("Auflösen") }
+                OutlinedButton(onClick = { onMove(PlanItem.MenuBlock(menu, entries)) }, enabled = !busy) { Text(tr(R.string.plan_move)) }
+                OutlinedButton(onClick = { confirm = "dissolve" }, enabled = !busy) { Text(tr(R.string.plan_dissolve)) }
                 OutlinedButton(onClick = { confirm = "delete" }, enabled = !busy) {
-                    Text("Löschen", color = MaterialTheme.colorScheme.error)
+                    Text(tr(R.string.common_delete), color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -365,20 +371,20 @@ fun MenuSheet(
         val delete = kind == "delete"
         AlertDialog(
             onDismissRequest = { confirm = null },
-            title = { Text(if (delete) "Menü löschen?" else "Menü auflösen?") },
+            title = { Text(tr(if (delete) R.string.plan_menu_delete_title else R.string.plan_menu_dissolve_title)) },
             text = {
                 Text(
-                    if (delete) "„${menu.displayTitle}“ mit ${if (entries.size == 1) "seinem Gang" else "allen ${entries.size} Gängen"} aus dem Plan entfernen?"
-                    else "Die Gänge bleiben als einzelne Gerichte im Plan.",
+                    if (delete) trPlural(R.plurals.plan_menu_delete_confirm, entries.size, "title" to menuTitle(menu))
+                    else tr(R.string.plan_menu_dissolve_confirm),
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     confirm = null
                     run(close = true) { app.planRepository.deleteMenu(menu, withEntries = delete) }
-                }) { Text(if (delete) "Löschen" else "Auflösen") }
+                }) { Text(tr(if (delete) R.string.common_delete else R.string.plan_dissolve)) }
             },
-            dismissButton = { TextButton(onClick = { confirm = null }) { Text("Abbrechen") } },
+            dismissButton = { TextButton(onClick = { confirm = null }) { Text(tr(R.string.common_cancel)) } },
         )
     }
 }
@@ -415,20 +421,21 @@ fun MenuPreviewSheet(
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.navigationBarsPadding().padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
-            Text("Zutaten vorhanden – ganzes Menü", style = MaterialTheme.typography.titleLarge)
+            Text(tr(R.string.plan_menu_preview_title), style = MaterialTheme.typography.titleLarge)
             Text(
-                "Häkchen entfernen, was du noch hast. Gilt nur für dieses Menü.",
+                tr(R.string.plan_menu_preview_hint),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
                 courses.forEach { (e, r) ->
                     val label = courseName(names, e.courseTagId)
                     Text(
-                        (if (label.isNotEmpty()) "$label: " else "") + r.title + " (${amountText(e.servings, r.yieldUnit)})",
+                        (if (label.isNotEmpty()) tr(R.string.plan_course_label, "course" to label, "title" to r.title) else r.title) +
+                            " (${amountText(e.servings, r.yieldUnit)})",
                         style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
                     )
                     val toBuy = r.ingredients.filter { it.shoppingRelevant }
-                    if (toBuy.isEmpty()) Text("Keine Zutaten zum Einkaufen.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (toBuy.isEmpty()) Text(tr(R.string.plan_nothing_to_buy), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     toBuy.forEach { ing ->
                         val mine = off[e.id].orEmpty()
                         val on = ing.itemKey !in mine
@@ -449,9 +456,9 @@ fun MenuPreviewSheet(
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp)) }
             Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { confirm(true) }, enabled = !busy, modifier = Modifier.weight(1f)) { Text("Alles vorhanden") }
+                OutlinedButton(onClick = { confirm(true) }, enabled = !busy, modifier = Modifier.weight(1f)) { Text(tr(R.string.plan_all_available)) }
                 Button(onClick = { confirm(false) }, enabled = !busy, modifier = Modifier.weight(1f)) {
-                    Text(if (busy) "Speichert …" else "Übernehmen")
+                    Text(tr(if (busy) R.string.common_saving else R.string.common_apply))
                 }
             }
         }
@@ -469,12 +476,12 @@ fun MenuScreen(menuId: Long, onBack: () -> Unit, onOpenCourse: (recipeId: Long, 
     val courses = courseTags(snapshot)
     Column(Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text(menu?.let { "Menü: ${it.displayTitle}" } ?: "Menü", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_back), contentDescription = "Zurück") } },
+            title = { Text(menu?.let { tr(R.string.plan_menu_heading, "title" to menuTitle(it)) } ?: tr(R.string.plan_menu_untitled), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_back), contentDescription = tr(R.string.common_back)) } },
             windowInsets = WindowInsets(0),
         )
         if (menu == null) {
-            Text("Dieses Menü gibt es nicht mehr.", Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr(R.string.plan_menu_gone), Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
             return@Column
         }
         Column(
@@ -482,7 +489,7 @@ fun MenuScreen(menuId: Long, onBack: () -> Unit, onOpenCourse: (recipeId: Long, 
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                "${dayLabel(menu.date)} · ${slotLabel(menu.slot)} · ${if (menu.servings == 1) "1 Person" else "${menu.servings} Personen"}",
+                "${dayLabel(menu.date)} · ${slotLabel(menu.slot)} · ${trPlural(R.plurals.plan_persons, menu.servings)}",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (menu.note.isNotEmpty()) {
@@ -493,7 +500,7 @@ fun MenuScreen(menuId: Long, onBack: () -> Unit, onOpenCourse: (recipeId: Long, 
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
             }
-            if (entries.isEmpty()) Text("Noch keine Gänge.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (entries.isEmpty()) Text(tr(R.string.plan_no_courses), color = MaterialTheme.colorScheme.onSurfaceVariant)
             entries.forEach { e ->
                 val recipeId = e.recipeId
                 Row(

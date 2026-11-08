@@ -1,5 +1,8 @@
 package io.github.thomas1607haja.rezeptplaner.data
 
+import androidx.annotation.StringRes
+import io.github.thomas1607haja.rezeptplaner.R
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.serialization.Serializable
 import java.net.URI
 
@@ -24,8 +27,14 @@ data class ServerConfig(
     override fun toString() = "ServerConfig(url=$url, apiKey=***, cfAccess=$hasCloudflareAccess)"
 }
 
-/** Fehler beim Lesen eines Einrichtungslinks oder einer Eingabe. */
-class InvalidSetupException(message: String) : Exception(message)
+/**
+ * Fehler beim Lesen eines Einrichtungslinks oder einer Eingabe. Der Text
+ * entsteht erst beim Lesen von [message] in der Sprache der Oberfläche
+ * (so laufen die reinen JVM-Tests ohne Texts).
+ */
+class InvalidSetupException(@StringRes val textId: Int) : Exception() {
+    override val message: String get() = Texts.get(textId)
+}
 
 /**
  * Liest und prüft die Angaben für eine Verbindung – aus dem QR-Code der
@@ -46,7 +55,7 @@ object SetupLink {
     fun parse(text: String, allowLocalHttp: Boolean = false): ServerConfig {
         val uri = runCatching { URI(text.trim()) }.getOrNull()
         if (uri == null || uri.scheme != SCHEME || uri.host != HOST) {
-            throw InvalidSetupException("Das ist kein QR-Code zum Verbinden des Rezeptplaners.")
+            throw InvalidSetupException(R.string.setup_error_not_setup_link)
         }
         val params = parseQuery(uri.rawQuery.orEmpty())
         return validate(
@@ -77,16 +86,16 @@ object SetupLink {
         if (parsed == null || (parsed.scheme != "https" && !localHttp) || parsed.host.isNullOrEmpty() ||
             parsed.rawQuery != null || parsed.rawFragment != null || parsed.rawUserInfo != null
         ) {
-            throw InvalidSetupException("Die Adresse muss mit https:// beginnen, z. B. https://rezepte.example.org.")
+            throw InvalidSetupException(R.string.setup_error_https)
         }
         val key = apiKey.trim()
         if (!keyPattern.matches(key)) {
-            throw InvalidSetupException("Der API-Schlüssel ist ungültig (er beginnt mit rp_).")
+            throw InvalidSetupException(R.string.setup_error_key)
         }
         val id = cfAccessId.trim()
         val secret = cfAccessSecret.trim()
         if (id.isEmpty() != secret.isEmpty()) {
-            throw InvalidSetupException("Für Cloudflare Access werden Client ID und Client Secret gebraucht.")
+            throw InvalidSetupException(R.string.setup_error_cf_both)
         }
         return ServerConfig(url = cleanUrl, apiKey = key, cfAccessId = id, cfAccessSecret = secret)
     }

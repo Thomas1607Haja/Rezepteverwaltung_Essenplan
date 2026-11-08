@@ -53,9 +53,12 @@ import coil3.compose.AsyncImage
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.CategoryChoice
 import io.github.thomas1607haja.rezeptplaner.api.ImportCandidate
+import io.github.thomas1607haja.rezeptplaner.api.Note
 import io.github.thomas1607haja.rezeptplaner.api.TagGroup
 import io.github.thomas1607haja.rezeptplaner.data.ImportState
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
+import io.github.thomas1607haja.rezeptplaner.ui.common.trPlural
 import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
 import io.github.thomas1607haja.rezeptplaner.ui.amountText
 import kotlinx.coroutines.launch
@@ -86,15 +89,15 @@ fun ImportScreen(onClose: () -> Unit, onOpenRecipe: (Long) -> Unit) {
 
     Column(Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Datei importieren") },
-            navigationIcon = { IconButton(onClick = close) { Icon(painterResource(R.drawable.ic_back), contentDescription = "Zurück") } },
+            title = { Text(tr(R.string.import_title)) },
+            navigationIcon = { IconButton(onClick = close) { Icon(painterResource(R.drawable.ic_back), contentDescription = tr(R.string.common_back)) } },
             windowInsets = WindowInsets(0),
         )
         when (val s = state) {
             ImportState.Idle -> Start(pick, error = null)
             is ImportState.Failed -> Start(pick, error = s.message)
-            ImportState.Reading, ImportState.Uploading -> Busy(if (s == ImportState.Reading) "Datei wird gelesen …" else "Wird geprüft …")
-            is ImportState.WaitingForSetup -> Busy("Erst die App mit dem Rezeptplaner verbinden – danach geht es weiter.")
+            ImportState.Reading, ImportState.Uploading -> Busy(tr(if (s == ImportState.Reading) R.string.import_reading else R.string.import_checking))
+            is ImportState.WaitingForSetup -> Busy(tr(R.string.import_waiting_setup))
             is ImportState.Preview -> Preview(
                 s,
                 thumbnail = { index -> repo.thumbnail(s.preview.token, index) },
@@ -112,18 +115,15 @@ fun ImportScreen(onClose: () -> Unit, onOpenRecipe: (Long) -> Unit) {
 @Composable
 private fun Start(pick: () -> Unit, error: String?) {
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            "Importdatei (ZIP oder JSON, z. B. von der Claude-Skill „rezeptplaner-import“) wählen. Gespeichert wird erst nach einer Vorschau.",
-        )
+        Text(tr(R.string.import_intro))
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        Button(onClick = pick, modifier = Modifier.fillMaxWidth()) { Text("Datei auswählen") }
+        Button(onClick = pick, modifier = Modifier.fillMaxWidth()) { Text(tr(R.string.import_choose_file)) }
         Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Aus WhatsApp", style = MaterialTheme.typography.titleSmall)
-                Text("Datei lange drücken → Teilen → Rezeptplaner.", style = MaterialTheme.typography.bodySmall)
+                Text(tr(R.string.import_whatsapp_title), style = MaterialTheme.typography.titleSmall)
+                Text(tr(R.string.import_whatsapp_share), style = MaterialTheme.typography.bodySmall)
                 Text(
-                    "Oder hier „Datei auswählen“: WhatsApp-Dokumente liegen unter Android → media → com.whatsapp → " +
-                        "WhatsApp → Media → WhatsApp Documents (meist auch unter „Zuletzt“).",
+                    tr(R.string.import_whatsapp_folder),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -152,9 +152,14 @@ private fun Preview(
     val count = s.selected.size
     Column(Modifier.fillMaxSize()) {
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val messages = s.rejected + s.preview.fileErrors.map { "${it.file}: ${it.error}" }
-            items(messages) { Text(it, color = MaterialTheme.colorScheme.error) }
-            if (s.preview.recipes.isEmpty()) item { Text("Keine Rezepte gefunden.") }
+            items(s.rejected) { Text(it, color = MaterialTheme.colorScheme.error) }
+            items(s.preview.fileErrors) {
+                Text(
+                    tr(R.string.import_item_error, "item" to it.file, "error" to (it.errorDetail?.text() ?: it.error)),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            if (s.preview.recipes.isEmpty()) item { Text(tr(R.string.import_no_recipes)) }
             items(s.preview.recipes, key = { it.index }) { c ->
                 CandidateCard(c, selected = c.index in s.selected, enabled = !s.importing, thumbnail = thumbnail, onToggle = { onToggle(c.index) })
             }
@@ -166,7 +171,7 @@ private fun Preview(
             // Am Ende der Liste statt fest unten: Im Querformat blieb für die
             // Vorschau sonst kaum Platz.
             item {
-                OutlinedButton(onClick = onOther, enabled = !s.importing, modifier = Modifier.fillMaxWidth()) { Text("Andere Datei") }
+                OutlinedButton(onClick = onOther, enabled = !s.importing, modifier = Modifier.fillMaxWidth()) { Text(tr(R.string.import_other_file)) }
             }
         }
         // Fest bleibt nur, was zum Abschluss gebraucht wird.
@@ -175,7 +180,7 @@ private fun Preview(
                 s.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 if (s.preview.recipes.isNotEmpty()) {
                     Button(onClick = onImport, enabled = count > 0 && !s.importing, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (s.importing) "Importiert …" else if (count == 1) "1 Rezept importieren" else "$count Rezepte importieren")
+                        Text(if (s.importing) tr(R.string.import_importing) else trPlural(R.plurals.import_import_count, count))
                     }
                 }
             }
@@ -203,35 +208,41 @@ private fun CandidateCard(
                 image?.let { AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(wrapTitle(r.title).ifEmpty { "(ohne Titel)" }, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(wrapTitle(r.title).ifEmpty { tr(R.string.import_untitled) }, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val details = buildList {
                     add(amountText(r.baseServings, r.yieldUnit))
-                    add(if (r.ingredients.size == 1) "1 Zutat" else "${r.ingredients.size} Zutaten")
-                    add(if (r.steps.size == 1) "1 Schritt" else "${r.steps.size} Schritte")
+                    add(trPlural(R.plurals.import_ingredient_count, r.ingredients.size))
+                    add(trPlural(R.plurals.import_step_count, r.steps.size))
                     formatMinutes(r.totalMinutes).takeIf { it.isNotEmpty() }?.let(::add)
                 }
                 Text(details.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 r.sourceName.takeIf { it.isNotEmpty() }?.let {
-                    Text("Quelle: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(tr(R.string.import_source, "source" to it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (r.tags.isNotEmpty()) {
                     Text(r.tags.joinToString(", ") { it.name }, style = MaterialTheme.typography.bodySmall)
                 }
-                c.errors.forEach { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                texts(c.errorDetails, c.errors).forEach { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 if (c.duplicates.isNotEmpty()) {
                     Text(
-                        "Gibt es schon: " + c.duplicates.joinToString(", ") { it.title },
+                        tr(R.string.import_exists, "titles" to c.duplicates.joinToString(", ") { it.title }),
                         color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall,
                     )
                 }
                 if (c.unknownCategories.isNotEmpty()) {
                     Text(
-                        "Unbekannte Kategorien: ${c.unknownCategories.joinToString(", ")} (siehe unten)",
+                        tr(R.string.import_unknown_in_recipe, "names" to c.unknownCategories.joinToString(", ")),
                         color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall,
                     )
                 }
                 // Hinweise zu unbekannten Kategorien stehen gesammelt unten.
-                c.warnings.filterNot { it.startsWith("Kategorie „") && "gibt es nicht" in it }.forEach {
+                val warnings = if (c.warningDetails.isNotEmpty()) {
+                    c.warningDetails.filterNot { it.code == UNKNOWN_CATEGORY }.map { it.text() }
+                } else {
+                    // Server vor 0.20: nur Texte (deutsch), am Wortlaut erkennen.
+                    c.warnings.filterNot { it.startsWith("Kategorie „") && "gibt es nicht" in it }
+                }
+                warnings.forEach {
                     Text(it, color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -239,11 +250,19 @@ private fun CandidateCard(
     }
 }
 
+/** Code des Hinweises „Kategorie gibt es nicht“ (server/internal/apierr); steht gesammelt unten. */
+private const val UNKNOWN_CATEGORY = "import_unknown_category"
+
+/** Hinweise in der Sprache der App; ältere Server (vor 0.20) liefern nur [fallback]. */
+private fun texts(details: List<Note>, fallback: List<String>): List<String> =
+    if (details.isNotEmpty()) details.map { it.text() } else fallback
+
 /** Text der Wahl für eine unbekannte Kategorie. */
+@Composable
 private fun choiceLabel(name: String, choice: CategoryChoice?, groups: List<TagGroup>): String = when {
-    choice == null -> "Weglassen"
-    choice.tagId > 0 -> "Zuordnen: " + (groups.flatMap { it.tags }.firstOrNull { it.id == choice.tagId }?.name ?: "?")
-    else -> "Neu: „$name“ in " + (groups.firstOrNull { it.id == choice.newInGroup }?.name ?: "?")
+    choice == null -> tr(R.string.import_skip)
+    choice.tagId > 0 -> tr(R.string.import_assign_to, "name" to (groups.flatMap { it.tags }.firstOrNull { it.id == choice.tagId }?.name ?: "?"))
+    else -> tr(R.string.import_new_in, "name" to name, "group" to (groups.firstOrNull { it.id == choice.newInGroup }?.name ?: "?"))
 }
 
 /**
@@ -262,23 +281,23 @@ private fun UnknownCategories(
     val withIds = groups.filter { it.id > 0 }
     Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Unbekannte Kategorien", style = MaterialTheme.typography.titleSmall)
+            Text(tr(R.string.import_unknown_title), style = MaterialTheme.typography.titleSmall)
             Text(
-                "Gibt es im Rezeptplaner nicht. Einer vorhandenen zuordnen, neu anlegen oder weglassen.",
+                tr(R.string.import_unknown_hint),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             names.forEach { name ->
                 var open by remember(name) { mutableStateOf(false) }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("„$name“", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                    Text(tr(R.string.import_quoted, "name" to name), fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                     Box {
                         TextButton(onClick = { open = true }, enabled = enabled) { Text(choiceLabel(name, choices[name], groups)) }
                         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                            DropdownMenuItem(text = { Text("Weglassen") }, onClick = { open = false; onChoose(name, null) })
+                            DropdownMenuItem(text = { Text(tr(R.string.import_skip)) }, onClick = { open = false; onChoose(name, null) })
                             groups.filter { it.tags.isNotEmpty() }.forEach { g ->
                                 HorizontalDivider()
                                 Text(
-                                    "Zuordnen – ${g.name}", style = MaterialTheme.typography.labelMedium,
+                                    tr(R.string.import_assign_group, "group" to g.name), style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                                 )
                                 g.tags.forEach { t ->
@@ -288,7 +307,7 @@ private fun UnknownCategories(
                             if (withIds.isNotEmpty()) {
                                 HorizontalDivider()
                                 Text(
-                                    "Neu anlegen in Gruppe", style = MaterialTheme.typography.labelMedium,
+                                    tr(R.string.import_create), style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                                 )
                                 withIds.forEach { g ->
@@ -309,27 +328,34 @@ private fun Done(s: ImportState.Done, onOpenRecipe: (Long) -> Unit, onAgain: () 
         val created = s.result.created
         item {
             Text(
-                if (created.size == 1) "1 Rezept importiert" else "${created.size} Rezepte importiert",
+                trPlural(R.plurals.import_imported, created.size),
                 style = MaterialTheme.typography.titleMedium,
             )
         }
         items(created, key = { it.id }) { c ->
             Column(Modifier.fillMaxWidth().clickable { onOpenRecipe(c.id) }.padding(vertical = 6.dp)) {
                 Text(c.title, color = MaterialTheme.colorScheme.primary)
-                c.warnings.forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary) }
+                texts(c.warningDetails, c.warnings).forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary) }
             }
         }
-        items(s.result.warnings) { Text(it, color = MaterialTheme.colorScheme.tertiary) }
+        items(texts(s.result.warningDetails, s.result.warnings)) { Text(it, color = MaterialTheme.colorScheme.tertiary) }
         if (s.result.failed.isNotEmpty()) {
-            item { Text("Nicht importiert", style = MaterialTheme.typography.titleMedium) }
+            item { Text(tr(R.string.import_not_imported), style = MaterialTheme.typography.titleMedium) }
             items(s.result.failed, key = { "f${it.index}" }) { f ->
-                Text("${f.title.ifEmpty { "Rezept ${f.index + 1}" }}: ${f.error}", color = MaterialTheme.colorScheme.error)
+                Text(
+                    tr(
+                        R.string.import_item_error,
+                        "item" to f.title.ifEmpty { tr(R.string.import_recipe_n, "n" to f.index + 1) },
+                        "error" to (f.errorDetail?.text() ?: f.error),
+                    ),
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
         }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                Button(onClick = onClose) { Text("Fertig") }
-                OutlinedButton(onClick = onAgain) { Text("Weitere Datei") }
+                Button(onClick = onClose) { Text(tr(R.string.import_done)) }
+                OutlinedButton(onClick = onAgain) { Text(tr(R.string.import_another)) }
             }
         }
     }

@@ -2,6 +2,7 @@ package io.github.thomas1607haja.rezeptplaner.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.ApiClient
 import io.github.thomas1607haja.rezeptplaner.api.ApiException
 import io.github.thomas1607haja.rezeptplaner.data.ConfigRepository
@@ -9,6 +10,7 @@ import io.github.thomas1607haja.rezeptplaner.data.InvalidSetupException
 import io.github.thomas1607haja.rezeptplaner.data.ServerConfig
 import io.github.thomas1607haja.rezeptplaner.data.SetupLink
 import io.github.thomas1607haja.rezeptplaner.data.SyncRepository
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,7 +48,7 @@ class SettingsViewModel(
             _check.value = try {
                 Check.Ok(api.system(current).version)
             } catch (e: ApiException) {
-                Check.Failed(e.message ?: "Fehler")
+                Check.Failed(e.message ?: Texts.get(R.string.settings_error_generic))
             }
         }
     }
@@ -56,7 +58,7 @@ class SettingsViewModel(
      * ohne) und testet die Verbindung damit. Liefert eine Fehlermeldung oder null.
      */
     suspend fun saveCloudflareAccess(id: String, secret: String): String? {
-        val current = repository.config.first() ?: return "Nicht verbunden."
+        val current = repository.config.first() ?: return Texts.get(R.string.settings_not_connected)
         val updated = try {
             SetupLink.validate(current.url, current.apiKey, id, secret)
         } catch (e: InvalidSetupException) {

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rezept aus Foto (ui/photo). -->
+<resources>
+    <string name="photo_title">Ricetta da foto</string>
+    <string name="photo_intro">Fotografa la pagina (o le pagine) della ricetta: dritta, ben illuminata, una pagina per foto. Il testo viene riconosciuto sul telefono; poi assegni le righe.</string>
+    <string name="photo_take_page">Fotografa pagina</string>
+    <string name="photo_take_another">+ Fotografa pagina</string>
+    <string name="photo_from_gallery">Dalla galleria</string>
+    <string name="photo_tap_hint">Tocca una riga per darle il tipo scelto. Tieni premuto: tutte le righe dall\'ultima toccata.</string>
+    <string name="photo_page">Pagina {n}</string>
+    <string name="photo_dish_chosen">Foto del piatto scelta</string>
+    <string name="photo_dish_optional">Foto del piatto (facoltativa):</string>
+    <string name="photo_camera">Fotocamera</string>
+    <string name="photo_gallery">Galleria</string>
+    <string name="photo_next">Continua con la modifica</string>
+    <string name="photo_leave_title">Annullare l\'importazione da foto?</string>
+    <string name="photo_leave_text">Le righe riconosciute andranno perse.</string>
+    <string name="photo_discard">Scarta</string>
+    <string name="photo_keep">Continua ad assegnare</string>
+    <string name="photo_kind_title">Titolo</string>
+    <string name="photo_kind_ingredient">Ingrediente</string>
+    <string name="photo_kind_step">Passaggio</string>
+    <string name="photo_kind_ignore">Ignora</string>
+    <string name="photo_recognizing">Riconoscimento del testo …</string>
+    <string name="photo_no_text">Nessun testo riconosciuto in una foto. Fotografa dritto e con buona luce.</string>
+    <string name="photo_mark_first">Prima segna delle righe come titolo, ingrediente o passaggio.</string>
+    <string name="photo_parsing">Analisi degli ingredienti …</string>
+    <string name="photo_note">Acquisita con l\'importazione da foto: controlla quantità e passaggi.</string>
+    <string name="photo_not_parsed">Ingredienti non analizzati ({message}).</string>
+    <string name="photo_ocr_loading">I servizi Google Play stanno ancora caricando il riconoscimento del testo. Riprova tra poco.</string>
+    <string name="photo_open_failed">Impossibile aprire la foto.</string>
+    <string name="photo_ocr_failed">Riconoscimento del testo non riuscito: {message}</string>
+</resources>

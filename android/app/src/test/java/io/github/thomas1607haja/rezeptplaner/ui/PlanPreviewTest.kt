@@ -13,7 +13,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+import androidx.test.ext.junit.runners.AndroidJUnit4
 
+// Robolectric: excludedLabel kommt aus den Ressourcen (Deutsch).
+@RunWith(AndroidJUnit4::class)
+@Config(sdk = [36], qualifiers = "de")
 class PlanPreviewTest {
     // Wie ApiClient: Standardwerte werden mitgeschickt – außer bei den neuen Feldern.
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }

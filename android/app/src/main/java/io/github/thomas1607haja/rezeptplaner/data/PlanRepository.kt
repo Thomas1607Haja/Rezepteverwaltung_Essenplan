@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.data
 
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.ApiClient
 import io.github.thomas1607haja.rezeptplaner.api.ApiException
 import io.github.thomas1607haja.rezeptplaner.api.EntryChanges
@@ -10,6 +11,7 @@ import io.github.thomas1607haja.rezeptplaner.api.MoveRequest
 import io.github.thomas1607haja.rezeptplaner.api.MoveResult
 import io.github.thomas1607haja.rezeptplaner.api.NewEntry
 import io.github.thomas1607haja.rezeptplaner.api.ToMenuRequest
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.coroutines.flow.first
 
 /** Ergebnis einer Änderung: null = gespeichert, sonst die Meldung für die Anzeige. */
@@ -194,13 +196,13 @@ class PlanRepository(
     }
 
     private suspend fun write(action: suspend (ServerConfig) -> Unit): PlanError {
-        val cfg = config.config.first() ?: return "Nicht verbunden."
+        val cfg = config.config.first() ?: return Texts.get(R.string.plan_not_connected)
         return try {
             action(cfg)
             sync.sync(SyncTrigger.Manual)
             null
         } catch (e: ApiException) {
-            if (e.offline) "Ändern geht nur mit Verbindung zum Rezeptplaner." else e.message
+            if (e.offline) Texts.get(R.string.plan_offline) else e.message
         }
     }
 }

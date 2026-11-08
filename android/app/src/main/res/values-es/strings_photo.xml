@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rezept aus Foto (ui/photo). -->
+<resources>
+    <string name="photo_title">Receta desde foto</string>
+    <string name="photo_intro">Fotografía la(s) página(s) de la receta: recta, bien iluminada, una página por foto. El texto se reconoce en el móvil; después asignas las líneas.</string>
+    <string name="photo_take_page">Fotografiar página</string>
+    <string name="photo_take_another">+ Fotografiar página</string>
+    <string name="photo_from_gallery">Desde la galería</string>
+    <string name="photo_tap_hint">Toca una línea para darle el tipo elegido. Mantén pulsado: todas las líneas desde la última tocada.</string>
+    <string name="photo_page">Página {n}</string>
+    <string name="photo_dish_chosen">Foto del plato elegida</string>
+    <string name="photo_dish_optional">Foto del plato (opcional):</string>
+    <string name="photo_camera">Cámara</string>
+    <string name="photo_gallery">Galería</string>
+    <string name="photo_next">Continuar a la edición</string>
+    <string name="photo_leave_title">¿Cancelar la importación por foto?</string>
+    <string name="photo_leave_text">Las líneas reconocidas se perderán.</string>
+    <string name="photo_discard">Descartar</string>
+    <string name="photo_keep">Seguir asignando</string>
+    <string name="photo_kind_title">Título</string>
+    <string name="photo_kind_ingredient">Ingrediente</string>
+    <string name="photo_kind_step">Paso</string>
+    <string name="photo_kind_ignore">Ignorar</string>
+    <string name="photo_recognizing">Reconociendo texto …</string>
+    <string name="photo_no_text">No se reconoció texto en una foto. Fotografía recto y con buena luz.</string>
+    <string name="photo_mark_first">Primero marca líneas como título, ingrediente o paso.</string>
+    <string name="photo_parsing">Analizando ingredientes …</string>
+    <string name="photo_note">Capturada con la importación por foto: revisa las cantidades y los pasos.</string>
+    <string name="photo_not_parsed">Ingredientes sin analizar ({message}).</string>
+    <string name="photo_ocr_loading">Los servicios de Google Play aún están cargando el reconocimiento de texto. Vuelve a intentarlo en un momento.</string>
+    <string name="photo_open_failed">No se pudo abrir la foto.</string>
+    <string name="photo_ocr_failed">Error en el reconocimiento de texto: {message}</string>
+</resources>

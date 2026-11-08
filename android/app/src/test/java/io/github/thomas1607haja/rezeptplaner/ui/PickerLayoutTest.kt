@@ -45,7 +45,7 @@ class PickerLayoutTest {
 
     private val courses = TagGroup(
         "Gang", id = 9, role = "course",
-        tags = listOf(Tag(1, "Hauptgericht"), Tag(2, "Vorspeise"), Tag(3, "Nachspeise"), Tag(4, "Kuchen & Torten")),
+        tags = listOf(Tag(1, "Hauptgericht", courseKey = "main"), Tag(2, "Vorspeise", courseKey = "starter"), Tag(3, "Nachspeise", courseKey = "dessert"), Tag(4, "Kuchen & Torten", courseKey = "cake")),
     )
 
     @Before
@@ -64,7 +64,7 @@ class PickerLayoutTest {
                     planFrom = "2026-10-10",
                     menusSupported = true,
                     tagGroups = listOf(courses),
-                    recipes = titles.mapIndexed { i, t -> Recipe(i + 1L, t, baseServings = 4, tags = listOf(Tag(1, "Hauptgericht"))) },
+                    recipes = titles.mapIndexed { i, t -> Recipe(i + 1L, t, baseServings = 4, tags = listOf(Tag(1, "Hauptgericht", courseKey = "main"))) },
                     entries = notes.mapIndexed { i, n -> MealPlanEntry(100L + i, "2026-10-${10 + i}", servings = 4, note = n) } +
                         MealPlanEntry(200, "2026-10-24", servings = 4, recipeId = 1, recipe = EntryRecipe("Romanesco-Tomaten-Pasta")) +
                         MealPlanEntry(201, "2026-10-25", servings = 4, recipeId = 2, recipe = EntryRecipe("Pizza selbstgemacht")),

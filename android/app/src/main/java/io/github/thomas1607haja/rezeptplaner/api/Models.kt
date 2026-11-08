@@ -108,7 +108,7 @@ data class Menu(
     val slot: String = "dinner",
     val position: Int = 0,
     val title: String = "",
-    @SerialName("display_title") val displayTitle: String = "Menü",
+    @SerialName("display_title") val displayTitle: String = "",
     val note: String = "",
     val servings: Int = 4,
     /** Nur in Antworten von /menus/{id}: die Gänge in Reihenfolge. */

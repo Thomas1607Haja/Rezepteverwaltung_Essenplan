@@ -1,11 +1,13 @@
 package io.github.thomas1607haja.rezeptplaner.data
 
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.ApiClient
 import io.github.thomas1607haja.rezeptplaner.api.ApiException
 import io.github.thomas1607haja.rezeptplaner.api.Ingredient
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
 import io.github.thomas1607haja.rezeptplaner.api.RecipeInput
 import io.github.thomas1607haja.rezeptplaner.api.UrlDraft
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.coroutines.flow.first
 
 /** Ergebnis einer Rezeptänderung: Wert oder Meldung für die Anzeige. */
@@ -61,7 +63,7 @@ class RecipeRepository(
             is ImageChange.FromUrl -> (call { api.fetchImage(it, recipe.id, image.url) } as? Outcome.Error)?.message
         }
         sync.sync(SyncTrigger.Manual)
-        return Outcome.Ok(recipe to imageError?.let { "Rezept gespeichert, aber das Bild nicht: $it" })
+        return Outcome.Ok(recipe to imageError?.let { Texts.get(R.string.recipe_image_failed, "message" to it) })
     }
 
     suspend fun delete(id: Long): Outcome<Unit> = call { api.deleteRecipe(it, id) }.also { if (it is Outcome.Ok) sync.sync(SyncTrigger.Manual) }
@@ -72,11 +74,11 @@ class RecipeRepository(
         call { api.setFavorite(it, id, favorite) }.also { if (it is Outcome.Ok) sync.sync(SyncTrigger.Manual) }
 
     private suspend fun <T> call(action: suspend (ServerConfig) -> T): Outcome<T> {
-        val cfg = config.config.first() ?: return Outcome.Error("Nicht verbunden.")
+        val cfg = config.config.first() ?: return Outcome.Error(Texts.get(R.string.recipe_not_connected))
         return try {
             Outcome.Ok(action(cfg))
         } catch (e: ApiException) {
-            Outcome.Error(if (e.offline) "Ändern geht nur mit Verbindung zum Rezeptplaner." else e.message ?: "Fehler")
+            Outcome.Error(if (e.offline) Texts.get(R.string.recipe_offline) else e.message ?: Texts.get(R.string.recipe_error))
         }
     }
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rezept als PDF teilen (share/). Texte wie web/src/locales/recipe. -->
+<resources>
+    <!-- Anfang des Dateinamens: „Ricetta_Lasagne.pdf“; nur Buchstaben, ohne Leerzeichen. -->
+    <string name="share_file_prefix">Ricetta</string>
+    <string name="share_prep_time">Preparazione {time}</string>
+    <string name="share_total_time">Tempo totale {time}</string>
+    <string name="share_course">Portata: {names}</string>
+    <string name="share_categories">Categorie: {names}</string>
+    <string name="share_source">Fonte: {source}</string>
+    <string name="share_variant_of">Variante di {title}</string>
+    <string name="share_ingredients">Ingredienti</string>
+    <string name="share_for">per {amount}</string>
+    <string name="share_steps">Passaggi</string>
+    <string name="share_notes">Note</string>
+    <string name="share_footer">Creato con Rezeptplaner</string>
+    <string name="share_page">Pagina {page} di {pages}</string>
+    <string name="share_subject">Ricetta: {title}</string>
+    <string name="share_chooser">Condividi ricetta</string>
+</resources>

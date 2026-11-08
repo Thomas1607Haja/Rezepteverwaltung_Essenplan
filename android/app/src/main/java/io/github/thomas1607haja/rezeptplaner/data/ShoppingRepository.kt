@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.data
 
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.ApiClient
 import io.github.thomas1607haja.rezeptplaner.api.ApiException
 import io.github.thomas1607haja.rezeptplaner.api.ResetPreview
@@ -9,6 +10,7 @@ import io.github.thomas1607haja.rezeptplaner.api.SendResult
 import io.github.thomas1607haja.rezeptplaner.api.ShoppingPreview
 import io.github.thomas1607haja.rezeptplaner.api.ShoppingSend
 import io.github.thomas1607haja.rezeptplaner.api.TodoList
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.coroutines.flow.first
 
 /**
@@ -49,7 +51,7 @@ class ShoppingRepository(
     suspend fun lists(): Outcome<List<TodoList>> = when (val r = call { api.homeAssistantStatus(it) }) {
         is Outcome.Error -> r
         is Outcome.Ok -> if (r.value.error.isNotEmpty()) {
-            Outcome.Error("Home Assistant nicht erreichbar: ${r.value.error}")
+            Outcome.Error(Texts.get(R.string.shopping_ha_unreachable, "message" to r.value.error))
         } else {
             Outcome.Ok(r.value.lists)
         }
@@ -58,11 +60,11 @@ class ShoppingRepository(
     suspend fun setList(entityId: String): Outcome<Unit> = call { api.setBringList(it, entityId) }
 
     private suspend fun <T> call(action: suspend (ServerConfig) -> T): Outcome<T> {
-        val cfg = config.config.first() ?: return Outcome.Error("Nicht verbunden.")
+        val cfg = config.config.first() ?: return Outcome.Error(Texts.get(R.string.shopping_not_connected))
         return try {
             Outcome.Ok(action(cfg))
         } catch (e: ApiException) {
-            Outcome.Error(if (e.offline) "Der Einkauf geht nur mit Verbindung zum Rezeptplaner." else e.message ?: "Fehler")
+            Outcome.Error(if (e.offline) Texts.get(R.string.shopping_offline) else e.message)
         }
     }
 }

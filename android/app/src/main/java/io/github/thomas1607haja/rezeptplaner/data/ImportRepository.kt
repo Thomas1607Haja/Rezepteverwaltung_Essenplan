@@ -3,11 +3,13 @@ package io.github.thomas1607haja.rezeptplaner.data
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.OpenableColumns
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.ApiClient
 import io.github.thomas1607haja.rezeptplaner.api.ApiException
 import io.github.thomas1607haja.rezeptplaner.api.CategoryChoice
 import io.github.thomas1607haja.rezeptplaner.api.ImportPreview
 import io.github.thomas1607haja.rezeptplaner.api.ImportResult
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -70,23 +72,23 @@ class ImportRepository(
                 val data = try {
                     read(uri, MAX_BYTES - total)
                 } catch (e: TooLargeException) {
-                    rejected += "„$name“ ist zu groß (höchstens ${MAX_BYTES shr 20} MB zusammen)."
+                    rejected += Texts.get(R.string.import_too_large, "name" to name, "mb" to (MAX_BYTES shr 20))
                     continue
                 } catch (e: Exception) {
-                    rejected += "„$name“ ließ sich nicht lesen."
+                    rejected += Texts.get(R.string.import_unreadable, "name" to name)
                     continue
                 }
                 if (isImportFile(data)) {
                     files += ImportFile(name, data)
                     total += data.size
                 } else {
-                    rejected += "„$name“ ist keine Rezeptplaner-Importdatei."
+                    rejected += Texts.get(R.string.import_not_import_file, "name" to name)
                 }
             }
         }
-        if (uris.size > MAX_FILES) rejected += "Höchstens $MAX_FILES Dateien auf einmal."
+        if (uris.size > MAX_FILES) rejected += Texts.get(R.string.import_too_many_files, "max" to MAX_FILES)
         if (files.isEmpty()) {
-            _state.value = ImportState.Failed(rejected.joinToString("\n").ifEmpty { "Keine Datei erhalten." })
+            _state.value = ImportState.Failed(rejected.joinToString("\n").ifEmpty { Texts.get(R.string.import_no_file) })
             return
         }
         if (config.config.first() == null) {
@@ -111,7 +113,7 @@ class ImportRepository(
             val selected = preview.recipes.filter { it.importable && it.duplicates.isEmpty() }.map { it.index }.toSet()
             ImportState.Preview(preview, rejected, selected)
         } catch (e: ApiException) {
-            ImportState.Failed(if (e.offline) OFFLINE else e.message ?: "Fehler beim Hochladen.")
+            ImportState.Failed(if (e.offline) offline() else e.message ?: Texts.get(R.string.import_upload_failed))
         }
     }
 
@@ -135,7 +137,7 @@ class ImportRepository(
             sync.sync(SyncTrigger.Manual)
             ImportState.Done(result)
         } catch (e: ApiException) {
-            p.copy(importing = false, error = if (e.offline) OFFLINE else e.message)
+            p.copy(importing = false, error = if (e.offline) offline() else e.message)
         }
     }
 
@@ -153,7 +155,7 @@ class ImportRepository(
             resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
                 if (c.moveToFirst()) c.getString(0) else null
             }
-        }.getOrNull() ?: uri.lastPathSegment ?: "Datei"
+        }.getOrNull() ?: uri.lastPathSegment ?: Texts.get(R.string.import_default_file_name)
 
     private fun read(uri: Uri, limit: Long): ByteArray {
         val stream = resolver.openInputStream(uri) ?: error("kein Inhalt")
@@ -178,7 +180,7 @@ class ImportRepository(
         // Wie die Grenzen des Servers (server/internal/fileimport/archive.go).
         const val MAX_BYTES = 30L shl 20
         const val MAX_FILES = 10
-        private const val OFFLINE = "Import geht nur mit Verbindung zum Rezeptplaner."
+        private fun offline() = Texts.get(R.string.import_offline)
 
         // Byte-Order-Mark am Dateianfang, wie ihn manche Editoren schreiben.
         private val BOM = Char(0xFEFF).toString()

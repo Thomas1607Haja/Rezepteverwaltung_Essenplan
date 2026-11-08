@@ -36,9 +36,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.ShoppingItem
 import io.github.thomas1607haja.rezeptplaner.ui.common.OfflineBanner
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
+import io.github.thomas1607haja.rezeptplaner.ui.common.trPlural
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import io.github.thomas1607haja.rezeptplaner.ui.slotWhen
 
@@ -60,7 +63,7 @@ fun ShoppingScreen(onOpenRecipe: (Long, Int) -> Unit) {
     Column(Modifier.fillMaxSize()) {
         OfflineBanner(sync.log)
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(16.dp, 12.dp, 16.dp, 4.dp)) {
-            listOf(false to "Eingekaufte Woche", true to "Nächster Einkauf").forEachIndexed { i, (next, label) ->
+            listOf(false to tr(R.string.shopping_period_current), true to tr(R.string.shopping_period_next)).forEachIndexed { i, (next, label) ->
                 SegmentedButton(
                     selected = ui.next == next,
                     onClick = { vm.switchPeriod(next) },
@@ -77,11 +80,11 @@ fun ShoppingScreen(onOpenRecipe: (Long, Int) -> Unit) {
             LazyColumn(Modifier.fillMaxSize()) {
                 when {
                     ui.error != null && preview == null -> item { Message(ui.error!!, error = true) }
-                    preview == null -> item { Message("Lädt …") }
+                    preview == null -> item { Message(tr(R.string.common_loading)) }
                     else -> {
                         item {
                             Text(
-                                "${dayLabel(preview.period.from)} bis ${dayLabel(preview.period.to)}",
+                                tr(R.string.shopping_range, "from" to dayLabel(preview.period.from), "to" to dayLabel(preview.period.to)),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -106,9 +109,9 @@ fun ShoppingScreen(onOpenRecipe: (Long, Int) -> Unit) {
                     Button(onClick = { vm.send(missing = false) }, enabled = !ui.sending && count > 0, modifier = Modifier.fillMaxWidth()) {
                         Text(
                             when {
-                                ui.sending -> "Sendet …"
-                                list != null -> "An Bring senden: $list ($count)"
-                                else -> "An Bring senden ($count)"
+                                ui.sending -> tr(R.string.shopping_sending)
+                                list != null -> tr(R.string.shopping_send_to, "list" to list, "count" to count)
+                                else -> tr(R.string.shopping_send, "count" to count)
                             },
                         )
                     }
@@ -129,7 +132,7 @@ fun ShoppingScreen(onOpenRecipe: (Long, Int) -> Unit) {
     ui.lists?.let { lists ->
         AlertDialog(
             onDismissRequest = vm::closeLists,
-            title = { Text("Bring-Liste wählen") },
+            title = { Text(tr(R.string.shopping_choose_list)) },
             text = {
                 Column {
                     lists.forEach { list ->
@@ -142,7 +145,7 @@ fun ShoppingScreen(onOpenRecipe: (Long, Int) -> Unit) {
                 }
             },
             confirmButton = {},
-            dismissButton = { TextButton(onClick = vm::closeLists) { Text("Abbrechen") } },
+            dismissButton = { TextButton(onClick = vm::closeLists) { Text(tr(R.string.common_cancel)) } },
         )
     }
 }
@@ -150,9 +153,9 @@ fun ShoppingScreen(onOpenRecipe: (Long, Int) -> Unit) {
 /** Gerichte des Zeitraums; nicht eingehende mit Grund. */
 private fun LazyListScope.entries(ui: ShoppingUi, onOpenRecipe: (Long, Int) -> Unit, onReset: () -> Unit) {
     val preview = ui.preview ?: return
-    item { Heading("Gerichte") }
+    item { Heading(tr(R.string.shopping_dishes)) }
     if (preview.entries.isEmpty()) {
-        item { Message("Für diesen Zeitraum ist nichts geplant.") }
+        item { Message(tr(R.string.shopping_nothing_planned)) }
         return
     }
     items(preview.entries, key = { "e${it.id}" }) { entry ->
@@ -173,7 +176,9 @@ private fun LazyListScope.entries(ui: ShoppingUi, onOpenRecipe: (Long, Int) -> U
             Column(Modifier.weight(1f)) {
                 Text(entry.title, color = muted)
                 val details = listOfNotNull(
-                    if (entry.recipeId != null) "${entry.servings} ${entry.yieldUnit.ifEmpty { "Port." }}" else null,
+                    if (entry.recipeId == null) null
+                    else if (entry.yieldUnit.isEmpty()) trPlural(R.plurals.shopping_servings_short, entry.servings)
+                    else "${entry.servings} ${entry.yieldUnit}",
                     reason.ifEmpty { null },
                 )
                 if (details.isNotEmpty()) {
@@ -186,7 +191,7 @@ private fun LazyListScope.entries(ui: ShoppingUi, onOpenRecipe: (Long, Int) -> U
     if (preview.entries.any { it.status == "transferred" }) {
         item {
             OutlinedButton(onClick = onReset, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                Text("Übertragung zurücksetzen …")
+                Text(tr(R.string.shopping_reset_button))
             }
         }
     }
@@ -197,10 +202,10 @@ private fun LazyListScope.shoppingList(ui: ShoppingUi, vm: ShoppingViewModel) {
     val preview = ui.preview ?: return
     item {
         Row(Modifier.fillMaxWidth().padding(end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Heading("Einkaufsliste", Modifier.weight(1f))
+            Heading(tr(R.string.shopping_list_title), Modifier.weight(1f))
             if (preview.items.isNotEmpty()) {
-                TextButton(onClick = { vm.selectAll(true) }) { Text("Alle") }
-                TextButton(onClick = { vm.selectAll(false) }) { Text("Keine") }
+                TextButton(onClick = { vm.selectAll(true) }) { Text(tr(R.string.shopping_select_all)) }
+                TextButton(onClick = { vm.selectAll(false) }) { Text(tr(R.string.shopping_select_none)) }
             }
         }
     }
@@ -209,19 +214,22 @@ private fun LazyListScope.shoppingList(ui: ShoppingUi, vm: ShoppingViewModel) {
             Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                 Text(sentSummary(result), color = MaterialTheme.colorScheme.primary)
                 if (result.failed.isNotEmpty()) {
-                    Text("Nicht angekommen – später nachsenden oder von Hand eintragen:", color = MaterialTheme.colorScheme.error)
-                    result.failed.forEach { Text("• ${it.name}${if (it.spec.isNotEmpty()) " (${it.spec})" else ""}") }
+                    Text(tr(R.string.shopping_failed_intro), color = MaterialTheme.colorScheme.error)
+                    result.failed.forEach { f ->
+                        val reason = f.reason()
+                        Text("• ${f.name}${if (f.spec.isNotEmpty()) " (${f.spec})" else ""}${if (reason.isNotEmpty()) " – $reason" else ""}")
+                    }
                 }
             }
         }
     }
     if (preview.items.isEmpty()) {
-        item { Message("Nichts einzukaufen.") }
+        item { Message(tr(R.string.shopping_nothing_to_buy)) }
         return
     }
     item {
         Text(
-            "${preview.items.size - ui.deselected.size} von ${preview.items.size} ausgewählt. Abgewählte Artikel gelten nach dem Senden als erledigt.",
+            tr(R.string.shopping_selected_hint, "selected" to preview.items.size - ui.deselected.size, "total" to preview.items.size),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -238,16 +246,16 @@ private fun LazyListScope.differences(ui: ShoppingUi, vm: ShoppingViewModel) {
     if (preview.missing.isEmpty() && preview.surplus.isEmpty()) return
     item {
         HorizontalDivider(Modifier.padding(top = 12.dp))
-        Heading("Nach dem Senden geändert")
+        Heading(tr(R.string.shopping_changed_title))
         Text(
-            "Gerichte wurden nach dem Senden geändert, verschoben oder entfernt.",
+            tr(R.string.shopping_changed_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp),
         )
     }
     if (preview.missing.isNotEmpty()) {
-        item { SubHeading("Fehlt noch auf der Bring-Liste") }
+        item { SubHeading(tr(R.string.shopping_missing_title)) }
         items(preview.missing, key = { "m${it.key}" }) { item ->
             ItemRow(item, checked = item.key !in ui.deselectedMissing) { vm.toggle(item.key, missing = true) }
         }
@@ -255,19 +263,22 @@ private fun LazyListScope.differences(ui: ShoppingUi, vm: ShoppingViewModel) {
             Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                 if (preview.items.isEmpty()) SendStatus(ui, vm)
                 Button(onClick = { vm.send(missing = true) }, enabled = !ui.sending) {
-                    Text(if (ui.sending) "Sendet …" else "Differenz nachsenden (${preview.missing.size - ui.deselectedMissing.size})")
+                    Text(
+                        if (ui.sending) tr(R.string.shopping_sending)
+                        else tr(R.string.shopping_send_missing, "count" to preview.missing.size - ui.deselectedMissing.size),
+                    )
                 }
                 preview.list?.takeIf { it.entityId.isNotEmpty() }?.let {
-                    Text("an „${it.name}“", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(tr(R.string.shopping_to_list, "name" to it.name), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
     }
     if (preview.surplus.isNotEmpty()) {
         item {
-            SubHeading("Zu viel gesendet")
+            SubHeading(tr(R.string.shopping_surplus_title))
             Text(
-                "Wird nicht aus Bring gelöscht – vielleicht schon gekauft. Am besten für ein anderes Gericht einplanen.",
+                tr(R.string.shopping_surplus_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -307,7 +318,7 @@ private fun ItemRow(item: ShoppingItem, checked: Boolean, onToggle: () -> Unit) 
 private fun SendStatus(ui: ShoppingUi, vm: ShoppingViewModel) {
     ui.notice?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
     ui.sendError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-    if (ui.needsList) TextButton(onClick = vm::chooseList) { Text("Bring-Liste wählen") }
+    if (ui.needsList) TextButton(onClick = vm::chooseList) { Text(tr(R.string.shopping_choose_list)) }
 }
 
 @Composable

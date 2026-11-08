@@ -14,7 +14,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+import androidx.test.ext.junit.runners.AndroidJUnit4
 
+// Robolectric: Prüfmeldungen und Dezimalzeichen kommen aus den Ressourcen (Deutsch).
+@RunWith(AndroidJUnit4::class)
+@Config(sdk = [36], qualifiers = "de")
 class RecipeFormTest {
     @Test
     fun quantities() {
@@ -61,6 +67,8 @@ class RecipeFormTest {
         val (input, errors) = bad.toInput()
         assertNull(input)
         assertEquals(setOf("title", "baseServings", "sourceUrl", "item:99"), errors.keys)
+        assertEquals("Bitte einen Titel eingeben.", errors["title"])
+        assertEquals("Menge nicht lesbar, z. B. 1,5 oder 1/2.", errors["item:99"])
         // Leere Zeilen werden einfach weggelassen.
         val (ok, _) = RecipeForm(title = "Suppe", items = listOf(IngredientRow())).toInput()
         assertEquals(0, ok!!.ingredients.size)

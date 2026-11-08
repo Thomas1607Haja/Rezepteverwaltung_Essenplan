@@ -66,6 +66,8 @@ import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import io.github.thomas1607haja.rezeptplaner.ui.slotWhen
 import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
@@ -121,7 +123,7 @@ fun RecipeScreen(
                 throw e
             } catch (e: Exception) {
                 Log.w("Rezeptplaner", "PDF teilen fehlgeschlagen", e)
-                snackbar.showSnackbar("PDF konnte nicht erstellt werden.")
+                snackbar.showSnackbar(Texts.get(R.string.recipe_pdf_failed))
             } finally {
                 sharing = false
             }
@@ -140,12 +142,12 @@ fun RecipeScreen(
         TopAppBar(
             title = { Text(recipe?.title.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis) },
             navigationIcon = {
-                IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_back), contentDescription = "Zurück") }
+                IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_back), contentDescription = tr(R.string.common_back)) }
             },
             actions = {
                 if (recipe != null) {
                     IconButton(onClick = { if (recipe.notes.isBlank()) share(false) else askShare = true }, enabled = !sharing) {
-                        Icon(painterResource(R.drawable.ic_share), contentDescription = "Als PDF teilen")
+                        Icon(painterResource(R.drawable.ic_share), contentDescription = tr(R.string.recipe_share_pdf))
                     }
                 }
             },
@@ -153,7 +155,7 @@ fun RecipeScreen(
             windowInsets = WindowInsets(0),
         )
         if (recipe == null) {
-            Text("Dieses Rezept gibt es nicht mehr.", Modifier.padding(24.dp))
+            Text(tr(R.string.recipe_not_found), Modifier.padding(24.dp))
             return@Column
         }
         val today = snapshot.today.takeIf(String::isNotEmpty)?.let(LocalDate::parse) ?: LocalDate.now()
@@ -166,7 +168,7 @@ fun RecipeScreen(
             onOpen, onAddToPlan = { adding = true },
             planContext = entry?.let {
                 buildList {
-                    add("Im Essensplan: ${dayLabel(it.date)}" + slotWhen(it.slot).let { w -> if (w.isEmpty()) "" else " $w" })
+                    add(tr(R.string.recipe_in_plan, "day" to dayLabel(it.date) + slotWhen(it.slot).let { w -> if (w.isEmpty()) "" else " $w" }))
                     add(amountText(it.servings, recipe.yieldUnit))
                     if (it.note.isNotEmpty()) add(it.note)
                 }.joinToString(" · ")
@@ -234,7 +236,7 @@ private fun RecipeContent(
             )
             if (recipe.isIllustrated) {
                 Text(
-                    "Gezeichnetes Bild (die Vorlage hatte kein Foto). Unter „Bearbeiten“ lässt es sich durch ein Foto ersetzen.",
+                    tr(R.string.recipe_drawn_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -247,7 +249,7 @@ private fun RecipeContent(
                 IconButton(onClick = actions.onToggleFavorite, enabled = !actions.busy) {
                     Icon(
                         painterResource(if (recipe.isFavorite) R.drawable.ic_heart_filled else R.drawable.ic_heart),
-                        contentDescription = if (recipe.isFavorite) "Favorit entfernen" else "Als Favorit merken",
+                        contentDescription = tr(if (recipe.isFavorite) R.string.recipe_favorite_remove else R.string.recipe_favorite_add),
                         tint = MaterialTheme.colorScheme.primary,
                     )
                 }
@@ -255,7 +257,7 @@ private fun RecipeContent(
             if (recipe.parentRecipeId != null) {
                 all.firstOrNull { it.id == recipe.parentRecipeId }?.let { parent ->
                     Text(
-                        "Variante von ${parent.title}", color = MaterialTheme.colorScheme.primary,
+                        tr(R.string.recipe_variant_of, "title" to parent.title), color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable { onOpen(parent.id) },
                     )
                 }
@@ -280,15 +282,15 @@ private fun RecipeContent(
             Button(onClick = onAddToPlan) {
                 Icon(painterResource(R.drawable.ic_plus), contentDescription = null, Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Zum Essensplan hinzufügen")
+                Text(tr(R.string.recipe_add_to_plan))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = actions.onEdit, enabled = !actions.busy) { Text("Bearbeiten") }
-                OutlinedButton(onClick = actions.onVariant, enabled = !actions.busy) { Text("Variante speichern") }
+                OutlinedButton(onClick = actions.onEdit, enabled = !actions.busy) { Text(tr(R.string.common_edit)) }
+                OutlinedButton(onClick = actions.onVariant, enabled = !actions.busy) { Text(tr(R.string.recipe_save_variant)) }
             }
         }
 
-        SectionCard("Zutaten") {
+        SectionCard(tr(R.string.recipe_ingredients)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedIconButton(onClick = { if (servings > 1) servings-- }, enabled = servings > 1) { Text("−") }
                 Text(amountText(servings, recipe.yieldUnit), style = MaterialTheme.typography.titleMedium)
@@ -297,17 +299,17 @@ private fun RecipeContent(
             if (servings != recipe.baseServings) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "Umgerechnet von ${amountText(recipe.baseServings, recipe.yieldUnit)}",
+                        tr(R.string.recipe_converted_from, "amount" to amountText(recipe.baseServings, recipe.yieldUnit)),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    TextButton(onClick = { servings = recipe.baseServings }) { Text("zurücksetzen") }
+                    TextButton(onClick = { servings = recipe.baseServings }) { Text(tr(R.string.recipe_reset_servings)) }
                 }
             }
             Ingredients(recipe.ingredients, factor)
         }
 
         if (recipe.steps.isNotEmpty()) {
-            SectionCard("Zubereitung") {
+            SectionCard(tr(R.string.recipe_steps)) {
                 recipe.steps.forEachIndexed { i, step ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("${i + 1}.", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
@@ -317,7 +319,7 @@ private fun RecipeContent(
             }
         }
         if (recipe.notes.isNotEmpty()) {
-            SectionCard("Notizen") { Text(recipe.notes) }
+            SectionCard(tr(R.string.recipe_notes)) { Text(recipe.notes) }
         }
     }
 }
@@ -328,18 +330,18 @@ private fun ShareDialog(onShare: (Boolean) -> Unit, onDismiss: () -> Unit) {
     var withNotes by rememberSaveable { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Als PDF teilen") },
+        title = { Text(tr(R.string.recipe_share_pdf)) },
         text = {
             Row(
                 Modifier.fillMaxWidth().clickable { withNotes = !withNotes },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(checked = withNotes, onCheckedChange = { withNotes = it })
-                Text("Eigene Notizen mitsenden")
+                Text(tr(R.string.recipe_share_with_notes))
             }
         },
-        confirmButton = { TextButton(onClick = { onShare(withNotes) }) { Text("Teilen") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Abbrechen") } },
+        confirmButton = { TextButton(onClick = { onShare(withNotes) }) { Text(tr(R.string.recipe_share)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(tr(R.string.common_cancel)) } },
     )
 }
 
@@ -356,15 +358,15 @@ private fun Meta(recipe: Recipe, status: String, open: (String) -> Unit) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val parts = buildList {
         add(status)
-        recipe.prepMinutes?.let { add("Vorbereitung ${formatMinutes(it)}") }
-        recipe.totalMinutes?.let { add("Gesamt ${formatMinutes(it)}") }
+        recipe.prepMinutes?.let { add(tr(R.string.recipe_prep_time, "time" to formatMinutes(it))) }
+        recipe.totalMinutes?.let { add(tr(R.string.recipe_total_time, "time" to formatMinutes(it))) }
     }
     Text(parts.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = muted)
     val web = recipe.sourceUrl.takeIf { it.startsWith("https://") || it.startsWith("http://") }
     if (web != null || recipe.sourceName.isNotEmpty()) {
         val label = recipe.sourceName.ifEmpty { runCatching { URI(web).host }.getOrNull() ?: web.orEmpty() }
         Text(
-            "Quelle: $label",
+            tr(R.string.recipe_source, "name" to label),
             style = MaterialTheme.typography.bodySmall,
             color = if (web != null) MaterialTheme.colorScheme.primary else muted,
             modifier = if (web != null) Modifier.clickable { open(web) } else Modifier,
@@ -406,7 +408,7 @@ private fun FamilyStrip(family: List<Recipe>, origin: Long, onOpen: (Long) -> Un
                     Column {
                         Text(wrapTitle(r.title), style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Text(
-                            if (r.id == origin) "Ursprungsrezept" else "Variante",
+                            tr(if (r.id == origin) R.string.recipe_origin else R.string.recipe_variant),
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }

@@ -77,4 +77,51 @@ class PhotoLinesTest {
         assertEquals(listOf("Teig kneten und", "ruhen lassen."), buildDraft(lines, kinds).steps)
         assertEquals("", buildDraft(lines, listOf(Ignore, Ignore)).title)
     }
+
+    @Test
+    fun headingsInOtherLanguages() {
+        // Titel, Zutaten-Überschrift, zwei Zutaten, Zubereitungs-Überschrift, Schritt.
+        val recipes = listOf(
+            listOf("Pancakes", "Ingredients", "flour", "milk", "Method", "Mix everything"),
+            listOf("Crêpes", "Ingrédients pour 4 personnes", "farine", "lait", "Préparation", "Tout mélanger"),
+            listOf("Crêpes", "INGREDIENTS", "farine", "lait", "Étapes :", "Tout mélanger"),
+            listOf("Tortitas", "Ingredientes", "harina", "leche", "Elaboración:", "Mezclar todo"),
+            listOf("Tortitas", "Ingredientes", "harina", "leche", "Pasos", "Mezclar todo"),
+            listOf("Frittelle", "Ingredienti per 4 persone", "farina", "latte", "Procedimento", "Mescolare tutto"),
+            listOf("Frittelle", "Ingredienti", "farina", "latte", "Preparazione", "Mescolare tutto"),
+            listOf("Pancakes", "For 4 servings", "flour", "milk", "Instructions", "Mix everything"),
+        )
+        for (r in recipes) {
+            val lines = page(listOf(r[0]), listOf(r[1]), listOf(r[2], r[3]), listOf(r[4]), listOf(r[5]))
+            assertEquals(r.toString(), listOf(Title, Ignore, Ingredient, Ingredient, Ignore, Step), guessKinds(lines))
+        }
+    }
+
+    @Test
+    fun timeInHeaderIsNoStepsHeading() {
+        // „Préparation : 15 min“ steht oft im Kopf – keine Überschrift für die Schritte.
+        val lines = page(
+            listOf("Quiche lorraine"),
+            listOf("Préparation : 15 min"),
+            listOf("Ingrédients"),
+            listOf("200 g de lardons"),
+            listOf("Étapes"),
+            listOf("Cuire la pâte."),
+        )
+        assertEquals(listOf(Title, Ignore, Ignore, Ingredient, Ignore, Step), guessKinds(lines))
+    }
+
+    @Test
+    fun stepWordsInOtherLanguages() {
+        val lines = page(
+            listOf("Instructions"),
+            listOf("Step 1", "Preheat the oven.", "Step 2", "Bake for 10 minutes."),
+        )
+        val kinds = guessKinds(lines)
+        assertEquals(listOf(Ignore, Ignore, Step, Ignore, Step), kinds)
+        assertEquals(listOf("Preheat the oven.", "Bake for 10 minutes."), buildDraft(lines, kinds).steps)
+        // „Étape 2 : …“ am Zeilenanfang beginnt einen neuen Schritt und wird entfernt.
+        val fr = page(listOf("Étape 1 : Cuire la pâte dix minutes.", "Étape 2 : Ajouter les lardons."))
+        assertEquals(listOf("Cuire la pâte dix minutes.", "Ajouter les lardons."), buildDraft(fr, listOf(Step, Step)).steps)
+    }
 }

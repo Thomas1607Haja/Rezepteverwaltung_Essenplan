@@ -5,8 +5,7 @@ import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import io.github.thomas1607haja.rezeptplaner.api.ErrorTexts
 import java.util.Locale
 
@@ -79,18 +78,16 @@ object Texts {
     }
 }
 
-/** Text in der Sprache der Oberfläche, mit Platzhaltern {name}. */
+/** Text in der Sprache der Oberfläche, mit Platzhaltern {name}; LocalResources folgt einem Sprachwechsel. */
 @Composable
 @ReadOnlyComposable
 fun tr(@StringRes id: Int, vararg params: Pair<String, Any?>): String {
-    LocalConfiguration.current // bei Sprachwechsel neu lesen
-    return Texts.fill(LocalContext.current.getString(id), params)
+    return Texts.fill(LocalResources.current.getString(id), params)
 }
 
 /** Pluralform in der Sprache der Oberfläche; {count} wird eingesetzt. */
 @Composable
 @ReadOnlyComposable
 fun trPlural(@PluralsRes id: Int, count: Int, vararg params: Pair<String, Any?>): String {
-    LocalConfiguration.current
-    return Texts.fill(LocalContext.current.resources.getQuantityString(id, count), arrayOf("count" to count, *params))
+    return Texts.fill(LocalResources.current.getQuantityString(id, count), arrayOf("count" to count, *params))
 }

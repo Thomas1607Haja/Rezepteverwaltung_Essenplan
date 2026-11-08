@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Statistik (ui/stats); Formulierungen wie web/src/locales/stats. -->
+<resources>
+    <string name="stats_offline_hint" formatted="false">Offline: dati dell\'ultima sincronizzazione, solo «Tutto». Periodi e voci senza ricetta sono disponibili online.</string>
+    <plurals name="stats_recipes">
+        <item quantity="one">Ricetta</item>
+        <item quantity="many">Ricette</item>
+        <item quantity="other">Ricette</item>
+    </plurals>
+    <string name="stats_planned" formatted="false">già previste ({percent}%)</string>
+    <string name="stats_never_planned" formatted="false">mai previste →</string>
+    <string name="stats_illustrated" formatted="false">con illustrazione →</string>
+    <string name="stats_favorites" formatted="false">Preferiti →</string>
+    <string name="stats_period_3m" formatted="false">3 mesi</string>
+    <string name="stats_period_12m" formatted="false">1 anno</string>
+    <string name="stats_period_all" formatted="false">Tutto</string>
+    <string name="stats_top_title" formatted="false">I più mangiati</string>
+    <plurals name="stats_entries_since">
+        <item quantity="one">{count} piatto nel piano pasti dal {date} (fino a oggi)</item>
+        <item quantity="many">{count} piatti nel piano pasti dal {date} (fino a oggi)</item>
+        <item quantity="other">{count} piatti nel piano pasti dal {date} (fino a oggi)</item>
+    </plurals>
+    <plurals name="stats_entries_total">
+        <item quantity="one">{count} piatto nel piano pasti in totale (fino a oggi)</item>
+        <item quantity="many">{count} piatti nel piano pasti in totale (fino a oggi)</item>
+        <item quantity="other">{count} piatti nel piano pasti in totale (fino a oggi)</item>
+    </plurals>
+    <plurals name="stats_menus">
+        <item quantity="one">, di cui {count} menù</item>
+        <item quantity="many">, di cui {count} menù</item>
+        <item quantity="other">, di cui {count} menù</item>
+    </plurals>
+    <string name="stats_top_empty" formatted="false">In questo periodo non c\'era niente nel piano pasti.</string>
+    <string name="stats_without_recipe_title" formatted="false">Senza ricetta</string>
+    <string name="stats_without_recipe_hint" formatted="false">Voci come «{example}» nel periodo – non contano come ricetta.</string>
+    <string name="stats_favorites_waiting_title" formatted="false">Preferiti che non mangi da tempo</string>
+    <string name="stats_favorites_waiting_empty" formatted="false">Tutti i preferiti sono stati mangiati nelle ultime 8 settimane o sono già previsti.</string>
+    <string name="stats_recent_title" formatted="false">Aggiunte di recente</string>
+    <string name="stats_recent_detail" formatted="false">{date}, {last}</string>
+    <string name="stats_categories_title" formatted="false">Ricette per categoria</string>
+    <plurals name="stats_without_category">
+        <item quantity="one">{count} ricetta senza categoria</item>
+        <item quantity="many">{count} ricette senza categoria</item>
+        <item quantity="other">{count} ricette senza categoria</item>
+    </plurals>
+    <string name="stats_last_today" formatted="false">l\'ultima volta oggi</string>
+    <plurals name="stats_last_days">
+        <item quantity="one">l\'ultima volta {count} giorno fa</item>
+        <item quantity="many">l\'ultima volta {count} giorni fa</item>
+        <item quantity="other">l\'ultima volta {count} giorni fa</item>
+    </plurals>
+    <plurals name="stats_last_weeks">
+        <item quantity="one">l\'ultima volta {count} settimana fa</item>
+        <item quantity="many">l\'ultima volta {count} settimane fa</item>
+        <item quantity="other">l\'ultima volta {count} settimane fa</item>
+    </plurals>
+    <plurals name="stats_last_months">
+        <item quantity="one">l\'ultima volta {count} mese fa</item>
+        <item quantity="many">l\'ultima volta {count} mesi fa</item>
+        <item quantity="other">l\'ultima volta {count} mesi fa</item>
+    </plurals>
+    <string name="stats_last_never" formatted="false">mai previsto</string>
+</resources>

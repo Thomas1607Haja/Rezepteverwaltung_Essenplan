@@ -4,9 +4,11 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
 import io.github.thomas1607haja.rezeptplaner.data.ImageStore
 import io.github.thomas1607haja.rezeptplaner.data.Snapshot
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -61,11 +63,11 @@ fun sharePdf(context: Context, file: File, title: String) {
     val send = Intent(Intent.ACTION_SEND).apply {
         type = "application/pdf"
         putExtra(Intent.EXTRA_STREAM, uri)
-        putExtra(Intent.EXTRA_SUBJECT, "Rezept: $title") // Betreff in E-Mail-Apps
+        putExtra(Intent.EXTRA_SUBJECT, Texts.get(R.string.share_subject, "title" to title)) // Betreff in E-Mail-Apps
         // ClipData: Leserecht und Vorschau im Teilen-Menü auch für Apps,
         // die die Datei nicht über EXTRA_STREAM öffnen.
         clipData = ClipData.newRawUri(file.name, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    context.startActivity(Intent.createChooser(send, "Rezept teilen"))
+    context.startActivity(Intent.createChooser(send, Texts.get(R.string.share_chooser)))
 }

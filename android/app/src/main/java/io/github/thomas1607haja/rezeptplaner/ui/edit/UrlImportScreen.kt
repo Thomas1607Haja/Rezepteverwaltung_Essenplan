@@ -35,6 +35,8 @@ import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.data.Outcome
 import io.github.thomas1607haja.rezeptplaner.ui.common.ScanResult
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 import io.github.thomas1607haja.rezeptplaner.ui.common.scanQrCode
 import kotlinx.coroutines.launch
 
@@ -65,7 +67,7 @@ fun UrlImportScreen(initialUrl: String, onDraft: () -> Unit, onClose: () -> Unit
     var error by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun load() {
-        val target = extractUrl(url) ?: run { error = "Bitte eine Webadresse eingeben (https://…)."; return }
+        val target = extractUrl(url) ?: run { error = Texts.get(R.string.recipe_url_missing); return }
         busy = true
         error = null
         scope.launch {
@@ -87,7 +89,7 @@ fun UrlImportScreen(initialUrl: String, onDraft: () -> Unit, onClose: () -> Unit
                 is ScanResult.Text -> {
                     val target = urlFromQr(result.value)
                     if (target == null) {
-                        error = "Der QR-Code enthält keine Webadresse (http/https): „${result.value.take(80)}“"
+                        error = Texts.get(R.string.recipe_url_no_url_in_qr, "text" to result.value.take(80))
                     } else {
                         url = target
                         load()
@@ -108,30 +110,27 @@ fun UrlImportScreen(initialUrl: String, onDraft: () -> Unit, onClose: () -> Unit
 
     Column(Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text(if (scan) "Rezept aus QR-Code" else "Rezept aus dem Internet") },
-            navigationIcon = { IconButton(onClick = onClose) { Icon(painterResource(R.drawable.ic_back), contentDescription = "Zurück") } },
+            title = { Text(tr(if (scan) R.string.recipe_from_qr else R.string.recipe_url_title)) },
+            navigationIcon = { IconButton(onClick = onClose) { Icon(painterResource(R.drawable.ic_back), contentDescription = tr(R.string.common_back)) } },
             windowInsets = WindowInsets(0),
         )
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(
-                "Adresse eines Rezepts, z. B. von Chefkoch – eintippen oder den QR-Code (z. B. auf einem Ausdruck) scannen. " +
-                    "Danach kannst du alles prüfen, bevor es gespeichert wird.",
-            )
+            Text(tr(R.string.recipe_url_hint))
             OutlinedTextField(
-                url, { url = it; error = null }, label = { Text("Webadresse") }, singleLine = true,
+                url, { url = it; error = null }, label = { Text(tr(R.string.recipe_url_label)) }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri), modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
                     IconButton(onClick = ::startScan, enabled = !busy) {
-                        Icon(painterResource(R.drawable.ic_qr), contentDescription = "QR-Code scannen")
+                        Icon(painterResource(R.drawable.ic_qr), contentDescription = tr(R.string.recipe_url_scan))
                     }
                 },
             )
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = ::load, enabled = !busy && url.isNotBlank()) { Text("Einlesen") }
+                Button(onClick = ::load, enabled = !busy && url.isNotBlank()) { Text(tr(R.string.recipe_url_load)) }
                 if (busy) {
                     CircularProgressIndicator(Modifier.size(24.dp))
-                    Text("Seite wird gelesen …")
+                    Text(tr(R.string.recipe_url_loading))
                 }
             }
         }

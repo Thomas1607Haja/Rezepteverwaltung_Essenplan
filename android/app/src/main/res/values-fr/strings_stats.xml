@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Statistik (ui/stats); Formulierungen wie web/src/locales/stats. -->
+<resources>
+    <string name="stats_offline_hint" formatted="false">Hors connexion : état de la dernière synchronisation, « Tout » uniquement. Les périodes et les entrées sans recette sont disponibles en ligne.</string>
+    <plurals name="stats_recipes">
+        <item quantity="one">Recette</item>
+        <item quantity="many">Recettes</item>
+        <item quantity="other">Recettes</item>
+    </plurals>
+    <string name="stats_planned" formatted="false">déjà prévues ({percent} %)</string>
+    <string name="stats_never_planned" formatted="false">jamais prévues →</string>
+    <string name="stats_illustrated" formatted="false">avec illustration →</string>
+    <string name="stats_favorites" formatted="false">Favoris →</string>
+    <string name="stats_period_3m" formatted="false">3 mois</string>
+    <string name="stats_period_12m" formatted="false">1 an</string>
+    <string name="stats_period_all" formatted="false">Tout</string>
+    <string name="stats_top_title" formatted="false">Les plus mangés</string>
+    <plurals name="stats_entries_since">
+        <item quantity="one">{count} plat au planning depuis le {date} (jusqu\'à aujourd\'hui)</item>
+        <item quantity="many">{count} plats au planning depuis le {date} (jusqu\'à aujourd\'hui)</item>
+        <item quantity="other">{count} plats au planning depuis le {date} (jusqu\'à aujourd\'hui)</item>
+    </plurals>
+    <plurals name="stats_entries_total">
+        <item quantity="one">{count} plat au planning au total (jusqu\'à aujourd\'hui)</item>
+        <item quantity="many">{count} plats au planning au total (jusqu\'à aujourd\'hui)</item>
+        <item quantity="other">{count} plats au planning au total (jusqu\'à aujourd\'hui)</item>
+    </plurals>
+    <plurals name="stats_menus">
+        <item quantity="one">, dont {count} menu</item>
+        <item quantity="many">, dont {count} menus</item>
+        <item quantity="other">, dont {count} menus</item>
+    </plurals>
+    <string name="stats_top_empty" formatted="false">Rien n\'était au planning pendant cette période.</string>
+    <string name="stats_without_recipe_title" formatted="false">Sans recette</string>
+    <string name="stats_without_recipe_hint" formatted="false">Entrées comme « {example} » sur la période – elles ne comptent pas comme recettes.</string>
+    <string name="stats_favorites_waiting_title" formatted="false">Favoris pas mangés depuis longtemps</string>
+    <string name="stats_favorites_waiting_empty" formatted="false">Tous les favoris ont été mangés ces 8 dernières semaines ou sont déjà prévus.</string>
+    <string name="stats_recent_title" formatted="false">Ajoutées récemment</string>
+    <string name="stats_recent_detail" formatted="false">{date}, {last}</string>
+    <string name="stats_categories_title" formatted="false">Recettes par catégorie</string>
+    <plurals name="stats_without_category">
+        <item quantity="one">{count} recette sans catégorie</item>
+        <item quantity="many">{count} recettes sans catégorie</item>
+        <item quantity="other">{count} recettes sans catégorie</item>
+    </plurals>
+    <string name="stats_last_today" formatted="false">dernière fois aujourd\'hui</string>
+    <plurals name="stats_last_days">
+        <item quantity="one">dernière fois il y a {count} jour</item>
+        <item quantity="many">dernière fois il y a {count} jours</item>
+        <item quantity="other">dernière fois il y a {count} jours</item>
+    </plurals>
+    <plurals name="stats_last_weeks">
+        <item quantity="one">dernière fois il y a {count} semaine</item>
+        <item quantity="many">dernière fois il y a {count} semaines</item>
+        <item quantity="other">dernière fois il y a {count} semaines</item>
+    </plurals>
+    <plurals name="stats_last_months">
+        <item quantity="one">dernière fois il y a {count} mois</item>
+        <item quantity="many">dernière fois il y a {count} mois</item>
+        <item quantity="other">dernière fois il y a {count} mois</item>
+    </plurals>
+    <string name="stats_last_never" formatted="false">jamais prévu</string>
+</resources>

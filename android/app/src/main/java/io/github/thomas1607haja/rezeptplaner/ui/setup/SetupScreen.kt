@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -41,9 +42,9 @@ import androidx.compose.ui.unit.dp
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.ui.CrashReportCard
-
-// Die App gibt es nur auf Deutsch; die Texte stehen deshalb direkt hier.
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 
 private const val TAG = "Rezeptplaner"
 
@@ -60,9 +61,9 @@ fun SetupScreen(
     onCancel: (() -> Unit)?,
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val scan = {
-        val unavailable = "Scanner nicht verfügbar (Google Play-Dienste). Den QR-Code mit der Kamera-App " +
-            "scannen oder die Angaben von Hand eingeben."
+        val unavailable = resources.getString(R.string.setup_scan_unavailable)
         try {
             val options = GmsBarcodeScannerOptions.Builder()
                 .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -96,7 +97,7 @@ fun SetupScreen(
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Rezeptplaner verbinden", style = MaterialTheme.typography.headlineSmall)
+            Text(tr(R.string.setup_title), style = MaterialTheme.typography.headlineSmall)
             CrashReportCard()
             when (state) {
                 is SetupViewModel.State.Choose -> ChooseStep(state, scan, viewModel::showManual, onCancel)
@@ -115,14 +116,11 @@ private fun ChooseStep(
     onManual: () -> Unit,
     onCancel: (() -> Unit)?,
 ) {
-    Text(
-        "In der Weboberfläche unter Einstellungen → App installieren → Schritt 2 auf „Neues Gerät verbinden“ " +
-            "tippen und den QR-Code hier scannen.",
-    )
+    Text(tr(R.string.setup_intro))
     state.error?.let { ErrorText(it) }
-    Button(onClick = onScan, modifier = Modifier.fillMaxWidth()) { Text("QR-Code scannen") }
-    OutlinedButton(onClick = onManual, modifier = Modifier.fillMaxWidth()) { Text("Von Hand eingeben") }
-    onCancel?.let { TextButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text("Abbrechen") } }
+    Button(onClick = onScan, modifier = Modifier.fillMaxWidth()) { Text(tr(R.string.setup_scan)) }
+    OutlinedButton(onClick = onManual, modifier = Modifier.fillMaxWidth()) { Text(tr(R.string.setup_manual)) }
+    onCancel?.let { TextButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text(tr(R.string.common_cancel)) } }
 }
 
 @Composable
@@ -137,17 +135,17 @@ private fun ManualStep(
     var cfSecret by rememberSaveable { mutableStateOf("") }
 
     OutlinedTextField(
-        value = url, onValueChange = { url = it }, label = { Text("Adresse für die App") },
+        value = url, onValueChange = { url = it }, label = { Text(tr(R.string.setup_app_url)) },
         singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
         modifier = Modifier.fillMaxWidth(),
     )
     OutlinedTextField(
-        value = key, onValueChange = { key = it }, label = { Text("API-Schlüssel (rp_…)") },
+        value = key, onValueChange = { key = it }, label = { Text(tr(R.string.setup_api_key)) },
         singleLine = true, visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         modifier = Modifier.fillMaxWidth(),
     )
-    Text("Cloudflare Access (nur falls eingerichtet)", style = MaterialTheme.typography.titleSmall)
+    Text(tr(R.string.setup_cf_title), style = MaterialTheme.typography.titleSmall)
     OutlinedTextField(
         value = cfId, onValueChange = { cfId = it }, label = { Text("Client ID") },
         singleLine = true, modifier = Modifier.fillMaxWidth(),
@@ -160,33 +158,33 @@ private fun ManualStep(
     )
     state.error?.let { ErrorText(it) }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = onBack) { Text("Zurück") }
-        Button(onClick = { onSubmit(url, key, cfId, cfSecret) }) { Text("Weiter") }
+        OutlinedButton(onClick = onBack) { Text(tr(R.string.common_back)) }
+        Button(onClick = { onSubmit(url, key, cfId, cfSecret) }) { Text(tr(R.string.setup_next)) }
     }
 }
 
 @Composable
 private fun ConfirmStep(state: SetupViewModel.State.Confirm, onConfirm: () -> Unit, onBack: () -> Unit) {
-    Text("Mit diesem Rezeptplaner verbinden?")
+    Text(tr(R.string.setup_confirm_question))
     Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(state.config.host, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(state.config.url, style = MaterialTheme.typography.bodySmall)
             if (state.config.hasCloudflareAccess) {
-                Text("mit Cloudflare Access", style = MaterialTheme.typography.bodySmall)
+                Text(tr(R.string.setup_with_cf), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
     Text(
-        "Nur bestätigen, wenn das deine Adresse ist. Ein fremder Server bekäme sonst alles, was du in der App eingibst.",
+        tr(R.string.setup_confirm_warning),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     state.error?.let { ErrorText(it) }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        OutlinedButton(onClick = onBack, enabled = !state.testing) { Text("Abbrechen") }
+        OutlinedButton(onClick = onBack, enabled = !state.testing) { Text(tr(R.string.common_cancel)) }
         Button(onClick = onConfirm, enabled = !state.testing) {
-            Text(if (state.error == null) "Verbinden" else "Erneut versuchen")
+            Text(tr(if (state.error == null) R.string.setup_connect else R.string.setup_retry))
         }
         if (state.testing) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 3.dp)
     }
@@ -194,10 +192,10 @@ private fun ConfirmStep(state: SetupViewModel.State.Confirm, onConfirm: () -> Un
 
 @Composable
 private fun DoneStep(state: SetupViewModel.State.Done, onFinished: () -> Unit) {
-    Text("Verbunden mit ${state.config.host}.", style = MaterialTheme.typography.titleMedium)
-    Text("Rezeptplaner ${state.serverVersion} auf dem Server.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(tr(R.string.setup_connected_to, "host" to state.config.host), style = MaterialTheme.typography.titleMedium)
+    Text(tr(R.string.setup_server_version, "version" to state.serverVersion), color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
-    Button(onClick = onFinished, modifier = Modifier.fillMaxWidth()) { Text("Los geht's") }
+    Button(onClick = onFinished, modifier = Modifier.fillMaxWidth()) { Text(tr(R.string.setup_start)) }
 }
 
 @Composable

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Statistik (ui/stats); Formulierungen wie web/src/locales/stats. -->
+<resources>
+    <string name="stats_offline_hint" formatted="false">Offline: data from the last sync, “All time” only. Periods and entries without a recipe are available online.</string>
+    <plurals name="stats_recipes">
+        <item quantity="one">Recipe</item>
+        <item quantity="other">Recipes</item>
+    </plurals>
+    <string name="stats_planned" formatted="false">planned before ({percent}%)</string>
+    <string name="stats_never_planned" formatted="false">never planned →</string>
+    <string name="stats_illustrated" formatted="false">with illustration →</string>
+    <string name="stats_favorites" formatted="false">Favorites →</string>
+    <string name="stats_period_3m" formatted="false">3 months</string>
+    <string name="stats_period_12m" formatted="false">1 year</string>
+    <string name="stats_period_all" formatted="false">All time</string>
+    <string name="stats_top_title" formatted="false">Most eaten</string>
+    <plurals name="stats_entries_since">
+        <item quantity="one">{count} dish in the meal plan since {date} (up to today)</item>
+        <item quantity="other">{count} dishes in the meal plan since {date} (up to today)</item>
+    </plurals>
+    <plurals name="stats_entries_total">
+        <item quantity="one">{count} dish in the meal plan in total (up to today)</item>
+        <item quantity="other">{count} dishes in the meal plan in total (up to today)</item>
+    </plurals>
+    <plurals name="stats_menus">
+        <item quantity="one">, including 1 menu</item>
+        <item quantity="other">, including {count} menus</item>
+    </plurals>
+    <string name="stats_top_empty" formatted="false">Nothing was in the meal plan during this period.</string>
+    <string name="stats_without_recipe_title" formatted="false">Without a recipe</string>
+    <string name="stats_without_recipe_hint" formatted="false">Entries like “{example}” in this period – they don\'t count as recipes.</string>
+    <string name="stats_favorites_waiting_title" formatted="false">Favorites you haven\'t had in a while</string>
+    <string name="stats_favorites_waiting_empty" formatted="false">All favorites were on the plan in the last 8 weeks or are already planned.</string>
+    <string name="stats_recent_title" formatted="false">Recently added</string>
+    <string name="stats_recent_detail" formatted="false">{date}, {last}</string>
+    <string name="stats_categories_title" formatted="false">Recipes by category</string>
+    <plurals name="stats_without_category">
+        <item quantity="one">{count} recipe without a category</item>
+        <item quantity="other">{count} recipes without a category</item>
+    </plurals>
+    <string name="stats_last_today" formatted="false">last made today</string>
+    <plurals name="stats_last_days">
+        <item quantity="one">last made {count} day ago</item>
+        <item quantity="other">last made {count} days ago</item>
+    </plurals>
+    <plurals name="stats_last_weeks">
+        <item quantity="one">last made {count} week ago</item>
+        <item quantity="other">last made {count} weeks ago</item>
+    </plurals>
+    <plurals name="stats_last_months">
+        <item quantity="one">last made {count} month ago</item>
+        <item quantity="other">last made {count} months ago</item>
+    </plurals>
+    <string name="stats_last_never" formatted="false">never planned</string>
+</resources>

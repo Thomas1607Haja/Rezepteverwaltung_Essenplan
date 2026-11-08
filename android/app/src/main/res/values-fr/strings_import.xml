@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Datei-Import (ui/importer, data/ImportRepository). Texte wie web/src/locales/import. -->
+<resources>
+    <string name="import_title">Importer un fichier</string>
+    <string name="import_reading">Lecture du fichier …</string>
+    <string name="import_checking">Vérification …</string>
+    <string name="import_waiting_setup">Connectez d\'abord l\'app à Rezeptplaner – l\'import continuera ensuite.</string>
+    <string name="import_intro">Choisissez un fichier d\'import (ZIP ou JSON, par ex. de la compétence Claude « rezeptplaner-import »). Rien n\'est enregistré avant l\'aperçu.</string>
+    <string name="import_choose_file">Choisir un fichier</string>
+    <string name="import_whatsapp_title">Depuis WhatsApp</string>
+    <string name="import_whatsapp_share">Appui long sur le fichier → Partager → Rezeptplaner.</string>
+    <string name="import_whatsapp_folder">Ou ici « Choisir un fichier » : les documents WhatsApp se trouvent sous Android → media → com.whatsapp → WhatsApp → Media → WhatsApp Documents (souvent aussi sous « Récents »).</string>
+    <string name="import_no_recipes">Aucune recette trouvée.</string>
+    <string name="import_other_file">Autre fichier</string>
+    <string name="import_importing">Import en cours …</string>
+    <plurals name="import_import_count">
+        <item quantity="one">Importer {count} recette</item>
+        <item quantity="many">Importer {count} recettes</item>
+        <item quantity="other">Importer {count} recettes</item>
+    </plurals>
+    <string name="import_untitled">(sans titre)</string>
+    <plurals name="import_ingredient_count">
+        <item quantity="one">{count} ingrédient</item>
+        <item quantity="many">{count} ingrédients</item>
+        <item quantity="other">{count} ingrédients</item>
+    </plurals>
+    <plurals name="import_step_count">
+        <item quantity="one">{count} étape</item>
+        <item quantity="many">{count} étapes</item>
+        <item quantity="other">{count} étapes</item>
+    </plurals>
+    <string name="import_source">Source : {source}</string>
+    <string name="import_exists">Existe déjà : {titles}</string>
+    <string name="import_unknown_in_recipe">Catégories inconnues : {names} (voir ci-dessous)</string>
+    <string name="import_unknown_title">Catégories inconnues</string>
+    <string name="import_unknown_hint">Ces catégories n\'existent pas dans Rezeptplaner. Associez-les à une catégorie existante, créez-les ou ignorez-les.</string>
+    <string name="import_quoted">« {name} »</string>
+    <string name="import_skip">Ignorer</string>
+    <string name="import_assign_to">Associer : {name}</string>
+    <string name="import_assign_group">Associer – {group}</string>
+    <string name="import_create">Créer dans le groupe</string>
+    <string name="import_new_in">Nouvelle : « {name} » dans {group}</string>
+    <plurals name="import_imported">
+        <item quantity="one">{count} recette importée</item>
+        <item quantity="many">{count} recettes importées</item>
+        <item quantity="other">{count} recettes importées</item>
+    </plurals>
+    <string name="import_not_imported">Non importées</string>
+    <string name="import_recipe_n">Recette {n}</string>
+    <string name="import_item_error">{item} : {error}</string>
+    <string name="import_done">Terminé</string>
+    <string name="import_another">Un autre fichier</string>
+    <string name="import_too_large">« {name} » est trop volumineux ({mb} Mo au maximum au total).</string>
+    <string name="import_unreadable">« {name} » n\'a pas pu être lu.</string>
+    <string name="import_not_import_file">« {name} » n\'est pas un fichier d\'import Rezeptplaner.</string>
+    <string name="import_too_many_files">{max} fichiers au maximum à la fois.</string>
+    <string name="import_no_file">Aucun fichier reçu.</string>
+    <string name="import_upload_failed">Échec de l\'envoi.</string>
+    <string name="import_offline">L\'import nécessite une connexion à Rezeptplaner.</string>
+    <string name="import_default_file_name">Fichier</string>
+</resources>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rezept aus Foto (ui/photo). -->
+<resources>
+    <string name="photo_title">Recipe from photo</string>
+    <string name="photo_intro">Take a photo of each recipe page – straight, well lit, one page per photo. The text is recognized on your phone; then you assign the lines.</string>
+    <string name="photo_take_page">Photograph page</string>
+    <string name="photo_take_another">+ Photograph page</string>
+    <string name="photo_from_gallery">From gallery</string>
+    <string name="photo_tap_hint">Tap a line to give it the selected type. Long-press: all lines since the last one tapped.</string>
+    <string name="photo_page">Page {n}</string>
+    <string name="photo_dish_chosen">Dish photo selected</string>
+    <string name="photo_dish_optional">Dish photo (optional):</string>
+    <string name="photo_camera">Camera</string>
+    <string name="photo_gallery">Gallery</string>
+    <string name="photo_next">Continue to editing</string>
+    <string name="photo_leave_title">Cancel photo import?</string>
+    <string name="photo_leave_text">The recognized lines will be lost.</string>
+    <string name="photo_discard">Discard</string>
+    <string name="photo_keep">Keep assigning</string>
+    <string name="photo_kind_title">Title</string>
+    <string name="photo_kind_ingredient">Ingredient</string>
+    <string name="photo_kind_step">Step</string>
+    <string name="photo_kind_ignore">Ignore</string>
+    <string name="photo_recognizing">Recognizing text …</string>
+    <string name="photo_no_text">No text was recognized on a photo. Take it straight and well lit.</string>
+    <string name="photo_mark_first">First mark lines as title, ingredient or step.</string>
+    <string name="photo_parsing">Splitting ingredients …</string>
+    <string name="photo_note">Captured with photo import – please check amounts and steps.</string>
+    <string name="photo_not_parsed">Ingredients not split ({message}).</string>
+    <string name="photo_ocr_loading">Google Play services are still loading text recognition. Please try again in a moment.</string>
+    <string name="photo_open_failed">The photo couldn\'t be opened.</string>
+    <string name="photo_ocr_failed">Text recognition failed: {message}</string>
+</resources>

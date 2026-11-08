@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Statistik (ui/stats); Formulierungen wie web/src/locales/stats. -->
+<resources>
+    <string name="stats_offline_hint" formatted="false">Ohne Verbindung: Stand des letzten Abgleichs, nur „Gesamt“. Zeitraum und Einträge ohne Rezept gibt es online.</string>
+    <plurals name="stats_recipes">
+        <item quantity="one">Rezept</item>
+        <item quantity="other">Rezepte</item>
+    </plurals>
+    <string name="stats_planned" formatted="false">schon eingeplant ({percent} %)</string>
+    <string name="stats_never_planned" formatted="false">noch nie eingeplant →</string>
+    <string name="stats_illustrated" formatted="false">mit Illustration →</string>
+    <string name="stats_favorites" formatted="false">Favoriten →</string>
+    <string name="stats_period_3m" formatted="false">3 Monate</string>
+    <string name="stats_period_12m" formatted="false">1 Jahr</string>
+    <string name="stats_period_all" formatted="false">Gesamt</string>
+    <string name="stats_top_title" formatted="false">Am häufigsten gegessen</string>
+    <plurals name="stats_entries_since">
+        <item quantity="one">{count} Gericht im Essensplan seit {date} (bis heute)</item>
+        <item quantity="other">{count} Gerichte im Essensplan seit {date} (bis heute)</item>
+    </plurals>
+    <plurals name="stats_entries_total">
+        <item quantity="one">{count} Gericht im Essensplan insgesamt (bis heute)</item>
+        <item quantity="other">{count} Gerichte im Essensplan insgesamt (bis heute)</item>
+    </plurals>
+    <plurals name="stats_menus">
+        <item quantity="one">, davon ein Menü</item>
+        <item quantity="other">, davon {count} Menüs</item>
+    </plurals>
+    <string name="stats_top_empty" formatted="false">In diesem Zeitraum stand noch nichts im Essensplan.</string>
+    <string name="stats_without_recipe_title" formatted="false">Ohne Rezept</string>
+    <string name="stats_without_recipe_hint" formatted="false">Einträge wie „{example}“ im Zeitraum – sie zählen nicht als Rezept.</string>
+    <string name="stats_favorites_waiting_title" formatted="false">Lieblingsgerichte, die lange nicht dran waren</string>
+    <string name="stats_favorites_waiting_empty" formatted="false">Alle Favoriten waren in den letzten 8 Wochen dran oder sind eingeplant.</string>
+    <string name="stats_recent_title" formatted="false">Zuletzt hinzugefügt</string>
+    <string name="stats_recent_detail" formatted="false">{date}, {last}</string>
+    <string name="stats_categories_title" formatted="false">Rezepte nach Kategorien</string>
+    <plurals name="stats_without_category">
+        <item quantity="one">{count} Rezept ohne Kategorie</item>
+        <item quantity="other">{count} Rezepte ohne Kategorie</item>
+    </plurals>
+    <string name="stats_last_today" formatted="false">zuletzt heute</string>
+    <plurals name="stats_last_days">
+        <item quantity="one">zuletzt vor {count} Tag</item>
+        <item quantity="other">zuletzt vor {count} Tagen</item>
+    </plurals>
+    <plurals name="stats_last_weeks">
+        <item quantity="one">zuletzt vor {count} Woche</item>
+        <item quantity="other">zuletzt vor {count} Wochen</item>
+    </plurals>
+    <plurals name="stats_last_months">
+        <item quantity="one">zuletzt vor {count} Monat</item>
+        <item quantity="other">zuletzt vor {count} Monaten</item>
+    </plurals>
+    <string name="stats_last_never" formatted="false">noch nie eingeplant</string>
+</resources>

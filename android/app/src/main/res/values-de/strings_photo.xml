@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rezept aus Foto (ui/photo). -->
+<resources>
+    <string name="photo_title">Rezept aus Foto</string>
+    <string name="photo_intro">Fotografiere die Seite(n) mit dem Rezept – gerade, gut beleuchtet, eine Seite je Foto. Der Text wird auf dem Handy erkannt; danach ordnest du die Zeilen zu.</string>
+    <string name="photo_take_page">Seite fotografieren</string>
+    <string name="photo_take_another">+ Seite fotografieren</string>
+    <string name="photo_from_gallery">Aus Galerie</string>
+    <string name="photo_tap_hint">Zeile antippen: bekommt die gewählte Art. Lange drücken: alle Zeilen seit der zuletzt angetippten.</string>
+    <string name="photo_page">Seite {n}</string>
+    <string name="photo_dish_chosen">Gerichtfoto gewählt</string>
+    <string name="photo_dish_optional">Gerichtfoto (optional):</string>
+    <string name="photo_camera">Kamera</string>
+    <string name="photo_gallery">Galerie</string>
+    <string name="photo_next">Weiter zum Bearbeiten</string>
+    <string name="photo_leave_title">Foto-Import abbrechen?</string>
+    <string name="photo_leave_text">Die erkannten Zeilen gehen verloren.</string>
+    <string name="photo_discard">Verwerfen</string>
+    <string name="photo_keep">Weiter zuordnen</string>
+    <string name="photo_kind_title">Titel</string>
+    <string name="photo_kind_ingredient">Zutat</string>
+    <string name="photo_kind_step">Schritt</string>
+    <string name="photo_kind_ignore">Ignorieren</string>
+    <string name="photo_recognizing">Text wird erkannt …</string>
+    <string name="photo_no_text">Auf einem Foto wurde kein Text erkannt. Gerade und gut beleuchtet fotografieren.</string>
+    <string name="photo_mark_first">Bitte zuerst Zeilen als Titel, Zutat oder Schritt markieren.</string>
+    <string name="photo_parsing">Zutaten werden zerlegt …</string>
+    <string name="photo_note">Mit dem Foto-Import erfasst – bitte Mengen und Schritte prüfen.</string>
+    <string name="photo_not_parsed">Zutaten nicht zerlegt ({message}).</string>
+    <string name="photo_ocr_loading">Die Texterkennung wird gerade von den Google-Play-Diensten geladen. Bitte gleich noch einmal versuchen.</string>
+    <string name="photo_open_failed">Das Foto ließ sich nicht öffnen.</string>
+    <string name="photo_ocr_failed">Texterkennung fehlgeschlagen: {message}</string>
+</resources>

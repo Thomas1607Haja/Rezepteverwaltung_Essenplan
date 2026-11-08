@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texte des Essensplans und der Menüs (ui/plan, data/PlanRepository). Platzhalter {name} wie im Web. -->
+<resources>
+    <string name="plan_loading">Loading meal plan …</string>
+    <string name="plan_no_data">No data yet – pull down to load.</string>
+    <string name="plan_shopped">Shopped: {range}</string>
+    <string name="plan_next_shopping">Next shopping: {range}</string>
+    <string name="plan_add_dish">Plan a dish for {day}</string>
+    <string name="plan_without_recipe">Without recipe</string>
+    <string name="plan_without_recipe_short">no recipe</string>
+    <string name="plan_status_sent">sent to Bring</string>
+    <string name="plan_status_sent_short">sent to Bring</string>
+    <string name="plan_status_have">Ingredients at home</string>
+    <string name="plan_favorite">Favorite</string>
+    <string name="plan_edit_entry">Edit entry</string>
+    <string name="plan_menu_untitled">Menu</string>
+    <string name="plan_menu_badge">MENU</string>
+    <string name="plan_menu_heading">Menu: {title}</string>
+    <string name="plan_menu_quoted">Menu “{title}”</string>
+    <string name="plan_quoted">“{title}”</string>
+    <string name="plan_free">free</string>
+    <string name="plan_add_more">Add</string>
+    <string name="plan_planned_on">“{title}” planned for {day}</string>
+    <string name="plan_add_title">Add to meal plan</string>
+    <string name="plan_replace">Replace</string>
+    <string name="plan_add">Add</string>
+    <string name="plan_replace_title">Replace?</string>
+    <string name="plan_replace_confirm">Replace “{old}” ({day}) with “{title}”?</string>
+    <string name="plan_slot_on_day">{slot}, {day}</string>
+    <string name="plan_favorite_remove">Remove from favorites</string>
+    <string name="plan_favorite_add">Add to favorites</string>
+    <string name="plan_note">Note</string>
+    <string name="plan_note_text">Text (e.g. Eating out)</string>
+    <string name="plan_have_ingredients">Ingredients at home</string>
+    <string name="plan_already_sent_short">Already sent to Bring.</string>
+    <string name="plan_not_bought">Won\'t be bought.</string>
+    <string name="plan_undo_sending">Undo sending …</string>
+    <string name="plan_have_ingredients_open">Ingredients at home …</string>
+    <string name="plan_already_sent">Already sent to Bring – changes show up in Shopping as a difference.</string>
+    <string name="plan_choose_recipe">Choose recipe</string>
+    <string name="plan_move">Move</string>
+    <string name="plan_course_in_menu">Course in menu “{title}”</string>
+    <string name="plan_detach_from_menu">Detach from menu</string>
+    <string name="plan_to_menu">Turn into a menu</string>
+    <string name="plan_remove_title">Remove?</string>
+    <string name="plan_remove_confirm">Remove “{title}” ({day}) from the plan?</string>
+    <string name="plan_moved_to">{title} moved to {day}</string>
+    <string name="plan_moved_send_failed">Moved, but couldn\'t send to Bring: {message}</string>
+    <string name="plan_move_title">Move {title}</string>
+    <string name="plan_other_date">Choose another date …</string>
+    <string name="plan_swap">Swap</string>
+    <string name="plan_move_confirm_title">Move anyway?</string>
+    <string name="plan_move_anyway">Move anyway</string>
+    <string name="plan_move_have">Ingredients at home</string>
+    <string name="plan_move_send">Send ingredients to Bring</string>
+    <string name="plan_edit_menu">Edit menu</string>
+    <string name="plan_no_courses_card">No courses yet</string>
+    <string name="plan_no_courses">No courses yet.</string>
+    <string name="plan_choose_course">Choose course</string>
+    <string name="plan_no_course">– no course –</string>
+    <string name="plan_no_course_chip">no course</string>
+    <string name="plan_menu_title_label">Title</string>
+    <string name="plan_menu_title_auto">{title} (automatic)</string>
+    <string name="plan_menu_note_placeholder">e.g. cook the soup ahead</string>
+    <string name="plan_apply_to_all">Apply to all courses</string>
+    <string name="plan_courses">Courses</string>
+    <string name="plan_detached">“{title}” is now a separate dish in the plan</string>
+    <string name="plan_detach">Detach</string>
+    <string name="plan_add_course">+ Add course</string>
+    <string name="plan_cooking_view">Cooking view</string>
+    <string name="plan_dissolve">Break up</string>
+    <string name="plan_menu_delete_title">Delete menu?</string>
+    <string name="plan_menu_dissolve_title">Break up menu?</string>
+    <string name="plan_menu_dissolve_confirm">The courses stay in the plan as separate dishes.</string>
+    <string name="plan_menu_preview_title">Ingredients at home – whole menu</string>
+    <string name="plan_menu_preview_hint">Uncheck what you already have. Applies to this menu only.</string>
+    <string name="plan_course_label">{course}: {title}</string>
+    <string name="plan_nothing_to_buy">No ingredients to buy.</string>
+    <string name="plan_all_available">All at home</string>
+    <string name="plan_menu_gone">This menu no longer exists.</string>
+    <string name="plan_pick_heading_menu">Course for menu</string>
+    <string name="plan_pick_heading_menu_named">Course for menu: {title}</string>
+    <string name="plan_pick_heading_replace">Replace “{title}”</string>
+    <string name="plan_pick_heading_add">Dish for {day}</string>
+    <string name="plan_added">“{title}” added</string>
+    <string name="plan_added_as">“{title}” added as {course}</string>
+    <string name="plan_done">Done</string>
+    <string name="plan_menu_loading">Loading menu …</string>
+    <string name="plan_note_placeholder">Without recipe, e.g. Eating out</string>
+    <string name="plan_note_submit">Add</string>
+    <string name="plan_compose_menu">Build a menu …</string>
+    <string name="plan_preview_hint">Uncheck what you already have – applies to this entry only.</string>
+    <string name="plan_pantry">From the pantry ({count}) – not bought</string>
+    <string name="plan_not_connected">Not connected.</string>
+    <string name="plan_offline">Changes need a connection to Rezeptplaner.</string>
+    <plurals name="plan_moved_sent">
+        <item quantity="one">Moved, {count} item sent to Bring</item>
+        <item quantity="other">Moved, {count} items sent to Bring</item>
+    </plurals>
+    <plurals name="plan_moved_not_arrived">
+        <item quantity="one">({count} didn\'t arrive, see Shopping)</item>
+        <item quantity="other">({count} didn\'t arrive, see Shopping)</item>
+    </plurals>
+    <plurals name="plan_course_count">
+        <item quantity="one">{count} course</item>
+        <item quantity="other">{count} courses</item>
+    </plurals>
+    <plurals name="plan_courses_in_menu">
+        <item quantity="one">{count} course in menu</item>
+        <item quantity="other">{count} courses in menu</item>
+    </plurals>
+    <plurals name="plan_persons">
+        <item quantity="one">{count} person</item>
+        <item quantity="other">{count} people</item>
+    </plurals>
+    <plurals name="plan_excluded_count">
+        <item quantity="one">{count} ingredient at home</item>
+        <item quantity="other">{count} ingredients at home</item>
+    </plurals>
+    <plurals name="plan_menu_delete_confirm">
+        <item quantity="one">Remove “{title}” and its course from the plan?</item>
+        <item quantity="other">Remove “{title}” and all {count} courses from the plan?</item>
+    </plurals>
+</resources>

@@ -1,13 +1,14 @@
 package io.github.thomas1607haja.rezeptplaner.ui.edit
 
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.Ingredient
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
 import io.github.thomas1607haja.rezeptplaner.api.RecipeInput
 import io.github.thomas1607haja.rezeptplaner.api.Step
 import io.github.thomas1607haja.rezeptplaner.api.TagRef
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
-import java.util.Locale
 
 // Umwandlung zwischen Rezept und Formular, wie web/src/lib/recipeForm.js:
 // Im Formular sind Gruppen eigene Zeilen (Überschriften); die API kennt nur
@@ -70,9 +71,9 @@ fun Recipe.toForm(): RecipeForm {
     )
 }
 
-/** Menge fürs Eingabefeld: 1.5 -> "1,5", 250.0 -> "250". */
+/** Menge fürs Eingabefeld mit dem Dezimalzeichen der Sprache: 1.5 -> "1,5" (de) bzw. "1.5" (en), 250.0 -> "250". */
 fun quantityText(value: Double?): String =
-    value?.let { DecimalFormat("0.###", DecimalFormatSymbols(Locale.GERMANY)).format(it) }.orEmpty()
+    value?.let { DecimalFormat("0.###", DecimalFormatSymbols(Texts.locale())).format(it) }.orEmpty()
 
 private val unicodeFractions = mapOf('¼' to 0.25, '½' to 0.5, '¾' to 0.75, '⅓' to 1.0 / 3, '⅔' to 2.0 / 3)
 
@@ -101,20 +102,20 @@ fun parseQuantity(text: String): Double? {
 /** Prüft das Formular. Ergebnis: Eingabe für die API oder Fehler je Feld ("title", "item:<key>", …). */
 fun RecipeForm.toInput(): Pair<RecipeInput?, Map<String, String>> {
     val errors = mutableMapOf<String, String>()
-    if (title.isBlank()) errors["title"] = "Bitte einen Titel eingeben."
+    if (title.isBlank()) errors["title"] = Texts.get(R.string.recipe_edit_title_required)
     val servings = baseServings.trim().toIntOrNull()
-    if (servings == null || servings < 1) errors["baseServings"] = "Mindestens 1."
+    if (servings == null || servings < 1) errors["baseServings"] = Texts.get(R.string.recipe_edit_servings_min)
     fun minutes(field: String, text: String): Int? {
         if (text.isBlank()) return null
         val n = text.trim().toIntOrNull()
-        if (n == null || n < 0) errors[field] = "Minuten als ganze Zahl."
+        if (n == null || n < 0) errors[field] = Texts.get(R.string.recipe_edit_whole_minutes)
         return n
     }
     val prep = minutes("prepMinutes", prepMinutes)
     val total = minutes("totalMinutes", totalMinutes)
     val url = sourceUrl.trim()
     if (url.isNotEmpty() && !(url.startsWith("http://") || url.startsWith("https://"))) {
-        errors["sourceUrl"] = "Muss mit http:// oder https:// beginnen."
+        errors["sourceUrl"] = Texts.get(R.string.recipe_edit_url_scheme)
     }
 
     val ingredients = mutableListOf<Ingredient>()
@@ -127,8 +128,8 @@ fun RecipeForm.toInput(): Pair<RecipeInput?, Map<String, String>> {
         if (listOf(row.quantity, row.unit, row.name, row.note).all { it.isBlank() }) continue
         val q = parseQuantity(row.quantity)
         when {
-            q != null && q.isNaN() -> errors["item:${row.key}"] = "Menge nicht lesbar, z. B. 1,5 oder 1/2."
-            row.name.isBlank() -> errors["item:${row.key}"] = "Bitte einen Namen eingeben."
+            q != null && q.isNaN() -> errors["item:${row.key}"] = Texts.get(R.string.recipe_edit_quantity_unreadable)
+            row.name.isBlank() -> errors["item:${row.key}"] = Texts.get(R.string.recipe_edit_name_required)
         }
         ingredients += Ingredient(
             groupName = group, quantity = q?.takeUnless { it.isNaN() }, unit = row.unit.trim(), name = row.name.trim(),

@@ -52,6 +52,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 import io.github.thomas1607haja.rezeptplaner.ui.edit.cameraFile
 import io.github.thomas1607haja.rezeptplaner.ui.edit.readImage
 
@@ -94,8 +95,8 @@ fun PhotoImportScreen(onDraft: () -> Unit, onClose: () -> Unit) {
 
     Column(Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Rezept aus Foto") },
-            navigationIcon = { IconButton(onClick = leave) { Icon(painterResource(R.drawable.ic_back), contentDescription = "Zurück") } },
+            title = { Text(tr(R.string.photo_title)) },
+            navigationIcon = { IconButton(onClick = leave) { Icon(painterResource(R.drawable.ic_back), contentDescription = tr(R.string.common_back)) } },
             windowInsets = WindowInsets(0),
         )
 
@@ -106,17 +107,14 @@ fun PhotoImportScreen(onDraft: () -> Unit, onClose: () -> Unit) {
             item {
                 Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (state.lines.isEmpty()) {
-                        Text(
-                            "Fotografiere die Seite(n) mit dem Rezept – gerade, gut beleuchtet, eine Seite je Foto. " +
-                                "Der Text wird auf dem Handy erkannt; danach ordnest du die Zeilen zu.",
-                        )
+                        Text(tr(R.string.photo_intro))
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { takePhoto(dish = false) }, enabled = state.busy == null) {
-                            Text(if (state.pages == 0) "Seite fotografieren" else "+ Seite fotografieren")
+                            Text(tr(if (state.pages == 0) R.string.photo_take_page else R.string.photo_take_another))
                         }
                         OutlinedButton(onClick = { pages.launch(imagesOnly) }, enabled = state.busy == null) {
-                            Text("Aus Galerie")
+                            Text(tr(R.string.photo_from_gallery))
                         }
                     }
                     state.busy?.let {
@@ -138,12 +136,12 @@ fun PhotoImportScreen(onDraft: () -> Unit, onClose: () -> Unit) {
                                     FilterChip(
                                         selected = state.brush == kind,
                                         onClick = { vm.setBrush(kind) },
-                                        label = { Text(kind.label, color = if (kind == LineKind.Ignore) Color.Unspecified else kindColor(kind)) },
+                                        label = { Text(tr(kind.label), color = if (kind == LineKind.Ignore) Color.Unspecified else kindColor(kind)) },
                                     )
                                 }
                             }
                             Text(
-                                "Zeile antippen: bekommt die gewählte Art. Lange drücken: alle Zeilen seit der zuletzt angetippten.",
+                                tr(R.string.photo_tap_hint),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -155,7 +153,7 @@ fun PhotoImportScreen(onDraft: () -> Unit, onClose: () -> Unit) {
                     val kind = state.kinds[i]
                     if (i > 0 && line.page != state.lines[i - 1].page) {
                         Text(
-                            "Seite ${line.page + 1}",
+                            tr(R.string.photo_page, "n" to line.page + 1),
                             style = MaterialTheme.typography.labelMedium,
                             modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 4.dp),
                         )
@@ -167,7 +165,7 @@ fun PhotoImportScreen(onDraft: () -> Unit, onClose: () -> Unit) {
                         verticalAlignment = Alignment.Top,
                     ) {
                         Text(
-                            kind.label,
+                            tr(kind.label),
                             style = MaterialTheme.typography.labelMedium,
                             color = kindColor(kind),
                             modifier = Modifier.width(76.dp),
@@ -185,12 +183,12 @@ fun PhotoImportScreen(onDraft: () -> Unit, onClose: () -> Unit) {
                     // Optionales Rezeptbild: Foto vom fertigen Gericht.
                     FlowRow(Modifier.padding(16.dp, 4.dp), itemVerticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            if (state.dish != null) "Gerichtfoto gewählt" else "Gerichtfoto (optional):",
+                            tr(if (state.dish != null) R.string.photo_dish_chosen else R.string.photo_dish_optional),
                             style = MaterialTheme.typography.bodySmall,
                         )
-                        TextButton(onClick = { takePhoto(dish = true) }) { Text("Kamera") }
-                        TextButton(onClick = { dishPicker.launch(imagesOnly) }) { Text("Galerie") }
-                        if (state.dish != null) TextButton(onClick = { vm.setDish(null) }) { Text("Entfernen") }
+                        TextButton(onClick = { takePhoto(dish = true) }) { Text(tr(R.string.photo_camera)) }
+                        TextButton(onClick = { dishPicker.launch(imagesOnly) }) { Text(tr(R.string.photo_gallery)) }
+                        if (state.dish != null) TextButton(onClick = { vm.setDish(null) }) { Text(tr(R.string.common_remove)) }
                     }
                 }
             }
@@ -202,17 +200,17 @@ fun PhotoImportScreen(onDraft: () -> Unit, onClose: () -> Unit) {
                 onClick = { vm.next(onDraft) },
                 enabled = state.busy == null,
                 modifier = Modifier.fillMaxWidth().padding(16.dp, 8.dp),
-            ) { Text("Weiter zum Bearbeiten") }
+            ) { Text(tr(R.string.photo_next)) }
         }
     }
 
     if (confirmLeave) {
         AlertDialog(
             onDismissRequest = { confirmLeave = false },
-            title = { Text("Foto-Import abbrechen?") },
-            text = { Text("Die erkannten Zeilen gehen verloren.") },
-            confirmButton = { TextButton(onClick = { confirmLeave = false; vm.clear(); onClose() }) { Text("Verwerfen") } },
-            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text("Weiter zuordnen") } },
+            title = { Text(tr(R.string.photo_leave_title)) },
+            text = { Text(tr(R.string.photo_leave_text)) },
+            confirmButton = { TextButton(onClick = { confirmLeave = false; vm.clear(); onClose() }) { Text(tr(R.string.photo_discard)) } },
+            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(tr(R.string.photo_keep)) } },
         )
     }
 }

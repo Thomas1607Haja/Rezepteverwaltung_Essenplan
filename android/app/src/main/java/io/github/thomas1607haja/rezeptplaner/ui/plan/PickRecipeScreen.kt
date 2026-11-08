@@ -47,15 +47,26 @@ import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.MealPlanEntry
 import io.github.thomas1607haja.rezeptplaner.ui.PickRecipeRoute
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
+import io.github.thomas1607haja.rezeptplaner.ui.common.trPlural
 import io.github.thomas1607haja.rezeptplaner.ui.dayLabel
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipesScreen
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.RecipesViewModel
 import io.github.thomas1607haja.rezeptplaner.ui.recipes.courseTabs
 import kotlinx.coroutines.launch
 
-/** Schnellauswahl für Einträge ohne Rezept – dieselbe wie im Web (RecipePickerPage). */
-val quickNotes = listOf("Essen gehen", "Reste", "Pizza bestellen")
+/**
+ * Schnellauswahl für Einträge ohne Rezept – dieselbe wie im Web
+ * (RecipePickerPage). Gespeichert wird der Text in der Sprache der App.
+ */
+val quickNotes: List<String>
+    get() = listOf(
+        Texts.get(R.string.quick_eating_out),
+        Texts.get(R.string.quick_leftovers),
+        Texts.get(R.string.quick_order_pizza),
+    )
 
 /**
  * Die zuletzt verwendeten Texte von Einträgen ohne Rezept (neueste zuerst,
@@ -63,15 +74,17 @@ val quickNotes = listOf("Essen gehen", "Reste", "Pizza bestellen")
  * zurück) und alles Geplante; das reicht für „zuletzt“. Höchstens drei,
  * ältere fallen aus der Schnellauswahl heraus.
  */
-fun recentNotes(entries: List<MealPlanEntry>, limit: Int = 3): List<String> =
-    entries.asSequence()
+fun recentNotes(entries: List<MealPlanEntry>, limit: Int = 3): List<String> {
+    val quick = quickNotes
+    return entries.asSequence()
         .filter { it.recipeId == null && it.note.isNotBlank() }
         .sortedByDescending { it.date }
         .map { it.note.trim() }
-        .filter { note -> quickNotes.none { it.equals(note, ignoreCase = true) } }
+        .filter { note -> quick.none { it.equals(note, ignoreCase = true) } }
         .distinctBy { it.lowercase() }
         .take(limit)
         .toList()
+}
 
 /**
  * Rezeptauswahl beim Planen: die Rezeptübersicht, Antippen plant ein bzw.
@@ -123,7 +136,10 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit, onMenu: (menuId
                 note = ""
                 previewId = null
                 val name = courseName(courses, courseTag)
-                snackbar.showSnackbar("„$title“${if (name.isNotEmpty()) " als $name" else ""} hinzugefügt")
+                snackbar.showSnackbar(
+                    if (name.isNotEmpty()) Texts.get(R.string.plan_added_as, "title" to title, "course" to name)
+                    else Texts.get(R.string.plan_added, "title" to title),
+                )
             }
         }
     }
@@ -147,7 +163,7 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit, onMenu: (menuId
             busy = false
             if (error == null) {
                 onDone()
-                snackbar.showSnackbar("„$title“ eingeplant am ${dayLabel(date)}")
+                snackbar.showSnackbar(Texts.get(R.string.plan_planned_on, "title" to title, "day" to dayLabel(date)))
             }
         }
     }
@@ -170,16 +186,17 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit, onMenu: (menuId
             title = {
                 Text(
                     when {
-                        menuMode -> "Gang für Menü" + (menu?.let { ": ${it.displayTitle}" } ?: "")
-                        replacing != null -> "„${entryTitle(replacing)}“ ersetzen"
-                        else -> "Gericht für ${dayLabel(route.date)}"
+                        menuMode -> menu?.let { tr(R.string.plan_pick_heading_menu_named, "title" to menuTitle(it)) }
+                            ?: tr(R.string.plan_pick_heading_menu)
+                        replacing != null -> tr(R.string.plan_pick_heading_replace, "title" to entryTitle(replacing))
+                        else -> tr(R.string.plan_pick_heading_add, "day" to dayLabel(route.date))
                     },
                 )
             },
             navigationIcon = {
-                IconButton(onClick = onDone) { Icon(painterResource(R.drawable.ic_back), contentDescription = "Zurück") }
+                IconButton(onClick = onDone) { Icon(painterResource(R.drawable.ic_back), contentDescription = tr(R.string.common_back)) }
             },
-            actions = { if (menuMode) TextButton(onClick = onDone) { Text("Fertig") } },
+            actions = { if (menuMode) TextButton(onClick = onDone) { Text(tr(R.string.plan_done)) } },
             windowInsets = WindowInsets(0),
         )
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -209,13 +226,13 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit, onMenu: (menuId
                     if (menuMode) {
                         // Gang des nächsten Gerichts; Datum und Slot kommen vom Menü.
                         Text(
-                            if (menu == null) "Menü wird geladen …"
-                            else "${dayLabel(menu.date)} · ${courseCount(menuCourses)} im Menü",
+                            if (menu == null) tr(R.string.plan_menu_loading)
+                            else "${dayLabel(menu.date)} · ${trPlural(R.plurals.plan_courses_in_menu, menuCourses)}",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         // Eine Zeile zum Wischen: Die Rezeptliste darunter braucht den Platz.
                         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilterChip(selected = courseTag == 0L, onClick = { courseTag = 0L }, label = { Text("kein Gang") })
+                            FilterChip(selected = courseTag == 0L, onClick = { courseTag = 0L }, label = { Text(tr(R.string.plan_no_course_chip)) })
                             courses.forEach { t ->
                                 FilterChip(selected = courseTag == t.id, onClick = { courseTag = t.id }, label = { Text(t.name) })
                             }
@@ -234,13 +251,13 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit, onMenu: (menuId
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             note, { if (it.length <= 200) note = it },
-                            placeholder = { Text("Ohne Rezept, z. B. Essen gehen") },
+                            placeholder = { Text(tr(R.string.plan_note_placeholder)) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { chooseNote(note) }),
                             modifier = Modifier.weight(1f),
                         )
-                        Button(onClick = { chooseNote(note) }, enabled = note.isNotBlank() && !busy) { Text("Eintragen") }
+                        Button(onClick = { chooseNote(note) }, enabled = note.isNotBlank() && !busy) { Text(tr(R.string.plan_note_submit)) }
                     }
                     // Eine Zeile zum Wischen, damit der Bereich nicht mit jedem Freitext wächst.
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -250,7 +267,7 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit, onMenu: (menuId
                     }
                     if (replacing == null && !menuMode && snapshot.menusSupported) {
                         // Schritt 9.4: mehrere Gänge, z. B. Suppe, Hauptgericht, Nachtisch.
-                        OutlinedButton(onClick = { startMenu() }, enabled = !busy) { Text("Menü zusammenstellen …") }
+                        OutlinedButton(onClick = { startMenu() }, enabled = !busy) { Text(tr(R.string.plan_compose_menu)) }
                     }
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
@@ -270,7 +287,7 @@ fun PickRecipeScreen(route: PickRecipeRoute, onDone: () -> Unit, onMenu: (menuId
                 else -> snapshot.settings.familySize
             },
             excluded = emptyList(),
-            confirmLabel = if (replacing != null) "Ersetzen" else "Hinzufügen",
+            confirmLabel = tr(if (replacing != null) R.string.plan_replace else R.string.plan_add),
             busy = busy,
             error = error,
             onConfirm = { choice ->

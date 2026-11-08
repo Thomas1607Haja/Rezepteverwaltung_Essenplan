@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Einrichtung der Verbindung (ui/setup, data/ServerConfig.kt). -->
+<resources>
+    <string name="setup_title">Connect Rezeptplaner</string>
+    <string name="setup_scan_unavailable">Scanner not available (Google Play services). Scan the QR code with the camera app or enter the details manually.</string>
+    <string name="setup_intro">In the web interface, go to Settings → Install the app → Step 2, tap “Connect new device” and scan the QR code here.</string>
+    <string name="setup_scan">Scan QR code</string>
+    <string name="setup_manual">Enter manually</string>
+    <string name="setup_app_url">Address for the app</string>
+    <string name="setup_api_key">API key (rp_…)</string>
+    <string name="setup_cf_title">Cloudflare Access (only if set up)</string>
+    <string name="setup_next">Next</string>
+    <string name="setup_confirm_question">Connect to this Rezeptplaner?</string>
+    <string name="setup_with_cf">with Cloudflare Access</string>
+    <string name="setup_confirm_warning">Only confirm if this is your address. Otherwise a stranger\'s server would receive everything you enter in the app.</string>
+    <string name="setup_connect">Connect</string>
+    <string name="setup_retry">Try again</string>
+    <string name="setup_connected_to">Connected to {host}.</string>
+    <string name="setup_server_version">Rezeptplaner {version} on the server.</string>
+    <string name="setup_start">Let\'s go</string>
+    <string name="setup_error_not_setup_link">This isn\'t a QR code for connecting Rezeptplaner.</string>
+    <string name="setup_error_https">The address must start with https://, e.g. https://rezepte.example.org.</string>
+    <string name="setup_error_key">The API key is invalid (it starts with rp_).</string>
+    <string name="setup_error_cf_both">Cloudflare Access needs both Client ID and Client Secret.</string>
+</resources>

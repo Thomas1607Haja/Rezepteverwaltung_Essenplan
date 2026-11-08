@@ -2,10 +2,12 @@ package io.github.thomas1607haja.rezeptplaner.ui.edit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.RezeptplanerApplication
 import io.github.thomas1607haja.rezeptplaner.api.DuplicateRecipe
 import io.github.thomas1607haja.rezeptplaner.data.ImageChange
 import io.github.thomas1607haja.rezeptplaner.data.Outcome
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -108,7 +110,7 @@ class RecipeEditViewModel(
         val (input, errors) = _form.value.toInput()
         _errors.value = errors
         if (input == null) {
-            _message.value = "Bitte die markierten Felder prüfen."
+            _message.value = Texts.get(R.string.recipe_edit_check_fields)
             return
         }
         _saving.value = true

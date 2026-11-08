@@ -1,6 +1,8 @@
 package io.github.thomas1607haja.rezeptplaner.share
 
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
 import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
 import java.net.URI
 
@@ -82,7 +84,8 @@ private fun needed(blocks: List<PdfBlock>, i: Int, from: Int, pageHeight: Float)
 }
 
 /**
- * Dateiname aus dem Titel: „Rezept_Romanesco-Tomaten-Pasta.pdf“. Zeichen,
+ * Dateiname aus dem Titel: „Rezept_Romanesco-Tomaten-Pasta.pdf“ („Rezept“
+ * in der Sprache der App, share_file_prefix). Zeichen,
  * die Windows, Android oder Mailprogramme nicht mögen, werden zu „-“,
  * Leerzeichen zu „_“; Umlaute bleiben.
  */
@@ -95,7 +98,8 @@ fun shareFileName(title: String): String {
         .trim('-', '_', '.')
         .take(80)
         .trimEnd('-', '_', '.')
-    return if (clean.isEmpty()) "Rezept.pdf" else "Rezept_$clean.pdf"
+    val prefix = Texts.get(R.string.share_file_prefix)
+    return if (clean.isEmpty()) "$prefix.pdf" else "${prefix}_$clean.pdf"
 }
 
 /**
@@ -104,22 +108,23 @@ fun shareFileName(title: String): String {
  */
 fun pdfMeta(recipe: Recipe, courseGroup: String): List<String> = buildList {
     val times = listOfNotNull(
-        recipe.prepMinutes?.let { "Vorbereitung ${formatMinutes(it)}" },
-        recipe.totalMinutes?.let { "Gesamt ${formatMinutes(it)}" },
+        recipe.prepMinutes?.let { Texts.get(R.string.share_prep_time, "time" to formatMinutes(it)) },
+        recipe.totalMinutes?.let { Texts.get(R.string.share_total_time, "time" to formatMinutes(it)) },
     )
     if (times.isNotEmpty()) add(times.joinToString(" · "))
     val (courses, others) = recipe.tags.partition { courseGroup.isNotEmpty() && it.group == courseGroup }
-    if (courses.isNotEmpty()) add("Gang: " + courses.joinToString(", ") { it.name })
-    if (others.isNotEmpty()) add("Kategorien: " + others.joinToString(", ") { it.name })
+    if (courses.isNotEmpty()) add(Texts.get(R.string.share_course, "names" to courses.joinToString(", ") { it.name }))
+    if (others.isNotEmpty()) add(Texts.get(R.string.share_categories, "names" to others.joinToString(", ") { it.name }))
 }
 
 /** Quelle mit Webadresse, null ohne Quelle. */
 fun pdfSource(recipe: Recipe): String? {
     val web = recipe.sourceUrl.trim().takeIf { it.startsWith("https://") || it.startsWith("http://") }
-    return when {
-        recipe.sourceName.isNotEmpty() && web != null -> "Quelle: ${recipe.sourceName}\n$web"
-        recipe.sourceName.isNotEmpty() -> "Quelle: ${recipe.sourceName}"
-        web != null -> "Quelle: " + (runCatching { URI(web).host }.getOrNull() ?: web).let { host -> if (host == web) web else "$host\n$web" }
-        else -> null
+    val source = when {
+        recipe.sourceName.isNotEmpty() && web != null -> "${recipe.sourceName}\n$web"
+        recipe.sourceName.isNotEmpty() -> recipe.sourceName
+        web != null -> (runCatching { URI(web).host }.getOrNull() ?: web).let { host -> if (host == web) web else "$host\n$web" }
+        else -> return null
     }
+    return Texts.get(R.string.share_source, "source" to source)
 }

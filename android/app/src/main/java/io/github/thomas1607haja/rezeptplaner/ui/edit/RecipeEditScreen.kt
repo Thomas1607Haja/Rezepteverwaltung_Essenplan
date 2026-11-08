@@ -62,6 +62,7 @@ import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.data.ImageChange
 import io.github.thomas1607haja.rezeptplaner.ui.common.RecipeImage
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 import java.io.File
 
 /**
@@ -111,11 +112,11 @@ fun RecipeEditScreen(
 
     Column(Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text(if (vm.isNew) "Neues Rezept" else "Rezept bearbeiten") },
-            navigationIcon = { IconButton(onClick = leave) { Icon(painterResource(R.drawable.ic_back), contentDescription = "Zurück") } },
+            title = { Text(tr(if (vm.isNew) R.string.recipe_new else R.string.recipe_edit_title)) },
+            navigationIcon = { IconButton(onClick = leave) { Icon(painterResource(R.drawable.ic_back), contentDescription = tr(R.string.common_back)) } },
             actions = {
                 if (saving) CircularProgressIndicator(Modifier.size(24.dp).padding(end = 8.dp))
-                TextButton(onClick = { vm.save(onSaved) }, enabled = !saving) { Text("Speichern") }
+                TextButton(onClick = { vm.save(onSaved) }, enabled = !saving) { Text(tr(R.string.common_save)) }
             },
             windowInsets = WindowInsets(0),
         )
@@ -126,7 +127,7 @@ fun RecipeEditScreen(
             message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             if (vm.duplicates.isNotEmpty()) {
                 // Wie im Web: Antippen öffnet das vorhandene Rezept, der Entwurf bleibt erhalten.
-                Text("Gibt es schon:", color = MaterialTheme.colorScheme.tertiary)
+                Text(tr(R.string.recipe_edit_duplicates), color = MaterialTheme.colorScheme.tertiary)
                 vm.duplicates.forEach { d ->
                     Text(
                         d.title, color = MaterialTheme.colorScheme.primary,
@@ -135,41 +136,41 @@ fun RecipeEditScreen(
                 }
             }
 
-            Field("Titel", form.title, errors["title"]) { v -> vm.update { it.copy(title = v) } }
-            Field("Beschreibung", form.description, null, singleLine = false) { v -> vm.update { it.copy(description = v) } }
+            Field(tr(R.string.recipe_edit_field_title), form.title, errors["title"]) { v -> vm.update { it.copy(title = v) } }
+            Field(tr(R.string.recipe_edit_field_description), form.description, null, singleLine = false) { v -> vm.update { it.copy(description = v) } }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Field(if (form.yieldUnit.isBlank()) "Portionen" else "Menge", form.baseServings, errors["baseServings"], Modifier.weight(1f), number = true) { v -> vm.update { it.copy(baseServings = v) } }
-                Field("Vorb. (Min.)", form.prepMinutes, errors["prepMinutes"], Modifier.weight(1f), number = true) { v -> vm.update { it.copy(prepMinutes = v) } }
-                Field("Gesamt (Min.)", form.totalMinutes, errors["totalMinutes"], Modifier.weight(1f), number = true) { v -> vm.update { it.copy(totalMinutes = v) } }
+                Field(tr(if (form.yieldUnit.isBlank()) R.string.recipe_edit_field_servings else R.string.recipe_edit_field_amount), form.baseServings, errors["baseServings"], Modifier.weight(1f), number = true) { v -> vm.update { it.copy(baseServings = v) } }
+                Field(tr(R.string.recipe_edit_field_prep), form.prepMinutes, errors["prepMinutes"], Modifier.weight(1f), number = true) { v -> vm.update { it.copy(prepMinutes = v) } }
+                Field(tr(R.string.recipe_edit_field_total), form.totalMinutes, errors["totalMinutes"], Modifier.weight(1f), number = true) { v -> vm.update { it.copy(totalMinutes = v) } }
             }
 
             // Ergebnis-Einheit (Kuchen & Co.): leer = Portionen; Vorschläge als Chips.
-            Field("Einheit (leer = Portionen)", form.yieldUnit, null) { v -> vm.update { it.copy(yieldUnit = v) } }
+            Field(tr(R.string.recipe_edit_field_yield_unit), form.yieldUnit, null) { v -> vm.update { it.copy(yieldUnit = v) } }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 yieldUnits.forEach { u ->
                     AssistChip(onClick = { vm.update { it.copy(yieldUnit = u) } }, label = { Text(u) })
                 }
             }
 
-            Section("Bild")
+            Section(tr(R.string.recipe_edit_section_image))
             ImageBlock(image, vm.currentImage)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = {
                     val uri = cameraFile(context)
                     cameraUri = uri
                     camera.launch(uri)
-                }) { Text("Foto aufnehmen") }
+                }) { Text(tr(R.string.recipe_edit_take_photo)) }
                 OutlinedButton(onClick = {
                     gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                }) { Text("Galerie") }
+                }) { Text(tr(R.string.recipe_edit_gallery)) }
                 if (image !is ImageChange.Remove && (vm.currentImage.isNotEmpty() || image !is ImageChange.Keep)) {
                     TextButton(onClick = { vm.setImage(if (vm.currentImage.isNotEmpty()) ImageChange.Remove else ImageChange.Keep) }) {
-                        Text("Entfernen")
+                        Text(tr(R.string.common_remove))
                     }
                 }
             }
 
-            Section("Kategorien")
+            Section(tr(R.string.recipe_categories))
             snapshot.tagGroups.forEach { group ->
                 Text(group.name, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -184,7 +185,7 @@ fun RecipeEditScreen(
                 }
             }
 
-            Section("Zutaten")
+            Section(tr(R.string.recipe_ingredients))
             form.items.forEachIndexed { index, row ->
                 IngredientEditor(
                     row, errors["item:${row.key}"],
@@ -197,12 +198,12 @@ fun RecipeEditScreen(
                 )
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { vm.update { it.copy(items = it.items + IngredientRow()) } }) { Text("+ Zutat") }
-                OutlinedButton(onClick = { vm.update { it.copy(items = it.items + IngredientRow(heading = true)) } }) { Text("+ Überschrift") }
-                TextButton(onClick = { pasting = true }) { Text("Zeilen einfügen") }
+                OutlinedButton(onClick = { vm.update { it.copy(items = it.items + IngredientRow()) } }) { Text(tr(R.string.recipe_edit_add_ingredient)) }
+                OutlinedButton(onClick = { vm.update { it.copy(items = it.items + IngredientRow(heading = true)) } }) { Text(tr(R.string.recipe_edit_add_heading)) }
+                TextButton(onClick = { pasting = true }) { Text(tr(R.string.recipe_edit_paste_lines)) }
             }
 
-            Section("Zubereitung")
+            Section(tr(R.string.recipe_steps))
             form.steps.forEachIndexed { index, step ->
                 Row(verticalAlignment = Alignment.Top) {
                     Text("${index + 1}.", Modifier.padding(top = 16.dp, end = 8.dp), color = MaterialTheme.colorScheme.primary)
@@ -218,16 +219,16 @@ fun RecipeEditScreen(
                     )
                 }
             }
-            OutlinedButton(onClick = { vm.update { it.copy(steps = it.steps + StepRow()) } }) { Text("+ Schritt") }
+            OutlinedButton(onClick = { vm.update { it.copy(steps = it.steps + StepRow()) } }) { Text(tr(R.string.recipe_edit_add_step)) }
 
-            Section("Quelle und Notizen")
-            Field("Quelle (Webadresse)", form.sourceUrl, errors["sourceUrl"], keyboard = KeyboardType.Uri) { v -> vm.update { it.copy(sourceUrl = v) } }
-            Field("Quelle (Name, z. B. Kochbuch)", form.sourceName, null) { v -> vm.update { it.copy(sourceName = v) } }
-            Field("Notizen", form.notes, null, singleLine = false) { v -> vm.update { it.copy(notes = v) } }
+            Section(tr(R.string.recipe_edit_section_source))
+            Field(tr(R.string.recipe_edit_field_source_url), form.sourceUrl, errors["sourceUrl"], keyboard = KeyboardType.Uri) { v -> vm.update { it.copy(sourceUrl = v) } }
+            Field(tr(R.string.recipe_edit_field_source_name), form.sourceName, null) { v -> vm.update { it.copy(sourceName = v) } }
+            Field(tr(R.string.recipe_notes), form.notes, null, singleLine = false) { v -> vm.update { it.copy(notes = v) } }
 
             if (!vm.isNew) {
                 TextButton(onClick = { confirmDelete = true }, enabled = !saving) {
-                    Text("Rezept löschen", color = MaterialTheme.colorScheme.error)
+                    Text(tr(R.string.recipe_delete), color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -238,30 +239,30 @@ fun RecipeEditScreen(
     if (confirmLeave) {
         AlertDialog(
             onDismissRequest = { confirmLeave = false },
-            title = { Text(if (freshVariant) "Variante verwerfen?" else "Änderungen verwerfen?") },
-            text = { Text(if (freshVariant) "Die eben angelegte Variante wird wieder gelöscht." else "Ungespeicherte Änderungen gehen verloren.") },
+            title = { Text(tr(if (freshVariant) R.string.recipe_edit_discard_variant_title else R.string.recipe_edit_discard_changes_title)) },
+            text = { Text(tr(if (freshVariant) R.string.recipe_edit_discard_variant_text else R.string.recipe_edit_discard_changes_text)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmLeave = false
                     if (freshVariant) vm.delete(onDeleted) else onCancel()
-                }) { Text("Verwerfen") }
+                }) { Text(tr(R.string.recipe_edit_discard)) }
             },
-            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text("Weiter bearbeiten") } },
+            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(tr(R.string.recipe_edit_keep_editing)) } },
         )
     }
     if (confirmDelete) {
         val hasVariants = snapshot.recipes.any { it.parentRecipeId == recipeId }
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Rezept löschen?") },
+            title = { Text(tr(R.string.recipe_delete_title)) },
             text = {
                 Text(
-                    "„${form.title}“ wird gelöscht; Einträge im Essensplan bleiben mit dem Titel als Notiz." +
-                        if (hasVariants) " Die älteste Variante wird zum neuen Ursprungsrezept." else "",
+                    tr(R.string.recipe_delete_text, "title" to form.title) +
+                        if (hasVariants) " " + tr(R.string.recipe_delete_variants) else "",
                 )
             },
-            confirmButton = { TextButton(onClick = { confirmDelete = false; vm.delete(onDeleted) }) { Text("Löschen") } },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Abbrechen") } },
+            confirmButton = { TextButton(onClick = { confirmDelete = false; vm.delete(onDeleted) }) { Text(tr(R.string.common_delete)) } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(tr(R.string.common_cancel)) } },
         )
     }
 }
@@ -295,9 +296,9 @@ private fun ImageBlock(image: ImageChange, current: String) {
     val modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(MaterialTheme.shapes.medium)
     when (image) {
         is ImageChange.Upload -> AsyncImage(model = image.data, contentDescription = null, contentScale = ContentScale.Crop, modifier = modifier)
-        is ImageChange.FromUrl -> Text("Das Bild der Quellseite wird beim Speichern übernommen.", style = MaterialTheme.typography.bodySmall)
-        ImageChange.Remove -> Text("Das Bild wird beim Speichern entfernt.", style = MaterialTheme.typography.bodySmall)
-        ImageChange.Keep -> if (current.isNotEmpty()) RecipeImage(current, modifier) else Text("Noch kein Bild.", style = MaterialTheme.typography.bodySmall)
+        is ImageChange.FromUrl -> Text(tr(R.string.recipe_edit_image_from_url), style = MaterialTheme.typography.bodySmall)
+        ImageChange.Remove -> Text(tr(R.string.recipe_edit_image_remove), style = MaterialTheme.typography.bodySmall)
+        ImageChange.Keep -> if (current.isNotEmpty()) RecipeImage(current, modifier) else Text(tr(R.string.recipe_edit_no_image), style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -314,7 +315,7 @@ private fun IngredientEditor(
             if (row.heading) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
-                        row.name, { onChange(row.copy(name = it)) }, label = { Text("Überschrift, z. B. Für die Soße") },
+                        row.name, { onChange(row.copy(name = it)) }, label = { Text(tr(R.string.recipe_edit_heading_label)) },
                         singleLine = true, modifier = Modifier.weight(1f),
                     )
                     RowActions({ onMove(-1) }, { onMove(1) }, onDelete)
@@ -322,19 +323,19 @@ private fun IngredientEditor(
             } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     OutlinedTextField(
-                        row.quantity, { onChange(row.copy(quantity = it)) }, label = { Text("Menge") }, singleLine = true,
+                        row.quantity, { onChange(row.copy(quantity = it)) }, label = { Text(tr(R.string.recipe_edit_quantity)) }, singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.width(84.dp),
                     )
-                    OutlinedTextField(row.unit, { onChange(row.copy(unit = it)) }, label = { Text("Einheit") }, singleLine = true, modifier = Modifier.width(88.dp))
-                    OutlinedTextField(row.name, { onChange(row.copy(name = it)) }, label = { Text("Zutat") }, singleLine = true, modifier = Modifier.weight(1f))
+                    OutlinedTextField(row.unit, { onChange(row.copy(unit = it)) }, label = { Text(tr(R.string.recipe_edit_unit)) }, singleLine = true, modifier = Modifier.width(88.dp))
+                    OutlinedTextField(row.name, { onChange(row.copy(name = it)) }, label = { Text(tr(R.string.recipe_edit_ingredient)) }, singleLine = true, modifier = Modifier.weight(1f))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
-                        row.note, { onChange(row.copy(note = it)) }, label = { Text("Zusatz") }, singleLine = true,
+                        row.note, { onChange(row.copy(note = it)) }, label = { Text(tr(R.string.recipe_edit_note)) }, singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
                     Checkbox(checked = row.shoppingRelevant, onCheckedChange = { onChange(row.copy(shoppingRelevant = it)) })
-                    Text("kaufen", style = MaterialTheme.typography.bodySmall)
+                    Text(tr(R.string.recipe_edit_buy), style = MaterialTheme.typography.bodySmall)
                     RowActions({ onMove(-1) }, { onMove(1) }, onDelete)
                 }
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
@@ -346,9 +347,9 @@ private fun IngredientEditor(
 @Composable
 private fun RowActions(onUp: () -> Unit, onDown: () -> Unit, onDelete: () -> Unit) {
     Row {
-        IconButton(onClick = onUp, modifier = Modifier.size(36.dp)) { Icon(painterResource(R.drawable.ic_up), contentDescription = "Nach oben") }
-        IconButton(onClick = onDown, modifier = Modifier.size(36.dp)) { Icon(painterResource(R.drawable.ic_down), contentDescription = "Nach unten") }
-        IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) { Icon(painterResource(R.drawable.ic_delete), contentDescription = "Entfernen") }
+        IconButton(onClick = onUp, modifier = Modifier.size(36.dp)) { Icon(painterResource(R.drawable.ic_up), contentDescription = tr(R.string.recipe_edit_move_up)) }
+        IconButton(onClick = onDown, modifier = Modifier.size(36.dp)) { Icon(painterResource(R.drawable.ic_down), contentDescription = tr(R.string.recipe_edit_move_down)) }
+        IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) { Icon(painterResource(R.drawable.ic_delete), contentDescription = tr(R.string.common_remove)) }
     }
 }
 
@@ -357,15 +358,15 @@ private fun PasteDialog(onDismiss: () -> Unit, onPaste: (String) -> Unit) {
     var text by rememberSaveable { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Zutaten einfügen") },
+        title = { Text(tr(R.string.recipe_edit_paste_title)) },
         text = {
             OutlinedTextField(
-                text, { text = it }, label = { Text("Eine Zutat je Zeile, z. B. 500 g Mehl") },
+                text, { text = it }, label = { Text(tr(R.string.recipe_edit_paste_label)) },
                 singleLine = false, modifier = Modifier.fillMaxWidth(),
             )
         },
-        confirmButton = { TextButton(onClick = { onPaste(text) }, enabled = text.isNotBlank()) { Text("Einfügen") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Abbrechen") } },
+        confirmButton = { TextButton(onClick = { onPaste(text) }, enabled = text.isNotBlank()) { Text(tr(R.string.recipe_edit_paste)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(tr(R.string.common_cancel)) } },
     )
 }
 

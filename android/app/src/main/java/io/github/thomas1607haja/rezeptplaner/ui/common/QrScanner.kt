@@ -8,6 +8,7 @@ import com.google.mlkit.common.MlKitException
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import io.github.thomas1607haja.rezeptplaner.R
 
 private const val TAG = "Rezeptplaner"
 
@@ -26,13 +27,13 @@ sealed interface ScanResult {
  * meldet das, statt still nichts zu tun.
  */
 fun scanQrCode(context: Context, onResult: (ScanResult) -> Unit) {
-    val unavailable = "Der QR-Scanner ist auf diesem Gerät gerade nicht verfügbar (Google-Play-Dienste)."
+    val unavailable = Texts.get(R.string.settings_qr_unavailable)
     try {
         val options = GmsBarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build()
         val scanner = GmsBarcodeScanning.getClient(context, options)
         scanner.startScan()
             .addOnSuccessListener { barcode ->
-                onResult(barcode.rawValue?.let { ScanResult.Text(it) } ?: ScanResult.Failed("Der QR-Code enthält keinen Text."))
+                onResult(barcode.rawValue?.let { ScanResult.Text(it) } ?: ScanResult.Failed(Texts.get(R.string.settings_qr_no_text)))
             }
             .addOnCanceledListener { onResult(ScanResult.Cancelled) }
             .addOnFailureListener { e ->
@@ -44,10 +45,7 @@ fun scanQrCode(context: Context, onResult: (ScanResult) -> Unit) {
                             .installModules(ModuleInstallRequest.newBuilder().addApi(scanner).build())
                     }
                     onResult(
-                        ScanResult.Failed(
-                            "Der QR-Scanner wird gerade von den Google-Play-Diensten nachgeladen. " +
-                                "Bitte in ein bis zwei Minuten erneut versuchen (Internetverbindung nötig).",
-                        ),
+                        ScanResult.Failed(Texts.get(R.string.settings_qr_installing)),
                     )
                 } else {
                     onResult(ScanResult.Failed("$unavailable (${e.message ?: e.javaClass.simpleName})"))

@@ -28,10 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.data.SyncLog
 import io.github.thomas1607haja.rezeptplaner.data.SyncTrigger
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.common.formatTime
+import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 import kotlinx.coroutines.launch
 
 private const val HOURS_12 = 12 * 60 * 60 * 1000L
@@ -71,43 +73,42 @@ fun SyncCard() {
         colors = if (stalled) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer) else CardDefaults.cardColors(),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Abgleich", style = MaterialTheme.typography.titleMedium)
-            Text("Zuletzt: ${formatTime(log.lastSuccess)}${log.lastSuccessTrigger?.let { " (${label(it)})" }.orEmpty()}")
-            Text("Im Hintergrund: ${formatTime(log.lastBackgroundSuccess)}", style = MaterialTheme.typography.bodySmall)
+            Text(tr(R.string.settings_sync_title), style = MaterialTheme.typography.titleMedium)
+            val last = formatTime(log.lastSuccess)
+            Text(
+                log.lastSuccessTrigger?.let { tr(R.string.settings_sync_last_trigger, "time" to last, "trigger" to tr(label(it))) }
+                    ?: tr(R.string.settings_sync_last, "time" to last),
+            )
+            Text(tr(R.string.settings_sync_background, "time" to formatTime(log.lastBackgroundSuccess)), style = MaterialTheme.typography.bodySmall)
             log.lastError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
             OutlinedButton(
                 onClick = { scope.launch { app.syncRepository.sync(SyncTrigger.Manual) } },
                 enabled = !state.running,
-            ) { Text(if (state.running) "Gleicht ab …" else "Jetzt abgleichen") }
+            ) { Text(tr(if (state.running) R.string.settings_sync_running else R.string.settings_sync_now)) }
 
             if (!unrestricted) {
                 Text(
-                    if (stalled) {
-                        "Der Abgleich im Hintergrund läuft nicht – One UI hält die App an. Bitte die Akku-Optimierung ausschalten."
-                    } else {
-                        "Damit der Abgleich auch im Hintergrund zuverlässig läuft, die Akku-Optimierung für die App ausschalten."
-                    },
+                    tr(if (stalled) R.string.settings_sync_stalled else R.string.settings_sync_battery_hint),
                     style = MaterialTheme.typography.bodySmall,
                 )
-                Button(onClick = { requestUnrestricted(context) }) { Text("Akku-Optimierung ausschalten") }
+                Button(onClick = { requestUnrestricted(context) }) { Text(tr(R.string.settings_sync_battery_button)) }
                 Text(
-                    "Falls nötig zusätzlich: App-Info → Akku → „Nicht eingeschränkt“ sowie Einstellungen → Akku → " +
-                        "Hintergrundnutzungsgrenzen → „Nie in Standby versetzte Apps“ → Rezeptplaner hinzufügen.",
+                    tr(R.string.settings_sync_samsung_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
-                Text("Akku-Optimierung ist aus – der Abgleich läuft alle 4 Stunden.", style = MaterialTheme.typography.bodySmall)
+                Text(tr(R.string.settings_sync_unrestricted), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
 }
 
-private fun label(trigger: SyncTrigger) = when (trigger) {
-    SyncTrigger.Start -> "beim Start"
-    SyncTrigger.Pull -> "Herunterziehen"
-    SyncTrigger.Background -> "im Hintergrund"
-    SyncTrigger.Manual -> "von Hand"
+private fun label(trigger: SyncTrigger): Int = when (trigger) {
+    SyncTrigger.Start -> R.string.settings_trigger_start
+    SyncTrigger.Pull -> R.string.settings_trigger_pull
+    SyncTrigger.Background -> R.string.settings_trigger_background
+    SyncTrigger.Manual -> R.string.settings_trigger_manual
 }
 
 // Für eine App außerhalb des Play Store ist der direkte Dialog erlaubt

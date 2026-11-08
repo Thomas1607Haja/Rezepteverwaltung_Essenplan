@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Einkauf (ui/shopping, data/ShoppingRepository); Formulierungen wie web/src/locales/shopping. -->
+<resources>
+    <string name="shopping_period_current" formatted="false">This shop</string>
+    <string name="shopping_period_next" formatted="false">Next shop</string>
+    <string name="shopping_range" formatted="false">{from} to {to}</string>
+    <string name="shopping_sending" formatted="false">Sending …</string>
+    <string name="shopping_send" formatted="false">Send to Bring ({count})</string>
+    <string name="shopping_send_to" formatted="false">Send to Bring: {list} ({count})</string>
+    <string name="shopping_choose_list" formatted="false">Choose Bring list</string>
+    <string name="shopping_dishes" formatted="false">Dishes</string>
+    <string name="shopping_nothing_planned" formatted="false">Nothing is planned for this period.</string>
+    <plurals name="shopping_servings_short">
+        <item quantity="one">{count} serv.</item>
+        <item quantity="other">{count} serv.</item>
+    </plurals>
+    <string name="shopping_reset_button" formatted="false">Undo sending …</string>
+    <string name="shopping_list_title" formatted="false">Shopping list</string>
+    <string name="shopping_select_all" formatted="false">All</string>
+    <string name="shopping_select_none" formatted="false">None</string>
+    <string name="shopping_failed_intro" formatted="false">Not received – send again later or add them by hand:</string>
+    <string name="shopping_nothing_to_buy" formatted="false">Nothing to buy.</string>
+    <string name="shopping_selected_hint" formatted="false">{selected} of {total} selected. Unselected items count as done after sending.</string>
+    <string name="shopping_changed_title" formatted="false">Changed after sending</string>
+    <string name="shopping_changed_hint" formatted="false">Dishes were changed, moved or removed after sending.</string>
+    <string name="shopping_missing_title" formatted="false">Still missing from the Bring list</string>
+    <string name="shopping_send_missing" formatted="false">Send the difference ({count})</string>
+    <string name="shopping_to_list" formatted="false">to “{name}”</string>
+    <string name="shopping_surplus_title" formatted="false">Sent too much</string>
+    <string name="shopping_surplus_hint" formatted="false">Not removed from Bring – it may already be bought. Best to plan it for another dish.</string>
+    <string name="shopping_reason_no_recipe" formatted="false">no recipe</string>
+    <string name="shopping_reason_transferred" formatted="false">already sent to Bring</string>
+    <string name="shopping_reason_have_ingredients" formatted="false">ingredients at home</string>
+    <string name="shopping_reason_past" formatted="false">past</string>
+    <plurals name="shopping_sent">
+        <item quantity="one">1 item sent to Bring.</item>
+        <item quantity="other">{count} items sent to Bring.</item>
+    </plurals>
+    <plurals name="shopping_sent_merged">
+        <item quantity="one">1 item sent to Bring, {merged} added to an existing entry.</item>
+        <item quantity="other">{count} items sent to Bring, {merged} added to existing entries.</item>
+    </plurals>
+    <string name="shopping_no_todo_lists" formatted="false">Home Assistant has no to-do list. Set up the Bring integration.</string>
+    <string name="shopping_list_chosen" formatted="false">Bring list “{name}” chosen – now send.</string>
+    <string name="shopping_not_connected" formatted="false">Not connected.</string>
+    <string name="shopping_offline" formatted="false">Shopping only works with a connection to Rezeptplaner.</string>
+    <string name="shopping_ha_unreachable" formatted="false">Home Assistant not reachable: {message}</string>
+
+    <!-- Übertragung zurücksetzen -->
+    <string name="shopping_reset_title" formatted="false">Undo sending</string>
+    <string name="shopping_reset_intro" formatted="false">The dishes go back to planned and can be sent to Bring again. Unselected ingredients (“ingredients at home”) are kept.</string>
+    <string name="shopping_reset_nothing" formatted="false">Nothing has been sent in this period.</string>
+    <string name="shopping_reset_list_name" formatted="false">“{name}”</string>
+    <string name="shopping_reset_unknown_list" formatted="false">unknown list</string>
+    <string name="shopping_reset_no_items" formatted="false">no items sent</string>
+    <string name="shopping_reset_target" formatted="false">to {lists}</string>
+    <plurals name="shopping_reset_items">
+        <item quantity="one">{count} item</item>
+        <item quantity="other">{count} items</item>
+    </plurals>
+    <string name="shopping_reset_remove" formatted="false">Remove items from the old list</string>
+    <string name="shopping_reset_remove_hint" formatted="false">Items still needed by other sent dishes stay with a smaller amount. Items already checked off are left alone.</string>
+    <plurals name="shopping_reset_unknown_label">
+        <item quantity="one">For {count} dish the original list wasn\'t saved (sent before version 0.18). Remove from:</item>
+        <item quantity="other">For {count} dishes the original list wasn\'t saved (sent before version 0.18). Remove from:</item>
+    </plurals>
+    <string name="shopping_reset_dont_remove" formatted="false">– don\'t remove –</string>
+    <string name="shopping_reset_lists_error" formatted="false">Lists not loaded: {message}</string>
+    <string name="shopping_reset_resend_hint" formatted="false">Sending again will go to “{name}” (settings).</string>
+    <string name="shopping_reset_resetting" formatted="false">Undoing …</string>
+    <string name="shopping_reset_confirm" formatted="false">Undo ({count})</string>
+    <plurals name="shopping_reset_done">
+        <item quantity="one">{count} dish is planned again.</item>
+        <item quantity="other">{count} dishes are planned again.</item>
+    </plurals>
+    <string name="shopping_reset_removed" formatted="false">Removed from the old list: {items}.</string>
+    <string name="shopping_reset_reduced" formatted="false">Amount reduced (other dishes still need it): {items}.</string>
+    <string name="shopping_reset_not_found" formatted="false">No longer open on the list, left unchanged: {items}.</string>
+    <string name="shopping_reset_skipped" formatted="false">Not removed, list unknown: {items}.</string>
+    <string name="shopping_reset_failed" formatted="false">Not removed (please delete by hand): {items}.</string>
+    <string name="shopping_reset_send_now" formatted="false">Now tap “Send to Bring” – it will go to “{name}”.</string>
+</resources>

@@ -126,6 +126,9 @@ android {
     lint {
         // targetSdk 36 ist bewusst gewählt (Zielgeräte mit Android 16).
         disable += "OldTargetApi"
+        // Platzhalter heißen {count} statt %d (Texts.kt); Lint erkennt sie
+        // nicht und meldet Pluralformen ohne Zahl, obwohl {count} drinsteht.
+        disable += "ImpliedQuantity"
     }
 
     androidResources {

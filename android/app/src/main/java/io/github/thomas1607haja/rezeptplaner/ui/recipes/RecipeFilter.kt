@@ -1,5 +1,7 @@
 package io.github.thomas1607haja.rezeptplaner.ui.recipes
 
+import androidx.annotation.StringRes
+import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.PlanInfo
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
 import io.github.thomas1607haja.rezeptplaner.api.isIllustrated
@@ -7,11 +9,11 @@ import io.github.thomas1607haja.rezeptplaner.data.Snapshot
 import io.github.thomas1607haja.rezeptplaner.ui.fold
 
 /** Sortierungen wie in der Weboberfläche (server/internal/recipes/list.go). */
-enum class RecipeSort(val label: String) {
-    Name("Name"),
-    Newest("Neu hinzugefügt"),
-    LastPlanned("Zuletzt eingeplant"),
-    MostPlanned("Am häufigsten eingeplant"),
+enum class RecipeSort(@StringRes val label: Int) {
+    Name(R.string.recipe_sort_name),
+    Newest(R.string.recipe_sort_newest),
+    LastPlanned(R.string.recipe_sort_last_planned),
+    MostPlanned(R.string.recipe_sort_most_planned),
 }
 
 data class RecipeFilter(
@@ -32,22 +34,26 @@ data class RecipeFilter(
     fun reset() = RecipeFilter(sort = sort)
 }
 
-/** Ein Schnellfilter-Reiter mit den IDs seiner Gänge. */
-data class CourseTab(val key: String, val label: String, val ids: Set<Long>)
+/** Ein Schnellfilter-Reiter mit den IDs seiner Gänge; [label] aus courses_* (strings_shared). */
+data class CourseTab(val key: String, @StringRes val label: Int, val ids: Set<Long>)
 
-/** Reiter wie web/src/lib/courseTabs.js: Gänge der Gang-Gruppe nach Namen. */
+/**
+ * Reiter wie web/src/lib/courseTabs.js: Gänge der Gang-Gruppe nach ihrem
+ * festen Schlüssel (Tag.courseKey), nie nach dem Namen – Namen sind Daten.
+ */
 private val courseTabDefs = listOf(
-    Triple("main", "Hauptgerichte", listOf("Hauptgericht")),
-    Triple("starters", "Vorspeisen, Suppen & Salate", listOf("Vorspeise", "Suppe/Eintopf", "Salat")),
-    Triple("desserts", "Nachspeisen", listOf("Nachspeise")),
-    Triple("baking", "Backen", listOf("Kuchen & Torten", "Gebäck", "Brot")),
+    Triple("main", R.string.courses_main, setOf("main")),
+    Triple("starters", R.string.courses_starters, setOf("starter", "soup", "salad")),
+    Triple("desserts", R.string.courses_desserts, setOf("dessert")),
+    Triple("baking", R.string.courses_baking, setOf("cake", "pastry", "bread")),
 )
 
 /** Reiter mit IDs, vorn „Alle“; Reiter ohne passende Kategorie fallen weg. */
 fun courseTabs(groups: List<io.github.thomas1607haja.rezeptplaner.api.TagGroup>): List<CourseTab> {
-    val course = groups.firstOrNull { it.role == "course" } ?: return listOf(CourseTab("all", "Alle", emptySet()))
-    return listOf(CourseTab("all", "Alle", emptySet())) + courseTabDefs.mapNotNull { (key, label, names) ->
-        val ids = course.tags.filter { t -> names.any { fold(it) == fold(t.name) } }.map { it.id }.toSet()
+    val all = CourseTab("all", R.string.courses_all, emptySet())
+    val course = groups.firstOrNull { it.role == "course" } ?: return listOf(all)
+    return listOf(all) + courseTabDefs.mapNotNull { (key, label, keys) ->
+        val ids = course.tags.filter { it.courseKey in keys }.map { it.id }.toSet()
         if (ids.isEmpty()) null else CourseTab(key, label, ids)
     }
 }

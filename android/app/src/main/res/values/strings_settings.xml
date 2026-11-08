@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Einstellungen, Abgleich, Absturzbericht, QR-Scanner (ui/settings, ui/common, ui/CrashReportCard.kt). -->
+<resources>
+    <string name="settings_connection">Connection</string>
+    <string name="settings_checking">Checking …</string>
+    <string name="settings_connected_version">Connected · Rezeptplaner {version}</string>
+    <string name="settings_test_connection">Test connection</string>
+    <string name="settings_reconnect">Reconnect</string>
+    <string name="settings_error_generic">Error</string>
+    <string name="settings_not_connected">Not connected.</string>
+    <string name="settings_disconnect_title">Disconnect device</string>
+    <string name="settings_disconnect_text">Removes the connection and all recipes and images from this phone. If you pass the device on, also revoke its key in the web interface under “Connected devices”.</string>
+    <string name="settings_disconnect_button">Disconnect</string>
+    <string name="settings_disconnect_confirm_title">Disconnect?</string>
+    <string name="settings_disconnect_confirm_text">The app will then need to be connected again.</string>
+    <string name="settings_disconnect_confirm">Disconnect</string>
+    <string name="settings_app_version">Rezeptplaner for Android {version}</string>
+    <string name="settings_cf_configured">Service token is set up.</string>
+    <string name="settings_cf_none">No service token (only needed if Access is enabled).</string>
+    <string name="settings_cf_change">Change</string>
+    <string name="settings_cf_setup">Set up</string>
+    <string name="settings_cf_empty_hint">Leave both empty and save to connect without Cloudflare Access.</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_text">The app follows the Android language.</string>
+    <string name="settings_language_button">Change language</string>
+    <string name="settings_sync_title">Sync</string>
+    <string name="settings_sync_last">Last: {time}</string>
+    <string name="settings_sync_last_trigger">Last: {time} ({trigger})</string>
+    <string name="settings_sync_background">In the background: {time}</string>
+    <string name="settings_sync_running">Syncing …</string>
+    <string name="settings_sync_now">Sync now</string>
+    <string name="settings_sync_stalled">Background sync isn\'t running – One UI is pausing the app. Please turn off battery optimization.</string>
+    <string name="settings_sync_battery_hint">To keep background sync reliable, turn off battery optimization for the app.</string>
+    <string name="settings_sync_battery_button">Turn off battery optimization</string>
+    <string name="settings_sync_samsung_hint">If needed, also: App info → Battery → “Unrestricted” and Settings → Battery → Background usage limits → “Never sleeping apps” → add Rezeptplaner.</string>
+    <string name="settings_sync_unrestricted">Battery optimization is off – sync runs every 4 hours.</string>
+    <string name="settings_trigger_start">at startup</string>
+    <string name="settings_trigger_pull">pull to refresh</string>
+    <string name="settings_trigger_background">in the background</string>
+    <string name="settings_trigger_manual">manually</string>
+    <string name="settings_never">never</string>
+    <string name="settings_offline">Offline – data from {time}</string>
+    <string name="settings_crash_title">The app crashed last time</string>
+    <string name="settings_crash_text">The report only contains the error and device details – no recipes and no key.</string>
+    <string name="settings_crash_subject">Rezeptplaner crash report</string>
+    <string name="settings_crash_share">Share report</string>
+    <string name="settings_crash_discard">Discard</string>
+    <string name="settings_qr_unavailable">The QR scanner isn\'t available on this device right now (Google Play services).</string>
+    <string name="settings_qr_no_text">The QR code contains no text.</string>
+    <string name="settings_qr_installing">Google Play services is downloading the QR scanner. Try again in a minute or two (internet connection required).</string>
+</resources>
