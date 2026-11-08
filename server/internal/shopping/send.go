@@ -125,7 +125,7 @@ func (s *Store) Send(ctx context.Context, opts SendOptions) (SendResult, error) 
 		// Nur der Bedarf der ausgewählten Gerichte. slices.DeleteFunc
 		// entfernt alle Elemente, für die die Funktion true liefert.
 		needs = slices.DeleteFunc(needs, func(n need) bool { return !slices.Contains(entryIDs, n.EntryID) })
-		items = summarize(needs)
+		items = summarize(needs, s.comma(ctx))
 		for _, n := range needs {
 			rows = append(rows, logRow{EntryID: &n.EntryID, Key: n.key(), Name: cleanName(n.Name), Quantity: n.Quantity, Unit: n.Unit})
 		}

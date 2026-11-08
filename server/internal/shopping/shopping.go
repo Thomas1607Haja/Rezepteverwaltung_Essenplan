@@ -86,6 +86,9 @@ type Store struct {
 	plan     *mealplan.Store
 	settings *settings.Store
 	ha       homeassistant.Client
+	// language liefert die Sprache des Haushalts ("de", "en" …) für das
+	// Dezimalzeichen der Mengenangaben; nil = Deutsch.
+	language func(ctx context.Context) string
 	// sendMu sorgt dafür, dass immer nur eine Übertragung läuft. Ein
 	// Mutex braucht keine Initialisierung: Der Nullwert ist entsperrt.
 	sendMu sync.Mutex
@@ -102,6 +105,19 @@ type Store struct {
 // settings die gewählte Bring-Liste, ha den Zugang zu Home Assistant.
 func NewStore(db *sql.DB, plan *mealplan.Store, settings *settings.Store, ha homeassistant.Client) *Store {
 	return &Store{db: db, plan: plan, settings: settings, ha: ha}
+}
+
+// SetLanguage legt fest, woher die Sprache des Haushalts kommt (main.go).
+func (s *Store) SetLanguage(language func(ctx context.Context) string) {
+	s.language = language
+}
+
+// comma meldet, ob Mengen mit Dezimalkomma geschrieben werden.
+func (s *Store) comma(ctx context.Context) bool {
+	if s.language == nil {
+		return true
+	}
+	return DecimalComma(s.language(ctx))
 }
 
 // Preview berechnet die Einkaufsliste für den aktuellen Einkaufszeitraum
@@ -129,7 +145,7 @@ func (s *Store) Preview(ctx context.Context, next bool) (Preview, error) {
 	if err != nil {
 		return Preview{}, err
 	}
-	return Preview{Period: period, Today: today, Entries: entries, Items: summarize(needs), Missing: missing, Surplus: surplus,
+	return Preview{Period: period, Today: today, Entries: entries, Items: summarize(needs, s.comma(ctx)), Missing: missing, Surplus: surplus,
 		List: s.listRef(ctx, st.BringEntity)}, nil
 }
 
@@ -286,8 +302,8 @@ func (s *Store) loadNeeds(ctx context.Context, from, to, status string) ([]need,
 }
 
 // summarize fasst den Bedarf zu Artikeln zusammen.
-func summarize(needs []need) []Item {
-	list := newCollector()
+func summarize(needs []need, comma bool) []Item {
+	list := newCollector(comma)
 	for _, n := range needs {
 		list.add(n.Recipe, n.Name, n.Quantity, n.Unit)
 	}
@@ -296,14 +312,15 @@ func summarize(needs []need) []Item {
 
 // collector fasst Zutaten zu Artikeln zusammen.
 type collector struct {
+	comma bool // Dezimalkomma in Spec (siehe FormatQuantity)
 	byKey map[string]*Item
 	// unitIndex merkt sich je Artikel, an welcher Stelle von Amounts eine
 	// Einheit steht (Schlüssel: Artikel-Key + "|" + Einheiten-Key).
 	unitIndex map[string]int
 }
 
-func newCollector() *collector {
-	return &collector{byKey: map[string]*Item{}, unitIndex: map[string]int{}}
+func newCollector(comma bool) *collector {
+	return &collector{byKey: map[string]*Item{}, unitIndex: map[string]int{}, comma: comma}
 }
 
 func (c *collector) add(recipe, name string, quantity *float64, unit string) {
@@ -352,7 +369,7 @@ func (c *collector) items() []Item {
 		for i := range it.Amounts {
 			a := &it.Amounts[i]
 			a.Quantity = roundForShopping(a.Quantity, a.Unit)
-			parts = append(parts, strings.TrimSpace(FormatQuantity(a.Quantity)+" "+a.Unit))
+			parts = append(parts, strings.TrimSpace(FormatQuantity(a.Quantity, c.comma)+" "+a.Unit))
 		}
 		it.Spec = strings.Join(parts, " + ")
 		result = append(result, *it)

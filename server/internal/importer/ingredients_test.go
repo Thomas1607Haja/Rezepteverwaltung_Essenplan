@@ -46,6 +46,42 @@ func TestParseIngredient(t *testing.T) {
 		{"3 Paar Wiener Würstchen", 3, "Paar", "Wiener Würstchen", ""},
 		{"2 kg Kasseler (oder Schnitzelfleisch (Schwein))", 2, "kg", "Kasseler", "oder Schnitzelfleisch (Schwein)"},
 		{"n. B. Ketchup (zum Andicken)", -1, "", "Ketchup", "n. B., zum Andicken"},
+		// Englisch
+		{"2 cups all-purpose flour", 2, "cups", "all-purpose flour", ""},
+		{"1 cup of milk", 1, "cup", "milk", ""},
+		{"2 tablespoons olive oil", 2, "tbsp", "olive oil", ""},
+		{"1/2 tsp ground cinnamon", 0.5, "tsp", "ground cinnamon", ""},
+		{"8 oz cream cheese, softened", 8, "oz", "cream cheese", "softened"},
+		{"1 lb ground beef", 1, "lb", "ground beef", ""},
+		{"2 cloves garlic, minced", 2, "cloves", "garlic", "minced"},
+		{"1 (14 oz) can diced tomatoes", 1, "", "(14 oz) can diced tomatoes", ""},
+		{"Salt to taste", -1, "", "Salt", "to taste"},
+		{"2 to 3 carrots", 2, "", "carrots", "2–3"},
+		{"4 fl oz cream", 4, "fl oz", "cream", ""},
+		{"1 pinch of salt", 1, "pinch", "salt", ""},
+		// Französisch
+		{"200 g de farine", 200, "g", "farine", ""},
+		{"2 cuillères à soupe d'huile d'olive", 2, "c. à s.", "huile d'olive", ""},
+		{"1 c. à c. de sel", 1, "c. à c.", "sel", ""},
+		{"1 c.à.s. de sucre", 1, "c. à s.", "sucre", ""},
+		{"3 gousses d'ail", 3, "gousses", "ail", ""},
+		{"1 pincée de sel", 1, "pincée", "sel", ""},
+		{"Poivre au goût", -1, "", "Poivre", "au goût"},
+		{"2 à 3 carottes", 2, "", "carottes", "2–3"},
+		// Spanisch
+		{"200 g de harina", 200, "g", "harina", ""},
+		{"2 cucharadas de aceite de oliva", 2, "cda", "aceite de oliva", ""},
+		{"1 cucharadita de sal", 1, "cdta", "sal", ""},
+		{"2 dientes de ajo", 2, "dientes", "ajo", ""},
+		{"Sal al gusto", -1, "", "Sal", "al gusto"},
+		{"1 pieza de jengibre", 1, "pieza", "jengibre", ""},
+		// Italienisch
+		{"200 g di farina", 200, "g", "farina", ""},
+		{"2 cucchiai di olio extravergine", 2, "cucchiai", "olio extravergine", ""},
+		{"1 cucchiaino di sale", 1, "cucchiaino", "sale", ""},
+		{"2 spicchi d'aglio", 2, "spicchi", "aglio", ""},
+		{"Sale q.b.", -1, "", "Sale", "q.b."},
+		{"3 pezzi di zenzero", 3, "pezzi", "zenzero", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.line, func(t *testing.T) {

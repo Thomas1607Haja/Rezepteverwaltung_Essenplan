@@ -373,7 +373,7 @@ func (s *Store) removeFromLists(ctx context.Context, rows []resetRow, fallback s
 		if err != nil {
 			return err
 		}
-		still := newCollector()
+		still := newCollector(s.comma(ctx))
 		for _, r := range remaining {
 			if !ids[r.ID] {
 				still.add("", r.Name, r.Quantity, r.Unit)

@@ -289,7 +289,16 @@ func registerRoutes(mux httpx.Router, s services) error {
 		st, err := settingsStore.Get(ctx)
 		return st.UILanguage, err
 	}).Register(mux)
-	shopping.NewHandler(shopping.NewStore(s.db, planStore, settingsStore, s.ha)).Register(mux)
+	shoppingStore := shopping.NewStore(s.db, planStore, settingsStore, s.ha)
+	// Dezimalzeichen der Mengen (auch an Bring): feste Sprache aus den
+	// Einstellungen, sonst die von Home Assistant.
+	shoppingStore.SetLanguage(func(ctx context.Context) string {
+		if st, err := settingsStore.Get(ctx); err == nil && st.UILanguage != "auto" {
+			return st.UILanguage
+		}
+		return s.lang.Default(ctx)
+	})
+	shopping.NewHandler(shoppingStore).Register(mux)
 	apikeys.NewHandler(s.keys).Register(mux)
 	appinstall.NewHandler(appinstall.LoadRepository(s.dataDir), s.fetcher).Register(mux)
 	// "GET /" passt auf alle Pfade, die kein genaueres Muster haben: Das ist

@@ -171,9 +171,20 @@ func TestFormatQuantity(t *testing.T) {
 		333.33: "333", 12.46: "12,5", 10: "10", 1.5: "1 ½", 0.33: "⅓",
 		2.2: "2,2", 2: "2", 0.75: "¾", 1.99: "2", 0.1: "0,1", 1.125: "1,13",
 	} {
-		if got := FormatQuantity(q); got != want {
+		if got := FormatQuantity(q, true); got != want {
 			t.Errorf("FormatQuantity(%v) = %q, erwartet %q", q, got, want)
 		}
+	}
+}
+
+func TestFormatQuantityPoint(t *testing.T) {
+	for q, want := range map[float64]string{12.46: "12.5", 2.2: "2.2", 1.5: "1 ½", 1500: "1500"} {
+		if got := FormatQuantity(q, false); got != want {
+			t.Errorf("FormatQuantity(%v, false) = %q, erwartet %q", q, got, want)
+		}
+	}
+	if DecimalComma("en") || !DecimalComma("fr") {
+		t.Error("DecimalComma")
 	}
 }
 

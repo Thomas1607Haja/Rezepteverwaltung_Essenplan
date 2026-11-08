@@ -20,11 +20,22 @@ var countUnits = map[string]bool{
 	"stange": true, "stangen": true, "flasche": true, "flaschen": true,
 	"beutel": true, "tafel": true, "tafeln": true, "rolle": true, "rollen": true,
 	"paar": true, "wurfel": true,
+	// Englisch, Französisch, Spanisch, Italienisch (ohne Akzente, siehe database.Plain)
+	"piece": true, "pieces": true, "clove": true, "cloves": true, "can": true, "cans": true,
+	"tin": true, "tins": true, "jar": true, "jars": true, "bunch": true, "bunches": true,
+	"head": true, "heads": true, "pack": true, "packs": true, "package": true, "packages": true,
+	"bottle": true, "bottles": true, "stick": true, "sticks": true,
+	"gousse": true, "gousses": true, "boite": true, "boites": true,
+	"botte": true, "bottes": true, "sachet": true, "sachets": true, "pot": true, "pots": true,
+	"pieza": true, "piezas": true, "diente": true, "dientes": true, "lata": true, "latas": true,
+	"manojo": true, "manojos": true, "sobre": true, "sobres": true, "bote": true, "botes": true,
+	"pezzo": true, "pezzi": true, "spicchio": true, "spicchi": true, "lattina": true, "lattine": true,
+	"scatola": true, "scatole": true, "mazzo": true, "mazzi": true, "bustina": true, "bustine": true,
 }
 
 // isCountUnit meldet, ob unit eine Stück-Einheit ist.
 func isCountUnit(unit string) bool {
-	return countUnits[strings.TrimSuffix(database.Fold(strings.TrimSpace(unit)), ".")]
+	return countUnits[strings.TrimSuffix(database.Plain(strings.TrimSpace(unit)), ".")]
 }
 
 // shoppingStep liefert die Schrittweite, auf die eine umgerechnete Menge
@@ -85,12 +96,14 @@ var fractions = []struct {
 // FormatQuantity schreibt eine Menge so, wie man sie in der Küche liest,
 // genau wie formatQuantity in der Weboberfläche:
 // 333.33 → "333", 12.46 → "12,5", 1.5 → "1 ½", 0.33 → "⅓", 2.2 → "2,2".
-func FormatQuantity(q float64) string {
+// comma: Dezimalkomma (Deutsch, Französisch, Spanisch, Italienisch) statt
+// Dezimalpunkt (Englisch).
+func FormatQuantity(q float64, comma bool) string {
 	switch {
 	case q >= 100:
 		return strconv.Itoa(int(math.Round(q)))
 	case q >= 10:
-		return formatDecimal(q, 1)
+		return formatDecimal(q, 1, comma)
 	}
 	whole := math.Floor(q)
 	part := q - whole
@@ -108,12 +121,12 @@ func FormatQuantity(q float64) string {
 			return strconv.Itoa(int(whole)) + " " + f.symbol
 		}
 	}
-	return formatDecimal(q, 2)
+	return formatDecimal(q, 2, comma)
 }
 
-// formatDecimal schreibt q mit höchstens digits Nachkommastellen und
-// deutschem Komma; Nullen am Ende fallen weg (2,50 → 2,5).
-func formatDecimal(q float64, digits int) string {
+// formatDecimal schreibt q mit höchstens digits Nachkommastellen, mit
+// Komma oder Punkt; Nullen am Ende fallen weg (2,50 → 2,5).
+func formatDecimal(q float64, digits int, comma bool) string {
 	// Erst kaufmännisch runden (1,125 → 1,13) wie die Weboberfläche;
 	// FormatFloat allein würde zur geraden Ziffer runden (1,12).
 	pow := math.Pow10(digits)
@@ -121,5 +134,13 @@ func formatDecimal(q float64, digits int) string {
 	if strings.Contains(s, ".") {
 		s = strings.TrimRight(strings.TrimRight(s, "0"), ".")
 	}
+	if !comma {
+		return s
+	}
 	return strings.Replace(s, ".", ",", 1)
+}
+
+// DecimalComma meldet, ob die Sprache lang Mengen mit Komma schreibt.
+func DecimalComma(lang string) bool {
+	return lang != "en"
 }

@@ -179,12 +179,13 @@ func (s *Store) differences(ctx context.Context, period mealplan.Period) (missin
 			surplus = append(surplus, it)
 		}
 	}
-	return finish(missing), finish(surplus), nil
+	comma := s.comma(ctx)
+	return finish(missing, comma), finish(surplus, comma), nil
 }
 
 // finish schreibt die Mengenangaben und sortiert wie die Einkaufsliste.
 // Die Mengen sind hier schon gerundet.
-func finish(items []Item) []Item {
+func finish(items []Item, comma bool) []Item {
 	if items == nil {
 		return []Item{}
 	}
@@ -194,7 +195,7 @@ func finish(items []Item) []Item {
 		slices.SortFunc(it.Amounts, func(a, b Amount) int { return strings.Compare(a.Unit, b.Unit) })
 		parts := make([]string, 0, len(it.Amounts))
 		for _, a := range it.Amounts {
-			parts = append(parts, strings.TrimSpace(FormatQuantity(a.Quantity)+" "+a.Unit))
+			parts = append(parts, strings.TrimSpace(FormatQuantity(a.Quantity, comma)+" "+a.Unit))
 		}
 		it.Spec = strings.Join(parts, " + ")
 	}

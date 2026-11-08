@@ -11,9 +11,10 @@ import (
 // Matcher prüft Zutatennamen gegen die Vorratsliste. Er enthält einen
 // Schnappschuss der Liste und wird pro Anfrage neu erzeugt.
 type Matcher struct {
-	// terms enthält alle Namen und Synonyme in gefalteter Form (siehe
-	// database.Fold). Eine Map mit leerem struct{} als Wert ist in Go die
-	// übliche Form einer Menge: Sie belegt für den Wert keinen Speicher.
+	// terms enthält alle Namen und Synonyme in gefalteter Form ohne Akzente
+	// (siehe database.Plain): "azucar" passt auch zu "Azúcar". Eine Map mit
+	// leerem struct{} als Wert ist in Go die übliche Form einer Menge: Sie
+	// belegt für den Wert keinen Speicher.
 	terms map[string]struct{}
 }
 
@@ -37,14 +38,16 @@ var (
 	// parenthesized trifft Klammerzusätze wie in "Zwiebel(n)" oder
 	// "Öl (zum Braten)".
 	parenthesized = regexp.MustCompile(`\([^)]*\)`)
-	// combined trennt Aufzählungen wie "Salz und Pfeffer" oder "Salz/Pfeffer".
-	combined = regexp.MustCompile(`\s+(?:und|oder|&)\s+|/|\+`)
+	// combined trennt Aufzählungen wie "Salz und Pfeffer", "salt and pepper",
+	// "sel et poivre", "sal y pimienta", "sale e pepe" oder "Salz/Pfeffer".
+	combined = regexp.MustCompile(`\s+(?:und|oder|and|or|et|ou|y|o|e|&)\s+|/|\+`)
 )
 
-// foldTerm bringt einen Namen in die Vergleichsform: gefaltet und mit
-// einfachen Leerzeichen.
+// foldTerm bringt einen Namen in die Vergleichsform: gefaltet, ohne
+// Akzente und mit einfachen Leerzeichen. Die Form wird nirgends
+// gespeichert, nur pro Anfrage verglichen.
 func foldTerm(s string) string {
-	return strings.Join(strings.Fields(database.Fold(s)), " ")
+	return strings.Join(strings.Fields(database.Plain(s)), " ")
 }
 
 // Matches meldet, ob eine Zutat mit diesem Namen im Vorrat ist. Verglichen

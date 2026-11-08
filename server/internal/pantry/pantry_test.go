@@ -223,3 +223,36 @@ func TestApplyToRecipes(t *testing.T) {
 		t.Errorf("zweiter Lauf = %+v", again)
 	}
 }
+
+// Andere Sprachen: Akzente zählen nicht, Aufzählungen mit and/et/y/e.
+func TestMatchesOtherLanguages(t *testing.T) {
+	ctx := context.Background()
+	store := newTestStore(t)
+	for _, it := range []Item{
+		{Name: "Azúcar"}, {Name: "Sel", Synonyms: []string{"fleur de sel"}}, {Name: "Poivre"},
+		{Name: "Sale"}, {Name: "Pepe"}, {Name: "Pepper"}, {Name: "Sal"}, {Name: "Pimienta"},
+	} {
+		if _, err := store.Create(ctx, it); err != nil {
+			t.Fatal(err)
+		}
+	}
+	m, err := store.Matcher(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, want := range map[string]bool{
+		"azucar":          true,
+		"AZÚCAR":          true,
+		"sel et poivre":   true,
+		"Fleur de sel":    true,
+		"sale e pepe":     true,
+		"salt and pepper": false, // "salt" steht nicht auf dieser Liste
+		"Salz and Pepper": true,
+		"sal y pimienta":  true,
+		"sel ou sucre":    false,
+	} {
+		if got := m.Matches(name); got != want {
+			t.Errorf("Matches(%q) = %v, erwartet %v", name, got, want)
+		}
+	}
+}

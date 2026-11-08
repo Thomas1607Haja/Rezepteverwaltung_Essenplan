@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 )
 
@@ -15,25 +16,29 @@ var unicodeFractions = map[rune]float64{'¼': 0.25, '½': 0.5, '¾': 0.75, '⅓'
 
 // quantityPattern erkennt eine Menge am Zeilenanfang, wahlweise als Spanne:
 // "500", "1,5", "1.5", "1/2", "1 1/2", "½", "1½", "1 ½", "1.000", "2-3",
-// "2 bis 3". Direkt angehängte Einheiten wie "500g" bleiben übrig.
+// "2 bis 3" (auch "2 to 3", "2 à 3", "2 a 3"). Direkt angehängte Einheiten
+// wie "500g" bleiben übrig.
 var quantityPattern = regexp.MustCompile(
 	`^(\d+\s+\d+\s*/\s*\d+|\d+\s*/\s*\d+|\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:[.,]\d+)?(?:\s*[¼½¾⅓⅔])?|[¼½¾⅓⅔])` +
-		`(?:\s*(?:-|–|bis)\s*(\d+(?:[.,]\d+)?))?`)
+		`(?:\s*(?:-|–|\s(?:bis|to|à|a)\s)\s*(\d+(?:[.,]\d+)?))?`)
 
 // units ordnet bekannte Einheiten (klein geschrieben, ohne Punkt und
 // Pluralendung) der gewünschten Schreibweise zu. Ein leerer Wert heißt:
-// so übernehmen, wie es in der Zeile steht (z. B. "Dosen").
+// so übernehmen, wie es in der Zeile steht (z. B. "Dosen", "cups").
+//
+// Einheiten bleiben in der Sprache der Vorlage (docs/glossar.md): Aus
+// "tablespoon" wird "tbsp", aus "Esslöffel" "EL" – übersetzt wird nicht,
+// und Tassen oder Unzen werden nicht in Gramm umgerechnet.
 var units = map[string]string{
-	"g": "g", "gr": "g", "gramm": "g",
-	"kg": "kg", "kilo": "kg", "kilogramm": "kg",
-	"mg": "mg", "ml": "ml", "milliliter": "ml", "cl": "cl", "dl": "dl",
-	"l": "l", "liter": "l",
+	// Maße, in allen Sprachen gleich
+	"g": "g", "gr": "g", "mg": "mg", "kg": "kg", "ml": "ml", "cl": "cl", "dl": "dl", "l": "l", "cm": "cm",
+	// Deutsch
+	"gramm": "g", "kilo": "kg", "kilogramm": "kg", "milliliter": "ml", "liter": "l",
 	"el": "EL", "essl": "EL", "esslöffel": "EL",
 	"tl": "TL", "teel": "TL", "teelöffel": "TL",
 	"msp": "Msp.", "messerspitze": "Msp.",
 	"pck": "Pck.", "pkt": "Pck.", "päckchen": "Pck.",
 	"stk": "Stück", "st": "Stück",
-	"cm":    "cm",
 	"tasse": "", "tassen": "", "prise": "", "prisen": "", "packung": "", "packungen": "",
 	"dose": "", "dosen": "", "becher": "", "bund": "", "stück": "", "scheibe": "", "scheiben": "",
 	"zehe": "", "zehen": "", "glas": "", "gläser": "", "tropfen": "", "zweig": "", "zweige": "",
@@ -41,15 +46,85 @@ var units = map[string]string{
 	"spritzer": "", "schuss": "", "kopf": "", "köpfe": "", "knolle": "", "knollen": "",
 	"beutel": "", "flasche": "", "flaschen": "", "tafel": "", "tafeln": "", "rolle": "", "rollen": "",
 	"paar": "", "portion": "", "portionen": "",
-	"cup": "", "cups": "", "tbsp": "EL", "tsp": "TL",
+	// Englisch
+	"gram": "g", "grams": "g", "kilogram": "kg", "kilograms": "kg", "millilitre": "ml",
+	"milliliters": "ml", "millilitres": "ml", "liters": "l", "litre": "l", "litres": "l",
+	"tbsp": "tbsp", "tbs": "tbsp", "tablespoon": "tbsp", "tablespoons": "tbsp",
+	"tsp": "tsp", "teaspoon": "tsp", "teaspoons": "tsp",
+	"oz": "oz", "ounce": "oz", "ounces": "oz", "lb": "lb", "lbs": "lb", "pound": "lb", "pounds": "lb",
+	"cup": "", "cups": "", "pint": "", "pints": "", "quart": "", "quarts": "",
+	"pinch": "", "pinches": "", "dash": "", "dashes": "", "clove": "", "cloves": "", "can": "", "cans": "",
+	"tin": "", "tins": "", "jar": "", "jars": "", "piece": "", "pieces": "", "slice": "", "slices": "",
+	"bunch": "", "bunches": "", "handful": "", "handfuls": "", "sprig": "", "sprigs": "", "stick": "", "sticks": "",
+	"stalk": "", "stalks": "", "head": "", "heads": "", "leaf": "", "leaves": "", "package": "", "packages": "",
+	"pack": "", "packs": "", "packet": "", "packets": "", "bottle": "", "bottles": "", "drop": "", "drops": "",
+	// Französisch
+	"gramme": "g", "grammes": "g", "kilogramme": "kg", "kilos": "kg",
+	"cs": "c. à s.", "cas": "c. à s.", "càs": "c. à s.", "cc": "c. à c.", "cac": "c. à c.", "càc": "c. à c.",
+	"pincée": "", "pincées": "", "gousse": "", "gousses": "", "boîte": "", "boîtes": "", "sachet": "", "sachets": "",
+	"tranche": "", "tranches": "", "botte": "", "bottes": "", "brin": "", "brins": "", "feuille": "", "feuilles": "",
+	"pièce": "", "pièces": "", "verre": "", "verres": "", "bouquet": "", "bouquets": "", "noix": "", "pot": "", "pots": "",
+	"tasses": "", "zeste": "",
+	// Spanisch
+	"gramo": "g", "gramos": "g", "kilogramo": "kg", "kilogramos": "kg", "mililitro": "ml", "mililitros": "ml",
+	"litro": "l", "litros": "l",
+	"cucharada": "cda", "cucharadas": "cda", "cda": "cda", "cdas": "cda",
+	"cucharadita": "cdta", "cucharaditas": "cdta", "cdta": "cdta", "cdtas": "cdta", "cdita": "cdta", "cditas": "cdta",
+	"pizca": "", "pizcas": "", "diente": "", "dientes": "", "lata": "", "latas": "", "pieza": "", "piezas": "",
+	"rebanada": "", "rebanadas": "", "loncha": "", "lonchas": "", "rodaja": "", "rodajas": "", "manojo": "", "manojos": "",
+	"ramita": "", "ramitas": "", "hoja": "", "hojas": "", "taza": "", "tazas": "", "vaso": "", "vasos": "",
+	"sobre": "", "sobres": "", "chorrito": "", "chorro": "", "puñado": "", "puñados": "", "bote": "", "botes": "",
+	// Italienisch
+	"grammo": "g", "grammi": "g", "chilo": "kg", "chilogrammo": "kg", "chilogrammi": "kg",
+	"millilitro": "ml", "millilitri": "ml", "litri": "l",
+	"cucchiaio": "", "cucchiai": "", "cucchiaino": "", "cucchiaini": "",
+	"pizzico": "", "pizzichi": "", "spicchio": "", "spicchi": "", "lattina": "", "lattine": "",
+	"scatola": "", "scatole": "", "scatoletta": "", "pezzo": "", "pezzi": "", "fetta": "", "fette": "",
+	"mazzo": "", "mazzi": "", "mazzetto": "", "rametto": "", "rametti": "", "foglia": "", "foglie": "",
+	"tazza": "", "tazze": "", "bicchiere": "", "bicchieri": "", "bustina": "", "bustine": "", "vasetto": "", "vasetti": "",
+	"ciuffo": "", "ciuffi": "", "manciata": "",
 }
+
+// phraseUnits sind Einheiten aus mehreren Wörtern. Schlüssel in der Form
+// von database.Plain (klein, ohne Akzente), Wörter durch ein Leerzeichen
+// getrennt; Wert ist die Schreibweise.
+var phraseUnits = map[string]string{
+	"c. a s.": "c. à s.", "c.a.s.": "c. à s.", "c. a. s.": "c. à s.",
+	"cuillere a soupe": "c. à s.", "cuilleres a soupe": "c. à s.",
+	"cuilleree a soupe": "c. à s.", "cuillerees a soupe": "c. à s.",
+	"c. a c.": "c. à c.", "c.a.c.": "c. à c.", "c. a. c.": "c. à c.",
+	"cuillere a cafe": "c. à c.", "cuilleres a cafe": "c. à c.",
+	"cuilleree a cafe": "c. à c.", "cuillerees a cafe": "c. à c.",
+	"fl oz": "fl oz", "fl. oz.": "fl oz", "fluid ounce": "fl oz", "fluid ounces": "fl oz",
+	"cucharada sopera": "cda", "cucharadas soperas": "cda",
+	"cucchiaio da tavola": "cucchiaio",
+}
+
+// connectors stehen zwischen Einheit und Zutat: "2 cups of flour",
+// "200 g de farine", "1 c. à s. d'huile", "100 g di burro".
+var connectors = []string{"of ", "de ", "di ", "d'", "d’"}
 
 // pluralSuffix erkennt Chefkochs Pluralangaben wie "Zwiebel(n)" oder
 // "Zehe/n" direkt hinter einem Wort.
 var pluralSuffix = regexp.MustCompile(`(\p{L})(?:\((n|en|e|s|er|nen)\)|/(n|en|e|s|er|nen))`)
 
-// vagueAmounts sind Mengenwörter ohne Zahl; sie wandern in den Hinweis.
-var vagueAmounts = []string{"nach belieben", "n. b.", "n.b.", "etwas", "evtl.", "eventuell", "einige", "ein paar", "reichlich", "wenig"}
+// vagueAmounts sind Mengenwörter ohne Zahl am Anfang; sie wandern in den Hinweis.
+var vagueAmounts = []string{
+	"nach belieben", "n. b.", "n.b.", "etwas", "evtl.", "eventuell", "einige", "ein paar", "reichlich", "wenig",
+	"some", "a little", "a few", "optional",
+	"un peu de", "un peu d'", "quelques", "un filet de", "un filet d'",
+	"un poco de", "unas", "unos", "un chorrito de",
+	"un po' di", "un po’ di", "qualche", "un filo di",
+}
+
+// vagueSuffixes stehen am Ende ("Salz nach Geschmack", "salt to taste",
+// "sale q.b."); sie wandern ebenfalls in den Hinweis.
+var vagueSuffixes = []string{
+	"nach geschmack", "nach belieben", "to taste", "as needed", "(optional)", "optional",
+	"au goût", "selon le goût", "selon votre goût",
+	"al gusto", "a gusto",
+	"q.b.", "q. b.", "qb", "quanto basta", "a piacere",
+}
 
 // thousands erkennt Zahlen mit Tausenderpunkt wie "1.000" oder "2.500,5".
 var thousands = regexp.MustCompile(`^\d{1,3}(\.\d{3})+(,\d+)?$`)
@@ -77,11 +152,23 @@ func ParseIngredient(line string) recipes.Ingredient {
 	ing.Quantity = quantity
 	plural := quantity == nil || *quantity > 1
 
-	// Einheit: das nächste Wort, falls es eine bekannte Einheit ist.
-	if word, rest, ok := strings.Cut(s+" ", " "); ok && word != "" {
+	// Einheit: erst Wortfolgen ("cuillère à soupe"), dann das nächste Wort.
+	if unit, rest, ok := lookupPhraseUnit(s); ok {
+		ing.Unit, s = unit, rest
+	} else if word, rest, ok := strings.Cut(s+" ", " "); ok && word != "" {
 		if unit, isUnit := lookupUnit(word, plural); isUnit {
 			ing.Unit = unit
 			s = strings.TrimSpace(rest)
+		}
+	}
+	// "of", "de", "d'", "di" hinter der Einheit gehören nicht zum Namen.
+	if ing.Unit != "" {
+		lower := strings.ToLower(s)
+		for _, c := range connectors {
+			if strings.HasPrefix(lower, c) && len(s) > len(c) {
+				s = strings.TrimSpace(s[len(c):])
+				break
+			}
 		}
 	}
 
@@ -98,6 +185,16 @@ func ParseIngredient(line string) recipes.Ingredient {
 				s = strings.TrimSpace(s[len(vague):])
 				break
 			}
+		}
+	}
+
+	// "… nach Geschmack", "… to taste", "… q.b." am Ende in den Hinweis.
+	lowerName := strings.ToLower(s)
+	for _, vague := range vagueSuffixes {
+		if strings.HasSuffix(lowerName, " "+vague) || strings.HasSuffix(lowerName, ", "+vague) {
+			notes = append(notes, strings.Trim(s[len(s)-len(vague):], "()"))
+			s = strings.TrimRight(strings.TrimSpace(s[:len(s)-len(vague)]), ",")
+			break
 		}
 	}
 
@@ -164,6 +261,20 @@ func matchingOpen(s string) int {
 		}
 	}
 	return -1
+}
+
+// lookupPhraseUnit erkennt eine Einheit aus zwei bis vier Wörtern am Anfang
+// von s und liefert ihre Schreibweise und den Rest der Zeile.
+func lookupPhraseUnit(s string) (string, string, bool) {
+	words := strings.Fields(s)
+	for n := min(4, len(words)-1); n >= 1; n-- {
+		phrase := strings.Join(words[:n], " ")
+		// "c.à.s." ist ein Wort, "c. à s." sind drei – beide Formen prüfen.
+		if unit, ok := phraseUnits[database.Plain(phrase)]; ok {
+			return unit, strings.Join(words[n:], " "), true
+		}
+	}
+	return "", "", false
 }
 
 // lookupUnit prüft, ob word eine Einheit ist, und liefert die Schreibweise.
