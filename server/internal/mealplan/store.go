@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/settings"
 )
@@ -116,10 +117,10 @@ func (s *Store) List(ctx context.Context, from, to string) ([]Entry, error) {
 		return nil, err
 	}
 	if toDate.Before(fromDate) {
-		return nil, &ValidationError{"to", "darf nicht vor from liegen"}
+		return nil, apierr.Field("to", "range_reversed")
 	}
 	if toDate.Sub(fromDate) > maxRangeDays*24*time.Hour {
-		return nil, &ValidationError{"to", fmt.Sprintf("zeitraum höchstens %d tage", maxRangeDays)}
+		return nil, apierr.Field("to", "range_too_long", "max", maxRangeDays)
 	}
 
 	// "lunch" < "dinner" gilt alphabetisch nicht, daher die CASE-Sortierung.
@@ -202,7 +203,7 @@ func checkRecipe(ctx context.Context, q querier, recipeID *int64) error {
 		return fmt.Errorf("rezept prüfen: %w", err)
 	}
 	if !exists {
-		return &ValidationError{"recipe_id", "dieses rezept gibt es nicht"}
+		return apierr.Field("recipe_id", "recipe_gone")
 	}
 	return nil
 }
@@ -248,14 +249,14 @@ func (s *Store) Create(ctx context.Context, in NewEntry) (Entry, error) {
 		in.Slot = SlotDinner
 	}
 	if !validSlot(in.Slot) {
-		return Entry{}, &ValidationError{"slot", slotError}
+		return Entry{}, apierr.Field("slot", "invalid_slot")
 	}
 	note, err := normalizeNote(in.Note)
 	if err != nil {
 		return Entry{}, err
 	}
 	if in.RecipeID == nil && note == "" {
-		return Entry{}, &ValidationError{"note", "ohne rezept ist eine notiz nötig, z. b. „essen gehen“"}
+		return Entry{}, apierr.Field("note", "note_required")
 	}
 
 	servings := 0
@@ -279,7 +280,7 @@ func (s *Store) Create(ctx context.Context, in NewEntry) (Entry, error) {
 		}
 	}
 	if servings < 1 || servings > 50 {
-		return Entry{}, &ValidationError{"servings", "muss zwischen 1 und 50 liegen"}
+		return Entry{}, apierr.Field("servings", "out_of_range", "min", 1, "max", 50)
 	}
 	excluded, err := normalizeExcluded(in.ExcludedIngredients)
 	if err != nil {
@@ -330,10 +331,10 @@ func (s *Store) Update(ctx context.Context, id int64, c Changes) (Entry, error) 
 		return Entry{}, err
 	}
 	if c.RecipeID == nil && note == "" {
-		return Entry{}, &ValidationError{"note", "ohne rezept ist eine notiz nötig, z. b. „essen gehen“"}
+		return Entry{}, apierr.Field("note", "note_required")
 	}
 	if c.Servings < 1 || c.Servings > 50 {
-		return Entry{}, &ValidationError{"servings", "muss zwischen 1 und 50 liegen"}
+		return Entry{}, apierr.Field("servings", "out_of_range", "min", 1, "max", 50)
 	}
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -358,10 +359,10 @@ func (s *Store) Update(ctx context.Context, id int64, c Changes) (Entry, error) 
 	case StatusPlanned, StatusHaveIngredients:
 	case StatusTransferred:
 		if oldStatus != StatusTransferred {
-			return Entry{}, &ValidationError{"status", "„transferred“ setzt nur die übertragung an bring"}
+			return Entry{}, apierr.Field("status", "status_transferred")
 		}
 	default:
-		return Entry{}, &ValidationError{"status", "muss planned oder have_ingredients sein"}
+		return Entry{}, apierr.Field("status", "invalid_status")
 	}
 	if err := checkRecipe(ctx, tx, c.RecipeID); err != nil {
 		return Entry{}, err

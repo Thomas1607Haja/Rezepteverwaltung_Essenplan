@@ -9,17 +9,24 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 // maxBodyBytes begrenzt die Größe einer JSON-Anfrage (1 MB). Ein Rezept ist
 // weit kleiner; die Grenze schützt vor versehentlich riesigen Anfragen.
 const maxBodyBytes = 1 << 20
 
-// ErrorResponse ist der Aufbau jeder Fehlerantwort der API.
+// ErrorResponse ist der Aufbau jeder Fehlerantwort der API. Die Oberflächen
+// übersetzen Code und Parameter; Error ist der englische Text dazu (für das
+// Protokoll und ältere App-Versionen). Siehe Paket apierr.
 type ErrorResponse struct {
-	Error string `json:"error"`
-	Field string `json:"field,omitempty"` // betroffenes Feld bei Eingabefehlern
+	Error  string         `json:"error"`
+	Code   string         `json:"code"`
+	Field  string         `json:"field,omitempty"` // betroffenes Feld bei Eingabefehlern
+	Params map[string]any `json:"params,omitempty"`
 }
 
 // WriteJSON sendet v als JSON mit dem HTTP-Status status.
@@ -33,16 +40,37 @@ func WriteJSON(w http.ResponseWriter, status int, v any) {
 	}
 }
 
-// WriteError sendet eine Fehlerantwort {"error": message}.
-func WriteError(w http.ResponseWriter, status int, message string) {
-	WriteJSON(w, status, ErrorResponse{Error: message})
+// WriteError sendet err als Fehlerantwort. Fehler sollten aus apierr
+// stammen; andere gehen mit dem Code "error" und ihrem Text hinaus (und
+// fallen im Protokoll auf, damit sie einen Code bekommen).
+func WriteError(w http.ResponseWriter, status int, err error) {
+	var e *apierr.Error
+	if !errors.As(err, &e) {
+		slog.Warn("Fehler ohne Code", "status", status, "error", err)
+		WriteJSON(w, status, ErrorResponse{Error: err.Error(), Code: "error"})
+		return
+	}
+	WriteJSON(w, status, ErrorResponse{Error: e.Message(), Code: e.Code, Field: e.Field, Params: e.Params})
+}
+
+// WriteFieldError sendet err als Eingabefehler zum Feld field. Fehler ohne
+// Code (z. B. Netzwerkfehler beim Laden einer fremden Seite) gehen als
+// "page_unreachable" mit der Meldung als Detail hinaus.
+func WriteFieldError(w http.ResponseWriter, status int, field string, err error) {
+	var e *apierr.Error
+	if !errors.As(err, &e) {
+		e = apierr.New("page_unreachable", "detail", err.Error())
+	}
+	c := *e
+	c.Field = field
+	WriteError(w, status, &c)
 }
 
 // WriteInternalError protokolliert err und sendet eine allgemeine
 // Fehlermeldung. Interna (SQL, Dateipfade) gehen so nicht nach außen.
 func WriteInternalError(w http.ResponseWriter, r *http.Request, err error) {
 	slog.Error("Interner Fehler", "method", r.Method, "path", r.URL.Path, "error", err)
-	WriteError(w, http.StatusInternalServerError, "interner fehler")
+	WriteError(w, http.StatusInternalServerError, apierr.New("internal_error"))
 }
 
 // ReadJSON liest genau ein JSON-Objekt aus dem Anfragekörper nach dst.
@@ -54,13 +82,24 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	dec.DisallowUnknownFields()
 
 	if err := dec.Decode(dst); err != nil {
-		return fmt.Errorf("ungültiges JSON: %w", err)
+		return apierr.New("invalid_json", "detail", jsonDetail(err))
 	}
 	// Nach dem Objekt darf nichts mehr folgen.
 	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
-		return errors.New("ungültiges JSON: nach dem objekt folgen weitere daten")
+		return apierr.New("invalid_json", "detail", "extra data after the object")
 	}
 	return nil
+}
+
+// jsonDetail ist die (englische) Meldung des JSON-Decoders, ohne das
+// Präfix "json: ". Bei zu großem Körper meldet MaxBytesReader einen
+// eigenen Fehler.
+func jsonDetail(err error) string {
+	var tooBig *http.MaxBytesError
+	if errors.As(err, &tooBig) {
+		return fmt.Sprintf("request body larger than %d bytes", tooBig.Limit)
+	}
+	return strings.TrimPrefix(err.Error(), "json: ")
 }
 
 // SecurityHeaders ist eine Middleware, die jeder Antwort zwei Kopfzeilen

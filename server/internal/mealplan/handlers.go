@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 )
 
@@ -99,7 +100,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 	var in NewEntry
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	e, err := h.store.Create(r.Context(), in)
@@ -119,7 +120,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 	}
 	var c Changes
 	if err := httpx.ReadJSON(w, r, &c); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	e, err := h.store.Update(r.Context(), id, c)
@@ -154,7 +155,7 @@ func (h *Handler) move(w http.ResponseWriter, r *http.Request) {
 	}
 	var m Move
 	if err := httpx.ReadJSON(w, r, &m); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	result, err := h.store.Move(r.Context(), id, m)
@@ -170,7 +171,7 @@ func (h *Handler) move(w http.ResponseWriter, r *http.Request) {
 func parseID(w http.ResponseWriter, r *http.Request) (id int64, ok bool) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil || id <= 0 {
-		httpx.WriteError(w, http.StatusBadRequest, "ungültige eintrags-id")
+		httpx.WriteError(w, http.StatusBadRequest, apierr.New("invalid_id"))
 		return 0, false
 	}
 	return id, true
@@ -178,12 +179,11 @@ func parseID(w http.ResponseWriter, r *http.Request) (id int64, ok bool) {
 
 // writeStoreError übersetzt Fehler des Stores in passende HTTP-Antworten.
 func writeStoreError(w http.ResponseWriter, r *http.Request, err error) {
-	var verr *ValidationError
-	switch {
-	case errors.As(err, &verr):
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: verr.Message, Field: verr.Field})
+	switch _, isField := apierr.AsField(err); {
+	case isField:
+		httpx.WriteError(w, http.StatusBadRequest, err)
 	case errors.Is(err, ErrNotFound), errors.Is(err, ErrMenuNotFound):
-		httpx.WriteError(w, http.StatusNotFound, err.Error())
+		httpx.WriteError(w, http.StatusNotFound, err)
 	default:
 		httpx.WriteInternalError(w, r, err)
 	}

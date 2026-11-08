@@ -3,10 +3,10 @@ package recipes
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"slices"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 )
 
@@ -46,7 +46,7 @@ type BulkTagsResult struct {
 func (s *Store) BulkTags(ctx context.Context, in BulkTags) (BulkTagsResult, error) {
 	result := BulkTagsResult{Added: []TagChange{}, Removed: []TagChange{}}
 	if len(in.Add)+len(in.Remove) > MaxBulkTagChanges {
-		return result, &ValidationError{"add", fmt.Sprintf("höchstens %d änderungen auf einmal", MaxBulkTagChanges)}
+		return result, apierr.Field("add", "too_many", "max", MaxBulkTagChanges)
 	}
 	var recipeIDs, tagIDs []int64
 	for _, c := range append(slices.Clone(in.Add), in.Remove...) {
@@ -55,10 +55,10 @@ func (s *Store) BulkTags(ctx context.Context, in BulkTags) (BulkTagsResult, erro
 	}
 	changed := map[int64]bool{}
 	err := s.inTx(ctx, "kategorien ändern", func(tx *sql.Tx, now string) error {
-		if err := checkIDs(ctx, tx, "recipes", "recipe_id", "rezept", recipeIDs); err != nil {
+		if err := checkIDs(ctx, tx, "recipes", "recipe_id", recipeIDs); err != nil {
 			return err
 		}
-		if err := checkIDs(ctx, tx, "tags", "tag_id", "kategorie", tagIDs); err != nil {
+		if err := checkIDs(ctx, tx, "tags", "tag_id", tagIDs); err != nil {
 			return err
 		}
 		for _, c := range in.Remove {
@@ -97,7 +97,7 @@ func (s *Store) BulkTags(ctx context.Context, in BulkTags) (BulkTagsResult, erro
 }
 
 // checkIDs prüft, dass es alle ids in table gibt.
-func checkIDs(ctx context.Context, tx *sql.Tx, table, field, what string, ids []int64) error {
+func checkIDs(ctx context.Context, tx *sql.Tx, table, field string, ids []int64) error {
 	ids = slices.Clone(ids)
 	slices.Sort(ids)
 	ids = slices.Compact(ids)
@@ -112,7 +112,7 @@ func checkIDs(ctx context.Context, tx *sql.Tx, table, field, what string, ids []
 			return err
 		}
 		if n != len(part) {
-			return &ValidationError{field, fmt.Sprintf("unbekannte %s-id", what)}
+			return apierr.Field(field, "unknown_id")
 		}
 	}
 	return nil
@@ -123,7 +123,7 @@ func checkIDs(ctx context.Context, tx *sql.Tx, table, field, what string, ids []
 func (h *Handler) bulkTags(w http.ResponseWriter, r *http.Request) {
 	var in BulkTags
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	result, err := h.store.BulkTags(r.Context(), in)

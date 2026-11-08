@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 )
 
@@ -28,7 +29,9 @@ func (h *Handler) Register(mux httpx.Router) {
 type statusResponse struct {
 	Mode  string     `json:"mode"`
 	Lists []TodoList `json:"lists"`
-	Error string     `json:"error,omitempty"`
+	Error string     `json:"error,omitempty"` // englischer Text zu ErrorCode
+	// ErrorCode zum Übersetzen, z. B. "home_assistant_down".
+	ErrorCode string `json:"error_code,omitempty"`
 }
 
 func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +39,8 @@ func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
 	lists, err := h.client.TodoLists(r.Context())
 	if err != nil {
 		slog.Warn("To-do-Listen nicht lesbar", "error", err)
-		resp.Error = err.Error()
+		e := apierr.From(err, "home_assistant_down")
+		resp.Error, resp.ErrorCode = e.Message(), e.Code
 	} else {
 		resp.Lists = lists
 	}

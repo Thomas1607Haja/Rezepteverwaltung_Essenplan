@@ -3,13 +3,14 @@ package fileimport
 import (
 	"archive/zip"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 // Grenzen gegen zu große Dateien und ZIP-Bomben. Eine ZIP-Datei kann sehr
@@ -44,9 +45,9 @@ func readLimited(r io.Reader, limit int64, b *budget, what string) ([]byte, erro
 	}
 	if int64(len(data)) > allowed {
 		if allowed < limit {
-			return nil, fmt.Errorf("Entpackt zu groß (höchstens %d MB je Import)", maxUnpackedBytes>>20)
+			return nil, apierr.New("zip_unpacked_too_large", "max_mb", maxUnpackedBytes>>20)
 		}
-		return nil, fmt.Errorf("%s ist zu groß (höchstens %d MB)", what, limit>>20)
+		return nil, apierr.New("zip_file_too_large", "name", what, "max_mb", limit>>20)
 	}
 	b.left -= int64(len(data))
 	return data, nil
@@ -72,15 +73,15 @@ func (s *source) Close() {
 // image liest ein Bild aus der ZIP-Datei; rel ist der Pfad aus recipes.json.
 func (s *source) image(rel string, b *budget) ([]byte, error) {
 	if s.zip == nil {
-		return nil, errors.New("Bilder gibt es nur in ZIP-Dateien, das Bild wird weggelassen")
+		return nil, apierr.New("import_images_need_zip")
 	}
 	f := s.files[rel]
 	if f == nil {
-		return nil, fmt.Errorf("Bild %s fehlt in der ZIP-Datei", rel)
+		return nil, apierr.New("import_image_missing", "name", rel)
 	}
 	rc, err := f.Open()
 	if err != nil {
-		return nil, fmt.Errorf("Bild %s nicht lesbar", rel)
+		return nil, apierr.New("import_image_unreadable", "name", rel)
 	}
 	defer rc.Close()
 	return readLimited(rc, maxImageBytes, b, "Bild "+rel)
@@ -117,7 +118,7 @@ func openSource(filePath string, b *budget) (*source, error) {
 		}
 		return &source{doc: doc}, nil
 	}
-	return nil, errors.New("Weder ZIP- noch JSON-Datei")
+	return nil, apierr.New("not_zip_or_json")
 }
 
 // looksLikeJSON: beginnt (nach BOM und Leerzeichen) mit "{".
@@ -130,7 +131,7 @@ func looksLikeJSON(head []byte) bool {
 func openZip(filePath string, b *budget) (*source, error) {
 	zr, err := zip.OpenReader(filePath)
 	if err != nil {
-		return nil, errors.New("Die ZIP-Datei ist beschädigt")
+		return nil, apierr.New("zip_corrupt")
 	}
 	src := &source{zip: zr, files: make(map[string]*zip.File)}
 	ok := false
@@ -141,7 +142,7 @@ func openZip(filePath string, b *budget) (*source, error) {
 	}()
 
 	if len(zr.File) > maxEntries {
-		return nil, fmt.Errorf("Zu viele Einträge in der ZIP-Datei (höchstens %d)", maxEntries)
+		return nil, apierr.New("zip_too_many_entries", "max", maxEntries)
 	}
 	var docEntries []*zip.File
 	for _, f := range zr.File {
@@ -157,10 +158,10 @@ func openZip(filePath string, b *budget) (*source, error) {
 	}
 	switch len(docEntries) {
 	case 0:
-		return nil, errors.New("recipes.json fehlt in der ZIP-Datei")
+		return nil, apierr.New("recipes_json_missing")
 	case 1:
 	default:
-		return nil, errors.New("Mehr als eine recipes.json in der ZIP-Datei")
+		return nil, apierr.New("recipes_json_multiple")
 	}
 
 	// Liegt alles in einem Ordner (ZIP eines Ordners), gelten die Pfade
@@ -179,7 +180,7 @@ func openZip(filePath string, b *budget) (*source, error) {
 
 	rc, err := docEntries[0].Open()
 	if err != nil {
-		return nil, errors.New("recipes.json nicht lesbar")
+		return nil, apierr.New("recipes_json_unreadable")
 	}
 	data, err := readLimited(rc, maxJSONBytes, b, "recipes.json")
 	rc.Close()
@@ -207,7 +208,7 @@ func checkEntry(f *zip.File) error {
 		}
 	}
 	if unsafe {
-		return fmt.Errorf("Unzulässiger Pfad in der ZIP-Datei: %q", name)
+		return apierr.New("zip_bad_path", "name", name)
 	}
 	return nil
 }

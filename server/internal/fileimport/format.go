@@ -16,6 +16,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 )
 
@@ -86,13 +87,13 @@ const (
 // beginnen daher – anders als sonst bei Go-Fehlern üblich – groß.
 
 // errNotImportFile: Die Datei ist kein Rezeptplaner-Import.
-var errNotImportFile = errors.New("Keine Rezeptplaner-Importdatei (Formatkennung fehlt)")
+var errNotImportFile = apierr.New("not_import_file")
 
 // parseDocument liest recipes.json. Ein Fehler betrifft die ganze Datei.
 func parseDocument(data []byte) (document, error) {
 	data = bytes.TrimPrefix(data, []byte("\xef\xbb\xbf")) // BOM mancher Editoren
 	if !utf8.Valid(data) {
-		return document{}, errors.New("Die Datei ist nicht UTF-8-kodiert")
+		return document{}, apierr.New("not_utf8")
 	}
 	// Erst nur die Kennung lesen: Bei fremden JSON-Dateien soll die Meldung
 	// "kein Rezeptplaner-Import" lauten, nicht "unbekanntes Feld".
@@ -101,25 +102,24 @@ func parseDocument(data []byte) (document, error) {
 		Version int    `json:"version"`
 	}
 	if err := json.Unmarshal(data, &head); err != nil {
-		return document{}, fmt.Errorf("Ungültiges JSON: %s", jsonMessage(err))
+		return document{}, apierr.New("invalid_json", "detail", jsonMessage(err))
 	}
 	if head.Format != formatID {
 		return document{}, errNotImportFile
 	}
 	if head.Version < formatVersionMin || head.Version > formatVersion {
-		return document{}, fmt.Errorf("Formatversion %d wird nicht unterstützt (erwartet %d bis %d) – ist der Rezeptplaner aktuell?",
-			head.Version, formatVersionMin, formatVersion)
+		return document{}, apierr.New("format_unsupported", "version", head.Version, "min", formatVersionMin, "max", formatVersion)
 	}
 
 	var doc document
 	if err := decodeStrict(data, &doc); err != nil {
-		return document{}, fmt.Errorf("Ungültiges JSON: %s", jsonMessage(err))
+		return document{}, apierr.New("invalid_json", "detail", jsonMessage(err))
 	}
 	if len(doc.Recipes) == 0 {
-		return document{}, errors.New("Die Datei enthält keine Rezepte")
+		return document{}, apierr.New("no_recipes_in_file")
 	}
 	if len(doc.Recipes) > maxRecipesPerFile {
-		return document{}, fmt.Errorf("Höchstens %d Rezepte je Datei", maxRecipesPerFile)
+		return document{}, apierr.New("too_many_recipes", "max", maxRecipesPerFile)
 	}
 	return doc, nil
 }
@@ -134,12 +134,14 @@ func decodeStrict(data []byte, dst any) error {
 		return err
 	}
 	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
-		return errors.New("nach dem Objekt folgen weitere Daten")
+		return errors.New("extra data after the object")
 	}
 	return nil
 }
 
-// jsonMessage übersetzt die häufigsten Fehler von encoding/json.
+// jsonMessage kürzt die häufigsten Fehler von encoding/json auf eine
+// verständliche (englische) Angabe. Sie erscheint als Parameter "detail"
+// des Codes "invalid_json" – Feldnamen und Positionen übersetzt niemand.
 func jsonMessage(err error) string {
 	var typeErr *json.UnmarshalTypeError
 	var syntaxErr *json.SyntaxError
@@ -147,15 +149,15 @@ func jsonMessage(err error) string {
 	case errors.As(err, &typeErr):
 		field := typeErr.Field
 		if field == "" {
-			field = "(oberste Ebene)"
+			field = "(top level)"
 		}
-		return fmt.Sprintf("Feld „%s“ hat den falschen Typ (%s statt %s)", field, typeErr.Value, typeErr.Type)
+		return fmt.Sprintf("field “%s” has the wrong type (%s instead of %s)", field, typeErr.Value, typeErr.Type)
 	case errors.As(err, &syntaxErr):
-		return fmt.Sprintf("Syntaxfehler an Position %d", syntaxErr.Offset)
+		return fmt.Sprintf("syntax error at position %d", syntaxErr.Offset)
 	}
 	msg := err.Error()
 	if name, ok := strings.CutPrefix(msg, "json: unknown field "); ok {
-		return "unbekanntes Feld „" + strings.Trim(name, `"`) + "“"
+		return "unknown field “" + strings.Trim(name, `"`) + "”"
 	}
 	return strings.TrimPrefix(msg, "json: ")
 }
@@ -167,8 +169,8 @@ type parsedRecipe struct {
 	recipe     recipes.Recipe
 	categories []string
 	image      string // Pfad in der ZIP-Datei, leer = kein Bild
-	errors     []string
-	warnings   []string
+	errors     []*apierr.Error
+	warnings   []*apierr.Error
 }
 
 // parseRecipe prüft ein Rezept und wandelt es um. Fehler verhindern den
@@ -177,7 +179,7 @@ func parseRecipe(raw json.RawMessage) parsedRecipe {
 	var in recipeJSON
 	var p parsedRecipe
 	if err := decodeStrict(raw, &in); err != nil {
-		p.errors = append(p.errors, jsonMessage(err))
+		p.errors = append(p.errors, apierr.New("invalid_json", "detail", jsonMessage(err)))
 		// Den Titel trotzdem versuchen, damit die Vorschau das Rezept
 		// benennen kann.
 		var t struct {
@@ -187,8 +189,8 @@ func parseRecipe(raw json.RawMessage) parsedRecipe {
 		p.recipe.Title = strings.TrimSpace(t.Title)
 		return p
 	}
-	fail := func(format string, args ...any) { p.errors = append(p.errors, fmt.Sprintf(format, args...)) }
-	warn := func(format string, args ...any) { p.warnings = append(p.warnings, fmt.Sprintf(format, args...)) }
+	fail := func(code string, params ...any) { p.errors = append(p.errors, apierr.New(code, params...)) }
+	warn := func(code string, params ...any) { p.warnings = append(p.warnings, apierr.New(code, params...)) }
 
 	r := &p.recipe
 	r.Title = strings.TrimSpace(in.Title)
@@ -198,42 +200,42 @@ func parseRecipe(raw json.RawMessage) parsedRecipe {
 
 	switch {
 	case r.Title == "":
-		fail("Titel fehlt")
+		fail("import_title_missing")
 	case utf8.RuneCountInString(r.Title) > 200:
-		fail("Titel ist länger als 200 Zeichen")
+		fail("import_title_too_long", "max", 200)
 	}
 	if utf8.RuneCountInString(r.Description) > 2000 {
-		fail("Beschreibung ist länger als 2000 Zeichen")
+		fail("import_description_too_long", "max", 2000)
 	}
 	if utf8.RuneCountInString(r.Notes) > 5000 {
-		fail("Notizen sind länger als 5000 Zeichen")
+		fail("import_notes_too_long", "max", 5000)
 	}
 	if in.BaseServings == nil || *in.BaseServings < 1 || *in.BaseServings > 100 {
-		fail("Grundportionen fehlen oder liegen nicht zwischen 1 und 100")
+		fail("import_servings", "min", 1, "max", 100)
 	} else {
 		r.BaseServings = *in.BaseServings
 	}
 	r.YieldUnit = strings.Join(strings.Fields(in.YieldUnit), " ")
 	if utf8.RuneCountInString(r.YieldUnit) > recipes.MaxYieldUnitLength {
-		fail("Ergebnis-Einheit ist länger als %d Zeichen", recipes.MaxYieldUnitLength)
+		fail("import_yield_unit_too_long", "max", recipes.MaxYieldUnitLength)
 	}
 	for _, m := range []struct {
-		name  string
+		code  string
 		value *int
-	}{{"Vorbereitungszeit", in.PrepMinutes}, {"Gesamtzeit", in.TotalMinutes}} {
+	}{{"import_prep_minutes", in.PrepMinutes}, {"import_total_minutes", in.TotalMinutes}} {
 		if m.value != nil && (*m.value < 0 || *m.value > maxMinutes) {
-			fail("%s muss zwischen 0 und %d Minuten liegen", m.name, maxMinutes)
+			fail(m.code, "max", maxMinutes)
 		}
 	}
 
 	if in.Source != nil {
 		r.SourceName = strings.TrimSpace(in.Source.Name)
 		if utf8.RuneCountInString(r.SourceName) > 200 {
-			fail("Quelle ist länger als 200 Zeichen")
+			fail("import_source_too_long", "max", 200)
 		}
 		if u := strings.TrimSpace(in.Source.URL); u != "" {
 			if parsed, err := url.Parse(u); err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
-				warn("Quell-Adresse „%s“ ist keine Webadresse und wird weggelassen", u)
+				warn("import_source_url", "url", u)
 			} else {
 				r.SourceURL = u
 			}
@@ -241,7 +243,7 @@ func parseRecipe(raw json.RawMessage) parsedRecipe {
 	}
 
 	if len(in.Categories) > maxCategories {
-		fail("Höchstens %d Kategorien", maxCategories)
+		fail("import_too_many_categories", "max", maxCategories)
 	}
 	for _, c := range in.Categories {
 		if c = strings.TrimSpace(c); c != "" {
@@ -253,7 +255,7 @@ func parseRecipe(raw json.RawMessage) parsedRecipe {
 		if imagePath.MatchString(*in.Image) {
 			p.image = *in.Image
 		} else {
-			warn("Bildpfad „%s“ ist ungültig (erwartet images/name.jpg), das Bild wird weggelassen", *in.Image)
+			warn("import_image_path", "name", *in.Image)
 		}
 	}
 	if p.image != "" {
@@ -263,13 +265,13 @@ func parseRecipe(raw json.RawMessage) parsedRecipe {
 		case recipes.ImageIllustration:
 			r.ImageKind = recipes.ImageIllustration
 		default:
-			warn("Bildart „%s“ ist unbekannt (erwartet photo oder illustration), das Bild gilt als Foto", in.ImageKind)
+			warn("import_image_kind", "name", in.ImageKind)
 			r.ImageKind = recipes.ImagePhoto
 		}
 	}
 
 	if len(in.Ingredients) > maxIngredients {
-		fail("Höchstens %d Zutaten", maxIngredients)
+		fail("import_too_many_ingredients", "max", maxIngredients)
 	}
 	r.Ingredients = []recipes.Ingredient{}
 	for i, ing := range in.Ingredients {
@@ -283,37 +285,37 @@ func parseRecipe(raw json.RawMessage) parsedRecipe {
 			ShoppingRelevant: ing.ShoppingRelevant == nil || *ing.ShoppingRelevant,
 		}
 		if out.Name == "" {
-			fail("Zutat %d: Name fehlt", n)
+			fail("import_ingredient_name", "n", n)
 		}
 		if out.Quantity != nil && *out.Quantity < 0 {
-			fail("Zutat %d (%s): Menge darf nicht negativ sein", n, out.Name)
+			fail("import_ingredient_negative", "n", n, "name", out.Name)
 		}
 		if utf8.RuneCountInString(out.Name) > 200 || utf8.RuneCountInString(out.Note) > 200 ||
 			utf8.RuneCountInString(out.Unit) > 30 || utf8.RuneCountInString(out.GroupName) > 100 {
-			fail("Zutat %d (%s): ein Feld ist zu lang", n, out.Name)
+			fail("import_ingredient_too_long", "n", n, "name", out.Name)
 		}
 		r.Ingredients = append(r.Ingredients, out)
 	}
 	if len(r.Ingredients) == 0 {
-		warn("Keine Zutaten")
+		warn("import_no_ingredients")
 	}
 
 	if len(in.Steps) > maxSteps {
-		fail("Höchstens %d Schritte", maxSteps)
+		fail("import_too_many_steps", "max", maxSteps)
 	}
 	r.Steps = []recipes.Step{}
 	for i, text := range in.Steps {
 		text = strings.TrimSpace(text)
 		switch {
 		case text == "":
-			fail("Schritt %d ist leer", i+1)
+			fail("import_step_empty", "n", i+1)
 		case utf8.RuneCountInString(text) > 5000:
-			fail("Schritt %d ist länger als 5000 Zeichen", i+1)
+			fail("import_step_too_long", "n", i+1, "max", 5000)
 		}
 		r.Steps = append(r.Steps, recipes.Step{Text: text})
 	}
 	if len(r.Steps) == 0 {
-		warn("Keine Zubereitungsschritte")
+		warn("import_no_steps")
 	}
 	return p
 }

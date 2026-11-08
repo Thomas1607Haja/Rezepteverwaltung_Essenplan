@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 )
@@ -59,7 +60,7 @@ func TestPhotoFromSourcePage(t *testing.T) {
 			t.Errorf("%s: web_image %q, erwartet %q", r.Recipe.Title, r.WebImage, want)
 		}
 	}
-	if w := strings.Join(p.Recipes[0].Warnings, "|"); !strings.Contains(w, "ersetzt die Illustration") {
+	if w := strings.Join(apierr.Messages(p.Recipes[0].Warnings), "|"); !strings.Contains(w, "replaces the illustration") {
 		t.Errorf("Hinweis fehlt: %v", p.Recipes[0].Warnings)
 	}
 	if k := p.Recipes[0].Recipe.ImageKind; k != recipes.ImagePhoto {
@@ -68,7 +69,7 @@ func TestPhotoFromSourcePage(t *testing.T) {
 	if !p.Recipes[1].Thumbnail || p.Recipes[3].Thumbnail {
 		t.Errorf("Vorschaubilder: %v %v", p.Recipes[1].Thumbnail, p.Recipes[3].Thumbnail)
 	}
-	if w := strings.Join(p.Recipes[3].Warnings, "|"); !strings.HasSuffix(w, "Kein Bild") || strings.Contains(w, "Foto von") {
+	if w := strings.Join(apierr.Messages(p.Recipes[3].Warnings), "|"); !strings.HasSuffix(w, "No image") || strings.Contains(w, "Photo from") {
 		t.Errorf("Suppe: Hinweise %q", w)
 	}
 

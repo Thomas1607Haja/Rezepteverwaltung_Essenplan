@@ -1,9 +1,9 @@
 package settings
 
 import (
-	"errors"
 	"net/http"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 )
 
@@ -45,14 +45,13 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 	// json.Unmarshal setzt nur die Felder, die im JSON vorkommen; die
 	// übrigen behalten den eben gelesenen Stand.
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	s, err := h.store.Update(r.Context(), in)
-	var verr *ValidationError
-	switch {
-	case errors.As(err, &verr):
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: verr.Message, Field: verr.Field})
+	switch _, isField := apierr.AsField(err); {
+	case isField:
+		httpx.WriteError(w, http.StatusBadRequest, err)
 	case err != nil:
 		httpx.WriteInternalError(w, r, err)
 	default:

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/pantry"
@@ -66,29 +67,29 @@ func (h *Handler) importURL(w http.ResponseWriter, r *http.Request) {
 		URL string `json:"url"`
 	}
 	if err := httpx.ReadJSON(w, r, &input); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	pageURL, err := ParseURL(input.URL)
 	if err != nil {
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: err.Error(), Field: "url"})
+		httpx.WriteFieldError(w, http.StatusBadRequest, "url", err)
 		return
 	}
 
 	page, _, err := h.fetcher.Get(r.Context(), pageURL.String(), maxPageBytes)
 	switch {
 	case errors.Is(err, fetch.ErrForbiddenAddress):
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: err.Error(), Field: "url"})
+		httpx.WriteFieldError(w, http.StatusBadRequest, "url", err)
 		return
 	case err != nil:
 		// 502: Nicht unser Fehler, sondern der der fremden Seite.
-		httpx.WriteJSON(w, http.StatusBadGateway, httpx.ErrorResponse{Error: err.Error(), Field: "url"})
+		httpx.WriteFieldError(w, http.StatusBadGateway, "url", err)
 		return
 	}
 
 	recipe, imageURL, err := Extract(page, pageURL)
 	if errors.Is(err, ErrNoRecipe) {
-		httpx.WriteJSON(w, http.StatusUnprocessableEntity, httpx.ErrorResponse{Error: err.Error(), Field: "url"})
+		httpx.WriteFieldError(w, http.StatusUnprocessableEntity, "url", err)
 		return
 	}
 	if err != nil {
@@ -115,11 +116,11 @@ func (h *Handler) parseIngredients(w http.ResponseWriter, r *http.Request) {
 		Lines []string `json:"lines"`
 	}
 	if err := httpx.ReadJSON(w, r, &input); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	if len(input.Lines) > maxLines {
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: "zu viele zeilen (höchstens 200)", Field: "lines"})
+		httpx.WriteError(w, http.StatusBadRequest, apierr.Field("lines", "too_many", "max", 200))
 		return
 	}
 	result := []recipes.Ingredient{}

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
@@ -224,7 +225,7 @@ func TestSend(t *testing.T) {
 	store, _ := setup(t)
 	ha := store.ha.(*homeassistant.TestClient) // Typzusicherung: der Testmodus von setup
 
-	var verr *ValidationError
+	var verr *apierr.Error
 	if _, err := store.Send(ctx, SendOptions{}); !errors.As(err, &verr) || verr.Field != "bring_entity" {
 		t.Fatalf("ohne Bring-Liste: err = %v", err)
 	}

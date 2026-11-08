@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 )
@@ -43,7 +44,7 @@ func parsePeriod(value string) (next bool, ok bool) {
 func (h *Handler) preview(w http.ResponseWriter, r *http.Request) {
 	next, ok := parsePeriod(r.URL.Query().Get("period"))
 	if !ok {
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: "period muss current oder next sein", Field: "period"})
+		httpx.WriteError(w, http.StatusBadRequest, apierr.Field("period", "invalid_value", "expected", "current, next"))
 		return
 	}
 	p, err := h.store.Preview(r.Context(), next)
@@ -65,12 +66,12 @@ func (h *Handler) send(w http.ResponseWriter, r *http.Request) {
 		Entries    []int64  `json:"entries"`
 	}
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	next, ok := parsePeriod(in.Period)
 	if !ok {
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: "period muss current oder next sein", Field: "period"})
+		httpx.WriteError(w, http.StatusBadRequest, apierr.Field("period", "invalid_value", "expected", "current, next"))
 		return
 	}
 	result, err := h.store.Send(r.Context(), SendOptions{Next: next, Deselected: in.Deselected, Missing: in.Missing, Entries: in.Entries})
@@ -84,14 +85,14 @@ func (h *Handler) resetPreview(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	next, ok := parsePeriod(q.Get("period"))
 	if !ok {
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: "period muss current oder next sein", Field: "period"})
+		httpx.WriteError(w, http.StatusBadRequest, apierr.Field("period", "invalid_value", "expected", "current, next"))
 		return
 	}
 	var entryID int64
 	if v := q.Get("entry"); v != "" {
 		id, err := strconv.ParseInt(v, 10, 64)
 		if err != nil || id <= 0 {
-			httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: "entry muss eine id sein", Field: "entry"})
+			httpx.WriteError(w, http.StatusBadRequest, apierr.Field("entry", "invalid_id"))
 			return
 		}
 		entryID = id
@@ -109,7 +110,7 @@ func (h *Handler) reset(w http.ResponseWriter, r *http.Request) {
 		FallbackList string  `json:"fallback_list"`
 	}
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	result, err := h.store.Reset(r.Context(), ResetOptions{Entries: in.Entries, Remove: in.Remove, FallbackList: in.FallbackList})
@@ -118,13 +119,12 @@ func (h *Handler) reset(w http.ResponseWriter, r *http.Request) {
 
 // writeResult schreibt das Ergebnis oder den passenden Fehler.
 func (h *Handler) writeResult(w http.ResponseWriter, r *http.Request, result any, err error) {
-	var verr *ValidationError
-	switch {
-	case errors.As(err, &verr):
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: verr.Message, Field: verr.Field})
+	switch _, isField := apierr.AsField(err); {
+	case isField:
+		httpx.WriteError(w, http.StatusBadRequest, err)
 	case errors.Is(err, homeassistant.ErrUnavailable):
 		// 502: Nicht unser Fehler, sondern der von Home Assistant.
-		httpx.WriteError(w, http.StatusBadGateway, err.Error())
+		httpx.WriteError(w, http.StatusBadGateway, err)
 	case err != nil:
 		httpx.WriteInternalError(w, r, err)
 	default:

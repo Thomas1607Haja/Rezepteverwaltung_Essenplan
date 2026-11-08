@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
@@ -68,8 +69,8 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	for _, value := range params["tag"] {
 		id, err := strconv.ParseInt(value, 10, 64)
 		if err != nil || id <= 0 {
-			httpx.WriteJSON(w, http.StatusBadRequest,
-				httpx.ErrorResponse{Error: fmt.Sprintf("ungültige kategorie-id %q", value), Field: "tag"})
+			httpx.WriteError(w, http.StatusBadRequest,
+				apierr.Field("tag", "invalid_id"))
 			return
 		}
 		filter.TagIDs = append(filter.TagIDs, id)
@@ -81,8 +82,8 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		}
 		id, err := strconv.ParseInt(value, 10, 64)
 		if err != nil || id <= 0 {
-			httpx.WriteJSON(w, http.StatusBadRequest,
-				httpx.ErrorResponse{Error: fmt.Sprintf("ungültige kategorie-id %q", value), Field: "course"})
+			httpx.WriteError(w, http.StatusBadRequest,
+				apierr.Field("course", "invalid_id"))
 			return
 		}
 		filter.CourseTagIDs = append(filter.CourseTagIDs, id)
@@ -91,8 +92,8 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	if value := params.Get("favorite"); value != "" {
 		favorite, err := strconv.ParseBool(value)
 		if err != nil {
-			httpx.WriteJSON(w, http.StatusBadRequest,
-				httpx.ErrorResponse{Error: "erwartet true oder false", Field: "favorite"})
+			httpx.WriteError(w, http.StatusBadRequest,
+				apierr.Field("favorite", "invalid_value", "expected", "true, false"))
 			return
 		}
 		filter.FavoritesOnly = favorite
@@ -104,8 +105,8 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	case ImageIllustration:
 		filter.IllustrationsOnly = true
 	default:
-		httpx.WriteJSON(w, http.StatusBadRequest,
-			httpx.ErrorResponse{Error: "erwartet image=illustration", Field: "image"})
+		httpx.WriteError(w, http.StatusBadRequest,
+			apierr.Field("image", "invalid_value", "expected", "illustration"))
 		return
 	}
 
@@ -115,8 +116,8 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	case "never":
 		filter.NeverPlanned = true
 	default:
-		httpx.WriteJSON(w, http.StatusBadRequest,
-			httpx.ErrorResponse{Error: "erwartet planned=never", Field: "planned"})
+		httpx.WriteError(w, http.StatusBadRequest,
+			apierr.Field("planned", "invalid_value", "expected", "never"))
 		return
 	}
 
@@ -132,7 +133,7 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 	var input Recipe
 	if err := httpx.ReadJSON(w, r, &input); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -169,7 +170,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 	}
 	var input Recipe
 	if err := httpx.ReadJSON(w, r, &input); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -240,11 +241,11 @@ func (h *Handler) setFavorite(w http.ResponseWriter, r *http.Request) {
 		IsFavorite *bool `json:"is_favorite"`
 	}
 	if err := httpx.ReadJSON(w, r, &input); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	if input.IsFavorite == nil {
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: "fehlt", Field: "is_favorite"})
+		httpx.WriteError(w, http.StatusBadRequest, apierr.Field("is_favorite", "missing"))
 		return
 	}
 
@@ -272,7 +273,7 @@ func (h *Handler) listTags(w http.ResponseWriter, r *http.Request) {
 func parseID(w http.ResponseWriter, r *http.Request) (id int64, ok bool) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil || id <= 0 {
-		httpx.WriteError(w, http.StatusBadRequest, "ungültige rezept-id")
+		httpx.WriteError(w, http.StatusBadRequest, apierr.New("invalid_id"))
 		return 0, false
 	}
 	return id, true
@@ -280,12 +281,11 @@ func parseID(w http.ResponseWriter, r *http.Request) (id int64, ok bool) {
 
 // writeStoreError übersetzt Fehler des Stores in passende HTTP-Antworten.
 func writeStoreError(w http.ResponseWriter, r *http.Request, err error) {
-	var verr *ValidationError
-	switch {
-	case errors.As(err, &verr):
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: verr.Message, Field: verr.Field})
+	switch _, isField := apierr.AsField(err); {
+	case isField:
+		httpx.WriteError(w, http.StatusBadRequest, err)
 	case errors.Is(err, ErrNotFound):
-		httpx.WriteError(w, http.StatusNotFound, err.Error())
+		httpx.WriteError(w, http.StatusNotFound, err)
 	default:
 		httpx.WriteInternalError(w, r, err)
 	}

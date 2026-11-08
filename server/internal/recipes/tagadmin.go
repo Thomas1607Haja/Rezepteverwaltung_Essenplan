@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -25,11 +26,11 @@ import (
 const maxTagNameLength = 50
 
 // ErrTagNotFound: Die Kategorie oder Gruppe gibt es nicht.
-var ErrTagNotFound = errors.New("kategorie oder gruppe nicht gefunden")
+var ErrTagNotFound = apierr.New("category_or_group_gone")
 
 // ErrGroupNotEmpty: Eine Gruppe mit Kategorien soll gelöscht werden, ohne
 // zu sagen, was mit ihnen geschieht.
-var ErrGroupNotEmpty = errors.New("die gruppe enthält noch kategorien – verschieben oder mitlöschen")
+var ErrGroupNotEmpty = apierr.New("group_not_empty")
 
 // AdminTag ist eine Kategorie in der Verwaltung, mit der Zahl ihrer Rezepte.
 type AdminTag struct {
@@ -91,9 +92,9 @@ func cleanName(name string) (string, error) {
 	name = strings.Join(strings.Fields(name), " ")
 	switch {
 	case name == "":
-		return "", &ValidationError{"name", "name fehlt"}
+		return "", apierr.Field("name", "required")
 	case utf8.RuneCountInString(name) > maxTagNameLength:
-		return "", &ValidationError{"name", fmt.Sprintf("name zu lang (höchstens %d zeichen)", maxTagNameLength)}
+		return "", apierr.Field("name", "too_long", "max", maxTagNameLength)
 	}
 	return name, nil
 }
@@ -116,11 +117,11 @@ func checkNameFree(ctx context.Context, tx *sql.Tx, table, name string, exceptID
 			return err
 		}
 		if id != exceptID && database.Fold(other) == want {
-			what := "eine kategorie"
+			code := "category_exists"
 			if table == "tag_groups" {
-				what = "eine gruppe"
+				code = "group_exists"
 			}
-			return &ValidationError{"name", fmt.Sprintf("es gibt schon %s „%s“", what, other)}
+			return apierr.Field("name", code, "name", other)
 		}
 	}
 	return rows.Err()
@@ -181,8 +182,7 @@ func (s *Store) inTx(ctx context.Context, what string, fn func(tx *sql.Tx, now s
 	}
 	defer tx.Rollback()
 	if err := fn(tx, database.FormatTime(s.now())); err != nil {
-		var verr *ValidationError
-		if errors.As(err, &verr) || errors.Is(err, ErrTagNotFound) || errors.Is(err, ErrGroupNotEmpty) || errors.Is(err, ErrNoCourseGroup) {
+		if _, isField := apierr.AsField(err); isField || errors.Is(err, ErrTagNotFound) || errors.Is(err, ErrGroupNotEmpty) || errors.Is(err, ErrNoCourseGroup) {
 			return err
 		}
 		return fmt.Errorf("%s: %w", what, err)
@@ -270,7 +270,7 @@ func (s *Store) OrderTagGroups(ctx context.Context, ids []int64) error {
 			return err
 		}
 		if len(ids) != n || !distinct(ids) {
-			return &ValidationError{"ids", "alle gruppen genau einmal angeben"}
+			return apierr.Field("ids", "groups_incomplete")
 		}
 		for i, id := range ids {
 			res, err := tx.ExecContext(ctx, "UPDATE tag_groups SET position = ?, updated_at = ? WHERE id = ?", i+1, now, id)
@@ -278,7 +278,7 @@ func (s *Store) OrderTagGroups(ctx context.Context, ids []int64) error {
 				return err
 			}
 			if k, _ := res.RowsAffected(); k == 0 {
-				return &ValidationError{"ids", fmt.Sprintf("gruppe %d gibt es nicht", id)}
+				return apierr.Field("ids", "group_not_found", "id", id)
 			}
 		}
 		return nil
@@ -301,7 +301,7 @@ func (s *Store) DeleteTagGroup(ctx context.Context, id, moveTo int64, withTags b
 		case len(ids) == 0:
 		case moveTo > 0:
 			if moveTo == id {
-				return &ValidationError{"move_to", "die kategorien müssen in eine andere gruppe"}
+				return apierr.Field("move_to", "move_to_other_group")
 			}
 			if err := exists(ctx, tx, "tag_groups", moveTo); err != nil {
 				return err
@@ -421,7 +421,7 @@ func (s *Store) OrderTags(ctx context.Context, groupID int64, ids []int64) error
 			return err
 		}
 		if !distinct(ids) {
-			return &ValidationError{"ids", "jede kategorie nur einmal angeben"}
+			return apierr.Field("ids", "categories_duplicate")
 		}
 		current, err := tagIDsOfGroup(ctx, tx, groupID)
 		if err != nil {
@@ -433,14 +433,14 @@ func (s *Store) OrderTags(ctx context.Context, groupID int64, ids []int64) error
 		}
 		for _, id := range current {
 			if !inList[id] {
-				return &ValidationError{"ids", fmt.Sprintf("kategorie %d fehlt – erst in eine andere gruppe verschieben", id)}
+				return apierr.Field("ids", "category_not_in_order", "id", id)
 			}
 		}
 		for i, id := range ids {
 			var oldGroup int64
 			err := tx.QueryRowContext(ctx, "SELECT group_id FROM tags WHERE id = ?", id).Scan(&oldGroup)
 			if errors.Is(err, sql.ErrNoRows) {
-				return &ValidationError{"ids", fmt.Sprintf("kategorie %d gibt es nicht", id)}
+				return apierr.Field("ids", "category_not_found", "id", id)
 			}
 			if err != nil {
 				return err
@@ -487,7 +487,7 @@ func deleteTag(ctx context.Context, tx *sql.Tx, now string, id int64) error {
 // bekommen into, danach wird id gelöscht.
 func (s *Store) MergeTag(ctx context.Context, id, into int64) error {
 	if id == into {
-		return &ValidationError{"into", "eine kategorie lässt sich nicht mit sich selbst zusammenführen"}
+		return apierr.Field("into", "merge_into_self")
 	}
 	return s.inTx(ctx, "kategorien zusammenführen", func(tx *sql.Tx, now string) error {
 		if err := exists(ctx, tx, "tags", id); err != nil {

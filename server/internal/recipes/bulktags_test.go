@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 func TestBulkTagsAddRemoveUndo(t *testing.T) {
@@ -52,7 +54,7 @@ func TestBulkTagsAddRemoveUndo(t *testing.T) {
 	}
 
 	// Unbekannte IDs: nichts ändert sich.
-	var verr *ValidationError
+	var verr *apierr.Error
 	if _, err := s.BulkTags(ctx, BulkTags{Add: []TagChange{{a.ID, main}, {9999, main}}}); !errors.As(err, &verr) {
 		t.Errorf("unbekanntes Rezept: %v", err)
 	}

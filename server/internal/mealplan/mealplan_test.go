@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/settings"
 )
@@ -157,7 +158,7 @@ func TestCreateValidation(t *testing.T) {
 	}
 	for _, tt := range tests {
 		_, err := s.Create(context.Background(), tt.in)
-		var verr *ValidationError
+		var verr *apierr.Error
 		if !errors.As(err, &verr) || verr.Field != tt.field {
 			t.Errorf("%+v: erwartet Fehler im Feld %q, bekommen %v", tt.in, tt.field, err)
 		}
@@ -195,7 +196,7 @@ func TestUpdate(t *testing.T) {
 
 	// "transferred" darf man nicht selbst setzen
 	_, err = s.Update(ctx, e.ID, Changes{Servings: 4, Note: "x", Status: StatusTransferred})
-	var verr *ValidationError
+	var verr *apierr.Error
 	if !errors.As(err, &verr) || verr.Field != "status" {
 		t.Errorf("transferred gesetzt: %v", err)
 	}

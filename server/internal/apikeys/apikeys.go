@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -39,10 +40,10 @@ type Key struct {
 }
 
 // ErrNotFound wird zurückgegeben, wenn es einen Schlüssel nicht gibt.
-var ErrNotFound = errors.New("api-schlüssel nicht gefunden")
+var ErrNotFound = apierr.New("api_key_not_found")
 
 // ErrInvalidName: Der Gerätename ist leer oder zu lang.
-var ErrInvalidName = fmt.Errorf("name darf nicht leer und höchstens %d zeichen lang sein", maxName)
+var ErrInvalidName = apierr.Field("name", "name_length", "max", maxName)
 
 // Store liest und schreibt die Tabelle api_keys.
 type Store struct {

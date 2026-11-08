@@ -2,19 +2,18 @@ package importer
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"html"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
 )
 
 // ErrNoRecipe: Die Seite enthält keine lesbaren schema.org-Rezeptdaten.
-var ErrNoRecipe = errors.New("auf der seite wurden keine rezeptdaten gefunden")
+var ErrNoRecipe = apierr.New("no_recipe_on_page")
 
 // defaultServings gilt, wenn die Seite keine Portionenzahl nennt.
 const defaultServings = 4
@@ -395,7 +394,7 @@ func NormalizeURL(u *url.URL) string {
 func ParseURL(raw string) (*url.URL, error) {
 	u, err := url.Parse(strings.TrimSpace(raw))
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-		return nil, fmt.Errorf("ungültige adresse: %q (erwartet http:// oder https://)", raw)
+		return nil, apierr.New("invalid_url")
 	}
 	return u, nil
 }

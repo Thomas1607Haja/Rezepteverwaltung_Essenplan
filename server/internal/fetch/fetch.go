@@ -13,6 +13,8 @@ import (
 	"net/url"
 	"syscall"
 	"time"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 // userAgent stellt den Abruf als normalen Browser-Zugriff mit Zusatz vor;
@@ -21,10 +23,10 @@ const userAgent = "Mozilla/5.0 (compatible; Rezeptplaner/1.0; +https://github.co
 
 // ErrForbiddenAddress: Die Adresse zeigt ins Heimnetz oder auf den Rechner
 // selbst.
-var ErrForbiddenAddress = errors.New("adressen im heimnetz sind nicht erlaubt")
+var ErrForbiddenAddress = apierr.New("address_forbidden")
 
 // ErrTooLarge: Die Antwort ist größer als erlaubt.
-var ErrTooLarge = errors.New("antwort ist zu groß")
+var ErrTooLarge = apierr.New("response_too_large")
 
 // Client lädt Dateien mit den genannten Grenzen.
 type Client struct {
@@ -123,7 +125,7 @@ func isPublic(ip net.IP) bool {
 func (c *Client) Get(ctx context.Context, rawURL string, maxBytes int64) (body []byte, contentType string, err error) {
 	u, err := url.Parse(rawURL)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-		return nil, "", errors.New("ungültige adresse (erwartet http:// oder https://)")
+		return nil, "", apierr.New("invalid_url")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
@@ -143,7 +145,7 @@ func (c *Client) Get(ctx context.Context, rawURL string, maxBytes int64) (body [
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, "", fmt.Errorf("seite antwortet mit status %d", resp.StatusCode)
+		return nil, "", apierr.New("page_status", "status", resp.StatusCode)
 	}
 
 	// Ein Byte mehr lesen als erlaubt: Kommt es an, war die Antwort zu groß.
@@ -170,7 +172,7 @@ type Response struct {
 func (c *Client) Probe(ctx context.Context, rawURL string, maxBytes int64) (Response, error) {
 	u, err := url.Parse(rawURL)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-		return Response{}, errors.New("ungültige adresse (erwartet http:// oder https://)")
+		return Response{}, apierr.New("invalid_url")
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {

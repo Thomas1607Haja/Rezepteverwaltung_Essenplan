@@ -3,7 +3,6 @@ package fileimport
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -14,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/importer"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
@@ -99,7 +99,7 @@ func (im *Importer) loadWebImage(ctx context.Context, dir string, c *candidate) 
 	}
 	imageURL := importer.PageImage(page, pageURL)
 	if imageURL == "" {
-		return errors.New("die seite nennt kein bild")
+		return apierr.New("no_image_on_page")
 	}
 	data, _, err := im.fetcher.Get(ctx, imageURL, images.MaxUploadBytes)
 	if err != nil {
@@ -127,18 +127,20 @@ func siteName(rawURL string) string {
 
 // saveWebImage speichert beim Bestätigen das in der Vorschau geladene Foto.
 // ok ist false, wenn es keins gibt.
-func (im *Importer) saveWebImage(ctx context.Context, dir string, c *candidate, recipeID int64) (ok bool, warning string) {
+func (im *Importer) saveWebImage(ctx context.Context, dir string, c *candidate, recipeID int64) (ok bool, warning *apierr.Error) {
 	data, err := os.ReadFile(webImagePath(dir, c.Index))
 	if err != nil {
-		return false, ""
+		return false, nil
 	}
 	large, thumb, err := im.images.Save(bytes.NewReader(data))
 	if err != nil {
-		return true, fmt.Sprintf("Foto von der Quellseite nicht gespeichert: %v", err)
+		slog.Warn("Datei-Import: Foto der Quellseite nicht gespeichert", "error", err)
+		return true, apierr.New("import_web_photo_not_saved")
 	}
 	if _, err := im.recipes.SetImage(ctx, recipeID, large, thumb, recipes.ImagePhoto); err != nil {
 		im.images.Delete(large, thumb)
-		return true, fmt.Sprintf("Foto von der Quellseite nicht gespeichert: %v", err)
+		slog.Warn("Datei-Import: Foto der Quellseite nicht gespeichert", "error", err)
+		return true, apierr.New("import_web_photo_not_saved")
 	}
-	return true, ""
+	return true, nil
 }

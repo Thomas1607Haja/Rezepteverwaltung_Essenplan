@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -100,7 +101,7 @@ func (s *Store) List(ctx context.Context, f ListFilter) ([]Summary, error) {
 	case SortMostPlanned:
 		orderBy = "plan_count DESC, fold(r.title), r.title, r.id"
 	default:
-		return nil, &ValidationError{"sort", fmt.Sprintf("unbekannte sortierung %q", f.Sort)}
+		return nil, apierr.Field("sort", "unknown_sort", "value", f.Sort)
 	}
 
 	// Die Bedingungen werden einzeln gesammelt und am Ende mit AND
@@ -234,7 +235,7 @@ func (s *Store) tagIDsByGroup(ctx context.Context, tagIDs []int64) (map[int64][]
 
 	for _, id := range ids {
 		if !known[id] {
-			return nil, &ValidationError{"tag", fmt.Sprintf("kategorie %d gibt es nicht", id)}
+			return nil, apierr.Field("tag", "category_not_found", "id", id)
 		}
 	}
 	return groups, nil

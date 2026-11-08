@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
@@ -38,7 +39,7 @@ func (h *Handler) fetchImage(w http.ResponseWriter, r *http.Request) {
 		URL string `json:"url"`
 	}
 	if err := httpx.ReadJSON(w, r, &input); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	if !h.recipeExists(w, r, id) {
@@ -48,15 +49,14 @@ func (h *Handler) fetchImage(w http.ResponseWriter, r *http.Request) {
 	data, contentType, err := h.fetcher.Get(r.Context(), input.URL, images.MaxUploadBytes)
 	switch {
 	case errors.Is(err, fetch.ErrTooLarge):
-		httpx.WriteError(w, http.StatusRequestEntityTooLarge, "bild ist zu groß (höchstens 20 mb)")
+		httpx.WriteError(w, http.StatusRequestEntityTooLarge, apierr.New("upload_too_large", "max_mb", images.MaxUploadBytes>>20))
 		return
 	case err != nil:
-		httpx.WriteJSON(w, http.StatusBadGateway, httpx.ErrorResponse{Error: err.Error(), Field: "url"})
+		httpx.WriteFieldError(w, http.StatusBadGateway, "url", err)
 		return
 	}
 	if contentType != "" && !strings.HasPrefix(contentType, "image/") {
-		httpx.WriteJSON(w, http.StatusUnsupportedMediaType,
-			httpx.ErrorResponse{Error: "die adresse liefert kein bild", Field: "url"})
+		httpx.WriteError(w, http.StatusUnsupportedMediaType, apierr.Field("url", "not_an_image"))
 		return
 	}
 	h.saveImage(w, r, id, bytes.NewReader(data))
@@ -80,10 +80,10 @@ func (h *Handler) saveImage(w http.ResponseWriter, r *http.Request, id int64, sr
 	var tooBig *http.MaxBytesError
 	switch {
 	case errors.As(err, &tooBig):
-		httpx.WriteError(w, http.StatusRequestEntityTooLarge, "datei ist zu groß (höchstens 20 mb)")
+		httpx.WriteError(w, http.StatusRequestEntityTooLarge, apierr.New("upload_too_large", "max_mb", images.MaxUploadBytes>>20))
 		return
 	case errors.Is(err, images.ErrUnsupported), errors.Is(err, images.ErrTooLarge):
-		httpx.WriteError(w, http.StatusUnsupportedMediaType, err.Error())
+		httpx.WriteError(w, http.StatusUnsupportedMediaType, err)
 		return
 	case err != nil:
 		httpx.WriteInternalError(w, r, err)

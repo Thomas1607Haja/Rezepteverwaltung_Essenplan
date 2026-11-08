@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 func TestSuggestCourse(t *testing.T) {
@@ -60,7 +62,7 @@ func TestCourseSuggestionsAndAssign(t *testing.T) {
 		t.Errorf("nach dem Zuordnen noch Vorschläge: %+v", list)
 	}
 	// Nur Gänge sind erlaubt.
-	var verr *ValidationError
+	var verr *apierr.Error
 	if _, err := s.AssignCourses(ctx, []CourseAssignment{{RecipeID: kuchen.ID, TagID: tagID(t, s, "Rind")}}); !errors.As(err, &verr) {
 		t.Errorf("Rind als Gang: %v", err)
 	}

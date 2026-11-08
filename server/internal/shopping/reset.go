@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
@@ -47,6 +48,8 @@ type ResetPreview struct {
 	// gespeicherte Liste. Leer, wenn Home Assistant nicht erreichbar ist.
 	Lists      []ListRef `json:"lists"`
 	ListsError string    `json:"lists_error,omitempty"`
+	// ListsErrorCode zum Übersetzen (ListsError ist der englische Text).
+	ListsErrorCode string `json:"lists_error_code,omitempty"`
 }
 
 // ResetOptions legen fest, was zurückgesetzt wird.
@@ -82,7 +85,7 @@ func (s *Store) ResetPreview(ctx context.Context, next bool, entryID int64) (Res
 	if entryID != 0 {
 		entries, err = s.queryEntries(ctx, "e.id = ? AND e.status = ?", "", entryID, mealplan.StatusTransferred)
 		if err == nil && len(entries) == 0 {
-			return ResetPreview{}, &ValidationError{"entry", "das gericht ist nicht an bring übertragen"}
+			return ResetPreview{}, apierr.Field("entry", "entry_not_sent")
 		}
 	} else {
 		var period mealplan.Period
@@ -102,7 +105,8 @@ func (s *Store) ResetPreview(ctx context.Context, next bool, entryID int64) (Res
 	result := ResetPreview{Entries: []ResetEntry{}, Lists: []ListRef{}}
 	names := map[string]string{}
 	if lists, err := s.ha.TodoLists(ctx); err != nil {
-		result.ListsError = err.Error()
+		e := apierr.From(err, "home_assistant_down")
+		result.ListsError, result.ListsErrorCode = e.Message(), e.Code
 	} else {
 		for _, l := range lists {
 			names[l.EntityID] = l.Name
@@ -176,14 +180,14 @@ func (s *Store) Reset(ctx context.Context, opts ResetOptions) (ResetResult, erro
 	defer s.sendMu.Unlock()
 
 	if opts.FallbackList != "" && !strings.HasPrefix(opts.FallbackList, "todo.") {
-		return ResetResult{}, &ValidationError{"fallback_list", "muss eine to-do-entität sein, z. b. todo.einkauf"}
+		return ResetResult{}, apierr.Field("fallback_list", "invalid_todo_entity")
 	}
 	ids, err := s.transferredIDs(ctx, opts.Entries)
 	if err != nil {
 		return ResetResult{}, err
 	}
 	if len(ids) == 0 {
-		return ResetResult{}, &ValidationError{"entries", "keine übertragenen gerichte gewählt"}
+		return ResetResult{}, apierr.Field("entries", "no_entries_selected")
 	}
 	rows, err := s.resetRows(ctx, ids)
 	if err != nil {
@@ -410,7 +414,7 @@ func (s *Store) removeFromLists(ctx context.Context, rows []resetRow, fallback s
 			}
 			switch {
 			case err != nil:
-				result.Failed = append(result.Failed, FailedItem{Name: name, Error: err.Error()})
+				result.Failed = append(result.Failed, newFailedItem(name, "", err))
 			case needed:
 				result.Reduced = append(result.Reduced, name)
 			default:

@@ -3,10 +3,11 @@
 package mealplan
 
 import (
-	"errors"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 // dateLayout ist das Format eines Kalendertags, z. B. 2026-10-24.
@@ -97,24 +98,14 @@ type Period struct {
 }
 
 // ErrNotFound: Den Eintrag gibt es nicht.
-var ErrNotFound = errors.New("eintrag nicht gefunden")
-
-// ValidationError beschreibt eine ungültige Eingabe.
-type ValidationError struct {
-	Field   string
-	Message string
-}
-
-func (e *ValidationError) Error() string {
-	return e.Field + ": " + e.Message
-}
+var ErrNotFound = apierr.New("entry_not_found")
 
 // parseDate prüft einen Kalendertag wie "2026-10-24". time.Parse lehnt
 // auch Tage ab, die es nicht gibt (z. B. 2026-02-30).
 func parseDate(field, s string) (time.Time, error) {
 	t, err := time.Parse(dateLayout, s)
 	if err != nil {
-		return time.Time{}, &ValidationError{field, "muss ein datum wie 2026-10-24 sein"}
+		return time.Time{}, apierr.Field(field, "invalid_date")
 	}
 	return t, nil
 }
@@ -142,12 +133,12 @@ func normalizeExcluded(keys []string) ([]string, error) {
 			continue
 		}
 		if len([]rune(k)) > 200 {
-			return nil, &ValidationError{"excluded_ingredients", "schlüssel zu lang"}
+			return nil, apierr.Field("excluded_ingredients", "too_long", "max", 200)
 		}
 		out = append(out, k)
 	}
 	if len(out) > maxExcluded {
-		return nil, &ValidationError{"excluded_ingredients", "zu viele zutaten"}
+		return nil, apierr.Field("excluded_ingredients", "too_many", "max", maxExcluded)
 	}
 	slices.Sort(out)
 	return out, nil
@@ -157,7 +148,7 @@ func normalizeExcluded(keys []string) ([]string, error) {
 func normalizeNote(note string) (string, error) {
 	note = strings.TrimSpace(note)
 	if len([]rune(note)) > 200 {
-		return "", &ValidationError{"note", "höchstens 200 zeichen"}
+		return "", apierr.Field("note", "too_long", "max", 200)
 	}
 	return note, nil
 }

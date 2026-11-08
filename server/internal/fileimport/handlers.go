@@ -13,6 +13,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 )
 
@@ -54,10 +55,10 @@ func (im *Importer) handleUpload(w http.ResponseWriter, r *http.Request) {
 	var tooBig *http.MaxBytesError
 	switch {
 	case errors.As(err, &tooBig):
-		httpx.WriteError(w, http.StatusRequestEntityTooLarge, fmt.Sprintf("Upload zu groß (höchstens %d MB)", maxUploadBytes>>20))
+		httpx.WriteError(w, http.StatusRequestEntityTooLarge, apierr.New("upload_too_large", "max_mb", maxUploadBytes>>20))
 		return
 	case err != nil:
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	list, err := json.Marshal(files)
@@ -85,7 +86,7 @@ var errUploadTooLarge = &http.MaxBytesError{Limit: maxUploadBytes}
 func saveParts(r *http.Request, dir string) ([]uploadedFile, error) {
 	mr, err := r.MultipartReader()
 	if err != nil {
-		return nil, errors.New("Erwartet werden Dateien als multipart/form-data (Feld „file“)")
+		return nil, apierr.New("upload_not_multipart")
 	}
 	files := []uploadedFile{}
 	var total int64
@@ -99,14 +100,14 @@ func saveParts(r *http.Request, dir string) ([]uploadedFile, error) {
 			if errors.As(err, &tooBig) {
 				return nil, err
 			}
-			return nil, errors.New("Upload unvollständig oder beschädigt")
+			return nil, apierr.New("upload_incomplete")
 		}
 		if part.FormName() != "file" {
 			part.Close()
 			continue
 		}
 		if len(files) == maxFiles {
-			return nil, fmt.Errorf("Höchstens %d Dateien auf einmal", maxFiles)
+			return nil, apierr.New("too_many", "max", maxFiles)
 		}
 		f := uploadedFile{Name: displayName(part.FileName(), len(files)), Path: fmt.Sprintf("%02d.upload", len(files)+1)}
 		out, err := os.OpenFile(filepath.Join(dir, f.Path), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
@@ -121,7 +122,7 @@ func saveParts(r *http.Request, dir string) ([]uploadedFile, error) {
 			if errors.As(err, &tooBig) {
 				return nil, err
 			}
-			return nil, errors.New("Upload unvollständig oder beschädigt")
+			return nil, apierr.New("upload_incomplete")
 		}
 		total += n
 		if total > maxUploadBytes {
@@ -130,7 +131,7 @@ func saveParts(r *http.Request, dir string) ([]uploadedFile, error) {
 		files = append(files, f)
 	}
 	if len(files) == 0 {
-		return nil, errors.New("Keine Datei im Upload (Feld „file“)")
+		return nil, apierr.New("no_file")
 	}
 	return files, nil
 }
@@ -153,12 +154,12 @@ func (im *Importer) handleThumbnail(w http.ResponseWriter, r *http.Request) {
 	dir := im.pendingDir(r.PathValue("token"))
 	index, err := strconv.Atoi(r.PathValue("index"))
 	if dir == "" || err != nil || index < 0 {
-		httpx.WriteError(w, http.StatusNotFound, "Bild nicht gefunden")
+		httpx.WriteError(w, http.StatusNotFound, apierr.New("image_not_found"))
 		return
 	}
 	data, err := os.ReadFile(thumbPath(dir, index))
 	if err != nil {
-		httpx.WriteError(w, http.StatusNotFound, "Bild nicht gefunden")
+		httpx.WriteError(w, http.StatusNotFound, apierr.New("image_not_found"))
 		return
 	}
 	w.Header().Set("Content-Type", "image/jpeg")
@@ -177,11 +178,11 @@ func (im *Importer) handleConfirm(w http.ResponseWriter, r *http.Request) {
 		Categories map[string]CategoryChoice `json:"categories"`
 	}
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	if len(in.Selected) == 0 {
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: "Kein Rezept ausgewählt", Field: "selected"})
+		httpx.WriteError(w, http.StatusBadRequest, apierr.Field("selected", "no_recipe_selected"))
 		return
 	}
 
@@ -190,7 +191,7 @@ func (im *Importer) handleConfirm(w http.ResponseWriter, r *http.Request) {
 	result, err := im.confirm(r.Context(), r.PathValue("token"), in.Selected, in.Categories)
 	switch {
 	case errors.Is(err, errExpired):
-		httpx.WriteError(w, http.StatusNotFound, err.Error())
+		httpx.WriteError(w, http.StatusNotFound, err)
 	case err != nil:
 		httpx.WriteInternalError(w, r, err)
 	default:

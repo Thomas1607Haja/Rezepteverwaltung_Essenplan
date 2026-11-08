@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
@@ -92,9 +93,7 @@ func (h *Handler) sync(w http.ResponseWriter, r *http.Request) {
 	if raw := r.URL.Query().Get("since"); raw != "" {
 		t, err := database.ParseTime(raw)
 		if err != nil {
-			httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{
-				Error: "since muss ein zeitstempel wie 2026-10-23T18:30:00.000Z sein (server_time der letzten antwort)",
-				Field: "since"})
+			httpx.WriteError(w, http.StatusBadRequest, apierr.Field("since", "invalid_timestamp"))
 			return
 		}
 		since = database.FormatTime(t.Add(-overlap))

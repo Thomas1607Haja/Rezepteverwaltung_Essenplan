@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -19,6 +18,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 // Betriebsarten, wie sie die API meldet.
@@ -86,7 +87,7 @@ func newREST(mode, base, token string) *rest {
 func (c *rest) Mode() string { return c.mode }
 
 // ErrUnavailable: Home Assistant ist nicht erreichbar oder lehnt ab.
-var ErrUnavailable = errors.New("home assistant nicht erreichbar")
+var ErrUnavailable = apierr.New("home_assistant_down")
 
 // call schickt eine Anfrage; ist out nicht nil, wird die Antwort dorthin
 // gelesen.
@@ -132,7 +133,7 @@ func (c *rest) call(ctx context.Context, method, path string, body, out any) err
 		return nil
 	}
 	if err := json.Unmarshal(data, out); err != nil {
-		return fmt.Errorf("antwort von home assistant: %w", err)
+		return fmt.Errorf("response from home assistant: %w", err)
 	}
 	return nil
 }
@@ -238,7 +239,7 @@ func (c *TestClient) TodoLists(context.Context) ([]TodoList, error) {
 func (c *TestClient) list(entityID string) ([]TodoItem, error) {
 	items, ok := c.lists[entityID]
 	if !ok {
-		return nil, fmt.Errorf("%w: unbekannte liste %s", ErrUnavailable, entityID)
+		return nil, fmt.Errorf("%w: unknown list %s", ErrUnavailable, entityID)
 	}
 	return items, nil
 }
@@ -275,7 +276,7 @@ func (c *TestClient) UpdateDescription(_ context.Context, entityID, uid, descrip
 			return nil
 		}
 	}
-	return fmt.Errorf("%w: eintrag %s nicht gefunden", ErrUnavailable, uid)
+	return fmt.Errorf("%w: item %s not found", ErrUnavailable, uid)
 }
 
 func (c *TestClient) RemoveItem(_ context.Context, entityID, uid string) error {
@@ -291,5 +292,5 @@ func (c *TestClient) RemoveItem(_ context.Context, entityID, uid string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("%w: eintrag %s nicht gefunden", ErrUnavailable, uid)
+	return fmt.Errorf("%w: item %s not found", ErrUnavailable, uid)
 }

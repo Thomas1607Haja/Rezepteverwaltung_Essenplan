@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -61,7 +62,7 @@ func TestCreateUpdateDelete(t *testing.T) {
 	}
 
 	// Gleicher Name in anderer Schreibweise ist eine Dublette.
-	var verr *ValidationError
+	var verr *apierr.Error
 	if _, err := store.Create(ctx, Item{Name: "SALZ"}); !errors.As(err, &verr) {
 		t.Errorf("Dublette: err = %v", err)
 	}

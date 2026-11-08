@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -43,7 +44,7 @@ func TestTagAdminNamesAreUniqueAcrossGroups(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 	art := groupID(t, s, "Art")
-	var verr *ValidationError
+	var verr *apierr.Error
 	for _, name := range []string{"pasta", "  PASTA ", "Geflugel", "geflügel"} {
 		if _, err := s.CreateTag(ctx, name, art); !errors.As(err, &verr) {
 			t.Errorf("%q: Fehler %v, erwartet Namenskonflikt", name, err)
@@ -160,7 +161,7 @@ func TestTagAdminGroupsAndOrder(t *testing.T) {
 		t.Errorf("Anlass: %v", got)
 	}
 	// Eine Gruppe darf beim Sortieren keine Kategorie verlieren.
-	var verr *ValidationError
+	var verr *apierr.Error
 	if err := s.OrderTags(ctx, anlass, []int64{herzhaft}); !errors.As(err, &verr) {
 		t.Errorf("Kategorie fehlt in der Liste: %v", err)
 	}

@@ -37,7 +37,7 @@ func (h *Handler) writeMenu(w http.ResponseWriter, r *http.Request, status int, 
 func (h *Handler) createMenu(w http.ResponseWriter, r *http.Request) {
 	var in MenuInput
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	m, err := h.store.CreateMenu(r.Context(), in)
@@ -69,7 +69,7 @@ func (h *Handler) updateMenu(w http.ResponseWriter, r *http.Request) {
 	}
 	var in MenuInput
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	m, err := h.store.UpdateMenu(r.Context(), id, in)
@@ -102,7 +102,7 @@ func (h *Handler) moveMenu(w http.ResponseWriter, r *http.Request) {
 	}
 	var m Move
 	if err := httpx.ReadJSON(w, r, &m); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	result, err := h.store.MoveMenu(r.Context(), id, m)
@@ -142,7 +142,7 @@ func (h *Handler) toMenu(w http.ResponseWriter, r *http.Request) {
 		CourseTagID int64  `json:"course_tag_id"`
 	}
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	m, err := h.store.ToMenu(r.Context(), id, in.Title, in.Note, in.CourseTagID)

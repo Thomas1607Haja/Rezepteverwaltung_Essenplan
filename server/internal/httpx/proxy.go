@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/netip"
 	"strings"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 // AllowOnlyFrom ist eine Middleware: Sie lässt nur Anfragen durch, deren
@@ -42,7 +44,7 @@ func AllowOnlyFrom(allowed netip.Addr, token string, next http.Handler) http.Han
 			return
 		}
 		slog.Warn("Anfrage abgelehnt: nicht über Ingress", "remote", r.RemoteAddr, "path", r.URL.Path)
-		WriteError(w, http.StatusForbidden, "zugriff nur über home assistant")
+		WriteError(w, http.StatusForbidden, apierr.New("home_assistant_only"))
 	})
 }
 

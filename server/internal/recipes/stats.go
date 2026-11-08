@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 // Statistik (Schritt 8.D). Wird bei jedem Aufruf aus den Tabellen
@@ -91,7 +93,7 @@ func periodStart(period string, today time.Time) (string, error) {
 	case Period12Months:
 		return today.AddDate(-1, 0, 0).Format(time.DateOnly), nil
 	}
-	return "", &ValidationError{"period", "erwartet 3m, 12m oder all"}
+	return "", apierr.Field("period", "invalid_value", "expected", "3m, 12m, all")
 }
 
 // Statistics berechnet die Statistik für den Zeitraum period.

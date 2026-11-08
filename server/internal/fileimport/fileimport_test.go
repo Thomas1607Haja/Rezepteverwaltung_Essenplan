@@ -15,6 +15,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
@@ -183,7 +184,7 @@ func TestZipPreviewAndConfirm(t *testing.T) {
 		t.Errorf("Gnocchi: %+v", g)
 	}
 	// "schnell" passt trotz Kleinschreibung, "Lieblingsessen" gibt es nicht.
-	if len(g.Recipe.Tags) != 2 || !strings.Contains(strings.Join(g.Warnings, "|"), "Lieblingsessen") {
+	if len(g.Recipe.Tags) != 2 || !strings.Contains(strings.Join(apierr.Messages(g.Warnings), "|"), "Lieblingsessen") {
 		t.Errorf("Kategorien %+v, Hinweise %v", g.Recipe.Tags, g.Warnings)
 	}
 	// Salz steht auf der Vorratsliste.
@@ -245,10 +246,10 @@ func TestSingleJSONAndContentDetection(t *testing.T) {
 	if p.Recipes[0].File != "1234" {
 		t.Errorf("Dateiname %q", p.Recipes[0].File)
 	}
-	if !strings.Contains(strings.Join(p.Recipes[0].Warnings, "|"), "nur in ZIP") {
+	if !strings.Contains(strings.Join(apierr.Messages(p.Recipes[0].Warnings), "|"), "only possible in ZIP") {
 		t.Errorf("Hinweis zum Bild fehlt: %v", p.Recipes[0].Warnings)
 	}
-	want := []string{"Formatkennung", "Weder ZIP", "Formatversion 4"}
+	want := []string{"format marker", "Neither a ZIP", "Format version 4"}
 	for i, fe := range p.FileErrors {
 		if !strings.Contains(fe.Error, want[i]) {
 			t.Errorf("Dateifehler %d: %q, erwartet %q", i, fe.Error, want[i])
@@ -274,7 +275,7 @@ func TestImageKindVersion2(t *testing.T) {
 	if k := p.Recipes[0].Recipe.ImageKind; k != recipes.ImageIllustration {
 		t.Errorf("Vorschau Bildart = %q", k)
 	}
-	if !strings.Contains(strings.Join(p.Recipes[1].Warnings, "|"), "Bildart „gemalt“") {
+	if !strings.Contains(strings.Join(apierr.Messages(p.Recipes[1].Warnings), "|"), "Image type “gemalt”") {
 		t.Errorf("Hinweis fehlt: %v", p.Recipes[1].Warnings)
 	}
 	_, result := f.confirm(t, p.Token, 0, 1, 2)
@@ -303,8 +304,8 @@ func TestUnknownFieldIsReported(t *testing.T) {
 	if len(p.Recipes) != 2 || p.Token != "" {
 		t.Fatalf("%s", body)
 	}
-	if !strings.Contains(p.Recipes[0].Errors[0], "unbekanntes Feld „ingredient“") ||
-		!strings.Contains(p.Recipes[1].Errors[0], "falschen Typ") || p.Recipes[1].Recipe.Title != "B" {
+	if !strings.Contains(p.Recipes[0].Errors[0].Message(), "unknown field “ingredient”") ||
+		!strings.Contains(p.Recipes[1].Errors[0].Message(), "wrong type") || p.Recipes[1].Recipe.Title != "B" {
 		t.Errorf("Meldungen: %v / %v", p.Recipes[0].Errors, p.Recipes[1].Errors)
 	}
 }
@@ -318,11 +319,11 @@ func TestUnsafeAndOversizedZips(t *testing.T) {
 		entries map[string][]byte
 		want    string
 	}{
-		{"zip slip", map[string][]byte{"recipes.json": doc, "../../etc/passwd": []byte("x")}, "Unzulässiger Pfad"},
-		{"absolut", map[string][]byte{"recipes.json": doc, "/etc/passwd": []byte("x")}, "Unzulässiger Pfad"},
-		{"backslash", map[string][]byte{"recipes.json": doc, `..\x`: []byte("x")}, "Unzulässiger Pfad"},
-		{"ohne recipes.json", map[string][]byte{"rezepte.json": doc}, "recipes.json fehlt"},
-		{"zu tief", map[string][]byte{"a/b/recipes.json": doc}, "recipes.json fehlt"},
+		{"zip slip", map[string][]byte{"recipes.json": doc, "../../etc/passwd": []byte("x")}, "Invalid path"},
+		{"absolut", map[string][]byte{"recipes.json": doc, "/etc/passwd": []byte("x")}, "Invalid path"},
+		{"backslash", map[string][]byte{"recipes.json": doc, `..\x`: []byte("x")}, "Invalid path"},
+		{"ohne recipes.json", map[string][]byte{"rezepte.json": doc}, "recipes.json is missing"},
+		{"zu tief", map[string][]byte{"a/b/recipes.json": doc}, "recipes.json is missing"},
 	}
 	for _, tt := range tests {
 		_, p, body := f.upload(t, namedFile{tt.name + ".zip", buildZip(t, tt.entries)})
@@ -338,14 +339,14 @@ func TestUnsafeAndOversizedZips(t *testing.T) {
 		t.Fatalf("Testdatei unerwartet groß: %d", len(bomb))
 	}
 	_, p, body := f.upload(t, namedFile{"bombe.zip", bomb})
-	if len(p.Recipes) != 1 || !strings.Contains(strings.Join(p.Recipes[0].Warnings, "|"), "zu groß") {
+	if len(p.Recipes) != 1 || !strings.Contains(strings.Join(apierr.Messages(p.Recipes[0].Warnings), "|"), "too large") {
 		t.Errorf("Bombe: %s", body)
 	}
 
 	// Ein "Bild", das keines ist: Rezept kommt ohne Bild.
 	fake := buildZip(t, map[string][]byte{"recipes.json": doc, "images/a.jpg": []byte("<script>alert(1)</script>")})
 	_, p, body = f.upload(t, namedFile{"fake.zip", fake})
-	if len(p.Recipes) != 1 || p.Recipes[0].Thumbnail || !strings.Contains(strings.Join(p.Recipes[0].Warnings, "|"), "unbrauchbar") {
+	if len(p.Recipes) != 1 || p.Recipes[0].Thumbnail || !strings.Contains(strings.Join(apierr.Messages(p.Recipes[0].Warnings), "|"), "unusable") {
 		t.Errorf("falsches Bild: %s", body)
 	}
 }
@@ -357,7 +358,7 @@ func TestTooManyEntriesAndFiles(t *testing.T) {
 		entries[fmt.Sprintf("images/%d.jpg", i)] = []byte("x")
 	}
 	_, p, body := f.upload(t, namedFile{"viele.zip", buildZip(t, entries)})
-	if len(p.FileErrors) != 1 || !strings.Contains(p.FileErrors[0].Error, "Zu viele Einträge") {
+	if len(p.FileErrors) != 1 || !strings.Contains(p.FileErrors[0].Error, "Too many entries") {
 		t.Errorf("Einträge: %s", body)
 	}
 

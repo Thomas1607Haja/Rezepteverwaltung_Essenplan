@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
@@ -132,14 +133,27 @@ type PreviewRecipe struct {
 	Thumbnail bool `json:"thumbnail"`
 	// WebImage: Das Foto kommt von der Quellseite (source.url), z. B.
 	// "chefkoch.de"; leer = Bild aus der Datei bzw. keins.
-	WebImage   string            `json:"web_image"`
-	Errors     []string          `json:"errors"`
-	Warnings   []string          `json:"warnings"`
+	WebImage string `json:"web_image"`
+	// Errors und Warnings als Codes; MarshalJSON schreibt dazu die
+	// englischen Texte in "errors" und "warnings" (ältere App-Versionen).
+	Errors     []*apierr.Error   `json:"error_details"`
+	Warnings   []*apierr.Error   `json:"warning_details"`
 	Duplicates []recipes.Summary `json:"duplicates"`
 	// UnknownCategories: Kategorien der Datei, die es im Rezeptplaner nicht
 	// gibt. Beim Bestätigen lassen sie sich zuordnen oder neu anlegen
 	// (CategoryChoice), sonst fallen sie weg.
 	UnknownCategories []string `json:"unknown_categories"`
+}
+
+// MarshalJSON ergänzt die Textfelder für ältere App-Versionen. Der
+// eingebettete Typ ohne Methoden verhindert eine Endlosschleife.
+func (p PreviewRecipe) MarshalJSON() ([]byte, error) {
+	type plain PreviewRecipe
+	return json.Marshal(struct {
+		plain
+		Errors   []string `json:"errors"`
+		Warnings []string `json:"warnings"`
+	}{plain(p), apierr.Messages(p.Errors), apierr.Messages(p.Warnings)})
 }
 
 // CategoryChoice sagt beim Bestätigen, was mit einer unbekannten Kategorie
@@ -150,10 +164,23 @@ type CategoryChoice struct {
 	NewInGroup int64 `json:"new_in_group"`
 }
 
-// FileError: Eine Datei ließ sich gar nicht lesen.
+// FileError: Eine Datei ließ sich gar nicht lesen. Error ist der englische
+// Text zu Detail (für ältere App-Versionen).
 type FileError struct {
-	File  string `json:"file"`
-	Error string `json:"error"`
+	File   string        `json:"file"`
+	Error  string        `json:"error"`
+	Detail *apierr.Error `json:"error_detail"`
+}
+
+// newFileError macht aus err einen FileError; Fehler ohne Code (z. B. beim
+// Lesen der Datei) werden zu "upload_incomplete".
+func newFileError(file string, err error) FileError {
+	var e *apierr.Error
+	if !errors.As(err, &e) {
+		slog.Warn("Datei-Import: Datei nicht lesbar", "datei", file, "error", err)
+		e = apierr.New("upload_incomplete")
+	}
+	return FileError{File: file, Error: e.Message(), Detail: e}
 }
 
 // candidate ist ein Rezept beim Auswerten eines Uploads.
@@ -187,7 +214,7 @@ func (im *Importer) analyze(ctx context.Context, dir string, b *budget) (cands [
 	for _, f := range files {
 		src, err := openSource(filepath.Join(dir, f.Path), b)
 		if err != nil {
-			fileErrors = append(fileErrors, FileError{File: f.Name, Error: err.Error()})
+			fileErrors = append(fileErrors, newFileError(f.Name, err))
 			continue
 		}
 		sources = append(sources, src)
@@ -195,11 +222,11 @@ func (im *Importer) analyze(ctx context.Context, dir string, b *budget) (cands [
 			p := parseRecipe(raw)
 			c := &candidate{src: src, image: p.image, PreviewRecipe: PreviewRecipe{
 				Index: len(cands), File: f.Name, Recipe: p.recipe,
-				Errors: append([]string{}, p.errors...), Warnings: append([]string{}, p.warnings...),
+				Errors: append([]*apierr.Error{}, p.errors...), Warnings: append([]*apierr.Error{}, p.warnings...),
 				Duplicates: []recipes.Summary{}, UnknownCategories: []string{},
 			}}
 			if len(cands) >= maxRecipesPerImport {
-				c.Errors = append(c.Errors, fmt.Sprintf("Mehr als %d Rezepte in einem Import", maxRecipesPerImport))
+				c.Errors = append(c.Errors, apierr.New("import_too_many_in_upload", "max", maxRecipesPerImport))
 			}
 			c.Recipe.Tags = []recipes.Tag{}
 			if err := im.resolveCategories(ctx, c, p.categories); err != nil {
@@ -229,7 +256,7 @@ func (im *Importer) analyze(ctx context.Context, dir string, b *budget) (cands [
 		}
 		key := database.Fold(c.Recipe.Title)
 		if first, ok := seenTitles[key]; ok {
-			c.Warnings = append(c.Warnings, fmt.Sprintf("Gleicher Titel wie Rezept %d dieses Imports", first+1))
+			c.Warnings = append(c.Warnings, apierr.New("import_same_title", "index", first+1))
 		} else {
 			seenTitles[key] = c.Index
 		}
@@ -259,7 +286,7 @@ func (im *Importer) resolveCategories(ctx context.Context, c *candidate, names [
 		t, ok := byName[database.Fold(name)]
 		switch {
 		case !ok:
-			c.Warnings = append(c.Warnings, fmt.Sprintf("Kategorie „%s“ gibt es nicht – zuordnen oder weglassen", name))
+			c.Warnings = append(c.Warnings, apierr.New("import_unknown_category", "name", name))
 			c.UnknownCategories = append(c.UnknownCategories, name)
 		case !slices.ContainsFunc(c.Recipe.Tags, func(x recipes.Tag) bool { return x.ID == t.ID }):
 			c.Recipe.Tags = append(c.Recipe.Tags, t)
@@ -286,19 +313,19 @@ func (im *Importer) preview(ctx context.Context, token, dir string) (Preview, er
 	result := Preview{Recipes: []PreviewRecipe{}, FileErrors: fileErrors, UnknownCategories: []string{}}
 	seenUnknown := make(map[string]bool)
 	// Hinweise zum Bild erst nach dem Versuch mit der Quellseite.
-	imageWarnings := make(map[int]string)
+	imageWarnings := make(map[int]*apierr.Error)
 	var fromWeb []*candidate
 	for _, c := range cands {
 		if c.image != "" {
 			if thumb, err := im.loadImage(c, b); err != nil {
-				imageWarnings[c.Index] = err.Error()
+				imageWarnings[c.Index] = asNote(err, "import_image_unusable", "name", c.image)
 			} else if err := os.WriteFile(thumbPath(dir, c.Index), thumb, 0o600); err != nil {
 				return Preview{}, fmt.Errorf("vorschaubild speichern: %w", err)
 			} else {
 				c.Thumbnail = true
 			}
 		} else {
-			imageWarnings[c.Index] = "Kein Bild"
+			imageWarnings[c.Index] = apierr.New("import_no_image")
 		}
 		hasPhoto := c.Thumbnail && c.Recipe.ImageKind != recipes.ImageIllustration
 		if wantsWebImage(c, hasPhoto) {
@@ -310,9 +337,9 @@ func (im *Importer) preview(ctx context.Context, token, dir string) (Preview, er
 	importable := false
 	for _, c := range cands {
 		if site, ok := found[c.Index]; ok {
-			hint := fmt.Sprintf("Foto von %s wird übernommen", site)
+			hint := apierr.New("import_web_photo", "site", site)
 			if c.Recipe.ImageKind == recipes.ImageIllustration && c.Thumbnail {
-				hint += " (ersetzt die Illustration)"
+				hint = apierr.New("import_web_photo_replaces", "site", site)
 			}
 			c.Warnings = append(c.Warnings, hint)
 			c.Thumbnail, c.WebImage, c.Recipe.ImageKind = true, site, recipes.ImagePhoto
@@ -346,7 +373,8 @@ func (im *Importer) loadImage(c *candidate, b *budget) ([]byte, error) {
 	}
 	thumb, err := im.images.Preview(data)
 	if err != nil {
-		return nil, fmt.Errorf("Bild %s ist unbrauchbar (%v), das Rezept kommt ohne Bild", c.image, err)
+		slog.Info("Datei-Import: Bild unbrauchbar", "bild", c.image, "error", err)
+		return nil, apierr.New("import_image_unusable", "name", c.image)
 	}
 	return thumb, nil
 }
@@ -356,21 +384,42 @@ type Result struct {
 	Created []CreatedRecipe `json:"created"`
 	Failed  []FailedRecipe  `json:"failed"`
 	// Warnings: z. B. eine Kategorie, die sich nicht anlegen ließ.
-	Warnings []string `json:"warnings"`
+	Warnings []*apierr.Error `json:"warning_details"`
+}
+
+// MarshalJSON ergänzt "warnings" als Texte für ältere App-Versionen.
+func (r Result) MarshalJSON() ([]byte, error) {
+	type plain Result
+	return json.Marshal(struct {
+		plain
+		Warnings []string `json:"warnings"`
+	}{plain(r), apierr.Messages(r.Warnings)})
+}
+
+// asNote liefert err, wenn es schon einen Code hat, sonst einen neuen
+// Hinweis mit code (die Ursache steht dann nur im Protokoll).
+func asNote(err error, code string, params ...any) *apierr.Error {
+	var e *apierr.Error
+	if errors.As(err, &e) {
+		return e
+	}
+	slog.Info("Datei-Import: Hinweis", "code", code, "error", err)
+	return apierr.New(code, params...)
 }
 
 // applyCategoryChoices legt die gewünschten neuen Kategorien an und liefert
 // je unbekanntem Namen (Fold) die Kategorie, die die Rezepte bekommen.
 // Probleme werden Hinweise; die Rezepte kommen dann ohne diese Kategorie.
-func (im *Importer) applyCategoryChoices(ctx context.Context, choices map[string]CategoryChoice) (map[string]recipes.Tag, []string) {
+func (im *Importer) applyCategoryChoices(ctx context.Context, choices map[string]CategoryChoice) (map[string]recipes.Tag, []*apierr.Error) {
 	mapped := make(map[string]recipes.Tag)
-	var warnings []string
+	var warnings []*apierr.Error
 	if len(choices) == 0 {
 		return mapped, warnings
 	}
 	groups, err := im.recipes.ListTags(ctx)
 	if err != nil {
-		return mapped, []string{err.Error()}
+		slog.Error("Datei-Import: Kategorien nicht lesbar", "error", err)
+		return mapped, []*apierr.Error{apierr.New("internal_error")}
 	}
 	byID := make(map[int64]recipes.Tag)
 	byName := make(map[string]recipes.Tag)
@@ -394,7 +443,7 @@ func (im *Importer) applyCategoryChoices(ctx context.Context, choices map[string
 			if t, ok := byID[choice.TagID]; ok {
 				mapped[key] = t
 			} else {
-				warnings = append(warnings, fmt.Sprintf("Kategorie %d für „%s“ gibt es nicht mehr – weggelassen", choice.TagID, name))
+				warnings = append(warnings, apierr.New("import_category_gone", "id", choice.TagID, "name", name))
 			}
 		case choice.NewInGroup > 0:
 			// Inzwischen angelegt (z. B. zweimal bestätigt)? Dann diese nehmen.
@@ -404,7 +453,8 @@ func (im *Importer) applyCategoryChoices(ctx context.Context, choices map[string
 			}
 			t, err := im.recipes.CreateTag(ctx, name, choice.NewInGroup)
 			if err != nil {
-				warnings = append(warnings, fmt.Sprintf("Kategorie „%s“ nicht angelegt: %v", name, err))
+				slog.Warn("Datei-Import: Kategorie nicht angelegt", "name", name, "error", err)
+				warnings = append(warnings, apierr.New("import_category_not_made", "name", name))
 				continue
 			}
 			byName[key] = t
@@ -417,21 +467,36 @@ func (im *Importer) applyCategoryChoices(ctx context.Context, choices map[string
 // CreatedRecipe ist ein angelegtes Rezept; Warnings z. B. bei einem Bild,
 // das sich nicht speichern ließ.
 type CreatedRecipe struct {
-	Index    int      `json:"index"`
-	ID       int64    `json:"id"`
-	Title    string   `json:"title"`
-	Warnings []string `json:"warnings"`
+	Index    int             `json:"index"`
+	ID       int64           `json:"id"`
+	Title    string          `json:"title"`
+	Warnings []*apierr.Error `json:"warning_details"`
+}
+
+// MarshalJSON ergänzt "warnings" als Texte für ältere App-Versionen.
+func (c CreatedRecipe) MarshalJSON() ([]byte, error) {
+	type plain CreatedRecipe
+	return json.Marshal(struct {
+		plain
+		Warnings []string `json:"warnings"`
+	}{plain(c), apierr.Messages(c.Warnings)})
 }
 
 // FailedRecipe ist ein ausgewähltes Rezept, das nicht angelegt wurde.
+// Error ist der englische Text zu Detail.
 type FailedRecipe struct {
-	Index int    `json:"index"`
-	Title string `json:"title"`
-	Error string `json:"error"`
+	Index  int           `json:"index"`
+	Title  string        `json:"title"`
+	Error  string        `json:"error"`
+	Detail *apierr.Error `json:"error_detail"`
+}
+
+func failed(index int, title string, e *apierr.Error) FailedRecipe {
+	return FailedRecipe{Index: index, Title: title, Error: e.Message(), Detail: e}
 }
 
 // errExpired: Die Kennung ist unbekannt oder abgelaufen.
-var errExpired = errors.New("Import nicht gefunden oder abgelaufen – bitte die Datei erneut hochladen")
+var errExpired = apierr.New("import_expired")
 
 // confirm legt die ausgewählten Rezepte an und räumt den Upload weg.
 // choices sagt, was mit unbekannten Kategorien geschieht.
@@ -447,17 +512,17 @@ func (im *Importer) confirm(ctx context.Context, token string, selected []int, c
 		return Result{}, err
 	}
 
-	result := Result{Created: []CreatedRecipe{}, Failed: []FailedRecipe{}, Warnings: []string{}}
+	result := Result{Created: []CreatedRecipe{}, Failed: []FailedRecipe{}, Warnings: []*apierr.Error{}}
 	mapped, warnings := im.applyCategoryChoices(ctx, choices)
 	result.Warnings = append(result.Warnings, warnings...)
 	for _, index := range selected {
 		if index < 0 || index >= len(cands) {
-			result.Failed = append(result.Failed, FailedRecipe{Index: index, Error: "Kein solches Rezept in diesem Import"})
+			result.Failed = append(result.Failed, failed(index, "", apierr.New("import_no_such_recipe")))
 			continue
 		}
 		c := cands[index]
 		if len(c.Errors) > 0 {
-			result.Failed = append(result.Failed, FailedRecipe{Index: index, Title: c.Recipe.Title, Error: c.Errors[0]})
+			result.Failed = append(result.Failed, failed(index, c.Recipe.Title, c.Errors[0]))
 			continue
 		}
 		for _, name := range c.UnknownCategories {
@@ -469,17 +534,17 @@ func (im *Importer) confirm(ctx context.Context, token string, selected []int, c
 		created, err := im.recipes.Create(ctx, c.Recipe)
 		if err != nil {
 			slog.Warn("Datei-Import: Rezept nicht angelegt", "titel", c.Recipe.Title, "error", err)
-			result.Failed = append(result.Failed, FailedRecipe{Index: index, Title: c.Recipe.Title, Error: err.Error()})
+			result.Failed = append(result.Failed, failed(index, c.Recipe.Title, asNote(err, "import_recipe_failed")))
 			continue
 		}
-		done := CreatedRecipe{Index: index, ID: created.ID, Title: created.Title, Warnings: []string{}}
+		done := CreatedRecipe{Index: index, ID: created.ID, Title: created.Title, Warnings: []*apierr.Error{}}
 		// Foto von der Quellseite aus der Vorschau, sonst das Bild der Datei.
 		fromWeb, warning := im.saveWebImage(ctx, dir, c, created.ID)
-		if warning != "" {
+		if warning != nil {
 			done.Warnings = append(done.Warnings, warning)
 		}
-		if (!fromWeb || warning != "") && c.image != "" {
-			if warning := im.saveImage(ctx, c, created.ID, b); warning != "" {
+		if (!fromWeb || warning != nil) && c.image != "" {
+			if warning := im.saveImage(ctx, c, created.ID, b); warning != nil {
 				done.Warnings = append(done.Warnings, warning)
 			}
 		}
@@ -497,18 +562,18 @@ func (im *Importer) confirm(ctx context.Context, token string, selected []int, c
 
 // saveImage speichert das Bild eines angelegten Rezepts; zurück kommt ein
 // Hinweis, falls das nicht klappt (das Rezept bleibt dann ohne Bild).
-func (im *Importer) saveImage(ctx context.Context, c *candidate, recipeID int64, b *budget) string {
+func (im *Importer) saveImage(ctx context.Context, c *candidate, recipeID int64, b *budget) *apierr.Error {
 	data, err := c.src.image(c.image, b)
 	if err != nil {
-		return err.Error()
+		return asNote(err, "import_image_unreadable", "name", c.image)
 	}
 	large, thumb, err := im.images.Save(bytes.NewReader(data))
 	if err != nil {
-		return fmt.Sprintf("Bild nicht gespeichert: %v", err)
+		return asNote(err, "import_image_not_saved")
 	}
 	if _, err := im.recipes.SetImage(ctx, recipeID, large, thumb, c.Recipe.ImageKind); err != nil {
 		im.images.Delete(large, thumb)
-		return fmt.Sprintf("Bild nicht gespeichert: %v", err)
+		return asNote(err, "import_image_not_saved")
 	}
-	return ""
+	return nil
 }

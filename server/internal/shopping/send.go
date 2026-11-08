@@ -3,23 +3,15 @@ package shopping
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"slices"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
 )
-
-// ValidationError beschreibt eine Anfrage, die so nicht ausführbar ist.
-type ValidationError struct {
-	Field   string
-	Message string
-}
-
-func (e *ValidationError) Error() string {
-	return e.Field + ": " + e.Message
-}
 
 // SentItem ist ein Artikel, der jetzt auf der Bring-Liste steht.
 type SentItem struct {
@@ -34,7 +26,15 @@ type SentItem struct {
 type FailedItem struct {
 	Name  string `json:"name"`
 	Spec  string `json:"spec"`
-	Error string `json:"error"`
+	Error string `json:"error"` // englischer Text zu Code
+	Code  string `json:"code"`
+}
+
+// newFailedItem: Ein Artikel ließ sich in Home Assistant nicht ändern.
+func newFailedItem(name, spec string, err error) FailedItem {
+	slog.Warn("Bring: Artikel nicht übertragen", "name", name, "error", err)
+	e := apierr.From(err, "home_assistant_down")
+	return FailedItem{Name: name, Spec: spec, Error: e.Message(), Code: e.Code}
 }
 
 // SendResult beschreibt, was übertragen wurde.
@@ -86,7 +86,7 @@ func (s *Store) Send(ctx context.Context, opts SendOptions) (SendResult, error) 
 		return SendResult{}, err
 	}
 	if st.BringEntity == "" {
-		return SendResult{}, &ValidationError{"bring_entity", "bitte zuerst in den einstellungen eine bring-liste wählen"}
+		return SendResult{}, apierr.Field("bring_entity", "no_bring_list")
 	}
 	period, today, err := s.period(ctx, opts.Next)
 	if err != nil {
@@ -131,7 +131,7 @@ func (s *Store) Send(ctx context.Context, opts SendOptions) (SendResult, error) 
 		}
 	}
 	if len(items) == 0 && len(entryIDs) == 0 {
-		return SendResult{}, &ValidationError{"period", "in diesem zeitraum ist nichts zu senden"}
+		return SendResult{}, apierr.Field("period", "nothing_to_send")
 	}
 
 	// Ab hier wird nach außen gesendet. Bricht der Browser die Anfrage ab,
@@ -156,7 +156,7 @@ func (s *Store) Send(ctx context.Context, opts SendOptions) (SendResult, error) 
 		}
 		merged, err := s.sendItem(ctx, st.BringEntity, open, it)
 		if err != nil {
-			result.Failed = append(result.Failed, FailedItem{Name: it.Name, Spec: it.Spec, Error: err.Error()})
+			result.Failed = append(result.Failed, newFailedItem(it.Name, it.Spec, err))
 			continue
 		}
 		done[it.Key] = true

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 )
 
@@ -31,9 +32,9 @@ func (h *Handler) registerTagAdmin(mux httpx.Router) {
 func writeTagError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, ErrTagNotFound):
-		httpx.WriteError(w, http.StatusNotFound, err.Error())
+		httpx.WriteError(w, http.StatusNotFound, err)
 	case errors.Is(err, ErrGroupNotEmpty), errors.Is(err, ErrNoCourseGroup):
-		httpx.WriteError(w, http.StatusConflict, err.Error())
+		httpx.WriteError(w, http.StatusConflict, err)
 	default:
 		writeStoreError(w, r, err)
 	}
@@ -43,7 +44,7 @@ func writeTagError(w http.ResponseWriter, r *http.Request, err error) {
 func pathID(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil || id <= 0 {
-		httpx.WriteError(w, http.StatusBadRequest, "ungültige id")
+		httpx.WriteError(w, http.StatusBadRequest, apierr.New("invalid_id"))
 		return 0, false
 	}
 	return id, true
@@ -73,7 +74,7 @@ type idsInput struct {
 func (h *Handler) createTagGroup(w http.ResponseWriter, r *http.Request) {
 	var in nameInput
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	id, err := h.store.CreateTagGroup(r.Context(), in.Name)
@@ -94,7 +95,7 @@ func (h *Handler) renameTagGroup(w http.ResponseWriter, r *http.Request) {
 	}
 	var in nameInput
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	if err := h.store.RenameTagGroup(r.Context(), id, in.Name); err != nil {
@@ -114,7 +115,7 @@ func (h *Handler) setCourseGroup(w http.ResponseWriter, r *http.Request) {
 		Course bool `json:"course"`
 	}
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	if err := h.store.SetCourseGroup(r.Context(), id, in.Course); err != nil {
@@ -142,7 +143,7 @@ func (h *Handler) assignCourses(w http.ResponseWriter, r *http.Request) {
 		Assignments []CourseAssignment `json:"assignments"`
 	}
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	n, err := h.store.AssignCourses(r.Context(), in.Assignments)
@@ -159,7 +160,7 @@ func (h *Handler) assignCourses(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) orderTagGroups(w http.ResponseWriter, r *http.Request) {
 	var in idsInput
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	if err := h.store.OrderTagGroups(r.Context(), in.IDs); err != nil {
@@ -180,7 +181,7 @@ func (h *Handler) deleteTagGroup(w http.ResponseWriter, r *http.Request) {
 	if v := r.URL.Query().Get("move_to"); v != "" {
 		var err error
 		if moveTo, err = strconv.ParseInt(v, 10, 64); err != nil || moveTo <= 0 {
-			httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: "ungültige gruppe", Field: "move_to"})
+			httpx.WriteError(w, http.StatusBadRequest, apierr.Field("move_to", "invalid_id"))
 			return
 		}
 	}
@@ -200,7 +201,7 @@ func (h *Handler) orderTags(w http.ResponseWriter, r *http.Request) {
 	}
 	var in idsInput
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	if err := h.store.OrderTags(r.Context(), id, in.IDs); err != nil {
@@ -219,7 +220,7 @@ type tagInput struct {
 func (h *Handler) createTag(w http.ResponseWriter, r *http.Request) {
 	var in tagInput
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	tag, err := h.store.CreateTag(r.Context(), in.Name, in.GroupID)
@@ -238,7 +239,7 @@ func (h *Handler) updateTag(w http.ResponseWriter, r *http.Request) {
 	}
 	var in tagInput
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	if err := h.store.UpdateTag(r.Context(), id, in.Name, in.GroupID); err != nil {
@@ -270,7 +271,7 @@ func (h *Handler) mergeTag(w http.ResponseWriter, r *http.Request) {
 		Into int64 `json:"into"`
 	}
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	if err := h.store.MergeTag(r.Context(), id, in.Into); err != nil {

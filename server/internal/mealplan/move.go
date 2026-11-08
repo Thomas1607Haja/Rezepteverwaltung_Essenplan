@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -37,11 +38,20 @@ const (
 	WarnTransferredOutOfPeriod = "transferred_out_of_period"
 )
 
-// Warning ist ein Hinweis zu einem Eintrag, der verschoben würde.
+// Warning ist ein Hinweis zu einem Eintrag, der verschoben würde. Type ist
+// zugleich der Code zum Übersetzen (Parameter "title"); Message ist der
+// englische Text für ältere App-Versionen.
 type Warning struct {
-	Type    string `json:"type"`
-	EntryID int64  `json:"entry_id"`
-	Message string `json:"message"`
+	Type    string         `json:"type"`
+	EntryID int64          `json:"entry_id"`
+	Message string         `json:"message"`
+	Params  map[string]any `json:"params"`
+}
+
+// newWarning baut den Hinweis zu code mit dem Titel des Eintrags.
+func newWarning(code string, entryID int64, title string) Warning {
+	e := apierr.New(code, "title", title)
+	return Warning{Type: code, EntryID: entryID, Message: e.Message(), Params: e.Params}
 }
 
 // MoveResult: Applied ist false, wenn es Warnungen gab und Confirm fehlte;
@@ -100,7 +110,7 @@ func (s *Store) moveBlock(ctx context.Context, load func(*sql.Tx) (*block, error
 		m.Slot = SlotDinner
 	}
 	if !validSlot(m.Slot) {
-		return MoveResult{}, &ValidationError{"slot", slotError}
+		return MoveResult{}, apierr.Field("slot", "invalid_slot")
 	}
 	period, err := s.CurrentPeriod(ctx)
 	if err != nil {
@@ -127,19 +137,19 @@ func (s *Store) moveBlock(ctx context.Context, load func(*sql.Tx) (*block, error
 		other, err = loadEntryBlock(ctx, tx, *m.SwapWith)
 	}
 	if errors.Is(err, ErrNotFound) || errors.Is(err, ErrMenuNotFound) {
-		return MoveResult{}, &ValidationError{"swap_with", "diesen eintrag gibt es nicht"}
+		return MoveResult{}, apierr.Field("swap_with", "swap_target_missing")
 	}
 	if err != nil {
 		return MoveResult{}, err
 	}
 	if other != nil {
 		if sameBlock(src, other) {
-			return MoveResult{}, &ValidationError{"swap_with", "ein eintrag kann nicht mit sich selbst tauschen"}
+			return MoveResult{}, apierr.Field("swap_with", "swap_with_self")
 		}
 		// Der Tauschpartner muss dort stehen, wohin gezogen wurde – sonst
 		// hat sich der Plan inzwischen geändert (z. B. auf einem anderen Gerät).
 		if other.date != m.Date || other.slot != m.Slot {
-			return MoveResult{}, &ValidationError{"swap_with", "der plan hat sich inzwischen geändert, bitte neu laden"}
+			return MoveResult{}, apierr.Field("swap_with", "plan_changed")
 		}
 		// Erst den alten Platz merken: place überschreibt ihn.
 		srcDate, srcSlot, srcPos := src.date, src.slot, src.position
@@ -309,11 +319,9 @@ func checkMove(e *movingEntry, period Period) (Warning, bool) {
 	wasIn, isIn := period.Contains(e.from.date), period.Contains(e.to.date)
 	switch {
 	case e.status == StatusPlanned && !wasIn && isIn:
-		return Warning{WarnPlannedIntoPeriod, e.id,
-			fmt.Sprintf("„%s“ rutscht in die eingekaufte Woche, die Zutaten sind aber noch nicht eingekauft.", e.label)}, true
+		return newWarning(WarnPlannedIntoPeriod, e.id, e.label), true
 	case e.status == StatusTransferred && wasIn && !isIn:
-		return Warning{WarnTransferredOutOfPeriod, e.id,
-			fmt.Sprintf("Die Zutaten für „%s“ sind schon eingekauft und halten sich vielleicht nicht so lange.", e.label)}, true
+		return newWarning(WarnTransferredOutOfPeriod, e.id, e.label), true
 	}
 	return Warning{}, false
 }

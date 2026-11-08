@@ -26,6 +26,8 @@ import (
 
 	"golang.org/x/image/draw"
 	_ "golang.org/x/image/webp"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 const (
@@ -43,10 +45,10 @@ const (
 )
 
 // ErrUnsupported: Die Datei ist kein lesbares Bild.
-var ErrUnsupported = errors.New("kein unterstütztes bildformat (jpeg, png, webp, gif)")
+var ErrUnsupported = apierr.New("image_unsupported")
 
 // ErrTooLarge: Das Bild hat zu viele Bildpunkte.
-var ErrTooLarge = errors.New("bild ist zu groß (höchstens 40 megapixel)")
+var ErrTooLarge = apierr.New("image_too_many_pixel", "max", maxPixels/1_000_000)
 
 // validName prüft Dateinamen beim Ausliefern, damit niemand mit Namen wie
 // "../rezeptplaner.db" an andere Dateien kommt.

@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -77,40 +78,30 @@ func (s Settings) ShoppingWeekday() time.Weekday {
 	return weekdays[s.ShoppingDay]
 }
 
-// ValidationError beschreibt eine ungültige Einstellung.
-type ValidationError struct {
-	Field   string
-	Message string
-}
-
-func (e *ValidationError) Error() string {
-	return e.Field + ": " + e.Message
-}
-
 func (s Settings) validate() error {
 	if s.FamilySize < 1 || s.FamilySize > 50 {
-		return &ValidationError{"family_size", "muss zwischen 1 und 50 liegen"}
+		return apierr.Field("family_size", "out_of_range", "min", 1, "max", 50)
 	}
 	// Bei einer Map liefert der zweite Rückgabewert, ob es den Schlüssel gibt.
 	if _, ok := weekdays[s.ShoppingDay]; !ok {
-		return &ValidationError{"shopping_day", "muss ein englischer wochentag sein, z. b. saturday"}
+		return apierr.Field("shopping_day", "invalid_weekday")
 	}
 	for field, value := range map[string]string{
 		"shopping_time": s.ShoppingTime, "lunch_time": s.LunchTime, "coffee_time": s.CoffeeTime, "dinner_time": s.DinnerTime,
 	} {
 		if !shoppingTime.MatchString(value) {
-			return &ValidationError{field, "muss eine uhrzeit wie 18:00 sein"}
+			return apierr.Field(field, "invalid_time")
 		}
 	}
 	if s.AppURL != "" {
 		u, err := url.Parse(s.AppURL)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" ||
 			u.User != nil || u.RawQuery != "" || u.Fragment != "" {
-			return &ValidationError{"app_url", "muss eine adresse wie https://rezepte.example.org sein"}
+			return apierr.Field("app_url", "invalid_app_url")
 		}
 	}
 	if s.BringEntity != "" && (!strings.HasPrefix(s.BringEntity, "todo.") || strings.ContainsAny(s.BringEntity, " ,")) {
-		return &ValidationError{"bring_entity", "muss eine to-do-entität sein, z. b. todo.zuhause"}
+		return apierr.Field("bring_entity", "invalid_todo_entity")
 	}
 	return nil
 }

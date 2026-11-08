@@ -149,7 +149,7 @@ func TestTestClientAndHandler(t *testing.T) {
 	NewHandler(New("", "http://127.0.0.1:1", "x")).Register(mux)
 	rec = httptest.NewRecorder()
 	mux.ServeHTTP(rec, httptest.NewRequest("GET", "/api/v1/homeassistant/status", nil))
-	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"error":"home assistant nicht erreichbar`) {
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"error_code":"home_assistant_down"`) {
 		t.Errorf("%d %s", rec.Code, rec.Body)
 	}
 }

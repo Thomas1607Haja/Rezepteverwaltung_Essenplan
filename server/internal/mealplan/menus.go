@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -18,7 +19,7 @@ import (
 // (move.go); ein einzelner Gang lässt sich „aus dem Menü lösen“.
 
 // ErrMenuNotFound: Das Menü gibt es nicht.
-var ErrMenuNotFound = errors.New("menü nicht gefunden")
+var ErrMenuNotFound = apierr.New("menu_not_found")
 
 // Menu ist ein Menü im Essensplan.
 type Menu struct {
@@ -134,10 +135,10 @@ func checkMenuText(title, note string) (string, string, error) {
 	title = strings.TrimSpace(title)
 	note = strings.TrimSpace(note)
 	if len([]rune(title)) > 200 {
-		return "", "", &ValidationError{"title", "höchstens 200 zeichen"}
+		return "", "", apierr.Field("title", "too_long", "max", 200)
 	}
 	if len([]rune(note)) > 2000 {
-		return "", "", &ValidationError{"note", "höchstens 2000 zeichen"}
+		return "", "", apierr.Field("note", "too_long", "max", 2000)
 	}
 	return title, note, nil
 }
@@ -152,7 +153,7 @@ func (s *Store) CreateMenu(ctx context.Context, in MenuInput) (Menu, error) {
 		in.Slot = SlotDinner
 	}
 	if !validSlot(in.Slot) {
-		return Menu{}, &ValidationError{"slot", slotError}
+		return Menu{}, apierr.Field("slot", "invalid_slot")
 	}
 	title, note, err := checkMenuText(in.Title, in.Note)
 	if err != nil {
@@ -169,7 +170,7 @@ func (s *Store) CreateMenu(ctx context.Context, in MenuInput) (Menu, error) {
 		servings = st.FamilySize
 	}
 	if servings < 1 || servings > 50 {
-		return Menu{}, &ValidationError{"servings", "muss zwischen 1 und 50 liegen"}
+		return Menu{}, apierr.Field("servings", "out_of_range", "min", 1, "max", 50)
 	}
 	now := database.FormatTime(s.now())
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -202,7 +203,7 @@ func (s *Store) UpdateMenu(ctx context.Context, id int64, in MenuInput) (Menu, e
 		return Menu{}, err
 	}
 	if in.Servings == nil || *in.Servings < 1 || *in.Servings > 50 {
-		return Menu{}, &ValidationError{"servings", "muss zwischen 1 und 50 liegen"}
+		return Menu{}, apierr.Field("servings", "out_of_range", "min", 1, "max", 50)
 	}
 	now := database.FormatTime(s.now())
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -302,7 +303,7 @@ func (s *Store) ToMenu(ctx context.Context, id int64, title, note string, course
 		return Menu{}, fmt.Errorf("menü anlegen: %w", err)
 	}
 	if menuID != nil {
-		return Menu{}, &ValidationError{"menu_id", "der eintrag gehört schon zu einem menü"}
+		return Menu{}, apierr.Field("menu_id", "entry_in_menu")
 	}
 	res, err := tx.ExecContext(ctx, `
 		INSERT INTO meal_plan_menus (date, slot, position, title, note, servings, created_at, updated_at)

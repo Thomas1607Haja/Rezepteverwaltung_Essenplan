@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/itemkey"
 )
@@ -269,7 +270,7 @@ func insertParts(ctx context.Context, tx *sql.Tx, recipeID int64, r Recipe, now 
 		if n, err := res.RowsAffected(); err != nil {
 			return fmt.Errorf("kategorie speichern: %w", err)
 		} else if n == 0 {
-			return &ValidationError{fmt.Sprintf("tags[%d].id", i), fmt.Sprintf("kategorie %d gibt es nicht", tag.ID)}
+			return apierr.Field(fmt.Sprintf("tags[%d].id", i), "category_not_found", "id", tag.ID)
 		}
 	}
 	return nil

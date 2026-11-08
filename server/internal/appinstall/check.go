@@ -4,18 +4,27 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 )
 
 // CheckResult sagt, ob unter der Adresse für die App der App-Zugang
-// antwortet. Message ist ein Satz für die Weboberfläche.
+// antwortet. Code (mit Params) übersetzt die Weboberfläche; Message ist
+// der englische Text dazu.
 type CheckResult struct {
-	OK      bool   `json:"ok"`
-	Message string `json:"message"`
+	OK      bool           `json:"ok"`
+	Code    string         `json:"code"`
+	Params  map[string]any `json:"params,omitempty"`
+	Message string         `json:"message"`
+}
+
+// result baut das Ergebnis zu einem Code aus dem Katalog (apierr).
+func result(ok bool, code string, params ...any) CheckResult {
+	e := apierr.New(code, params...)
+	return CheckResult{OK: ok, Code: code, Params: e.Params, Message: e.Message()}
 }
 
 // prober ruft eine Adresse ab, ohne Weiterleitungen zu folgen
@@ -31,14 +40,14 @@ type prober interface {
 func Check(ctx context.Context, p prober, appURL string) CheckResult {
 	appURL = strings.TrimRight(strings.TrimSpace(appURL), "/")
 	if appURL == "" {
-		return CheckResult{Message: "Keine Adresse eingetragen."}
+		return result(false, "app_check_no_url")
 	}
 	resp, err := p.Probe(ctx, appURL+"/api/v1/health", 64<<10)
 	switch {
 	case errors.Is(err, fetch.ErrForbiddenAddress):
-		return CheckResult{Message: "Die Adresse zeigt ins Heimnetz. Die App braucht die Adresse aus dem Internet (Hostname im Cloudflare-Tunnel)."}
+		return result(false, "app_check_home_network")
 	case err != nil:
-		return CheckResult{Message: "Nicht erreichbar – Hostname und Tunnel prüfen."}
+		return result(false, "app_check_unreachable")
 	}
 
 	body := bytes.TrimSpace(resp.Body)
@@ -47,22 +56,24 @@ func Check(ctx context.Context, p prober, appURL string) CheckResult {
 	location := resp.Header.Get("Location")
 
 	switch {
-	case resp.Status == http.StatusUnauthorized && bytes.Contains(body, []byte("api-schlüssel")):
-		return CheckResult{OK: true, Message: "Der App-Zugang antwortet. Die App kann sich mit dieser Adresse verbinden."}
+	case resp.Status == http.StatusUnauthorized && (bytes.Contains(body, []byte(`"code":"api_key_required"`)) ||
+		bytes.Contains(body, []byte("api-schlüssel"))) /* Text bis Version 0.19 */ :
+		return result(true, "app_check_ok")
 	case resp.Status >= 300 && resp.Status < 400 && strings.Contains(location, "cloudflareaccess.com"),
 		resp.Status == http.StatusForbidden && fromCloudflare && !isJSON:
-		return CheckResult{OK: true, Message: "Cloudflare Access schützt diese Adresse. Beim Verbinden der App unter „Cloudflare Access“ Client ID und Secret angeben."}
-	case resp.Status == http.StatusForbidden && isJSON && bytes.Contains(body, []byte("home assistant")):
-		return CheckResult{Message: "Die Adresse führt zur Weboberfläche (Port 8099). Im Tunnel muss der Hostname auf Port 8100 zeigen."}
+		return result(true, "app_check_cloudflare")
+	case resp.Status == http.StatusForbidden && isJSON && (bytes.Contains(body, []byte(`"code":"home_assistant_only"`)) ||
+		bytes.Contains(body, []byte("home assistant"))) /* Text bis Version 0.19 */ :
+		return result(false, "app_check_web_port")
 	case resp.Status == http.StatusNotFound && bytes.HasPrefix(body, []byte("404: Not Found")):
 		// So antwortet Home Assistant (aiohttp) auf unbekannte Pfade.
-		return CheckResult{Message: "Diese Adresse führt zu Home Assistant, nicht zum App-Zugang. Im Tunnel einen eigenen Hostnamen anlegen, der auf Port 8100 des Rezeptplaners zeigt (docs/APP-ZUGANG.md)."}
+		return result(false, "app_check_home_assistant")
 	case resp.Status == http.StatusNotFound:
-		return CheckResult{Message: "Unter dieser Adresse antwortet kein Rezeptplaner. Ist der Hostname in der Tunnel-Konfiguration eingetragen?"}
+		return result(false, "app_check_not_found")
 	case resp.Status == 502 || resp.Status == 503 || resp.Status == 504 || resp.Status == 530:
-		return CheckResult{Message: fmt.Sprintf("Der Tunnel erreicht den Rezeptplaner nicht (Fehler %d). Hostname und Port 8100 in der Tunnel-Konfiguration prüfen.", resp.Status)}
+		return result(false, "app_check_tunnel", "status", resp.Status)
 	case resp.Status == http.StatusOK:
-		return CheckResult{Message: "Die Adresse antwortet ohne Schlüssel – das ist nicht der App-Zugang (Port 8100)."}
+		return result(false, "app_check_no_key")
 	}
-	return CheckResult{Message: fmt.Sprintf("Unerwartete Antwort (Status %d) – das ist vermutlich nicht der App-Zugang.", resp.Status)}
+	return result(false, "app_check_unexpected", "status", resp.Status)
 }

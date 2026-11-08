@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -23,17 +24,7 @@ type Item struct {
 }
 
 // ErrNotFound wird zurückgegeben, wenn es einen Vorratsartikel nicht gibt.
-var ErrNotFound = errors.New("vorratsartikel nicht gefunden")
-
-// ValidationError beschreibt eine ungültige Eingabe.
-type ValidationError struct {
-	Field   string
-	Message string
-}
-
-func (e *ValidationError) Error() string {
-	return e.Field + ": " + e.Message
-}
+var ErrNotFound = apierr.New("pantry_item_not_found")
 
 // normalize entfernt Leerzeichen, leere und doppelte Synonyme.
 func (it *Item) normalize() {
@@ -54,16 +45,16 @@ func (it *Item) normalize() {
 
 func (it *Item) validate() error {
 	if it.Name == "" {
-		return &ValidationError{"name", "darf nicht leer sein"}
+		return apierr.Field("name", "required")
 	}
 	// Synonyme werden kommagetrennt gespeichert, ein Komma im Namen würde
 	// sie beim Lesen zerteilen.
 	if strings.Contains(it.Name, ",") {
-		return &ValidationError{"name", "darf kein komma enthalten"}
+		return apierr.Field("name", "contains_comma")
 	}
 	for i, syn := range it.Synonyms {
 		if strings.Contains(syn, ",") {
-			return &ValidationError{fmt.Sprintf("synonyms[%d]", i), "darf kein komma enthalten"}
+			return apierr.Field(fmt.Sprintf("synonyms[%d]", i), "contains_comma")
 		}
 	}
 	return nil
@@ -215,7 +206,7 @@ func (s *Store) checkUnique(ctx context.Context, exceptID int64, name string) er
 		return fmt.Errorf("vorratsliste prüfen: %w", err)
 	}
 	if n > 0 {
-		return &ValidationError{"name", "steht schon auf der vorratsliste"}
+		return apierr.Field("name", "pantry_duplicate")
 	}
 	return nil
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/itemkey"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
@@ -252,7 +253,7 @@ func TestResetSingleEntry(t *testing.T) {
 	}
 
 	// Ein nicht übertragenes Gericht lässt sich nicht zurücksetzen.
-	var verr *ValidationError
+	var verr *apierr.Error
 	if _, err := store.ResetPreview(ctx, false, ids["Omelett"]); !errors.As(err, &verr) {
 		t.Errorf("Vorschau für geplantes Gericht: %v", err)
 	}

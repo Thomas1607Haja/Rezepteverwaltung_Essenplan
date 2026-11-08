@@ -6,6 +6,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -172,9 +173,9 @@ func TestCreateRejectsInvalidRecipes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := s.Create(context.Background(), tt.recipe)
 
-			var verr *ValidationError
+			var verr *apierr.Error
 			if !errors.As(err, &verr) {
-				t.Fatalf("Fehler = %v, erwartet ValidationError", err)
+				t.Fatalf("Fehler = %v, erwartet Eingabefehler", err)
 			}
 			if verr.Field != tt.wantField {
 				t.Errorf("Feld = %q, erwartet %q", verr.Field, tt.wantField)
@@ -280,9 +281,9 @@ func TestUpdateErrors(t *testing.T) {
 	// Unbekannte Kategorie fällt erst nach dem Löschen der alten Teile auf.
 	// Die Transaktion muss dann alles zurückrollen.
 	_, err = s.Update(ctx, created.ID, Recipe{Title: "X", BaseServings: 2, Tags: []Tag{{ID: 9999}}})
-	var verr *ValidationError
+	var verr *apierr.Error
 	if !errors.As(err, &verr) || verr.Field != "tags[0].id" {
-		t.Fatalf("Fehler = %v, erwartet ValidationError für tags[0].id", err)
+		t.Fatalf("Fehler = %v, erwartet Eingabefehler für tags[0].id", err)
 	}
 	got, err := s.Get(ctx, created.ID)
 	if err != nil {

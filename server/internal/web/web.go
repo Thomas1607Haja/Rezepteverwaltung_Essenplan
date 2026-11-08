@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 )
 
@@ -61,7 +62,7 @@ func newHandler(app fs.FS) http.Handler {
 		// Unbekannte API-Pfade landen ebenfalls hier, weil dieser Handler
 		// alles Übrige bekommt. Sie erhalten eine JSON-Antwort statt HTML.
 		if strings.HasPrefix(path, "/api/") {
-			httpx.WriteError(w, http.StatusNotFound, "unbekannter api-pfad")
+			httpx.WriteError(w, http.StatusNotFound, apierr.New("unknown_api_path"))
 			return
 		}
 

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 )
 
@@ -45,12 +46,12 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		Name string `json:"name"`
 	}
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	key, secret, err := h.store.Create(r.Context(), in.Name)
 	if errors.Is(err, ErrInvalidName) {
-		httpx.WriteJSON(w, http.StatusBadRequest, httpx.ErrorResponse{Error: err.Error(), Field: "name"})
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	if err != nil {
@@ -69,12 +70,12 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil || id <= 0 {
-		httpx.WriteError(w, http.StatusBadRequest, "ungültige id")
+		httpx.WriteError(w, http.StatusBadRequest, apierr.New("invalid_id"))
 		return
 	}
 	switch err := h.store.Delete(r.Context(), id); {
 	case errors.Is(err, ErrNotFound):
-		httpx.WriteError(w, http.StatusNotFound, err.Error())
+		httpx.WriteError(w, http.StatusNotFound, err)
 		return
 	case err != nil:
 		httpx.WriteInternalError(w, r, err)
@@ -105,16 +106,16 @@ func Require(store *Store, next http.Handler) http.Handler {
 			// Nur Adresse und Pfad protokollieren, nie den Schlüssel.
 			slog.Warn("App-Zugang abgelehnt: kein gültiger Schlüssel", "remote", r.RemoteAddr, "path", r.URL.Path)
 			w.Header().Set("WWW-Authenticate", `Bearer realm="rezeptplaner"`)
-			httpx.WriteError(w, http.StatusUnauthorized, "gültiger api-schlüssel erforderlich")
+			httpx.WriteError(w, http.StatusUnauthorized, apierr.New("api_key_required"))
 			return
 		}
 		path := r.URL.Path
 		if !strings.HasPrefix(path, "/api/v1/") {
-			httpx.WriteError(w, http.StatusNotFound, "nur api unter /api/v1/")
+			httpx.WriteError(w, http.StatusNotFound, apierr.New("api_only"))
 			return
 		}
 		if path == "/api/v1/api-keys" || strings.HasPrefix(path, "/api/v1/api-keys/") {
-			httpx.WriteError(w, http.StatusForbidden, "schlüssel nur über die weboberfläche verwalten")
+			httpx.WriteError(w, http.StatusForbidden, apierr.New("web_only_api_keys"))
 			return
 		}
 		// Kategorien verwalten nur in der Weboberfläche (Schritt 8.C); lesen
@@ -122,7 +123,7 @@ func Require(store *Store, next http.Handler) http.Handler {
 		if path == "/api/v1/tag-groups" || strings.HasPrefix(path, "/api/v1/tag-groups/") ||
 			strings.HasPrefix(path, "/api/v1/courses/") ||
 			(r.Method != http.MethodGet && (path == "/api/v1/tags" || strings.HasPrefix(path, "/api/v1/tags/"))) {
-			httpx.WriteError(w, http.StatusForbidden, "kategorien nur über die weboberfläche verwalten")
+			httpx.WriteError(w, http.StatusForbidden, apierr.New("web_only_categories"))
 			return
 		}
 		next.ServeHTTP(w, r)

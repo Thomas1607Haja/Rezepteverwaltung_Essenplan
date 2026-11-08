@@ -3,12 +3,12 @@ package recipes
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
 	"unicode"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -34,7 +34,7 @@ type CourseAssignment struct {
 }
 
 // ErrNoCourseGroup: Es ist keine Kategoriegruppe als Gang markiert.
-var ErrNoCourseGroup = errors.New("keine gang-gruppe – in der kategorienverwaltung eine gruppe als gang markieren")
+var ErrNoCourseGroup = apierr.New("no_course_group")
 
 // courseRule: Wörter im (gefalteten) Titel → Gang (Name wie in der
 // Startliste). Die erste passende Regel gewinnt; längere, eindeutige
@@ -179,7 +179,7 @@ func (s *Store) AssignCourses(ctx context.Context, list []CourseAssignment) (int
 	err = s.inTx(ctx, "gänge zuordnen", func(tx *sql.Tx, now string) error {
 		for _, a := range list {
 			if !allowed[a.TagID] {
-				return &ValidationError{"tag_id", fmt.Sprintf("kategorie %d ist kein gang", a.TagID)}
+				return apierr.Field("tag_id", "not_a_course", "id", a.TagID)
 			}
 			res, err := tx.ExecContext(ctx, `
 				INSERT OR IGNORE INTO recipe_tags (recipe_id, tag_id, updated_at)

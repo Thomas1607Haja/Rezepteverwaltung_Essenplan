@@ -154,7 +154,7 @@ func (h *Handler) check(w http.ResponseWriter, r *http.Request) {
 		URL string `json:"url"`
 	}
 	if err := httpx.ReadJSON(w, r, &in); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		httpx.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, Check(r.Context(), h.prober, in.URL))

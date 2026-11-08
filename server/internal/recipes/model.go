@@ -2,12 +2,13 @@
 package recipes
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 // Recipe ist ein Rezept mit allen Bestandteilen. Es wird immer als Ganzes
@@ -82,18 +83,7 @@ type Tag struct {
 }
 
 // ErrNotFound wird zurückgegeben, wenn es ein Rezept nicht gibt.
-var ErrNotFound = errors.New("rezept nicht gefunden")
-
-// ValidationError beschreibt eine ungültige Eingabe. Field nennt das
-// betroffene Feld im JSON-Format, z. B. "ingredients[2].name".
-type ValidationError struct {
-	Field   string
-	Message string
-}
-
-func (e *ValidationError) Error() string {
-	return e.Field + ": " + e.Message
-}
+var ErrNotFound = apierr.New("recipe_not_found")
 
 // normalize entfernt überflüssige Leerzeichen am Anfang und Ende aller Texte.
 func (r *Recipe) normalize() {
@@ -120,43 +110,43 @@ const MaxYieldUnitLength = 40
 // validate prüft die fachlichen Regeln und liefert den ersten Verstoß.
 func (r *Recipe) validate() error {
 	if r.Title == "" {
-		return &ValidationError{"title", "darf nicht leer sein"}
+		return apierr.Field("title", "required")
 	}
 	if r.BaseServings <= 0 {
-		return &ValidationError{"base_servings", "muss größer als 0 sein"}
+		return apierr.Field("base_servings", "must_be_positive")
 	}
 	r.YieldUnit = strings.Join(strings.Fields(r.YieldUnit), " ")
 	if utf8.RuneCountInString(r.YieldUnit) > MaxYieldUnitLength {
-		return &ValidationError{"yield_unit", fmt.Sprintf("höchstens %d zeichen", MaxYieldUnitLength)}
+		return apierr.Field("yield_unit", "too_long", "max", MaxYieldUnitLength)
 	}
 	if r.PrepMinutes != nil && *r.PrepMinutes < 0 {
-		return &ValidationError{"prep_minutes", "darf nicht negativ sein"}
+		return apierr.Field("prep_minutes", "negative")
 	}
 	if r.TotalMinutes != nil && *r.TotalMinutes < 0 {
-		return &ValidationError{"total_minutes", "darf nicht negativ sein"}
+		return apierr.Field("total_minutes", "negative")
 	}
 	// Die Quelle erscheint als Link. Nur Webadressen, damit dort nichts wie
 	// "javascript:…" landet, das beim Anklicken im Browser ausgeführt würde.
 	if r.SourceURL != "" {
 		u, err := url.Parse(r.SourceURL)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return &ValidationError{"source_url", "muss mit http:// oder https:// beginnen"}
+			return apierr.Field("source_url", "invalid_url")
 		}
 	}
 	if len([]rune(r.SourceName)) > 200 {
-		return &ValidationError{"source_name", "höchstens 200 zeichen"}
+		return apierr.Field("source_name", "too_long", "max", 200)
 	}
 	for i, ing := range r.Ingredients {
 		if ing.Name == "" {
-			return &ValidationError{fmt.Sprintf("ingredients[%d].name", i), "darf nicht leer sein"}
+			return apierr.Field(fmt.Sprintf("ingredients[%d].name", i), "required")
 		}
 		if ing.Quantity != nil && *ing.Quantity < 0 {
-			return &ValidationError{fmt.Sprintf("ingredients[%d].quantity", i), "darf nicht negativ sein"}
+			return apierr.Field(fmt.Sprintf("ingredients[%d].quantity", i), "negative")
 		}
 	}
 	for i, step := range r.Steps {
 		if step.Text == "" {
-			return &ValidationError{fmt.Sprintf("steps[%d].text", i), "darf nicht leer sein"}
+			return apierr.Field(fmt.Sprintf("steps[%d].text", i), "required")
 		}
 	}
 	return nil

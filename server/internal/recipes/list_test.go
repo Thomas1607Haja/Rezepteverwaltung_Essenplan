@@ -5,6 +5,8 @@ import (
 	"errors"
 	"slices"
 	"testing"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 // seedList legt eine kleine Rezeptsammlung an und liefert die Kategorie-IDs
@@ -153,9 +155,9 @@ func TestListRejectsInvalidFilter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := s.List(context.Background(), tt.filter)
-			var verr *ValidationError
+			var verr *apierr.Error
 			if !errors.As(err, &verr) {
-				t.Fatalf("Fehler = %v, erwartet ValidationError", err)
+				t.Fatalf("Fehler = %v, erwartet Eingabefehler", err)
 			}
 			if verr.Field != tt.wantField {
 				t.Errorf("Feld = %q, erwartet %q", verr.Field, tt.wantField)

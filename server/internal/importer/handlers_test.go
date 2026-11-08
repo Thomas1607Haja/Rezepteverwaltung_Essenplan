@@ -101,7 +101,7 @@ func TestImportBlocksHomeNetwork(t *testing.T) {
 	NewHandler(recipes.NewStore(db), pantry.NewStore(db), fetch.New(5*time.Second, false)).Register(mux)
 
 	rec := post(mux, "/api/v1/import/url", `{"url": "http://192.168.1.1/admin"}`)
-	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "heimnetz") {
+	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), `"code":"address_forbidden"`) {
 		t.Errorf("Status %d; %s", rec.Code, rec.Body)
 	}
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 )
 
 // Heute ist Mittwoch, 21.10.2026; mit Einkaufstag Samstag läuft der
@@ -170,7 +172,7 @@ func TestMoveValidation(t *testing.T) {
 	}
 	for _, tt := range tests {
 		_, err := s.Move(ctx, a.ID, tt.m)
-		var verr *ValidationError
+		var verr *apierr.Error
 		if !errors.As(err, &verr) || verr.Field != tt.field {
 			t.Errorf("%s: erwartet Fehler im Feld %q, bekommen %v", tt.name, tt.field, err)
 		}

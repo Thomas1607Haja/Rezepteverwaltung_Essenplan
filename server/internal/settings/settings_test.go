@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/apierr"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 )
 
@@ -85,9 +86,9 @@ func TestValidation(t *testing.T) {
 		{FamilySize: 4, ShoppingDay: "saturday", BringEntity: "todo.a b"},
 	} {
 		_, err := store.Update(context.Background(), in)
-		var verr *ValidationError
+		var verr *apierr.Error
 		if !errors.As(err, &verr) {
-			t.Errorf("%+v: erwartet ValidationError, bekommen %v", in, err)
+			t.Errorf("%+v: erwartet Eingabefehler, bekommen %v", in, err)
 		}
 	}
 }
