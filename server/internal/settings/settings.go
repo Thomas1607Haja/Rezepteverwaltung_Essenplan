@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -46,13 +47,20 @@ type Settings struct {
 	LunchTime  string `json:"lunch_time"`
 	CoffeeTime string `json:"coffee_time"`
 	DinnerTime string `json:"dinner_time"`
+	// UILanguage: Sprache der Weboberfläche für den ganzen Haushalt.
+	// "auto" = Systemsprache von Home Assistant (Standard), sonst ein
+	// Sprachcode aus language.Supported. Die App folgt dem Handy.
+	UILanguage string `json:"ui_language"`
 }
 
 // Defaults gelten, solange nichts gespeichert ist.
 var Defaults = Settings{
 	FamilySize: 4, ShoppingDay: "saturday", ShoppingTime: "00:00", PlanPreview: true,
-	CoffeeSlot: true, LunchTime: "12:00", CoffeeTime: "15:30", DinnerTime: "18:30",
+	CoffeeSlot: true, LunchTime: "12:00", CoffeeTime: "15:30", DinnerTime: "18:30", UILanguage: "auto",
 }
+
+// uiLanguages sind die erlaubten Werte von UILanguage (wie language.Supported).
+var uiLanguages = []string{"auto", "en", "de", "fr", "es", "it"}
 
 // shoppingTime prüft die Uhrzeit, z. B. "18:00".
 var shoppingTime = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
@@ -99,6 +107,9 @@ func (s Settings) validate() error {
 			u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 			return apierr.Field("app_url", "invalid_app_url")
 		}
+	}
+	if !slices.Contains(uiLanguages, s.UILanguage) {
+		return apierr.Field("ui_language", "invalid_language")
 	}
 	if s.BringEntity != "" && (!strings.HasPrefix(s.BringEntity, "todo.") || strings.ContainsAny(s.BringEntity, " ,")) {
 		return apierr.Field("bring_entity", "invalid_todo_entity")
@@ -161,6 +172,10 @@ func (s *Store) Get(ctx context.Context) (Settings, error) {
 			if shoppingTime.MatchString(value) {
 				result.CoffeeTime = value
 			}
+		case "ui_language":
+			if slices.Contains(uiLanguages, value) {
+				result.UILanguage = value
+			}
 		case "dinner_time":
 			if shoppingTime.MatchString(value) {
 				result.DinnerTime = value
@@ -184,6 +199,7 @@ func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
 	}{
 		{&in.ShoppingTime, Defaults.ShoppingTime}, {&in.LunchTime, Defaults.LunchTime},
 		{&in.CoffeeTime, Defaults.CoffeeTime}, {&in.DinnerTime, Defaults.DinnerTime},
+		{&in.UILanguage, Defaults.UILanguage},
 	} {
 		if *t.value == "" {
 			*t.value = t.def
@@ -211,6 +227,7 @@ func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
 		"lunch_time":    in.LunchTime,
 		"coffee_time":   in.CoffeeTime,
 		"dinner_time":   in.DinnerTime,
+		"ui_language":   in.UILanguage,
 	}
 	for key, value := range values {
 		// "Upsert": neu anlegen oder, falls der Schlüssel schon existiert,

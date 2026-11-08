@@ -370,7 +370,7 @@ func (s *Store) loadSteps(ctx context.Context, recipeID int64) ([]Step, error) {
 
 func (s *Store) loadTags(ctx context.Context, recipeID int64) ([]Tag, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT t.id, t.name, g.name, g.id, t.position
+		SELECT t.id, t.name, g.name, g.id, t.position, t.course_key
 		FROM recipe_tags rt JOIN tags t ON t.id = rt.tag_id `+tagJoin+`
 		WHERE rt.recipe_id = ?
 		ORDER BY `+tagOrder, recipeID)
@@ -382,7 +382,7 @@ func (s *Store) loadTags(ctx context.Context, recipeID int64) ([]Tag, error) {
 	tags := []Tag{}
 	for rows.Next() {
 		var tag Tag
-		if err := rows.Scan(&tag.ID, &tag.Name, &tag.Group, &tag.GroupID, &tag.Position); err != nil {
+		if err := rows.Scan(&tag.ID, &tag.Name, &tag.Group, &tag.GroupID, &tag.Position, &tag.CourseKey); err != nil {
 			return nil, fmt.Errorf("kategorien laden: %w", err)
 		}
 		tags = append(tags, tag)

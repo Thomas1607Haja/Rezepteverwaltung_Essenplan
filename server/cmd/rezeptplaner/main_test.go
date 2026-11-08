@@ -14,6 +14,7 @@ import (
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/fetch"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/homeassistant"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/language"
 )
 
 // recordingMux schreibt jedes angemeldete Muster mit und reicht es an den
@@ -57,6 +58,7 @@ func newAppHandler(t *testing.T) (http.Handler, *apikeys.Store, []string) {
 		images:  imgs,
 		fetcher: fetch.New(time.Second, false),
 		ha:      homeassistant.New("", "", ""),
+		lang:    language.NewResolver(nil, ""),
 		keys:    keys,
 		version: "test",
 		dataDir: dir,

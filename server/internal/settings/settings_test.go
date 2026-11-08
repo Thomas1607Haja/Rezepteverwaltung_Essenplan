@@ -40,7 +40,7 @@ func TestDefaultsAndUpdate(t *testing.T) {
 	}
 
 	want := Settings{FamilySize: 3, ShoppingDay: "friday", BringEntity: "todo.zuhause", ShoppingTime: "00:00",
-		LunchTime: "12:00", CoffeeTime: "15:30", DinnerTime: "18:30"}
+		LunchTime: "12:00", CoffeeTime: "15:30", DinnerTime: "18:30", UILanguage: "fr"}
 	got, err = store.Update(ctx, want)
 	if err != nil {
 		t.Fatal(err)
@@ -84,6 +84,7 @@ func TestValidation(t *testing.T) {
 		{FamilySize: 4, ShoppingDay: ""},
 		{FamilySize: 4, ShoppingDay: "saturday", BringEntity: "sensor.bring"},
 		{FamilySize: 4, ShoppingDay: "saturday", BringEntity: "todo.a b"},
+		{FamilySize: 4, ShoppingDay: "saturday", UILanguage: "nl"},
 	} {
 		_, err := store.Update(context.Background(), in)
 		var verr *apierr.Error

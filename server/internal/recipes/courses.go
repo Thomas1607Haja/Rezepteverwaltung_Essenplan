@@ -17,14 +17,18 @@ import (
 // Bewusst einfache Regeln statt eines KI-Modells: Der Nutzer prüft die
 // Vorschläge ohnehin und übernimmt sie gesammelt (nur Weboberfläche).
 
-// CourseSuggestion ist ein Vorschlag für ein Rezept.
+// CourseSuggestion ist ein Vorschlag für ein Rezept. Der Grund steht als
+// Code mit Parametern in ReasonCode/ReasonParams (die Oberfläche übersetzt
+// ihn); Reason ist der englische Text dazu.
 type CourseSuggestion struct {
-	RecipeID  int64  `json:"recipe_id"`
-	Title     string `json:"title"`
-	Thumbnail string `json:"thumbnail"`
-	TagID     int64  `json:"tag_id"` // vorgeschlagener Gang
-	Course    string `json:"course"`
-	Reason    string `json:"reason"` // z. B. „Titel enthält „Kuchen““
+	RecipeID     int64          `json:"recipe_id"`
+	Title        string         `json:"title"`
+	Thumbnail    string         `json:"thumbnail"`
+	TagID        int64          `json:"tag_id"` // vorgeschlagener Gang
+	Course       string         `json:"course"`
+	Reason       string         `json:"reason"`
+	ReasonCode   string         `json:"reason_code"`
+	ReasonParams map[string]any `json:"reason_params,omitempty"`
 }
 
 // CourseAssignment ordnet einem Rezept einen Gang zu.
@@ -36,38 +40,74 @@ type CourseAssignment struct {
 // ErrNoCourseGroup: Es ist keine Kategoriegruppe als Gang markiert.
 var ErrNoCourseGroup = apierr.New("no_course_group")
 
-// courseRule: Wörter im (gefalteten) Titel → Gang (Name wie in der
-// Startliste). Die erste passende Regel gewinnt; längere, eindeutige
-// Wörter stehen daher vorn („kartoffelsalat“ ist Salat, nicht Beilage).
+// courseRules: Wörter im Titel → Gang (course_key). Die erste passende
+// Regel gewinnt; längere, eindeutige Wörter stehen daher vorn
+// („kartoffelsalat“ ist Salat, nicht Beilage). Verglichen wird mit
+// database.Plain (ohne Akzente).
+//
+// words sind deutsche Stichwörter: Ab 4 Buchstaben zählen sie auch als
+// Teil eines Worts (Zusammensetzungen wie „Apfelkuchen“). exact gilt für
+// die anderen Sprachen und nur als ganzes Wort bzw. ganze Wortfolge – sonst
+// wäre „meatloaf“ ein Brot und „steak tartare“ ein Kuchen.
 var courseRules = []struct {
 	course string
 	words  []string
+	exact  []string
 }{
-	{"Kuchen & Torten", []string{"kuchen", "torte", "tarte", "cheesecake", "strudel", "gugelhupf", "blechkuchen"}},
-	{"Gebäck", []string{"kekse", "keks", "platzchen", "muffin", "cookie", "brownie", "waffel", "hefezopf", "schnecke", "croissant", "scone", "cupcake", "makrone", "berliner", "krapfen"}},
-	{"Brot", []string{"brotchen", "brot", "baguette", "focaccia", "ciabatta", "fladen", "bagel", "laugen"}},
-	{"Suppe/Eintopf", []string{"suppe", "eintopf", "bruhe", "chowder", "ramen", "gulaschsuppe", "minestrone"}},
-	{"Salat", []string{"salat", "bowl"}},
-	{"Nachspeise", []string{"dessert", "pudding", "mousse", "tiramisu", "panna cotta", "parfait", "crumble", "grutze", "kompott", "eis", "creme brulee", "milchreis", "quarkspeise"}},
-	{"Vorspeise", []string{"vorspeise", "carpaccio", "bruschetta", "antipasti", "tatar"}},
-	{"Snack", []string{"snack", "dip", "fingerfood", "happchen", "chips", "wrap"}},
-	{"Beilage", []string{"beilage", "pommes", "puree", "kroketten", "rosti", "spatzle", "knodel"}},
+	{"cake", []string{"kuchen", "torte", "tarte", "cheesecake", "strudel", "gugelhupf", "blechkuchen"},
+		[]string{"cake", "pie", "gateau", "tarta", "pastel", "bizcocho", "torta", "crostata", "ciambella"}},
+	{"pastry", []string{"kekse", "keks", "platzchen", "muffin", "cookie", "brownie", "waffel", "hefezopf", "schnecke",
+		"croissant", "scone", "cupcake", "makrone", "berliner", "krapfen"},
+		[]string{"cookies", "biscuit", "biscuits", "pastry", "pastries", "waffle", "waffles", "macaron", "macarons",
+			"madeleine", "madeleines", "galletas", "magdalenas", "biscotti", "cornetti"}},
+	{"bread", []string{"brotchen", "brot", "baguette", "focaccia", "ciabatta", "fladen", "bagel", "laugen"},
+		[]string{"bread", "pain", "pan", "pane", "panini"}},
+	{"soup", []string{"suppe", "eintopf", "bruhe", "chowder", "ramen", "gulaschsuppe", "minestrone"},
+		[]string{"soup", "stew", "soupe", "veloute", "potage", "sopa", "crema", "guiso", "potaje", "gazpacho",
+			"zuppa", "brodo", "vellutata", "stufato", "minestra"}},
+	{"salad", []string{"salat", "bowl"}, []string{"salad", "salade", "ensalada", "insalata"}},
+	{"dessert", []string{"dessert", "pudding", "mousse", "tiramisu", "panna cotta", "parfait", "crumble", "grutze",
+		"kompott", "eis", "creme brulee", "milchreis", "quarkspeise"},
+		[]string{"ice cream", "sorbet", "flan", "postre", "helado", "natillas", "arroz con leche", "gelato", "semifreddo"}},
+	{"starter", []string{"vorspeise", "carpaccio", "bruschetta", "antipasti", "tatar"},
+		[]string{"starter", "appetizer", "entree", "entrante", "antipasto"}},
+	{"snack", []string{"snack", "dip", "fingerfood", "happchen", "chips", "wrap"}, []string{"tapa", "tapas", "spuntino"}},
+	{"side", []string{"beilage", "pommes", "puree", "kroketten", "rosti", "spatzle", "knodel"},
+		[]string{"side dish", "mash", "fries", "gratin", "contorno"}},
 }
 
-// suggestCourse liefert den vorgeschlagenen Gang (Name) und den Grund.
-func suggestCourse(title string, ingredients []string, tags []string) (string, string) {
-	folded := database.Fold(title)
-	words := strings.FieldsFunc(folded, func(r rune) bool { return !unicode.IsLetter(r) })
+// Zutaten-Stichwörter für Gebäck ohne passenden Titel (alle Sprachen).
+var (
+	flourWords  = []string{"mehl", "flour", "farine", "harina", "farina"}
+	leavenWords = []string{"backpulver", "hefe", "natron", "baking powder", "baking soda", "yeast",
+		"levure", "bicarbonate", "levadura", "polvo de hornear", "bicarbonato", "lievito"}
+	meatWords = []string{"hackfleisch", "hahnchen", "schwein", "rind", "speck", "schinken",
+		"beef", "chicken", "pork", "bacon", "ham", "mince", "boeuf", "poulet", "porc", "lardon", "jambon",
+		"carne", "pollo", "cerdo", "tocino", "jamon", "manzo", "maiale", "pancetta", "prosciutto", "guanciale"}
+	sugarWords = []string{"zucker", "sugar", "sucre", "azucar", "zucchero"}
+	// Kategorie „Süß“ des Nutzers (Gruppe Geschmack) in den Startlisten.
+	sweetTags = []string{"suss", "sweet", "sucre", "dulce", "dolce"}
+)
+
+// suggestCourse liefert den vorgeschlagenen Gang (course_key) und den Grund.
+func suggestCourse(title string, ingredients []string, tags []string) (string, *apierr.Error) {
+	plain := database.Plain(title)
+	words := strings.FieldsFunc(plain, func(r rune) bool { return !unicode.IsLetter(r) })
 	for _, rule := range courseRules {
 		for _, kw := range rule.words {
-			if titleHas(folded, words, kw) {
-				return rule.course, fmt.Sprintf("Titel enthält „%s“", kw)
+			if titleHas(plain, words, kw) {
+				return rule.course, apierr.New("course_reason_title", "word", kw)
+			}
+		}
+		for _, kw := range rule.exact {
+			if hasPhrase(words, kw) {
+				return rule.course, apierr.New("course_reason_title", "word", kw)
 			}
 		}
 	}
-	has := func(words ...string) bool {
+	has := func(words []string) bool {
 		for _, ing := range ingredients {
-			f := database.Fold(ing)
+			f := database.Plain(ing)
 			for _, w := range words {
 				if strings.Contains(f, w) {
 					return true
@@ -76,17 +116,17 @@ func suggestCourse(title string, ingredients []string, tags []string) (string, s
 		}
 		return false
 	}
-	sweet := slices.ContainsFunc(tags, func(t string) bool { return database.Fold(t) == "suss" })
-	if has("mehl") && has("backpulver", "hefe", "natron") && !has("hackfleisch", "hahnchen", "schwein", "rind", "speck", "schinken") {
-		if sweet || has("zucker") {
-			return "Kuchen & Torten", "Mehl, Triebmittel und Zucker"
+	sweet := slices.ContainsFunc(tags, func(t string) bool { return slices.Contains(sweetTags, database.Plain(t)) })
+	if has(flourWords) && has(leavenWords) && !has(meatWords) {
+		if sweet || has(sugarWords) {
+			return "cake", apierr.New("course_reason_baking")
 		}
-		return "Brot", "Mehl und Triebmittel ohne Zucker"
+		return "bread", apierr.New("course_reason_bread")
 	}
 	if sweet {
-		return "Nachspeise", "Kategorie „Süß“"
+		return "dessert", apierr.New("course_reason_sweet")
 	}
-	return "Hauptgericht", "keine besonderen Hinweise"
+	return "main", apierr.New("course_reason_none")
 }
 
 // titleHas: Kommt das Stichwort kw im Titel vor? Mehrwortige Stichwörter
@@ -105,7 +145,18 @@ func titleHas(folded string, words []string, kw string) bool {
 	return false
 }
 
-// courseGroup liefert die Gänge der Gang-Gruppe (gefalteter Name → Kategorie).
+// hasPhrase: Kommt die Wortfolge phrase („ice cream“) als ganze Wörter vor?
+func hasPhrase(words []string, phrase string) bool {
+	want := strings.Fields(phrase)
+	for i := 0; i+len(want) <= len(words); i++ {
+		if slices.Equal(words[i:i+len(want)], want) {
+			return true
+		}
+	}
+	return false
+}
+
+// courseGroup liefert die Gänge der Gang-Gruppe mit Schlüssel (course_key → Kategorie).
 func (s *Store) courseGroup(ctx context.Context) (map[string]Tag, error) {
 	groups, err := s.ListTags(ctx)
 	if err != nil {
@@ -113,11 +164,13 @@ func (s *Store) courseGroup(ctx context.Context) (map[string]Tag, error) {
 	}
 	for _, g := range groups {
 		if g.Role == RoleCourse {
-			byName := make(map[string]Tag, len(g.Tags))
+			byKey := make(map[string]Tag, len(g.Tags))
 			for _, t := range g.Tags {
-				byName[database.Fold(t.Name)] = t
+				if t.CourseKey != "" {
+					byKey[t.CourseKey] = t
+				}
 			}
-			return byName, nil
+			return byKey, nil
 		}
 	}
 	// Leere Gang-Gruppe (ListTags lässt leere Gruppen weg) oder keine.
@@ -153,12 +206,13 @@ func (s *Store) CourseSuggestions(ctx context.Context) ([]CourseSuggestion, erro
 		if err := rows.Scan(&sug.RecipeID, &sug.Title, &sug.Thumbnail, &ings, &tags); err != nil {
 			return nil, fmt.Errorf("gänge vorschlagen: %w", err)
 		}
-		name, reason := suggestCourse(sug.Title, strings.Split(ings, "\x1f"), strings.Split(tags, "\x1f"))
-		tag, ok := courses[database.Fold(name)]
+		key, reason := suggestCourse(sug.Title, strings.Split(ings, "\x1f"), strings.Split(tags, "\x1f"))
+		tag, ok := courses[key]
 		if !ok {
 			continue
 		}
-		sug.TagID, sug.Course, sug.Reason = tag.ID, tag.Name, reason
+		sug.TagID, sug.Course = tag.ID, tag.Name
+		sug.Reason, sug.ReasonCode, sug.ReasonParams = reason.Message(), reason.Code, reason.Params
 		list = append(list, sug)
 	}
 	return list, rows.Err()

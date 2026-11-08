@@ -56,6 +56,9 @@ type Client interface {
 	UpdateDescription(ctx context.Context, entityID, uid, description string) error
 	// RemoveItem löscht den Eintrag uid von der Liste.
 	RemoveItem(ctx context.Context, entityID, uid string) error
+	// Language liefert die Systemsprache von Home Assistant, z. B. "de"
+	// oder "en-GB"; leer im Testmodus.
+	Language(ctx context.Context) (string, error)
 }
 
 // New wählt die Betriebsart: Mit supervisorToken (in der App gesetzt) geht
@@ -136,6 +139,18 @@ func (c *rest) call(ctx context.Context, method, path string, body, out any) err
 		return fmt.Errorf("response from home assistant: %w", err)
 	}
 	return nil
+}
+
+// Language liest die Systemsprache aus GET /api/config (Einstellungen →
+// System → Allgemein in Home Assistant).
+func (c *rest) Language(ctx context.Context) (string, error) {
+	var config struct {
+		Language string `json:"language"`
+	}
+	if err := c.call(ctx, http.MethodGet, "/config", nil, &config); err != nil {
+		return "", err
+	}
+	return config.Language, nil
 }
 
 // TodoLists liest alle Entitäten, deren ID mit "todo." beginnt.
@@ -227,6 +242,9 @@ func NewTestClient() *TestClient {
 }
 
 func (c *TestClient) Mode() string { return ModeTest }
+
+// Language: Der Testmodus kennt keine Sprache; es gilt REZEPTPLANER_LANGUAGE.
+func (c *TestClient) Language(context.Context) (string, error) { return "", nil }
 
 func (c *TestClient) TodoLists(context.Context) ([]TodoList, error) {
 	return []TodoList{

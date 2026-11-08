@@ -28,8 +28,8 @@ func TestMigrateCreatesSchemaAndTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Migrate: %v", err)
 	}
-	if version != 17 {
-		t.Errorf("version = %d, erwartet 17", version)
+	if version != 18 {
+		t.Errorf("version = %d, erwartet 18", version)
 	}
 
 	// 8 Hauptzutat + 2 Geschmack + 8 Art + 5 Eigenschaften + 8 neue Gänge (013)
@@ -39,6 +39,15 @@ func TestMigrateCreatesSchemaAndTags(t *testing.T) {
 	}
 	if tagCount != 31 {
 		t.Errorf("tags = %d, erwartet 31", tagCount)
+	}
+
+	// Alle zehn Gänge der Startliste haben ihren Schlüssel (018).
+	var keys int
+	if err := db.QueryRowContext(ctx, "SELECT count(DISTINCT course_key) FROM tags WHERE course_key <> ''").Scan(&keys); err != nil {
+		t.Fatal(err)
+	}
+	if keys != 10 {
+		t.Errorf("Gänge mit Schlüssel = %d, erwartet 10", keys)
 	}
 }
 
@@ -55,8 +64,8 @@ func TestMigrateTwiceChangesNothing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("zweite Migration: %v", err)
 	}
-	if version != 17 {
-		t.Errorf("version = %d, erwartet 17", version)
+	if version != 18 {
+		t.Errorf("version = %d, erwartet 18", version)
 	}
 }
 

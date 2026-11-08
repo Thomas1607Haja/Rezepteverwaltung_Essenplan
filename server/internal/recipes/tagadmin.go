@@ -37,6 +37,7 @@ type AdminTag struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	Position    int    `json:"position"`
+	CourseKey   string `json:"course_key"`
 	RecipeCount int    `json:"recipe_count"`
 }
 
@@ -52,7 +53,7 @@ type AdminGroup struct {
 // AdminTags liefert alle Gruppen (auch leere) mit ihren Kategorien.
 func (s *Store) AdminTags(ctx context.Context) ([]AdminGroup, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT g.id, g.name, g.position, g.role, t.id, t.name, t.position,
+		SELECT g.id, g.name, g.position, g.role, t.id, t.name, t.position, COALESCE(t.course_key, ''),
 		       (SELECT count(*) FROM recipe_tags rt WHERE rt.tag_id = t.id)
 		FROM tag_groups g LEFT JOIN tags t ON t.group_id = g.id
 		ORDER BY g.position, g.id, t.position, t.id`)
@@ -68,8 +69,9 @@ func (s *Store) AdminTags(ctx context.Context) ([]AdminGroup, error) {
 		var tagID sql.NullInt64
 		var tagName sql.NullString
 		var tagPos sql.NullInt64
+		var courseKey string
 		var count int
-		if err := rows.Scan(&g.ID, &g.Name, &g.Position, &g.Role, &tagID, &tagName, &tagPos, &count); err != nil {
+		if err := rows.Scan(&g.ID, &g.Name, &g.Position, &g.Role, &tagID, &tagName, &tagPos, &courseKey, &count); err != nil {
 			return nil, fmt.Errorf("kategorien laden: %w", err)
 		}
 		if len(groups) == 0 || groups[len(groups)-1].ID != g.ID {
@@ -78,7 +80,7 @@ func (s *Store) AdminTags(ctx context.Context) ([]AdminGroup, error) {
 		}
 		if tagID.Valid {
 			last := &groups[len(groups)-1]
-			last.Tags = append(last.Tags, AdminTag{ID: tagID.Int64, Name: tagName.String, Position: int(tagPos.Int64), RecipeCount: count})
+			last.Tags = append(last.Tags, AdminTag{ID: tagID.Int64, Name: tagName.String, Position: int(tagPos.Int64), CourseKey: courseKey, RecipeCount: count})
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -366,8 +368,8 @@ func (s *Store) CreateTag(ctx context.Context, name string, groupID int64) (Tag,
 			return err
 		}
 		return tx.QueryRowContext(ctx, `
-			SELECT t.id, t.name, g.name, g.id, t.position FROM tags t `+tagJoin+` WHERE t.id = ?`, id).
-			Scan(&tag.ID, &tag.Name, &tag.Group, &tag.GroupID, &tag.Position)
+			SELECT t.id, t.name, g.name, g.id, t.position, t.course_key FROM tags t `+tagJoin+` WHERE t.id = ?`, id).
+			Scan(&tag.ID, &tag.Name, &tag.Group, &tag.GroupID, &tag.Position, &tag.CourseKey)
 	})
 	return tag, err
 }

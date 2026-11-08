@@ -29,7 +29,7 @@ type TagGroup struct {
 // fehlen – sie haben nur in der Verwaltung (AdminTags) eine Bedeutung.
 func (s *Store) ListTags(ctx context.Context) ([]TagGroup, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT t.id, t.name, g.id, g.name, t.position, g.role
+		SELECT t.id, t.name, g.id, g.name, t.position, g.role, t.course_key
 		FROM tags t `+tagJoin+`
 		ORDER BY `+tagOrder)
 	if err != nil {
@@ -41,7 +41,7 @@ func (s *Store) ListTags(ctx context.Context) ([]TagGroup, error) {
 	for rows.Next() {
 		var tag Tag
 		var role string
-		if err := rows.Scan(&tag.ID, &tag.Name, &tag.GroupID, &tag.Group, &tag.Position, &role); err != nil {
+		if err := rows.Scan(&tag.ID, &tag.Name, &tag.GroupID, &tag.Group, &tag.Position, &role, &tag.CourseKey); err != nil {
 			return nil, fmt.Errorf("kategorien laden: %w", err)
 		}
 		// Die Zeilen kommen nach Gruppen sortiert: Eine neue Gruppe beginnt,

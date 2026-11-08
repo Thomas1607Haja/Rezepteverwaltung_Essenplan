@@ -27,9 +27,11 @@ import (
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/httpx"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/images"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/importer"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/language"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/pantry"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/recipes"
+	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/seed"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/settings"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/shopping"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/system"
@@ -105,6 +107,10 @@ func run() error {
 	// des Servers, wenn keine Anfrage mehr die Datenbank braucht.
 	defer db.Close()
 
+	before, err := database.SchemaVersion(ctx, db)
+	if err != nil {
+		return err
+	}
 	version, err := database.Migrate(ctx, db)
 	if err != nil {
 		return err
@@ -121,6 +127,18 @@ func run() error {
 	// Testmodus.
 	ha := homeassistant.New(os.Getenv("SUPERVISOR_TOKEN"), os.Getenv("REZEPTPLANER_HA_URL"), os.Getenv("REZEPTPLANER_HA_TOKEN"))
 	slog.Info("Home Assistant", "modus", ha.Mode())
+	// Sprache des Haushalts: Home Assistant, sonst REZEPTPLANER_LANGUAGE
+	// (z. B. für den lokalen Testmodus), sonst Englisch.
+	lang := language.NewResolver(ha, os.Getenv("REZEPTPLANER_LANGUAGE"))
+	// Neue Installation: Startdaten (Kategorien, Vorrat) in der Sprache des
+	// Haushalts. Bestehende Datenbanken bleiben, wie sie sind.
+	if before == 0 {
+		code := lang.AtStartup(ctx, 6, 2*time.Second)
+		if err := seed.Localize(ctx, db, code); err != nil {
+			return err
+		}
+		slog.Info("Startdaten angelegt", "sprache", code)
+	}
 	keys := apikeys.NewStore(db)
 
 	mux := http.NewServeMux()
@@ -129,6 +147,7 @@ func run() error {
 		images:  imgs,
 		fetcher: fetch.New(20*time.Second, false), // Heimnetz gesperrt
 		ha:      ha,
+		lang:    lang,
 		keys:    keys,
 		version: buildVersion,
 		dataDir: cfg.DataDir,
@@ -237,6 +256,7 @@ type services struct {
 	images  *images.Store
 	fetcher *fetch.Client
 	ha      homeassistant.Client
+	lang    *language.Resolver
 	keys    *apikeys.Store
 	version string
 	dataDir string
@@ -265,6 +285,10 @@ func registerRoutes(mux httpx.Router, s services) error {
 	appsync.NewHandler(s.db, recipeStore, planStore, pantryStore, settingsStore).Register(mux)
 	system.NewHandler(s.version, s.dataDir).Register(mux)
 	homeassistant.NewHandler(s.ha).Register(mux)
+	language.NewHandler(s.lang, func(ctx context.Context) (string, error) {
+		st, err := settingsStore.Get(ctx)
+		return st.UILanguage, err
+	}).Register(mux)
 	shopping.NewHandler(shopping.NewStore(s.db, planStore, settingsStore, s.ha)).Register(mux)
 	apikeys.NewHandler(s.keys).Register(mux)
 	appinstall.NewHandler(appinstall.LoadRepository(s.dataDir), s.fetcher).Register(mux)

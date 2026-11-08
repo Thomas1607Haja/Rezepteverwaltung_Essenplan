@@ -65,8 +65,8 @@ var catalog = map[string]string{
 	"not_a_course":           "Category {id} is not a course",
 	"unknown_sort":           "Unknown sort order “{value}”",
 	"course_reason_title":    "Title contains “{word}”",
-	"course_reason_category": "Category “{name}”",
 	"course_reason_baking":   "Flour, raising agent and sugar",
+	"course_reason_bread":    "Flour and raising agent without sugar",
 	"course_reason_sweet":    "Category “Sweet”",
 	"course_reason_none":     "No particular hints",
 

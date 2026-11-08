@@ -80,6 +80,10 @@ type Tag struct {
 	Group    string `json:"group"`
 	GroupID  int64  `json:"group_id"`
 	Position int    `json:"position"`
+	// CourseKey: fester Schlüssel eines Gangs der Startliste ("main",
+	// "dessert" …), sonst leer. Der Name ist Daten des Nutzers; der Code
+	// erkennt Gänge nur am Schlüssel (siehe Migration 018).
+	CourseKey string `json:"course_key"`
 }
 
 // ErrNotFound wird zurückgegeben, wenn es ein Rezept nicht gibt.

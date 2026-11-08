@@ -112,7 +112,7 @@ func (s *Store) ChangedSince(ctx context.Context, since string) ([]Recipe, error
 	rows.Close()
 
 	rows, err = s.db.QueryContext(ctx, `
-		SELECT rt.recipe_id, t.id, t.name, g.name, g.id, t.position
+		SELECT rt.recipe_id, t.id, t.name, g.name, g.id, t.position, t.course_key
 		FROM recipe_tags rt JOIN tags t ON t.id = rt.tag_id `+tagJoin+`
 		WHERE rt.recipe_id IN `+changed+`
 		ORDER BY rt.recipe_id, `+tagOrder, since)
@@ -123,7 +123,7 @@ func (s *Store) ChangedSince(ctx context.Context, since string) ([]Recipe, error
 	for rows.Next() {
 		var recipeID int64
 		var tag Tag
-		if err := rows.Scan(&recipeID, &tag.ID, &tag.Name, &tag.Group, &tag.GroupID, &tag.Position); err != nil {
+		if err := rows.Scan(&recipeID, &tag.ID, &tag.Name, &tag.Group, &tag.GroupID, &tag.Position, &tag.CourseKey); err != nil {
 			return nil, fmt.Errorf("kategorien für den abgleich laden: %w", err)
 		}
 		if r := byID[recipeID]; r != nil {

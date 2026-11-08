@@ -64,6 +64,15 @@ type migration struct {
 	sql     string // Inhalt
 }
 
+// SchemaVersion liefert die Schemaversion; 0 heißt: neue, leere Datenbank.
+func SchemaVersion(ctx context.Context, db *sql.DB) (int, error) {
+	var v int
+	if err := db.QueryRowContext(ctx, "PRAGMA user_version").Scan(&v); err != nil {
+		return 0, fmt.Errorf("schemaversion lesen: %w", err)
+	}
+	return v, nil
+}
+
 // Migrate spielt alle noch fehlenden Migrationen ein und gibt die danach
 // erreichte Schemaversion zurück. Die aktuelle Version merkt sich SQLite
 // selbst in PRAGMA user_version.

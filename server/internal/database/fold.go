@@ -34,3 +34,20 @@ func init() {
 			}
 		})
 }
+
+// accentReplacer entfernt die Akzente der unterstützten Sprachen
+// (Französisch, Spanisch, Italienisch).
+var accentReplacer = strings.NewReplacer(
+	"à", "a", "á", "a", "â", "a", "ã", "a", "å", "a", "æ", "ae",
+	"ç", "c", "è", "e", "é", "e", "ê", "e", "ë", "e",
+	"ì", "i", "í", "i", "î", "i", "ï", "i", "ñ", "n",
+	"ò", "o", "ó", "o", "ô", "o", "õ", "o", "œ", "oe",
+	"ù", "u", "ú", "u", "û", "u", "ÿ", "y",
+)
+
+// Plain ist Fold ohne Akzente: "Crème brûlée" → "creme brulee". Nur zum
+// Vergleich mit festen Stichwörtern (Gang-Vorschläge, Parser). Fold selbst
+// bleibt unverändert, weil gespeicherte Schlüssel (item_key) darauf beruhen.
+func Plain(s string) string {
+	return accentReplacer.Replace(Fold(s))
+}

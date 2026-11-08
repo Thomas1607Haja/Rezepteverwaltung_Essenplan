@@ -15,19 +15,30 @@ func TestSuggestCourse(t *testing.T) {
 		tags        []string
 		want        string
 	}{
-		{"Schneller Apfelkuchen", nil, nil, "Kuchen & Torten"},
-		{"Kartoffelsalat mit Gurke", nil, nil, "Salat"},
-		{"Linseneintopf", nil, nil, "Suppe/Eintopf"},
-		{"Schoko-Muffins", nil, nil, "Gebäck"},
-		{"Dinkelbrötchen", nil, nil, "Brot"},
-		{"Panna cotta mit Beeren", nil, nil, "Nachspeise"},
-		{"Omas Rezept", []string{"Mehl", "Backpulver", "Zucker", "Butter"}, nil, "Kuchen & Torten"},
-		{"Fladen vom Blech", []string{"Weizenmehl", "Trockenhefe", "Salz"}, nil, "Brot"},
-		{"Grießflammeri", []string{"Grieß", "Milch"}, []string{"Süß"}, "Nachspeise"},
-		{"Gulasch", []string{"Rindfleisch", "Zwiebeln"}, []string{"Rind"}, "Hauptgericht"},
-		{"Gemüsecurry mit Reis", []string{"Reis"}, nil, "Hauptgericht"},
-		{"Eis am Stiel", nil, nil, "Nachspeise"},
-		{"Hummus-Dip", nil, nil, "Snack"},
+		{"Schneller Apfelkuchen", nil, nil, "cake"},
+		{"Kartoffelsalat mit Gurke", nil, nil, "salad"},
+		{"Linseneintopf", nil, nil, "soup"},
+		{"Schoko-Muffins", nil, nil, "pastry"},
+		{"Dinkelbrötchen", nil, nil, "bread"},
+		{"Panna cotta mit Beeren", nil, nil, "dessert"},
+		{"Omas Rezept", []string{"Mehl", "Backpulver", "Zucker", "Butter"}, nil, "cake"},
+		{"Fladen vom Blech", []string{"Weizenmehl", "Trockenhefe", "Salz"}, nil, "bread"},
+		{"Grießflammeri", []string{"Grieß", "Milch"}, []string{"Süß"}, "dessert"},
+		{"Gulasch", []string{"Rindfleisch", "Zwiebeln"}, []string{"Rind"}, "main"},
+		{"Gemüsecurry mit Reis", []string{"Reis"}, nil, "main"},
+		{"Eis am Stiel", nil, nil, "dessert"},
+		{"Hummus-Dip", nil, nil, "snack"},
+		// Andere Sprachen
+		{"Classic Apple Pie", nil, nil, "cake"},
+		{"Velouté de potiron", nil, nil, "soup"},
+		{"Ensalada de garbanzos", nil, nil, "salad"},
+		{"Crème brûlée", nil, nil, "dessert"},
+		{"Pane casereccio", nil, nil, "bread"},
+		{"Grandma's recipe", []string{"flour", "baking powder", "sugar"}, nil, "cake"},
+		{"Pollo al ajillo", []string{"pollo", "ajo"}, nil, "main"},
+		{"Grandma's meatloaf", []string{"beef"}, nil, "main"},
+		{"Steak tartare", nil, nil, "main"},
+		{"Homemade ice cream", nil, nil, "dessert"},
 	}
 	for _, tt := range tests {
 		if got, _ := suggestCourse(tt.title, tt.ingredients, tt.tags); got != tt.want {
