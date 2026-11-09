@@ -14,8 +14,8 @@ reviewed by native speakers yet – corrections are very welcome.
 | Error messages of the server | `web/src/locales/errors/<lang>.json` – one text per error code (`server/internal/apierr/catalog.go` lists the codes) |
 | Android app | `android/app/src/main/res/values-<lang>/strings*.xml` (`values/` is English) |
 | Android error and shared texts | generated: `strings_errors.xml` and `strings_shared.xml` come from the web files – edit the web JSON, then run `python android/tools/gen_errors.py` |
-| Home Assistant integration | `custom_components/rezeptplaner/translations/<lang>.json` (setup, entities) and `custom_components/rezeptplaner/texts/<lang>.json` (calendar titles) |
-| Dashboard card | `custom_components/rezeptplaner/frontend/rezeptplaner-card.js`, block between `// i18n:begin` and `// i18n:end` (plain JSON) |
+| Home Assistant integration | repository [rezeptplaner-ha](https://github.com/Thomas1607Haja/rezeptplaner-ha): `custom_components/rezeptplaner/translations/<lang>.json` (setup, entities) and `custom_components/rezeptplaner/texts/<lang>.json` (calendar titles) |
+| Dashboard card | rezeptplaner-ha: `custom_components/rezeptplaner/frontend/rezeptplaner-card.js`, block between `// i18n:begin` and `// i18n:end` (plain JSON) |
 | Add-on options | `rezeptplaner/translations/<lang>.yaml` |
 | Default categories and pantry of a new installation | `server/internal/seed/seed.go` |
 | Terms | `docs/glossar.md` – please use these terms everywhere |
@@ -41,7 +41,8 @@ texts are objects with the forms `one` and `other` (JSON) or `<plurals>` (Androi
    `Supported` in `server/internal/language/language.go`, `uiLanguages` in
    `server/internal/settings/settings.go`, `languages` in
    `server/internal/locales/locales_test.go`, `LANGS` in `android/tools/gen_errors.py`,
-   `LANGUAGES` in `custom_components/rezeptplaner/texts.py`, the language names in the
+   `LANGUAGES` in `custom_components/rezeptplaner/texts.py` and `tests/test_translations.py`
+   (both in rezeptplaner-ha), the language names in the
    settings page, and the default data in `server/internal/seed/seed.go`.
 3. Extend `docs/glossar.md` with a column for the new language.
 4. Run the tests and open a pull request.

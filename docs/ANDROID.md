@@ -131,7 +131,9 @@ Am einfachsten über die Weboberfläche: **Einstellungen → App installieren �
 | Rezeptplaner in Obtainium eintragen | `https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/<Konfiguration>` – öffnet Obtainium mit fertiger Konfiguration (Repository; Version aus dem Tag `android-v1.2.3` per `versionExtractionRegEx`), dort bestätigen und **Installieren** |
 | APK direkt (ohne Obtainium) | `…/releases/latest/download/rezeptplaner.apk` – immer die neueste APK; die GitHub Action legt sie in jedem Release unter diesem Namen ab |
 
-Filter für Release-Titel oder APK braucht Obtainium nicht: Releases gibt es nur für die Android-App (Tags `v…` der Home-Assistant-App bekommen keine), und jedes enthält genau eine APK. **Dabei bleiben:** keine Releases für die Home-Assistant-App anlegen, sonst zeigt `releases/latest` nicht mehr auf die App.
+Filter für Release-Titel oder APK braucht Obtainium nicht: Releases gibt es nur für die Android-App (Tags `v…` der Home-Assistant-App bekommen keine), und jedes enthält genau eine APK. **Dabei bleiben:** keine Releases für die Home-Assistant-App anlegen, sonst zeigt `releases/latest` nicht mehr auf die App. Die HA-Integration hat deshalb ein eigenes Repository mit eigenen Releases (`Thomas1607Haja/rezeptplaner-ha`, seit 2026-11-09).
+
+Wer trotzdem auf Nummer sicher gehen will: in Obtainium beim Rezeptplaner unter **Bearbeiten** (Zahnrad) → **Release-Titel nach regulärem Ausdruck filtern** `^Android-App ` eintragen. Alle Android-Releases heißen „Android-App x.y.z“ (Tag `android-v…`); andere Releases würden dann ignoriert. Der QR-Code trägt diesen Filter bewusst nicht ein, damit er gut lesbar bleibt.
 
 Auf dem Galaxy A54 (Android 16):
 

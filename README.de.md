@@ -10,7 +10,7 @@ Ein selbst gebautes, schlankes System zur Verwaltung von Kochrezepten und zur Wo
 - **Essensplan** mit frei scrollbaren Tagen, Planung beliebig weit im Voraus, Verschieben per Drag and Drop
 - **Einkaufsliste** für den aktuellen Einkaufszeitraum, Übertragung an die Bring-App über Home Assistant
 - **Dashboard-Karte** mit dem aktuellen Essensplan in Home Assistant
-- **Kalender und Sensor** in Home Assistant (Integration über HACS)
+- **Kalender und Sensor** in Home Assistant (Integration über HACS, Repository [rezeptplaner-ha](https://github.com/Thomas1607Haja/rezeptplaner-ha))
 - **Android-App:** Rezepte und Plan auch offline lesen, planen, Rezepte anlegen und bearbeiten, Rezept-Links teilen, Foto-Import mit Texterkennung auf dem Handy, Einkauf an Bring senden
 - **Claude-Skill** „rezeptplaner-import“: erfasst Rezepte aus Fotos (Rezeptkarten, Kochbuchseiten, Zettel) und liefert eine Importdatei; fehlt ein Foto vom Gericht, zeichnet sie eine Illustration
 
@@ -29,24 +29,7 @@ Französisch, Spanisch und Italienisch sind ohne Prüfung durch Muttersprachler 
 
 1. **App:** In Home Assistant unter Einstellungen → Apps → App-Store → ⋮ → Repositories diese Adresse hinzufügen und „Rezeptplaner“ installieren:
    `https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan`
-2. **Integration und Dashboard-Karte (optional):** In HACS → ⋮ → Benutzerdefinierte Repositories dieselbe Adresse mit Typ „Integration“ hinzufügen, „Rezeptplaner“ herunterladen und Home Assistant neu starten. Die Integration erscheint dann unter Einstellungen → Geräte & Dienste als „Entdeckt“ – nur noch bestätigen.
-3. Nach der Einrichtung die Seite einmal neu laden (F5), dann im Dashboard eine Karte „Essensplan“ hinzufügen (in der Kartenauswahl oder als `type: custom:rezeptplaner-card`). Die Integration trägt die Karte selbst als Dashboard-Ressource ein (Einstellungen → Dashboards → ⋮ → Ressourcen) und hält den Eintrag bei Updates aktuell. Werden die Ressourcen in YAML gepflegt (`lovelace: resource_mode: yaml`), dort einen Eintrag mit `url: /rezeptplaner_static/rezeptplaner-card.js` und `type: module` ergänzen; bis dahin lädt die Integration die Karte ersatzweise über die Startseite.
-
-   Einstellungen der Karte (im visuellen Editor oder in YAML):
-
-   | Feld | Bedeutung | Standard |
-   |---|---|---|
-   | `title` | Überschrift | „Essensplan“ in der Sprache des Nutzers |
-   | `days` | Anzahl Tage ab heute (1–31) | aktueller Einkaufszeitraum |
-   | `height` | Höhe in Pixel; passt nicht alles hinein, scrollt der Inhalt innerhalb der Karte | so hoch wie der Inhalt |
-
-### Zugriff über einen Cloudflare-Tunnel
-
-Cloudflare speichert ohne eigene Regel auch Fehlerantworten zwischen und weist Browser an, sie 4 Stunden zu behalten. Fragt ein Browser oder die Companion-App die Karte während eines Neustarts von Home Assistant ab, bleibt sie danach stundenlang verschwunden („Konfigurationsfehler“). Abhilfe im Cloudflare-Dashboard der Domain:
-
-1. **Caching → Cache Rules → Create rule:** Name „Home Assistant nicht cachen“, Bedingung *Hostname equals* `<HA-Hostname>`, Aktion **Bypass cache**, speichern.
-2. **Caching → Configuration → Browser Cache TTL:** **Respect Existing Headers**.
-3. Einmalig **Caching → Configuration → Purge Everything**; in der Companion-App unter Einstellungen → Companion-App → Fehlerbehebung den Frontend-Cache zurücksetzen.
+2. **Integration und Dashboard-Karte (optional):** Sie haben ein eigenes Repository: **[rezeptplaner-ha](https://github.com/Thomas1607Haja/rezeptplaner-ha)** – [in HACS öffnen](https://my.home-assistant.io/redirect/hacs_repository/?owner=Thomas1607Haja&repository=rezeptplaner-ha&category=integration), „Rezeptplaner“ herunterladen und Home Assistant neu starten. Die Integration erscheint dann unter Einstellungen → Geräte & Dienste als „Entdeckt“ – nur noch bestätigen. Einstellungen der Karte, der Hinweis zum Cloudflare-Tunnel und der Umstieg von diesem Repository (bis Integration 0.6 lag sie hier) stehen dort.
 
 ### Android-App
 
@@ -64,7 +47,7 @@ Die Skill erfasst Rezepte in der Sprache der Vorlage (sie übersetzt nicht) und 
 |---|---|
 | Server | Go mit SQLite, läuft als Home-Assistant-Add-on |
 | Weboberfläche | in den Server eingebettet, erreichbar über die HA-Seitenleiste |
-| HA-Integration und Dashboard-Karte | Python bzw. JavaScript, installierbar über HACS |
+| HA-Integration und Dashboard-Karte | Python bzw. JavaScript, installierbar über HACS – eigenes Repository [rezeptplaner-ha](https://github.com/Thomas1607Haja/rezeptplaner-ha) |
 | Android-App | Kotlin, Jetpack Compose |
 
 Grundsatz: Das System muss so schlank sein, dass es einen Home Assistant Green neben seiner eigentlichen Aufgabe kaum belastet.
@@ -77,7 +60,6 @@ Fertig: Rezepte, Essensplan, Einkaufsliste mit Bring, Integration mit Dashboard-
 
 ```
 rezeptplaner/                    Home-Assistant-Add-on
-custom_components/rezeptplaner/  HA-Integration (HACS) mit Dashboard-Karte (frontend/)
 server/                          Go-Backend
 web/                             Weboberfläche
 android/                         Android-App

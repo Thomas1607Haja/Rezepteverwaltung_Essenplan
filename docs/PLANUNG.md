@@ -639,14 +639,22 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App-Zugang
 
 ## 9. Projektstruktur
 
-Das Repository ist gleichzeitig Add-on-Repository für Home Assistant und HACS-Repository für die Integration. Beides stellt Anforderungen an die Struktur:
+Das Repository ist Add-on-Repository für Home Assistant. Integration und Dashboard-Karte liegen seit 2026-11-09 (Integration 0.7.0) im eigenen Repository **Thomas1607Haja/rezeptplaner-ha** mit eigenen Releases `v…`: HACS liest die Version aus dem neuesten GitHub-Release, und hier sind das die Android-Releases (HACS zeigte „android-v0.19.0“ und meldete keine Updates). `hacs.json` kann Releases nicht nach Tag filtern; Integration-Releases als „latest“ hätten `releases/latest/download/rezeptplaner.apk` (QR-Code, Obtainium) gebrochen.
+
+```
+rezeptplaner-ha/
+├── hacs.json, README.md, README.de.md, CHANGELOG.md
+├── custom_components/rezeptplaner/  HA-Integration, Karte in frontend/, Icon in brand/
+├── tests/test_translations.py       gleiche Schlüssel/Platzhalter in allen Sprachen
+└── .github/workflows/validate.yml   Test, hassfest, HACS-Action; Tag v… → Release nur bei Grün
+```
+
+Struktur dieses Repositorys:
 
 ```
 Rezepteverwaltung_Essenplan/
 ├── repository.yaml                  Kennzeichnet das Repo als Add-on-Repository
-├── hacs.json                        HACS-Metadaten für die Integration
 ├── rezeptplaner/                    Add-on: config.yaml, Doku, Icon
-├── custom_components/rezeptplaner/  HA-Integration (Pfad von HACS vorgegeben), Karte in frontend/
 ├── server/                          Go-Backend
 ├── web/                             Weboberfläche (wird in den Server eingebettet)
 ├── android/                         Android-App
@@ -660,8 +668,8 @@ Rezepteverwaltung_Essenplan/
 - **Claude-Skill als Download (7.6c):** Die GitHub Action packt `skills/rezeptplaner-import/` als `rezeptplaner-import-skill.zip` (Ordner `rezeptplaner-import/` mit `SKILL.md` darin) und hängt sie unter diesem festen Namen an jedes Android-Release. Ändert sich die Skill zwischen zwei Releases (Push auf `main` mit Änderungen unter `skills/`), ersetzt eine Action die Datei am neuesten Release. So zeigt `…/releases/latest/download/rezeptplaner-import-skill.zip` immer auf die aktuelle Skill. Ändert sich das Importformat, wird die Skill im selben Release mitgeändert (Regel in CLAUDE.md).
 
 - **Add-on-Image wird nicht auf dem Green gebaut.** Ohne vorgefertigtes Image würde der Green bei jeder Installation und jedem Update Go und die Weboberfläche selbst kompilieren. Stattdessen baut eine GitHub Action das ARM64-Image und legt es in der GitHub Container Registry (ghcr.io) ab; die `config.yaml` des Add-ons verweist darauf. Der Green lädt nur noch das fertige Image herunter.
-- **Dashboard-Karte wird von der Integration mitgeliefert.** Die JavaScript-Datei der Karte liegt in der Integration (`custom_components/rezeptplaner/frontend/`), die sie beim Start registriert (`add_extra_js_url`). So genügt eine einzige HACS-Installation für Integration und Karte. Die Karte ist eine schlichte Web Component ohne Bibliotheken und braucht keinen Build-Schritt; einen eigenen Ordner `ha-card/` gibt es deshalb nicht (geändert 2026-10-21).
-- **Installation zu Hause:** Repository-URL im Add-on-Store von Home Assistant hinzufügen; dieselbe URL in HACS als benutzerdefiniertes Repository vom Typ „Integration“.
+- **Dashboard-Karte wird von der Integration mitgeliefert.** Die JavaScript-Datei der Karte liegt in der Integration (`custom_components/rezeptplaner/frontend/` in rezeptplaner-ha), die sie beim Start registriert (`add_extra_js_url`). So genügt eine einzige HACS-Installation für Integration und Karte. Die Karte ist eine schlichte Web Component ohne Bibliotheken und braucht keinen Build-Schritt; einen eigenen Ordner `ha-card/` gibt es deshalb nicht (geändert 2026-10-21).
+- **Installation zu Hause:** Repository-URL im Add-on-Store von Home Assistant hinzufügen; `https://github.com/Thomas1607Haja/rezeptplaner-ha` in HACS als benutzerdefiniertes Repository vom Typ „Integration“ (Ziel: HACS-Standardliste).
 
 ### Öffentliches Repository – Regeln
 

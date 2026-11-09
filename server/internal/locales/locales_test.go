@@ -1,8 +1,9 @@
 // Package locales enthält nur Tests: Sie prüfen, dass alle Sprachdateien
-// des Repositorys (Weboberfläche, Dashboard-Karte, Integration, Add-on,
-// Android-App) dieselben Schlüssel und Platzhalter haben. Die Dateien
-// liegen außerhalb des Go-Moduls; die Tests lesen sie über relative Pfade
-// (go test läuft im Ordner des Pakets).
+// des Repositorys (Weboberfläche, Add-on, Android-App) dieselben Schlüssel
+// und Platzhalter haben. Die Dateien liegen außerhalb des Go-Moduls; die
+// Tests lesen sie über relative Pfade (go test läuft im Ordner des Pakets).
+// Integration und Dashboard-Karte prüft ihr eigenes Repository
+// (Thomas1607Haja/rezeptplaner-ha, tests/test_translations.py).
 package locales
 
 import (
@@ -222,48 +223,6 @@ func TestWebKnowsAllErrorCodes(t *testing.T) {
 			t.Errorf("web/src/locales/errors: Code %q fehlt", code)
 		}
 	}
-}
-
-func TestIntegrationTranslations(t *testing.T) {
-	compare(t, "custom_components/rezeptplaner/translations",
-		readJSONDir(t, filepath.Join(repo, "custom_components/rezeptplaner/translations")))
-}
-
-// Texte der Kalendertermine und des Sensors (custom_components/…/texts).
-func TestIntegrationTexts(t *testing.T) {
-	compare(t, "custom_components/rezeptplaner/texts",
-		readJSONDir(t, filepath.Join(repo, "custom_components/rezeptplaner/texts")))
-}
-
-// Die Karte ist eine einzelne JS-Datei ohne Build. Ihre Texte stehen als
-// reines JSON zwischen den Kommentaren "// i18n:begin" und "// i18n:end"
-// ({"en": {...}, "de": {...}, ...}).
-func TestCardTranslations(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join(repo, "custom_components/rezeptplaner/frontend/rezeptplaner-card.js"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, rest, ok := strings.Cut(string(data), "// i18n:begin")
-	if !ok {
-		t.Skip("Karte hat noch keine Übersetzungen")
-	}
-	block, _, ok := strings.Cut(rest, "// i18n:end")
-	if !ok {
-		t.Fatal("// i18n:end fehlt")
-	}
-	// Zwischen den Markierungen steht "const TEXTS = {...};".
-	start, end := strings.Index(block, "{"), strings.LastIndex(block, "}")
-	var all map[string]any
-	if err := json.Unmarshal([]byte(block[start:end+1]), &all); err != nil {
-		t.Fatalf("Texte der Karte sind kein reines JSON: %v", err)
-	}
-	files := map[string]entries{}
-	for lang, v := range all {
-		e := entries{}
-		flattenJSON("", v, e)
-		files[lang] = e
-	}
-	compare(t, "rezeptplaner-card.js", files)
 }
 
 // Add-on-Optionen: rezeptplaner/translations/<sprache>.yaml. Verglichen

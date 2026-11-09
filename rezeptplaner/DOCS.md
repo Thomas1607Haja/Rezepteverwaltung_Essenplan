@@ -35,11 +35,15 @@ The app writes the items into this list via the Home Assistant API; the quantity
 
 There is an optional integration for Home Assistant:
 
-1. In **HACS** → ⋮ → **Custom repositories** add the address of this repository with type **Integration**.
+Integration and card have their own repository: **https://github.com/Thomas1607Haja/rezeptplaner-ha**
+
+1. [Open it in HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=Thomas1607Haja&repository=rezeptplaner-ha&category=integration) – or in **HACS** → ⋮ → **Custom repositories** add `https://github.com/Thomas1607Haja/rezeptplaner-ha` with type **Integration**.
 2. Download **Rezeptplaner** and restart Home Assistant.
 3. Under **Settings → Devices & services**, “Rezeptplaner” appears as **Discovered** – tap **Add** and confirm. The app provides address and key itself.
-4. Reload the page once (F5) so the browser knows the card. The integration registers the card as a dashboard resource itself. If you access Home Assistant through a Cloudflare tunnel, set up the cache rule from the repository README first.
+4. Reload the page once (F5) so the browser knows the card. The integration registers the card as a dashboard resource itself. If you access Home Assistant through a Cloudflare tunnel, set up the cache rule from the README of rezeptplaner-ha first.
 5. Add a **Meal plan** card to a dashboard.
+
+Installed the integration from this repository before (up to version 0.6)? HACS showed the Android app's version there and no updates. Switch as described under “Moving from the old repository” in the README of rezeptplaner-ha – your setup is kept.
 
 “Open” on the card leads to the app's web interface – even if the app is not in the sidebar.
 
@@ -103,11 +107,15 @@ Die App schreibt die Artikel über die Home-Assistant-API in diese Liste; die Me
 
 Optional gibt es eine Integration für Home Assistant:
 
-1. In **HACS** → ⋮ → **Benutzerdefinierte Repositories** die Adresse dieses Repositorys mit Typ **Integration** hinzufügen.
+Integration und Karte haben ein eigenes Repository: **https://github.com/Thomas1607Haja/rezeptplaner-ha**
+
+1. [In HACS öffnen](https://my.home-assistant.io/redirect/hacs_repository/?owner=Thomas1607Haja&repository=rezeptplaner-ha&category=integration) – oder in **HACS** → ⋮ → **Benutzerdefinierte Repositories** `https://github.com/Thomas1607Haja/rezeptplaner-ha` mit Typ **Integration** hinzufügen.
 2. **Rezeptplaner** herunterladen und Home Assistant neu starten.
 3. Unter **Einstellungen → Geräte & Dienste** erscheint „Rezeptplaner“ als **Entdeckt** – auf **Hinzufügen** tippen und bestätigen. Adresse und Schlüssel liefert die App selbst.
-4. Die Seite einmal neu laden (F5), damit der Browser die Karte kennt. Die Integration trägt die Karte dafür selbst als Dashboard-Ressource ein. Bei Zugriff über einen Cloudflare-Tunnel vorher die Cache-Regel aus dem README des Repositorys einrichten.
+4. Die Seite einmal neu laden (F5), damit der Browser die Karte kennt. Die Integration trägt die Karte dafür selbst als Dashboard-Ressource ein. Bei Zugriff über einen Cloudflare-Tunnel vorher die Cache-Regel aus dem README von rezeptplaner-ha einrichten.
 5. Im Dashboard eine Karte **Essensplan** hinzufügen.
+
+Die Integration früher aus diesem Repository installiert (bis Version 0.6)? HACS zeigte dort die Version der Android-App und keine Updates. Umstieg wie im README von rezeptplaner-ha unter „Umstieg vom bisherigen Repository“ beschrieben – die Einrichtung bleibt erhalten.
 
 „Öffnen“ auf der Karte führt zur Weboberfläche der App – auch wenn die App nicht in der Seitenleiste steht.
 

@@ -59,7 +59,7 @@ func validBearer(r *http.Request, token string) bool {
 
 // integrationPath meldet, ob die Home-Assistant-Integration path lesen
 // darf: Essensplan, einzelne Rezepte und Bilder – mehr braucht sie nicht
-// (siehe custom_components/rezeptplaner/api.py).
+// (siehe custom_components/rezeptplaner/api.py im Repository rezeptplaner-ha).
 func integrationPath(path string) bool {
 	return path == "/api/v1/meal-plan" ||
 		strings.HasPrefix(path, "/api/v1/recipes/") ||

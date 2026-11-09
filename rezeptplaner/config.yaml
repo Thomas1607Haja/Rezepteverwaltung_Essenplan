@@ -27,7 +27,8 @@ panel_title: Rezeptplaner
 homeassistant_api: true
 
 # Meldet die App bei Home Assistant an (Supervisor-Discovery). Die
-# Integration "rezeptplaner" (HACS) erscheint dann unter "Entdeckt" und
+# Integration "rezeptplaner" (HACS, Repository Thomas1607Haja/rezeptplaner-ha)
+# erscheint dann unter "Entdeckt" und
 # bekommt Adresse und Schlüssel für lesenden Zugriff im internen Netz.
 discovery:
   - rezeptplaner
