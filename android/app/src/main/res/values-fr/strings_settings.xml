@@ -48,4 +48,15 @@
     <string name="settings_qr_unavailable">Le scanner de QR code n\'est pas disponible pour le moment sur cet appareil (services Google Play).</string>
     <string name="settings_qr_no_text">Le QR code ne contient pas de texte.</string>
     <string name="settings_qr_installing">Les services Google Play téléchargent le scanner de QR code. Réessayez dans une ou deux minutes (connexion Internet requise).</string>
+    <string name="ha_title">Home Assistant</string>
+    <string name="ha_text">Ces liens ouvrent my.home-assistant.io, qui vous redirige vers la bonne page de votre propre Home Assistant. La première fois, l\'adresse de votre Home Assistant vous est demandée.</string>
+    <string name="ha_integration_title">Intégration et carte du tableau de bord</string>
+    <string name="ha_integration_text">Ajoute un calendrier du planning des repas, un capteur « Aujourd\'hui » et la carte « Planning des repas ». Téléchargez-la depuis le Marketplace (HACS avant Home Assistant 2026.11), redémarrez Home Assistant, puis configurez-la.</string>
+    <string name="ha_integration_download">Ouvrir dans le Marketplace</string>
+    <string name="ha_integration_setup">Configurer l\'intégration</string>
+    <string name="ha_app_title">Installer Rezeptplaner sur un autre Home Assistant</string>
+    <string name="ha_app_text">Partagez ce lien avec toute personne souhaitant installer Rezeptplaner. S\'il ne fonctionne pas, ajoutez d\'abord le dépôt.</string>
+    <string name="ha_app_install">Installer l\'application</string>
+    <string name="ha_app_share">Partager le lien</string>
+    <string name="ha_app_repository">Ajouter le dépôt</string>
 </resources>

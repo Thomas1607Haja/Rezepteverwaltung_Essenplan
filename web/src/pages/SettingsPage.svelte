@@ -6,6 +6,7 @@
   import ApiKeysEditor from '../components/ApiKeysEditor.svelte';
   import TagManager from '../components/TagManager.svelte';
   import { supportUrl } from '../lib/support.js';
+  import { myLinks } from '../lib/myLinks.js';
 
   // Ein Promise direkt im Markup: {#await} zeigt je nach Zustand
   // "lädt", das Ergebnis oder den Fehler an. Neu zuweisen lädt neu.
@@ -213,6 +214,25 @@
 
 <ApiKeysEditor />
 
+<!-- My-Home-Assistant-Links: öffnen my.home-assistant.io im neuen Tab, das zur
+     passenden Seite im eigenen Home Assistant weiterleitet. -->
+<section class="card">
+  <h2>{t('settings.home_assistant.title')}</h2>
+  <p class="hint">{t('settings.home_assistant.text')}</p>
+  <h3>{t('settings.home_assistant.integration_title')}</h3>
+  <p>{t('settings.home_assistant.integration_text')}</p>
+  <div class="links">
+    <a class="support" href={myLinks.integration_download} target="_blank" rel="noopener noreferrer">{t('settings.home_assistant.integration_download')}</a>
+    <a class="support" href={myLinks.integration_setup} target="_blank" rel="noopener noreferrer">{t('settings.home_assistant.integration_setup')}</a>
+  </div>
+  <h3>{t('settings.home_assistant.app_title')}</h3>
+  <p>{t('settings.home_assistant.app_text')}</p>
+  <div class="links">
+    <a class="support" href={myLinks.app_install} target="_blank" rel="noopener noreferrer">{t('settings.home_assistant.app_install')}</a>
+    <a class="support" href={myLinks.app_repository} target="_blank" rel="noopener noreferrer">{t('settings.home_assistant.app_repository')}</a>
+  </div>
+</section>
+
 <section class="card">
   <h2>{t('settings.system.title')}</h2>
   {#await system}
@@ -305,6 +325,21 @@
     background: var(--surface);
     color: var(--text);
     text-decoration: none;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.5rem;
+  }
+
+  h3 {
+    margin: 1rem 0 0.25rem;
+    font-size: 1rem;
+  }
+
+  .hint {
+    color: var(--text-muted);
   }
 
   .support:hover {

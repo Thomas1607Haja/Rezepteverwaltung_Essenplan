@@ -29,6 +29,18 @@
     "time_coffee": "Goûter",
     "time_dinner": "Dîner"
   },
+  "home_assistant": {
+    "title": "Home Assistant",
+    "text": "Ces liens ouvrent my.home-assistant.io, qui vous redirige vers la bonne page de votre propre Home Assistant. La première fois, l’adresse de votre Home Assistant vous est demandée.",
+    "integration_title": "Intégration et carte du tableau de bord",
+    "integration_text": "Ajoute un calendrier du planning des repas, un capteur « Aujourd’hui » et la carte « Planning des repas ». Téléchargez-la depuis le Marketplace (HACS avant Home Assistant 2026.11), redémarrez Home Assistant, puis configurez-la.",
+    "integration_download": "Ouvrir dans le Marketplace",
+    "integration_setup": "Configurer l’intégration",
+    "app_title": "Installer Rezeptplaner sur un autre Home Assistant",
+    "app_text": "Envoyez ce lien à toute personne souhaitant installer Rezeptplaner. S’il ne fonctionne pas, ajoutez d’abord le dépôt.",
+    "app_install": "Installer l’application",
+    "app_repository": "Ajouter le dépôt"
+  },
   "system": {
     "title": "Système",
     "checking": "Vérification de la connexion …",

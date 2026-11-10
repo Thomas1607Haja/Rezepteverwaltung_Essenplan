@@ -8,6 +8,8 @@ import android.provider.Settings
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -105,6 +107,8 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
             }
         }
 
+        HomeAssistantCard()
+
         // Nur in der GitHub-Variante gesetzt, in „play“ leer (build.gradle.kts).
         if (BuildConfig.SUPPORT_URL.isNotEmpty()) SupportCard(BuildConfig.SUPPORT_URL)
 
@@ -125,6 +129,40 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
             },
             dismissButton = { TextButton(onClick = { confirmDisconnect = false }) { Text(tr(R.string.common_cancel)) } },
         )
+    }
+}
+
+/**
+ * My-Home-Assistant-Links (my-links.properties): Integration herunterladen und
+ * einrichten, App auf einem anderen Home Assistant installieren. Öffnen
+ * my.home-assistant.io im Browser, das zum eigenen Home Assistant weiterleitet.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun HomeAssistantCard() {
+    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
+    Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(tr(R.string.ha_title), style = MaterialTheme.typography.titleMedium)
+            Text(tr(R.string.ha_text), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr(R.string.ha_integration_title), style = MaterialTheme.typography.titleSmall)
+            Text(tr(R.string.ha_integration_text), style = MaterialTheme.typography.bodySmall)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { uriHandler.openUri(BuildConfig.MY_INTEGRATION_DOWNLOAD) }) { Text(tr(R.string.ha_integration_download)) }
+                OutlinedButton(onClick = { uriHandler.openUri(BuildConfig.MY_INTEGRATION_SETUP) }) { Text(tr(R.string.ha_integration_setup)) }
+            }
+            Text(tr(R.string.ha_app_title), style = MaterialTheme.typography.titleSmall)
+            Text(tr(R.string.ha_app_text), style = MaterialTheme.typography.bodySmall)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { uriHandler.openUri(BuildConfig.MY_APP_INSTALL) }) { Text(tr(R.string.ha_app_install)) }
+                OutlinedButton(onClick = {
+                    val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, BuildConfig.MY_APP_INSTALL)
+                    context.startActivity(Intent.createChooser(send, null))
+                }) { Text(tr(R.string.ha_app_share)) }
+                OutlinedButton(onClick = { uriHandler.openUri(BuildConfig.MY_APP_REPOSITORY) }) { Text(tr(R.string.ha_app_repository)) }
+            }
+        }
     }
 }
 

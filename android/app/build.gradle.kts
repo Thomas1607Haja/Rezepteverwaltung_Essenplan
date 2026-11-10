@@ -1,3 +1,4 @@
+import java.io.StringReader
 import java.util.Properties
 
 plugins {
@@ -41,6 +42,13 @@ val signing: Map<String, String> = run {
 val supportUrl = providers.fileContents(rootProject.layout.projectDirectory.file("../support-url.txt"))
     .asText.get().trim()
 
+// My-Home-Assistant-Links (App installieren, Integration herunterladen und
+// einrichten) aus my-links.properties im Hauptordner; die Weboberfläche liest
+// dieselbe Datei. Landen als BuildConfig.MY_<SCHLÜSSEL>.
+val myLinks = Properties().apply {
+    load(StringReader(providers.fileContents(rootProject.layout.projectDirectory.file("../my-links.properties")).asText.get()))
+}
+
 android {
     namespace = "io.github.thomas1607haja.rezeptplaner"
     // Übersetzt wird gegen das SDK von Android 17, weil die aktuellen
@@ -54,6 +62,10 @@ android {
         targetSdk = 36 // Android 16
         versionCode = appVersionCode
         versionName = appVersionName
+        for (key in listOf("app_install", "app_repository", "integration_download", "integration_setup")) {
+            val url = myLinks.getProperty(key) ?: error("my-links.properties: $key fehlt")
+            buildConfigField("String", "MY_" + key.uppercase(), "\"$url\"")
+        }
     }
 
     signingConfigs {

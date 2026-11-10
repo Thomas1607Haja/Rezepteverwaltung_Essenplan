@@ -48,4 +48,15 @@
     <string name="settings_qr_unavailable">The QR scanner isn\'t available on this device right now (Google Play services).</string>
     <string name="settings_qr_no_text">The QR code contains no text.</string>
     <string name="settings_qr_installing">Google Play services is downloading the QR scanner. Try again in a minute or two (internet connection required).</string>
+    <string name="ha_title">Home Assistant</string>
+    <string name="ha_text">These links open my.home-assistant.io, which forwards you to the right page in your own Home Assistant. The first time, it asks for your Home Assistant address.</string>
+    <string name="ha_integration_title">Integration and dashboard card</string>
+    <string name="ha_integration_text">Adds a meal plan calendar, a “Today” sensor and the “Meal plan” card. Download it from the Marketplace (HACS before Home Assistant 2026.11), restart Home Assistant, then set it up.</string>
+    <string name="ha_integration_download">Open in the Marketplace</string>
+    <string name="ha_integration_setup">Set up integration</string>
+    <string name="ha_app_title">Install Rezeptplaner on another Home Assistant</string>
+    <string name="ha_app_text">Share this link with anyone who wants to install Rezeptplaner. If it doesn\'t work, add the repository first.</string>
+    <string name="ha_app_install">Install the app</string>
+    <string name="ha_app_share">Share link</string>
+    <string name="ha_app_repository">Add repository</string>
 </resources>

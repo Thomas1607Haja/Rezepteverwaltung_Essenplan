@@ -37,9 +37,9 @@ There is an optional integration for Home Assistant:
 
 Integration and card have their own repository: **https://github.com/Thomas1607Haja/rezeptplaner-ha**
 
-1. [Open it in HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=Thomas1607Haja&repository=rezeptplaner-ha&category=integration) – or in **HACS** → ⋮ → **Custom repositories** add `https://github.com/Thomas1607Haja/rezeptplaner-ha` with type **Integration**.
+1. [Open it in the Marketplace](https://my.home-assistant.io/redirect/marketplace_repository/?owner=Thomas1607Haja&repository=rezeptplaner-ha&category=integration) – or under **Settings → Marketplace → Add from link** enter `Thomas1607Haja/rezeptplaner-ha`. (Before Home Assistant 2026.11 the link opens HACS; there: **HACS** → ⋮ → **Custom repositories**, type **Integration**.)
 2. Download **Rezeptplaner** and restart Home Assistant.
-3. Under **Settings → Devices & services**, “Rezeptplaner” appears as **Discovered** – tap **Add** and confirm. The app provides address and key itself.
+3. Under **Settings → Devices & services**, “Rezeptplaner” appears as **Discovered** – tap **Add** and confirm, or [start the setup](https://my.home-assistant.io/redirect/config_flow_start/?domain=rezeptplaner). The app provides address and key itself.
 4. Reload the page once (F5) so the browser knows the card. The integration registers the card as a dashboard resource itself. If you access Home Assistant through a Cloudflare tunnel, set up the cache rule from the README of rezeptplaner-ha first.
 5. Add a **Meal plan** card to a dashboard.
 
@@ -109,9 +109,9 @@ Optional gibt es eine Integration für Home Assistant:
 
 Integration und Karte haben ein eigenes Repository: **https://github.com/Thomas1607Haja/rezeptplaner-ha**
 
-1. [In HACS öffnen](https://my.home-assistant.io/redirect/hacs_repository/?owner=Thomas1607Haja&repository=rezeptplaner-ha&category=integration) – oder in **HACS** → ⋮ → **Benutzerdefinierte Repositories** `https://github.com/Thomas1607Haja/rezeptplaner-ha` mit Typ **Integration** hinzufügen.
+1. [Im Marketplace öffnen](https://my.home-assistant.io/redirect/marketplace_repository/?owner=Thomas1607Haja&repository=rezeptplaner-ha&category=integration) – oder unter **Einstellungen → Marketplace → Add from link** `Thomas1607Haja/rezeptplaner-ha` eintragen. (Vor Home Assistant 2026.11 öffnet der Link HACS; dort **HACS** → ⋮ → **Benutzerdefinierte Repositories**, Typ **Integration**.)
 2. **Rezeptplaner** herunterladen und Home Assistant neu starten.
-3. Unter **Einstellungen → Geräte & Dienste** erscheint „Rezeptplaner“ als **Entdeckt** – auf **Hinzufügen** tippen und bestätigen. Adresse und Schlüssel liefert die App selbst.
+3. Unter **Einstellungen → Geräte & Dienste** erscheint „Rezeptplaner“ als **Entdeckt** – auf **Hinzufügen** tippen und bestätigen oder [die Einrichtung starten](https://my.home-assistant.io/redirect/config_flow_start/?domain=rezeptplaner). Adresse und Schlüssel liefert die App selbst.
 4. Die Seite einmal neu laden (F5), damit der Browser die Karte kennt. Die Integration trägt die Karte dafür selbst als Dashboard-Ressource ein. Bei Zugriff über einen Cloudflare-Tunnel vorher die Cache-Regel aus dem README von rezeptplaner-ha einrichten.
 5. Im Dashboard eine Karte **Essensplan** hinzufügen.
 

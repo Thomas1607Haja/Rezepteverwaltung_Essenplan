@@ -27,9 +27,18 @@ French, Spanish and Italian were translated without a native speaker review – 
 
 ## Installation
 
-1. **App:** In Home Assistant go to Settings → Apps → App store → ⋮ → Repositories, add this address and install “Rezeptplaner”:
-   `https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan`
-2. **Integration and dashboard card (optional):** they have their own repository: **[rezeptplaner-ha](https://github.com/Thomas1607Haja/rezeptplaner-ha)** – [open it in HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=Thomas1607Haja&repository=rezeptplaner-ha&category=integration), download “Rezeptplaner” and restart Home Assistant. The integration then appears under Settings → Devices & services as “Discovered” – just confirm it. Card options, the Cloudflare tunnel note and how to move from this repository (up to integration 0.6 it lived here) are described there.
+1. **App:** [![Open your Home Assistant instance and show the Rezeptplaner app (adds the repository if needed).](https://my.home-assistant.io/badges/supervisor_app.svg)](https://my.home-assistant.io/redirect/supervisor_app/?app=45a92d34_rezeptplaner&repository_url=https%3A%2F%2Fgithub.com%2FThomas1607Haja%2FRezepteverwaltung_Essenplan)
+
+   Click the button and install “Rezeptplaner”. If the app doesn't show up, [add the repository](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FThomas1607Haja%2FRezepteverwaltung_Essenplan) first – or in Home Assistant go to Settings → Apps → App store → ⋮ → Repositories and add `https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan`.
+2. **Integration and dashboard card (optional):** they have their own repository, **[rezeptplaner-ha](https://github.com/Thomas1607Haja/rezeptplaner-ha)**.
+
+   [![Open your Home Assistant instance and open this repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=Thomas1607Haja&repository=rezeptplaner-ha&category=integration)
+
+   Download “Rezeptplaner” in the Marketplace (Home Assistant 2026.11 or newer; older versions open HACS) and restart Home Assistant. The integration then appears under Settings → Devices & services as “Discovered” – just confirm it, or start the setup here:
+
+   [![Open your Home Assistant instance and start setting up the Rezeptplaner integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=rezeptplaner)
+
+   Card options, the Cloudflare tunnel note and how to move from this repository (up to integration 0.6 it lived here) are described there.
 
 ### Android app
 

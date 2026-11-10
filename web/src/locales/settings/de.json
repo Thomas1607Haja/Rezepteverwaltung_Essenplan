@@ -29,6 +29,18 @@
     "time_coffee": "Kaffee",
     "time_dinner": "Abend"
   },
+  "home_assistant": {
+    "title": "Home Assistant",
+    "text": "Diese Links öffnen my.home-assistant.io und leiten von dort zur richtigen Seite in deinem eigenen Home Assistant weiter. Beim ersten Mal wird nach der Adresse deines Home Assistant gefragt.",
+    "integration_title": "Integration und Dashboard-Karte",
+    "integration_text": "Fügt einen Essensplan-Kalender, einen Sensor „Heute“ und die Karte „Essensplan“ hinzu. Im Marketplace herunterladen (vor Home Assistant 2026.11: HACS), Home Assistant neu starten, dann einrichten.",
+    "integration_download": "Im Marketplace öffnen",
+    "integration_setup": "Integration einrichten",
+    "app_title": "Rezeptplaner auf einem anderen Home Assistant installieren",
+    "app_text": "Diesen Link kannst du an alle schicken, die den Rezeptplaner installieren möchten. Klappt er nicht, zuerst das Repository hinzufügen.",
+    "app_install": "App installieren",
+    "app_repository": "Repository hinzufügen"
+  },
   "system": {
     "title": "System",
     "checking": "Verbindung wird geprüft …",
