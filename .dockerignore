@@ -4,6 +4,7 @@
 !web/
 !server/
 !support-url.txt
+!my-links.properties
 web/node_modules/
 server/internal/web/dist/app/
 server/data/
