@@ -52,7 +52,7 @@ You then have a calendar “Meal plan” and a sensor “Today” (e.g. for an a
 ## Access and security
 
 - The web interface is only reachable through Home Assistant (Ingress). Home Assistant handles the login.
-- The Android app has a separate **app access** on port 8100. Every request there needs an API key (created under **Settings**, only a hash is stored). The port is not exposed; a Cloudflare tunnel reaches it via the app's host name. Guide: `docs/APP-ZUGANG.md` in the repository.
+- The Android app has a separate **app access** on port 8100. Every request there needs an API key (created under **Settings**, only a hash is stored). The port is not exposed; a tunnel or VPN reaches it. Never forward this port to the internet. Guide: [docs/APP-ACCESS.md](https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/blob/main/docs/APP-ACCESS.md).
 - The app may use the Home Assistant API (`homeassistant_api`). It only reads the existing to-do lists and the system language, and writes to the selected list.
 - For the integration the app creates its own key and passes it to Home Assistant via discovery. This key can only read the meal plan, recipes and images inside the local network.
 - When importing a recipe from the internet, the app loads the page and the image itself. Addresses in the home network are blocked.
@@ -124,7 +124,7 @@ Danach gibt es den Kalender `calendar.rezeptplaner_essensplan` und den Sensor `s
 ## Zugriff und Sicherheit
 
 - Die Weboberfläche ist nur über Home Assistant erreichbar (Ingress). Die Anmeldung übernimmt Home Assistant.
-- Für die Android-App gibt es einen getrennten **App-Zugang** auf Port 8100. Dort braucht jede Anfrage einen API-Schlüssel (anlegen unter **Einstellungen → App-Zugang**, gespeichert wird nur ein Hash). Der Port ist nach außen nicht freigegeben; ein Cloudflare-Tunnel erreicht ihn über den Hostnamen der App. Anleitung: `docs/APP-ZUGANG.md` im Repository.
+- Für die Android-App gibt es einen getrennten **App-Zugang** auf Port 8100. Dort braucht jede Anfrage einen API-Schlüssel (anlegen unter **Einstellungen → App installieren**, gespeichert wird nur ein Hash). Der Port ist nach außen nicht freigegeben; ein Tunnel oder VPN erreicht ihn. Den Port nie direkt ins Internet freigeben. Anleitung: [docs/APP-ZUGANG.md](https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/blob/main/docs/APP-ZUGANG.md).
 - Die App darf die Home-Assistant-API nutzen (`homeassistant_api`). Sie liest damit nur die vorhandenen To-do-Listen und schreibt in die gewählte Liste.
 - Für die Integration erzeugt die App einen eigenen Schlüssel und teilt ihn Home Assistant über die Discovery mit. Mit diesem Schlüssel lassen sich im internen Netz nur Essensplan, Rezepte und Bilder lesen.
 - Beim Übernehmen eines Rezepts aus dem Internet lädt die App die Seite und das Bild selbst. Adressen im Heimnetz sind dabei gesperrt.

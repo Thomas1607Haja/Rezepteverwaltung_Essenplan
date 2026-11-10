@@ -1,5 +1,9 @@
 # App-Zugang über einen Cloudflare-Tunnel
 
+[English](APP-ACCESS.md) · **Deutsch**
+
+> **Port 8100 – und überhaupt keinen Port von Home Assistant – nie im Router direkt ins Internet freigeben.** Für unterwegs einen Tunnel (diese Anleitung) oder ein VPN ins Heimnetz nutzen. Beim VPN braucht die App eine `https://`-Adresse, also einen HTTPS-Endpunkt vor Port 8100 im Heimnetz (englische Anleitung, Abschnitt „Option A: VPN“).
+
 Die Android-App spricht den Rezeptplaner nicht über Home Assistant an, sondern über einen eigenen Zugang: **Port 8100** der App. Dort verlangt der Server bei **jeder** Anfrage einen gültigen API-Schlüssel (`Authorization: Bearer rp_…`), sonst antwortet er mit 401. Die Weboberfläche und die Schlüsselverwaltung gibt es dort nicht.
 
 Die Weboberfläche (Port 8099, Ingress) bleibt davon getrennt und ist nur über Home Assistant erreichbar.
