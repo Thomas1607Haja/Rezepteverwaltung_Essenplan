@@ -277,6 +277,7 @@ func registerRoutes(mux httpx.Router, s services) error {
 	if err != nil {
 		return err
 	}
+	fileImporter.SkillURL = appinstall.NewLinks(appinstall.LoadRepository(s.dataDir)).SkillURL
 	fileImporter.Register(mux)
 	settingsStore := settings.NewStore(s.db)
 	settings.NewHandler(settingsStore).Register(mux)

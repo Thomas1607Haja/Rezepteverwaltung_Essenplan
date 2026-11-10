@@ -34,5 +34,6 @@
   "not_imported": "Not imported",
   "recipe_n": "Recipe {n}",
   "to_recipes": "Go to recipes",
-  "import_more": "Import another file"
+  "import_more": "Import another file",
+  "skill_update": { "text": "A newer Claude skill is available: this file comes from version {version}, the current one is {current}. The import still works – download the new skill and upload it in Claude to replace the old one.", "download": "Download skill {current}" }
 }

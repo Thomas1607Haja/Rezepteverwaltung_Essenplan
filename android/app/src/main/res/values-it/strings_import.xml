@@ -58,4 +58,6 @@
     <string name="import_upload_failed">Errore durante il caricamento.</string>
     <string name="import_offline">L\'importazione funziona solo con la connessione a Rezeptplaner.</string>
     <string name="import_default_file_name">File</string>
+    <string name="import_skill_update">È disponibile una skill di Claude più recente: questo file proviene dalla versione {version}, quella attuale è la {current}. L’importazione funziona comunque: scarica la nuova skill e sostituisci quella vecchia in Claude.</string>
+    <string name="import_skill_download">Scarica la skill {current}</string>
 </resources>

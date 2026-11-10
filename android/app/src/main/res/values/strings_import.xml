@@ -54,4 +54,6 @@
     <string name="import_upload_failed">Upload failed.</string>
     <string name="import_offline">Importing only works when connected to Rezeptplaner.</string>
     <string name="import_default_file_name">File</string>
+    <string name="import_skill_update">A newer Claude skill is available: this file comes from version {version}, the current one is {current}. The import still works – download the new skill and upload it in Claude to replace the old one.</string>
+    <string name="import_skill_download">Download skill {current}</string>
 </resources>

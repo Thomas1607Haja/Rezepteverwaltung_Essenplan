@@ -31,7 +31,7 @@ Zeichensatz UTF-8 (ein BOM am Anfang wird ignoriert).
 {
   "format": "rezeptplaner-import",
   "version": 3,
-  "generator": "claude-skill rezeptplaner-import 2.3",
+  "generator": "claude-skill rezeptplaner-import 2.4",
   "recipes": [ { … }, { … } ]
 }
 ```
@@ -40,7 +40,7 @@ Zeichensatz UTF-8 (ein BOM am Anfang wird ignoriert).
 |---|---|---|
 | `format` | ja | immer `"rezeptplaner-import"` |
 | `version` | ja | `3`; Dateien der Versionen `1` und `2` (ohne `image_kind` bzw. `yield_unit`) nimmt der Server weiter an. Andere Versionen lehnt er mit Meldung ab |
-| `generator` | nein | wer die Datei erzeugt hat (nur zur Information) |
+| `generator` | nein | wer die Datei erzeugt hat. Die Claude-Skill schreibt `claude-skill rezeptplaner-import <Skill-Version>`; ab Server 0.21.0 zeigt die Vorschau dann einen Hinweis mit Download-Link, wenn die Skill älter ist als die zum Server gehörende (`skill` in der Antwort der Vorschau). Ein eigenes Versionsfeld gibt es nicht, weil ältere Server unbekannte Felder ablehnen |
 | `recipes` | ja | 1 bis 100 Rezepte |
 
 Unbekannte Felder sind **nicht erlaubt** – ein Tippfehler wie `"ingredient"`

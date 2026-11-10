@@ -154,6 +154,14 @@
     <p class="error">{fe.file}: {noteText(fe.error_detail ?? fe.error)}</p>
   {/each}
 
+  {#if preview.skill?.update_available}
+    <!-- Datei von einer älteren Claude-Skill: nur ein Hinweis, der Import geht weiter. -->
+    <p class="skill-update">
+      {t('import.skill_update.text', { version: preview.skill.version, current: preview.skill.current })}
+      <a href={preview.skill.download_url}>{t('import.skill_update.download', { current: preview.skill.current })}</a>
+    </p>
+  {/if}
+
   {#if preview.recipes.length === 0}
     <p>{t('import.no_recipes')}</p>
   {/if}
@@ -496,6 +504,20 @@
 
   .warning {
     color: var(--warning);
+  }
+
+  .skill-update {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .skill-update a {
+    display: inline-block;
+    margin-left: 0.25rem;
+    font-weight: 600;
   }
 
   .from-web {

@@ -45,7 +45,10 @@ type Importer struct {
 	images  *images.Store
 	// fetcher lädt Fotos von den Quellseiten (webimage.go); nil = aus.
 	fetcher *fetch.Client
-	now     func() time.Time
+	// SkillURL lädt die neueste Claude-Skill (Hinweis in der Vorschau,
+	// SkillCheck); main setzt ihn aus dem App-Repository.
+	SkillURL string
+	now      func() time.Time
 	// mu: immer nur ein Upload bzw. Import gleichzeitig. Das hält die
 	// Speicherspitze klein und verhindert, dass zweimal Bestätigen
 	// dieselben Rezepte doppelt anlegt.
@@ -118,6 +121,9 @@ type Preview struct {
 	// einmal (ohne Rücksicht auf Groß-/Kleinschreibung und Umlaute) – so
 	// fragt die Oberfläche je Name nur einmal.
 	UnknownCategories []string `json:"unknown_categories"`
+	// Skill: Version der Claude-Skill, die die Dateien erzeugt hat, und ob es
+	// eine neuere gibt; fehlt, wenn keine Datei von der Skill stammt.
+	Skill *SkillCheck `json:"skill,omitempty"`
 }
 
 // PreviewRecipe ist ein Rezept der Vorschau. Mit Errors lässt es sich
@@ -311,6 +317,11 @@ func (im *Importer) preview(ctx context.Context, token, dir string) (Preview, er
 	}
 
 	result := Preview{Recipes: []PreviewRecipe{}, FileErrors: fileErrors, UnknownCategories: []string{}}
+	generators := make([]string, 0, len(cands))
+	for _, c := range cands {
+		generators = append(generators, c.src.doc.Generator)
+	}
+	result.Skill = checkSkill(generators, im.SkillURL)
 	seenUnknown := make(map[string]bool)
 	// Hinweise zum Bild erst nach dem Versuch mit der Quellseite.
 	imageWarnings := make(map[int]*apierr.Error)

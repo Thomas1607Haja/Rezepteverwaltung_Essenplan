@@ -34,5 +34,6 @@
   "not_imported": "Non importate",
   "recipe_n": "Ricetta {n}",
   "to_recipes": "Vai alle ricette",
-  "import_more": "Importa un altro file"
+  "import_more": "Importa un altro file",
+  "skill_update": { "text": "È disponibile una skill di Claude più recente: questo file proviene dalla versione {version}, quella attuale è la {current}. L’importazione funziona comunque: scarica la nuova skill e sostituisci quella vecchia in Claude.", "download": "Scarica la skill {current}" }
 }

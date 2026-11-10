@@ -1,6 +1,5 @@
 package io.github.thomas1607haja.rezeptplaner.ui.importer
 
-import io.github.thomas1607haja.rezeptplaner.ui.wrapTitle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -21,29 +20,30 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,13 +54,15 @@ import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.CategoryChoice
 import io.github.thomas1607haja.rezeptplaner.api.ImportCandidate
 import io.github.thomas1607haja.rezeptplaner.api.Note
+import io.github.thomas1607haja.rezeptplaner.api.SkillCheck
 import io.github.thomas1607haja.rezeptplaner.api.TagGroup
 import io.github.thomas1607haja.rezeptplaner.data.ImportState
+import io.github.thomas1607haja.rezeptplaner.ui.amountText
 import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 import io.github.thomas1607haja.rezeptplaner.ui.common.trPlural
 import io.github.thomas1607haja.rezeptplaner.ui.formatMinutes
-import io.github.thomas1607haja.rezeptplaner.ui.amountText
+import io.github.thomas1607haja.rezeptplaner.ui.wrapTitle
 import kotlinx.coroutines.launch
 
 /**
@@ -158,6 +160,9 @@ private fun Preview(
                     tr(R.string.import_item_error, "item" to it.file, "error" to (it.errorDetail?.text() ?: it.error)),
                     color = MaterialTheme.colorScheme.error,
                 )
+            }
+            s.preview.skill?.takeIf { it.updateAvailable && it.downloadUrl.isNotEmpty() }?.let { skill ->
+                item { SkillUpdateCard(skill) }
             }
             if (s.preview.recipes.isEmpty()) item { Text(tr(R.string.import_no_recipes)) }
             items(s.preview.recipes, key = { it.index }) { c ->
@@ -356,6 +361,23 @@ private fun Done(s: ImportState.Done, onOpenRecipe: (Long) -> Unit, onAgain: () 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
                 Button(onClick = onClose) { Text(tr(R.string.import_done)) }
                 OutlinedButton(onClick = onAgain) { Text(tr(R.string.import_another)) }
+            }
+        }
+    }
+}
+
+/** Die Datei stammt von einer älteren Claude-Skill: nur ein Hinweis, der Import geht weiter. */
+@Composable
+private fun SkillUpdateCard(skill: SkillCheck) {
+    val uriHandler = LocalUriHandler.current
+    Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                tr(R.string.import_skill_update, "version" to skill.version, "current" to skill.current),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            OutlinedButton(onClick = { uriHandler.openUri(skill.downloadUrl) }) {
+                Text(tr(R.string.import_skill_download, "current" to skill.current))
             }
         }
     }

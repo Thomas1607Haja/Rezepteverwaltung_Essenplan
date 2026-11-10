@@ -58,4 +58,6 @@
     <string name="import_upload_failed">Échec de l\'envoi.</string>
     <string name="import_offline">L\'import nécessite une connexion à Rezeptplaner.</string>
     <string name="import_default_file_name">Fichier</string>
+    <string name="import_skill_update">Une skill Claude plus récente est disponible : ce fichier provient de la version {version}, la version actuelle est {current}. L’import fonctionne quand même – téléchargez la nouvelle skill et remplacez l’ancienne dans Claude.</string>
+    <string name="import_skill_download">Télécharger la skill {current}</string>
 </resources>

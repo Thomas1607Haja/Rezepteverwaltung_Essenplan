@@ -260,6 +260,17 @@ data class ImportPreview(
     @SerialName("file_errors") val fileErrors: List<ImportFileError> = emptyList(),
     /** Kategorien der Datei, die es nicht gibt – jede einmal (ab Server 0.9.0). */
     @SerialName("unknown_categories") val unknownCategories: List<String> = emptyList(),
+    /** Version der Claude-Skill, die die Datei erzeugt hat (ab Server 0.21.0); null = nicht von der Skill. */
+    val skill: SkillCheck? = null,
+)
+
+/** Skill-Version einer Importdatei und ob es eine neuere gibt (server/internal/fileimport/skill.go). */
+@Serializable
+data class SkillCheck(
+    val version: String = "",
+    val current: String = "",
+    @SerialName("update_available") val updateAvailable: Boolean = false,
+    @SerialName("download_url") val downloadUrl: String = "",
 )
 
 /**
