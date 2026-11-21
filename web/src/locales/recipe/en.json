@@ -31,6 +31,27 @@
   "creating_variant": "Creating …",
   "variant_error": "Couldn't create the variant: {message}",
   "add_to_plan": "Add to meal plan",
+  "shop_now": {
+    "button": "Shop now",
+    "button_title": "Send this recipe's ingredients to Bring without planning it",
+    "hint": "Untick what you already have. Nothing is added to the meal plan.",
+    "send": "Send to Bring · {list}",
+    "send_plain": "Send to Bring",
+    "no_list": "No Bring list selected – please choose one in Settings.",
+    "sending": "Sending …",
+    "title": "Shop now",
+    "sent": {
+      "one": "One item sent to Bring ({list}).",
+      "other": "{count} items sent to Bring ({list})."
+    },
+    "merged": {
+      "one": "One of them was added to an item already on the list.",
+      "other": "{count} of them were added to items already on the list."
+    },
+    "failed": "Not received (please add by hand): {items}",
+    "also_plan": "Also add to meal plan",
+    "also_plan_hint": "Added as “ingredients available”, so nothing is bought twice."
+  },
   "delete": {
     "button": "Delete recipe",
     "confirm": "Delete “{title}”?",

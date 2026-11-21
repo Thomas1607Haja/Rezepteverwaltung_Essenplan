@@ -119,6 +119,7 @@
     <string name="error_not_zip_or_json" formatted="false">Weder ZIP- noch JSON-Datei</string>
     <string name="error_note_required" formatted="false">Ohne Rezept ist eine Notiz nötig, z. B. „Essen gehen“</string>
     <string name="error_nothing_to_send" formatted="false">In diesem Zeitraum ist nichts zu senden</string>
+    <string name="error_no_items_selected" formatted="false">Keine Artikel ausgewählt</string>
     <string name="error_out_of_range" formatted="false">Muss zwischen {min} und {max} liegen</string>
     <string name="error_page_status" formatted="false">Die Seite antwortet mit Status {status}</string>
     <string name="error_page_unreachable" formatted="false">Die Seite ließ sich nicht laden</string>

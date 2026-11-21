@@ -133,6 +133,13 @@ class ApiClient(baseClient: OkHttpClient = defaultClient) {
     suspend fun sendShopping(config: ServerConfig, request: ShoppingSend): SendResult =
         send(config, "POST", "/api/v1/shopping/send", json.encodeToString(request))
 
+    /** Eingestellte Bring-Liste (entity_id leer = keine gewählt). */
+    suspend fun shoppingList(config: ServerConfig): TodoList = get(config, "/api/v1/shopping/list")
+
+    /** „Jetzt einkaufen“: ein Rezept an Bring senden, ohne es einzuplanen. */
+    suspend fun sendRecipe(config: ServerConfig, request: RecipeSend): SendResult =
+        send(config, "POST", "/api/v1/shopping/recipe", json.encodeToString(request))
+
     suspend fun homeAssistantStatus(config: ServerConfig): HomeAssistantStatus = get(config, "/api/v1/homeassistant/status")
 
     /** Vorschau „Übertragung zurücksetzen“: Gerichte des Zeitraums bzw. nur [entryId]. */

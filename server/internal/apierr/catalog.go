@@ -92,6 +92,7 @@ var catalog = map[string]string{
 	// Einkauf und Bring
 	"no_bring_list":       "Please choose a Bring list in the settings first",
 	"nothing_to_send":     "Nothing to send in this period",
+	"no_items_selected":   "No items selected",
 	"entry_not_sent":      "The dish has not been sent to Bring",
 	"no_entries_selected": "No sent dishes selected",
 

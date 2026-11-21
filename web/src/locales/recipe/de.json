@@ -31,6 +31,27 @@
   "creating_variant": "Legt an …",
   "variant_error": "Variante konnte nicht angelegt werden: {message}",
   "add_to_plan": "Zum Essensplan hinzufügen",
+  "shop_now": {
+    "button": "Jetzt einkaufen",
+    "button_title": "Zutaten dieses Rezepts an Bring senden, ohne es einzuplanen",
+    "hint": "Häkchen entfernen, was du noch hast. Es wird nichts im Essensplan eingetragen.",
+    "send": "An Bring senden · {list}",
+    "send_plain": "An Bring senden",
+    "no_list": "Keine Bring-Liste gewählt – bitte in den Einstellungen auswählen.",
+    "sending": "Wird gesendet …",
+    "title": "Jetzt einkaufen",
+    "sent": {
+      "one": "Ein Artikel an Bring gesendet ({list}).",
+      "other": "{count} Artikel an Bring gesendet ({list})."
+    },
+    "merged": {
+      "one": "Davon einer bei einem schon vorhandenen Artikel ergänzt.",
+      "other": "Davon {count} bei schon vorhandenen Artikeln ergänzt."
+    },
+    "failed": "Nicht angekommen (bitte von Hand eintragen): {items}",
+    "also_plan": "Auch im Essensplan eintragen",
+    "also_plan_hint": "Wird als „Zutaten vorhanden“ eingetragen und nicht noch einmal eingekauft."
+  },
   "delete": {
     "button": "Rezept löschen",
     "confirm": "„{title}“ wirklich löschen?",

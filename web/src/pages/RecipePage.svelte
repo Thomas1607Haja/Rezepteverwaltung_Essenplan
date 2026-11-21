@@ -10,6 +10,7 @@
   import { t, errorText } from '../lib/i18n.svelte.js';
   import Icon from '../components/Icon.svelte';
   import AddToPlanDialog from '../components/AddToPlanDialog.svelte';
+  import ShopNowDialog from '../components/ShopNowDialog.svelte';
 
   // id kommt aus der Adresse #/recipes/:id. Aus dem Essensplan geöffnet
   // (#/recipes/:id/entry/:entryId) kommt die ID des Planeintrags dazu.
@@ -28,6 +29,8 @@
   let servings = $state(1);
   let planEntry = $state(null); // Planeintrag, aus dem die Seite geöffnet wurde
   let showAddDialog = $state(false);
+  let showShopNow = $state(false); // „Jetzt einkaufen“
+  let bought = $state(null); // { servings } nach „Jetzt einkaufen“ → „Auch eintragen“
   let creatingVariant = $state(false);
 
   // Rezeptfamilie: Ursprungsrezept und Varianten (siehe Server variants.go).
@@ -339,13 +342,28 @@
       <button type="button" class="plan" onclick={saveVariant} disabled={creatingVariant}>
         {creatingVariant ? t('recipe.creating_variant') : t('recipe.save_variant')}
       </button>
-      <button type="button" class="plan" onclick={() => (showAddDialog = true)}>{t('recipe.add_to_plan')}</button>
+      <button type="button" class="plan" onclick={() => (showShopNow = true)} title={t('recipe.shop_now.button_title')}>
+        {t('recipe.shop_now.button')}
+      </button>
+      <button type="button" class="plan" onclick={() => ((bought = null), (showAddDialog = true))}>{t('recipe.add_to_plan')}</button>
       <a class="edit" href={`#/recipes/${recipe.id}/edit`}>{t('common.edit')}</a>
     </footer>
   </article>
 
   {#if showAddDialog}
-    <AddToPlanDialog {recipe} onadded={refreshPlanInfo} onclose={() => (showAddDialog = false)} />
+    <AddToPlanDialog {recipe} {bought} onadded={refreshPlanInfo} onclose={() => (showAddDialog = false)} />
+  {/if}
+
+  {#if showShopNow}
+    <ShopNowDialog
+      {recipe}
+      onplan={(b) => {
+        bought = b;
+        showShopNow = false;
+        showAddDialog = true;
+      }}
+      onclose={() => (showShopNow = false)}
+    />
   {/if}
 {/if}
 

@@ -5,6 +5,10 @@ import io.github.thomas1607haja.rezeptplaner.api.HouseholdSettings
 import io.github.thomas1607haja.rezeptplaner.api.Ingredient
 import io.github.thomas1607haja.rezeptplaner.api.NewEntry
 import io.github.thomas1607haja.rezeptplaner.api.Recipe
+import io.github.thomas1607haja.rezeptplaner.api.RecipeSend
+import io.github.thomas1607haja.rezeptplaner.api.SendResult
+import io.github.thomas1607haja.rezeptplaner.api.SentItem
+import io.github.thomas1607haja.rezeptplaner.ui.recipe.shopNowSummary
 import io.github.thomas1607haja.rezeptplaner.data.Snapshot
 import io.github.thomas1607haja.rezeptplaner.ui.plan.excludedLabel
 import io.github.thomas1607haja.rezeptplaner.ui.plan.wantsPreview
@@ -49,5 +53,20 @@ class PlanPreviewTest {
         assertFalse(wantsPreview(off, withKeys))
         assertEquals(null, excludedLabel(0))
         assertEquals("2 Zutaten vorhanden", excludedLabel(2))
+    }
+
+    @Test
+    fun shopNowRequestAndSummary() {
+        // „Jetzt einkaufen“ schickt genau die Felder, die der Server erwartet.
+        assertEquals(
+            "{\"recipe_id\":7,\"servings\":2,\"excluded\":[\"butter\"]}",
+            json.encodeToString(RecipeSend(7, 2, listOf("butter"))),
+        )
+        val result = SendResult(list = "todo.zuhause", sent = listOf(SentItem("Mehl", "500 g"), SentItem("Eier", "8", merged = true)))
+        assertEquals(
+            listOf("2 Artikel an Bring gesendet (Zuhause).", "Davon einer bei einem schon vorhandenen Artikel ergänzt."),
+            shopNowSummary(result, "Zuhause"),
+        )
+        assertEquals(listOf("Ein Artikel an Bring gesendet (Zuhause)."), shopNowSummary(SendResult(sent = listOf(SentItem("Mehl"))), "Zuhause"))
     }
 }

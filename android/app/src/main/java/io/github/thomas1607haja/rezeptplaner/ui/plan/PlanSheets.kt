@@ -52,6 +52,7 @@ import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.MealPlanEntry
 import io.github.thomas1607haja.rezeptplaner.api.MoveWarning
 import io.github.thomas1607haja.rezeptplaner.data.Outcome
+import io.github.thomas1607haja.rezeptplaner.data.PlanChoice
 import io.github.thomas1607haja.rezeptplaner.data.Snapshot
 import io.github.thomas1607haja.rezeptplaner.ui.common.LocalSnackbar
 import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
@@ -155,10 +156,14 @@ private fun DayChooser(
     }
 }
 
-/** „Zum Essensplan hinzufügen“ aus der Kochansicht. */
+/**
+ * „Zum Essensplan hinzufügen“ aus der Kochansicht. [bought]: Portionen nach
+ * „Jetzt einkaufen“ – dann ohne Kurzvorschau mit Status „Zutaten vorhanden“
+ * eintragen, damit nichts doppelt eingekauft wird.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, today: LocalDate, onDismiss: () -> Unit) {
+fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, today: LocalDate, onDismiss: () -> Unit, bought: Int? = null) {
     val app = app()
     val snackbar = LocalSnackbar.current
     val scope = rememberCoroutineScope()
@@ -170,7 +175,8 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
     var previewDate by remember { mutableStateOf<String?>(null) }
     var previewReplace by remember { mutableStateOf<MealPlanEntry?>(null) }
     val recipe = snapshot.recipes.firstOrNull { it.id == recipeId }
-    val preview = wantsPreview(snapshot, recipe)
+    val boughtChoice = bought?.let { PlanChoice(it, emptyList(), allAvailable = true) }
+    val preview = boughtChoice == null && wantsPreview(snapshot, recipe)
 
     fun run(date: String, action: suspend () -> String?) {
         busy = true
@@ -201,7 +207,7 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
                     when {
                         busy -> {}
                         preview -> { error = null; previewDate = date }
-                        else -> run(date) { app.planRepository.add(date, slot, recipeId) }
+                        else -> run(date) { app.planRepository.add(date, slot, recipeId, boughtChoice) }
                     }
                 },
                 onItem = { item ->
@@ -237,7 +243,7 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
             confirmButton = {
                 TextButton(onClick = {
                     replacing = null
-                    run(e.date) { app.planRepository.replace(e, recipeId) }
+                    run(e.date) { app.planRepository.replace(e, recipeId, boughtChoice) }
                 }) { Text(tr(R.string.plan_replace)) }
             },
             dismissButton = { TextButton(onClick = { replacing = null }) { Text(tr(R.string.common_cancel)) } },

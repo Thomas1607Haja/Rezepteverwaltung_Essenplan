@@ -160,12 +160,14 @@ fun RecipeScreen(
         }
         val today = snapshot.today.takeIf(String::isNotEmpty)?.let(LocalDate::parse) ?: LocalDate.now()
         var adding by remember { mutableStateOf(false) }
+        var shopping by remember { mutableStateOf(false) } // „Jetzt einkaufen“
+        var bought by remember { mutableStateOf<Int?>(null) } // Portionen nach „Jetzt einkaufen“
         // Nur, solange der Eintrag noch dieses Rezept hat (wie im Web).
         val entry = snapshot.entries.firstOrNull { it.id == entryId && it.recipeId == recipe.id }
         RecipeContent(
             recipe, entry?.servings ?: planServings, snapshot.recipes,
             planStatus(snapshot.planInfo.firstOrNull { it.recipeId == recipe.id }, today),
-            onOpen, onAddToPlan = { adding = true },
+            onOpen, onAddToPlan = { bought = null; adding = true }, onShopNow = { shopping = true },
             planContext = entry?.let {
                 buildList {
                     add(tr(R.string.recipe_in_plan, "day" to dayLabel(it.date) + slotWhen(it.slot).let { w -> if (w.isEmpty()) "" else " $w" }))
@@ -197,7 +199,14 @@ fun RecipeScreen(
                 },
             ),
         )
-        if (adding) AddToPlanSheet(recipe.id, recipe.title, snapshot, today, onDismiss = { adding = false })
+        if (adding) AddToPlanSheet(recipe.id, recipe.title, snapshot, today, onDismiss = { adding = false }, bought = bought)
+        if (shopping) {
+            ShopNowSheet(
+                recipe, snapshot.settings.familySize,
+                onPlan = { servings -> shopping = false; bought = servings; adding = true },
+                onDismiss = { shopping = false },
+            )
+        }
     }
 }
 
@@ -211,6 +220,7 @@ private fun RecipeContent(
     onOpen: (Long) -> Unit,
     onAddToPlan: () -> Unit,
     actions: RecipeActions,
+    onShopNow: () -> Unit = {},
     planContext: String? = null,
     onTag: (Long) -> Unit = {},
 ) {
@@ -284,6 +294,8 @@ private fun RecipeContent(
                 Spacer(Modifier.width(8.dp))
                 Text(tr(R.string.recipe_add_to_plan))
             }
+            // Spontan einkaufen, ohne einzuplanen (nur online, siehe ShopNowSheet).
+            OutlinedButton(onClick = onShopNow) { Text(tr(R.string.shop_now_button)) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = actions.onEdit, enabled = !actions.busy) { Text(tr(R.string.common_edit)) }
                 OutlinedButton(onClick = actions.onVariant, enabled = !actions.busy) { Text(tr(R.string.recipe_save_variant)) }

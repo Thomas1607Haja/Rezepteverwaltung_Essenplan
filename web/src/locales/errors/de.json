@@ -117,6 +117,7 @@
   "not_zip_or_json": "Weder ZIP- noch JSON-Datei",
   "note_required": "Ohne Rezept ist eine Notiz nötig, z. B. „Essen gehen“",
   "nothing_to_send": "In diesem Zeitraum ist nichts zu senden",
+  "no_items_selected": "Keine Artikel ausgewählt",
   "out_of_range": "Muss zwischen {min} und {max} liegen",
   "page_status": "Die Seite antwortet mit Status {status}",
   "page_unreachable": "Die Seite ließ sich nicht laden",

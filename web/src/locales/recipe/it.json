@@ -31,6 +31,27 @@
   "creating_variant": "Creazione …",
   "variant_error": "Impossibile creare la variante: {message}",
   "add_to_plan": "Aggiungi al piano",
+  "shop_now": {
+    "button": "Compra ora",
+    "button_title": "Invia gli ingredienti di questa ricetta a Bring senza pianificarla",
+    "hint": "Togli la spunta a ciò che hai già. Nel piano non viene aggiunto nulla.",
+    "send": "Invia a Bring · {list}",
+    "send_plain": "Invia a Bring",
+    "no_list": "Nessuna lista Bring scelta: selezionane una nelle impostazioni.",
+    "sending": "Invio …",
+    "title": "Compra ora",
+    "sent": {
+      "one": "Un articolo inviato a Bring ({list}).",
+      "other": "{count} articoli inviati a Bring ({list})."
+    },
+    "merged": {
+      "one": "Uno è stato aggiunto a un articolo già presente.",
+      "other": "{count} sono stati aggiunti ad articoli già presenti."
+    },
+    "failed": "Non ricevuto (aggiungi a mano): {items}",
+    "also_plan": "Aggiungi anche al piano",
+    "also_plan_hint": "Aggiunto come «ingredienti disponibili», così non si compra due volte."
+  },
   "delete": {
     "button": "Elimina ricetta",
     "confirm": "Eliminare «{title}»?",

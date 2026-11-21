@@ -3,6 +3,7 @@ package io.github.thomas1607haja.rezeptplaner.data
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.api.ApiClient
 import io.github.thomas1607haja.rezeptplaner.api.ApiException
+import io.github.thomas1607haja.rezeptplaner.api.RecipeSend
 import io.github.thomas1607haja.rezeptplaner.api.ResetPreview
 import io.github.thomas1607haja.rezeptplaner.api.ResetRequest
 import io.github.thomas1607haja.rezeptplaner.api.ResetResult
@@ -37,6 +38,16 @@ class ShoppingRepository(
     suspend fun sendEntries(entryIds: List<Long>): Outcome<SendResult> =
         call { api.sendShopping(it, ShoppingSend("current", emptyList(), entries = entryIds)) }
             .also { if (it is Outcome.Ok) sync.sync(SyncTrigger.Manual) }
+
+    /** Eingestellte Bring-Liste für „Jetzt einkaufen“. */
+    suspend fun bringList(): Outcome<TodoList> = call { api.shoppingList(it) }
+
+    /**
+     * „Jetzt einkaufen“: Zutaten eines Rezepts an Bring senden. Legt keinen
+     * Planeintrag an, deshalb ist kein Abgleich nötig.
+     */
+    suspend fun sendRecipe(recipeId: Long, servings: Int, excluded: List<String>): Outcome<SendResult> =
+        call { api.sendRecipe(it, RecipeSend(recipeId, servings, excluded)) }
 
     /** Was „Übertragung zurücksetzen“ beträfe: Gerichte des Zeitraums bzw. nur [entryId]. */
     suspend fun resetPreview(next: Boolean, entryId: Long?): Outcome<ResetPreview> =

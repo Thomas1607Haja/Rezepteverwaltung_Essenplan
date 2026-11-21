@@ -26,6 +26,8 @@ func (h *Handler) Register(mux httpx.Router) {
 	mux.HandleFunc("POST /api/v1/shopping/send", h.send)
 	mux.HandleFunc("GET /api/v1/shopping/reset", h.resetPreview)
 	mux.HandleFunc("POST /api/v1/shopping/reset", h.reset)
+	mux.HandleFunc("GET /api/v1/shopping/list", h.list)
+	mux.HandleFunc("POST /api/v1/shopping/recipe", h.sendRecipe)
 }
 
 // parsePeriod liest "current" (oder leer) bzw. "next".
@@ -114,6 +116,29 @@ func (h *Handler) reset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := h.store.Reset(r.Context(), ResetOptions{Entries: in.Entries, Remove: in.Remove, FallbackList: in.FallbackList})
+	h.writeResult(w, r, result, err)
+}
+
+// list liefert die eingestellte Bring-Liste: {"entity_id": "todo.zuhause", "name": "Zuhause"}.
+func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
+	ref, err := h.store.List(r.Context())
+	h.writeResult(w, r, ref, err)
+}
+
+// sendRecipe: „Jetzt einkaufen“ – ein Rezept spontan an Bring senden, ohne
+// es einzuplanen. Anfrage z. B.
+// {"recipe_id": 12, "servings": 4, "excluded": ["zwiebel"]}.
+func (h *Handler) sendRecipe(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		RecipeID int64    `json:"recipe_id"`
+		Servings int      `json:"servings"`
+		Excluded []string `json:"excluded"`
+	}
+	if err := httpx.ReadJSON(w, r, &in); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	result, err := h.store.SendRecipe(r.Context(), RecipeSendOptions{RecipeID: in.RecipeID, Servings: in.Servings, Excluded: in.Excluded})
 	h.writeResult(w, r, result, err)
 }
 

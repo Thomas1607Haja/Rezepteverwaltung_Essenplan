@@ -124,6 +124,7 @@ object ErrorTexts {
         "not_zip_or_json" to R.string.error_not_zip_or_json,
         "note_required" to R.string.error_note_required,
         "nothing_to_send" to R.string.error_nothing_to_send,
+        "no_items_selected" to R.string.error_no_items_selected,
         "out_of_range" to R.string.error_out_of_range,
         "page_status" to R.string.error_page_status,
         "page_unreachable" to R.string.error_page_unreachable,

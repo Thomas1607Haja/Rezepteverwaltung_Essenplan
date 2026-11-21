@@ -114,4 +114,21 @@
         <item quantity="one">{count} recipe</item>
         <item quantity="other">{count} recipes</item>
     </plurals>
+    <string name="shop_now_button">Shop now</string>
+    <string name="shop_now_hint">Untick what you already have. Nothing is added to the meal plan.</string>
+    <string name="shop_now_send">Send to Bring · {list}</string>
+    <string name="shop_now_send_plain">Send to Bring</string>
+    <string name="shop_now_no_list">No Bring list selected – please choose one under Shopping.</string>
+    <string name="shop_now_title">Shop now</string>
+    <plurals name="shop_now_sent">
+        <item quantity="one">One item sent to Bring ({list}).</item>
+        <item quantity="other">{count} items sent to Bring ({list}).</item>
+    </plurals>
+    <plurals name="shop_now_merged">
+        <item quantity="one">One of them was added to an item already on the list.</item>
+        <item quantity="other">{count} of them were added to items already on the list.</item>
+    </plurals>
+    <string name="shop_now_failed">Not received (please add by hand): {items}</string>
+    <string name="shop_now_also_plan">Also add to meal plan</string>
+    <string name="shop_now_also_plan_hint">Added as “ingredients available”, so nothing is bought twice.</string>
 </resources>

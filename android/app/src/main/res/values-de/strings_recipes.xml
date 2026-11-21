@@ -114,4 +114,21 @@
         <item quantity="one">{count} Rezept</item>
         <item quantity="other">{count} Rezepte</item>
     </plurals>
+    <string name="shop_now_button">Jetzt einkaufen</string>
+    <string name="shop_now_hint">Häkchen entfernen, was du noch hast. Es wird nichts im Essensplan eingetragen.</string>
+    <string name="shop_now_send">An Bring senden · {list}</string>
+    <string name="shop_now_send_plain">An Bring senden</string>
+    <string name="shop_now_no_list">Keine Bring-Liste gewählt – bitte unter Einkauf auswählen.</string>
+    <string name="shop_now_title">Jetzt einkaufen</string>
+    <plurals name="shop_now_sent">
+        <item quantity="one">Ein Artikel an Bring gesendet ({list}).</item>
+        <item quantity="other">{count} Artikel an Bring gesendet ({list}).</item>
+    </plurals>
+    <plurals name="shop_now_merged">
+        <item quantity="one">Davon einer bei einem schon vorhandenen Artikel ergänzt.</item>
+        <item quantity="other">Davon {count} bei schon vorhandenen Artikeln ergänzt.</item>
+    </plurals>
+    <string name="shop_now_failed">Nicht angekommen (bitte von Hand eintragen): {items}</string>
+    <string name="shop_now_also_plan">Auch im Essensplan eintragen</string>
+    <string name="shop_now_also_plan_hint">Wird als „Zutaten vorhanden“ eingetragen und nicht noch einmal eingekauft.</string>
 </resources>

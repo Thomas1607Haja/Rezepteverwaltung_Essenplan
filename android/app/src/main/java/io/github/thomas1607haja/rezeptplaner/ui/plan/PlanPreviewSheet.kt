@@ -74,6 +74,10 @@ fun PlanPreviewSheet(
     error: String?,
     onConfirm: (PlanChoice) -> Unit,
     onDismiss: () -> Unit,
+    /** „Jetzt einkaufen“: eigener Hinweis, ohne „Alles vorhanden“. */
+    shop: Boolean = false,
+    /** Hauptknopf freigegeben (z. B. erst, wenn die Bring-Liste bekannt ist). */
+    confirmEnabled: Boolean = true,
 ) {
     var portions by remember(recipe.id) { mutableIntStateOf(servings) }
     var off by remember(recipe.id) { mutableStateOf(excluded.toSet()) }
@@ -110,7 +114,7 @@ fun PlanPreviewSheet(
                     Text(tr(R.string.plan_nothing_to_buy), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     Text(
-                        tr(R.string.plan_preview_hint),
+                        tr(if (shop) R.string.shop_now_hint else R.string.plan_preview_hint),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -150,8 +154,12 @@ fun PlanPreviewSheet(
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp)) }
             Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { confirm(true) }, enabled = !busy, modifier = Modifier.weight(1f)) { Text(tr(R.string.plan_all_available)) }
-                Button(onClick = { confirm(false) }, enabled = !busy, modifier = Modifier.weight(1f)) {
+                if (!shop) {
+                    OutlinedButton(onClick = { confirm(true) }, enabled = !busy, modifier = Modifier.weight(1f)) { Text(tr(R.string.plan_all_available)) }
+                }
+                // Einkaufen nur, wenn mindestens ein Artikel ausgewählt ist.
+                val anySelected = toBuy.any { it.itemKey !in off }
+                Button(onClick = { confirm(false) }, enabled = !busy && confirmEnabled && (!shop || anySelected), modifier = Modifier.weight(1f)) {
                     Text(if (busy) tr(R.string.common_saving) else confirmLabel + if (offCount > 0) " ($offCount)" else "")
                 }
             }

@@ -115,4 +115,23 @@
         <item quantity="many">{count} recettes</item>
         <item quantity="other">{count} recettes</item>
     </plurals>
+    <string name="shop_now_button">Acheter maintenant</string>
+    <string name="shop_now_hint">Décochez ce que vous avez déjà. Rien n\'est ajouté au planning.</string>
+    <string name="shop_now_send">Envoyer à Bring · {list}</string>
+    <string name="shop_now_send_plain">Envoyer à Bring</string>
+    <string name="shop_now_no_list">Aucune liste Bring choisie – veuillez en choisir une sous Courses.</string>
+    <string name="shop_now_title">Acheter maintenant</string>
+    <plurals name="shop_now_sent">
+        <item quantity="one">Un article envoyé à Bring ({list}).</item>
+        <item quantity="many">{count} articles envoyés à Bring ({list}).</item>
+        <item quantity="other">{count} articles envoyés à Bring ({list}).</item>
+    </plurals>
+    <plurals name="shop_now_merged">
+        <item quantity="one">Dont un complété sur un article déjà présent.</item>
+        <item quantity="many">Dont {count} complétés sur des articles déjà présents.</item>
+        <item quantity="other">Dont {count} complétés sur des articles déjà présents.</item>
+    </plurals>
+    <string name="shop_now_failed">Non reçu (à ajouter à la main) : {items}</string>
+    <string name="shop_now_also_plan">Ajouter aussi au planning</string>
+    <string name="shop_now_also_plan_hint">Ajouté comme « ingrédients disponibles », donc rien n\'est acheté deux fois.</string>
 </resources>

@@ -119,6 +119,7 @@
     <string name="error_not_zip_or_json" formatted="false">Neither a ZIP nor a JSON file</string>
     <string name="error_note_required" formatted="false">Without a recipe, enter a note, e.g. “Eating out”</string>
     <string name="error_nothing_to_send" formatted="false">Nothing to send in this period</string>
+    <string name="error_no_items_selected" formatted="false">No items selected</string>
     <string name="error_out_of_range" formatted="false">Must be between {min} and {max}</string>
     <string name="error_page_status" formatted="false">The page responded with status {status}</string>
     <string name="error_page_unreachable" formatted="false">The page could not be loaded</string>

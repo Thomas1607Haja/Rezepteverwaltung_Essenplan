@@ -10,10 +10,23 @@
   //   servings     Portionen zu Beginn (null = Familiengröße)
   //   excluded     schon abgewählte Zutatenschlüssel (item_key)
   //   confirmLabel Text des Hauptknopfs (ohne Angabe: „Hinzufügen“)
+  //   shop         „Jetzt einkaufen“: eigener Hinweis, ohne „Alles vorhanden“
+  //   message      Fehler- oder Hinweistext über den Knöpfen
+  //   confirmDisabled Hauptknopf gesperrt (z. B. keine Bring-Liste)
   //   onconfirm({ servings, excluded, allAvailable })
   //   onclose()
-  let { recipeId, servings = null, excluded = [], confirmLabel = null, busy = false, onconfirm, onclose } =
-    $props();
+  let {
+    recipeId,
+    servings = null,
+    excluded = [],
+    confirmLabel = null,
+    busy = false,
+    shop = false,
+    message = '',
+    confirmDisabled = false,
+    onconfirm,
+    onclose,
+  } = $props();
 
   let recipe = $state(null);
   let error = $state('');
@@ -38,6 +51,7 @@
   const toBuy = $derived(recipe?.ingredients.filter((i) => i.shopping_relevant) ?? []);
   const pantry = $derived(recipe?.ingredients.filter((i) => !i.shopping_relevant) ?? []);
   // Gezählt je Schlüssel: Zwei Zeilen „Zwiebel“ sind ein Artikel.
+  const buyKeys = $derived(new Set(toBuy.map((i) => i.item_key)).size);
   const offCount = $derived(new Set(toBuy.map((i) => i.item_key).filter((k) => off.has(k))).size);
 
   function amount(ing) {
@@ -80,7 +94,7 @@
       </div>
 
       {#if toBuy.length > 0}
-        <p class="hint">{t('plan.preview.hint')}</p>
+        <p class="hint">{shop ? t('recipe.shop_now.hint') : t('plan.preview.hint')}</p>
         <ul class="ingredients">
           {#each toBuy as ing (ing.id)}
             <li>
@@ -107,12 +121,22 @@
         </details>
       {/if}
 
+      {#if message}<p class="error">{message}</p>{/if}
+
       <footer>
         <button type="button" onclick={onclose} disabled={busy}>{t('common.cancel')}</button>
-        <button type="button" onclick={() => confirm(true)} disabled={busy} title={t('plan.preview.all_available_title')}>
-          {t('plan.preview.all_available')}
-        </button>
-        <button type="button" class="primary" onclick={() => confirm(false)} disabled={busy}>
+        {#if !shop}
+          <button type="button" onclick={() => confirm(true)} disabled={busy} title={t('plan.preview.all_available_title')}>
+            {t('plan.preview.all_available')}
+          </button>
+        {/if}
+        <!-- Einkaufen: gesperrt, solange nichts ausgewählt ist -->
+        <button
+          type="button"
+          class="primary"
+          onclick={() => confirm(false)}
+          disabled={busy || confirmDisabled || (shop && offCount >= buyKeys)}
+        >
           {busy ? t('common.saving') : (confirmLabel ?? t('common.add'))}{offCount > 0 ? ` ${t('plan.preview.have_count', { count: offCount })}` : ''}
         </button>
       </footer>
@@ -247,5 +271,10 @@
     background: var(--accent);
     color: var(--on-accent);
     font-weight: 600;
+  }
+
+  footer button:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 </style>

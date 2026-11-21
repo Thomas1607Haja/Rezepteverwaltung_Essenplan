@@ -175,6 +175,16 @@ export const api = {
   sendShopping: (next, deselected, options = {}) =>
     request('POST', '/shopping/send', { period: next ? 'next' : 'current', deselected, ...options }),
 
+  /** Eingestellte Bring-Liste: { entity_id, name }; entity_id leer = keine. */
+  shoppingList: () => request('GET', '/shopping/list'),
+
+  /**
+   * „Jetzt einkaufen“: Zutaten eines Rezepts an Bring senden, ohne es
+   * einzuplanen. Ergebnis wie sendShopping (entries = 0).
+   */
+  sendRecipe: (recipeId, servings, excluded) =>
+    request('POST', '/shopping/recipe', { recipe_id: recipeId, servings, excluded }),
+
   /**
    * Vorschau „Übertragung zurücksetzen“: übertragene Gerichte des
    * Einkaufszeitraums bzw. mit entryId nur dieses. Ergebnis { entries: [{

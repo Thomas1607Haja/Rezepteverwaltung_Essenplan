@@ -12,7 +12,12 @@
 
   // recipe: das Rezept der Kochansicht. onadded() meldet, dass es
   // eingeplant wurde (die Kochansicht aktualisiert dann ihren Hinweis).
-  let { recipe, onadded, onclose } = $props();
+  // bought: nach „Jetzt einkaufen“ ({ servings }) – dann ohne Kurzvorschau
+  // mit diesen Portionen und Status „Zutaten vorhanden“ eintragen, damit
+  // nichts doppelt eingekauft wird.
+  let { recipe, bought = null, onadded, onclose } = $props();
+  // svelte-ignore state_referenced_locally
+  const boughtChoice = bought ? { servings: bought.servings, excluded: [], allAvailable: true } : null;
 
   // Ältere Server ohne plan_end: zwei Wochen wie früher.
   const FALLBACK_DAYS = 14;
@@ -52,12 +57,18 @@
 
   /** Als (weiteres) Gericht an date einplanen – mit Kurzvorschau, falls eingeschaltet. */
   async function add(date) {
-    if (await previewEnabled()) pending = { date };
+    if (boughtChoice) await run(date, () => createWithChoice(date, slot, recipe.id, boughtChoice));
+    else if (await previewEnabled()) pending = { date };
     else await run(date, () => createWithChoice(date, slot, recipe.id, null));
   }
 
   /** Das Gericht entry durch dieses Rezept ersetzen. */
   async function replace(entry) {
+    if (boughtChoice) {
+      if (!confirm(t('plan.add.replace_confirm', { old: label(entry), title: recipe.title }))) return;
+      await run(entry.date, () => replaceWithChoice(entry, recipe.id, boughtChoice));
+      return;
+    }
     if (await previewEnabled()) {
       pending = { entry };
       return;

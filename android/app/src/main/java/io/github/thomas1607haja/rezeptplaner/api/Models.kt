@@ -425,6 +425,14 @@ data class ShoppingSend(
     val entries: List<Long> = emptyList(),
 )
 
+/** POST /api/v1/shopping/recipe: „Jetzt einkaufen“ (ab Server 0.21.0). */
+@Serializable
+data class RecipeSend(
+    @SerialName("recipe_id") val recipeId: Long,
+    val servings: Int,
+    val excluded: List<String>,
+)
+
 @Serializable
 data class SentItem(val name: String, val spec: String = "", val merged: Boolean = false)
 

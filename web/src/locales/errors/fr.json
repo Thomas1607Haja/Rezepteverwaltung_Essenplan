@@ -117,6 +117,7 @@
   "not_zip_or_json": "Ni un fichier ZIP ni un fichier JSON",
   "note_required": "Sans recette, saisissez une note, p. ex. « Restaurant »",
   "nothing_to_send": "Rien à envoyer pour cette période",
+  "no_items_selected": "Aucun article sélectionné",
   "out_of_range": "Doit être entre {min} et {max}",
   "page_status": "La page a répondu avec le statut {status}",
   "page_unreachable": "Impossible de charger la page",
