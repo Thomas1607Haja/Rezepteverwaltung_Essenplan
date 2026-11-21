@@ -1,0 +1,38 @@
+name: Feature request
+description: An idea that would make Rezeptplaner more useful
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English or German is fine. Not sure yet? Discuss it first under [Ideas](https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/discussions/categories/ideas).
+        Rezeptplaner should stay lean – a small, clear idea has the best chance.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do?
+      description: Describe the situation in your kitchen or week – not the solution yet.
+      placeholder: "When I plan dinner for guests, I'd like to …"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: How could it work?
+  - type: dropdown
+    id: part
+    attributes:
+      label: Which part?
+      multiple: true
+      options:
+        - Web interface
+        - Android app
+        - Meal plan
+        - Recipes and import
+        - Shopping list / Bring!
+        - Claude skill
+        - Other
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: How do you handle it today?

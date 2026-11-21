@@ -1,0 +1,68 @@
+name: Bug report
+description: Something in Rezeptplaner doesn't work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! English or German is fine.
+        Problems with the **integration or the dashboard card** belong in [rezeptplaner-ha](https://github.com/Thomas1607Haja/rezeptplaner-ha/issues).
+        Please don't post API keys, host names or other private data.
+  - type: dropdown
+    id: part
+    attributes:
+      label: Where does it happen?
+      options:
+        - Web interface
+        - Android app
+        - Import from a web page
+        - Import of a file (Claude skill)
+        - Shopping list / Bring!
+        - Installation or app start in Home Assistant
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open …
+        2. Click …
+        3. …
+  - type: input
+    id: version
+    attributes:
+      label: Rezeptplaner version
+      description: Web interface → Settings → System (and the Android app version under Settings, if relevant)
+      placeholder: "0.21.0 / app 0.22.0"
+    validations:
+      required: true
+  - type: input
+    id: ha
+    attributes:
+      label: Home Assistant version and hardware
+      placeholder: "2026.11.1, Home Assistant Green"
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language of the interface
+      options:
+        - English
+        - German
+        - French
+        - Spanish
+        - Italian
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log
+      description: Settings → Apps → Rezeptplaner → Log (only the relevant lines). For the Android app, a crash report can be shared from its Settings.
+      render: text

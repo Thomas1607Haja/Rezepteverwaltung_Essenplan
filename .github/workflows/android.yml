@@ -128,7 +128,8 @@ jobs:
           # releases/latest zeigt immer auf die App (Tags v… der
           # Home-Assistant-App bekommen keine Releases).
           # Die Skill hängt unter festem Namen mit dran (siehe skill.yml).
+          # Release-Texte seit 2026-11 nur auf Englisch.
           gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/rezeptplaner.apk" "$RUNNER_TEMP/rezeptplaner-import-skill.zip" \
             --latest \
             --title "Android-App $VERSION" \
-            --notes "Rezeptplaner for Android, version $VERSION. Install and update via Obtainium (see docs/ANDROID.md). — Rezeptplaner für Android, Version $VERSION. Installation und Updates über Obtainium (siehe docs/ANDROID.md)."
+            --notes "Rezeptplaner for Android, version $VERSION, with the Claude skill. Install and update the app with Obtainium: open the web interface → Settings → Install the app. What's new: https://github.com/$GITHUB_REPOSITORY/blob/main/rezeptplaner/CHANGELOG.md"

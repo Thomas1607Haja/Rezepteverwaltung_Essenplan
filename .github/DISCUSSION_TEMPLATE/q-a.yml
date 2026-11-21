@@ -1,0 +1,18 @@
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask anything about installing or using Rezeptplaner. English or German is fine.
+        Please don't post API keys, host names or other private data.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Rezeptplaner and Home Assistant version
+      placeholder: "0.21.0, Home Assistant 2026.11.1"

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question
+    url: https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/discussions/categories/q-a
+    about: Ask how something works or share how you use Rezeptplaner.
+  - name: Integration or dashboard card
+    url: https://github.com/Thomas1607Haja/rezeptplaner-ha/issues
+    about: Calendar, sensor and the "Meal plan" card live in the repository rezeptplaner-ha.

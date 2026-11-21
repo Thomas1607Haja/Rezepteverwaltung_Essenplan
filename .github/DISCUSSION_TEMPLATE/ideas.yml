@@ -1,0 +1,18 @@
+title: "[Idea] "
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share an idea before it becomes a feature request. English or German is fine.
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would you like to do, and why?
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: An example from your week

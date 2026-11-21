@@ -1,4 +1,12 @@
-# Änderungen / Changes
+# Changes
+
+From version 0.21.0 on, this changelog is in English only. Older entries are in English and German or German only.
+
+## Unreleased
+
+- **Home Assistant links:** Settings → Home Assistant opens the integration in the Marketplace (HACS before Home Assistant 2026.11), starts its setup, or installs Rezeptplaner on another Home Assistant – via my.home-assistant.io. The Android app has the same links under Settings, plus “Share link”.
+- **Claude skill updates:** if an imported file comes from an older version of the Claude skill, the import preview says so and offers the current skill for download (web interface and Android app). Files from older skills still import as before.
+- English documentation: README, app access guide (tunnel or VPN, Cloudflare Access), contributing guide with translation instructions, issue templates.
 
 ## 0.20.0
 

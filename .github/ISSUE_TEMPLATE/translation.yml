@@ -1,0 +1,44 @@
+name: Translation
+description: A wrong, clumsy or missing text in one of the languages
+labels: ["translation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you! You can also fix it yourself in a few clicks – see [CONTRIBUTING.md](https://github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/blob/main/CONTRIBUTING.md#translations).
+        Your own recipes and categories are never translated; this is only about the interface.
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - French
+        - Spanish
+        - Italian
+        - German
+        - English
+        - A new language
+    validations:
+      required: true
+  - type: dropdown
+    id: part
+    attributes:
+      label: Where?
+      options:
+        - Web interface
+        - Android app
+        - Integration or dashboard card
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: text
+    attributes:
+      label: Current text and your suggestion
+      description: Where does it appear (page, button, message)?
+      placeholder: |
+        Page: Shopping
+        Now: "…"
+        Better: "…"
+    validations:
+      required: true
