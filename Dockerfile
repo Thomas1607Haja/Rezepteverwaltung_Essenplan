@@ -24,7 +24,7 @@ COPY support-url.txt my-links.properties /src/
 RUN npm run build
 
 # --- 2. Server für die Zielplattform übersetzen ---
-FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine AS server
+FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine AS server
 # Zertifikate der Zertifizierungsstellen, damit der URL-Import
 # HTTPS-Seiten prüfen kann. Werden in Stufe 3 übernommen.
 RUN apk add --no-cache ca-certificates

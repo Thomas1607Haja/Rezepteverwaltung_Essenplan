@@ -9,6 +9,7 @@ From version 0.21.0 on, this changelog is in English only. Older entries are in 
 - **Plan ahead (weeks):** new setting (Settings → Household, 1–12 weeks, default 4). It sets how far ahead the meal plan scrolls and which days “Add to meal plan”, swapping and moving offer – in the web interface and the Android app. Entries already planned further ahead stay visible; nothing is deleted. The shopping period is unchanged.
 - **Shop now:** a new button in the recipe view sends one recipe’s ingredients straight to Bring without planning it – with the same quick preview (servings, untick what you have, pantry items left out). Items already on the list get the amount added, as with the normal transfer. Nothing is added to the meal plan or the shopping list; “Also add to meal plan” plans it as “ingredients available”. In the app, this needs a connection to the server.
 - **App 0.22.0** brings the same features to Android (plan ahead is shown under Settings and comes from the web interface).
+- Built with Go 1.27.4 (security fix in the Go standard library, net/http).
 - English documentation: README, app access guide (tunnel or VPN, Cloudflare Access), contributing guide with translation instructions, issue templates.
 
 ## 0.20.0
