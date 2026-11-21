@@ -37,6 +37,9 @@
   let period = $state(null);
   let nextPeriod = $state(null);
   let error = $state('');
+  // Letzter Tag, bis zu dem der Plan nach vorne reicht: Planungszeitraum
+  // (Einstellung plan_weeks) oder ein schon weiter geplanter Eintrag.
+  let limit = $state('');
 
   let strip; // der waagerecht scrollende Streifen (bind:this)
   let loading = false; // verhindert doppeltes Nachladen beim Scrollen
@@ -59,6 +62,8 @@
     today = result.today;
     period = result.shopping_period;
     nextPeriod = result.next_shopping_period ?? null;
+    // Ältere Server ohne plan_end: wie bisher ohne Grenze.
+    if (result.plan_end) limit = [result.plan_end, result.last_planned ?? ''].sort().at(-1);
     for (let d = start; d <= end; d = addDays(d, 1)) {
       entriesByDate[d] = [];
       menusByDate[d] = [];
@@ -75,7 +80,7 @@
       const end = addDays(center > today ? center : today, INITIAL_AFTER);
       await load(start, end);
       from = start;
-      to = end;
+      to = limit && limit < end ? [limit, center, today].sort().at(-1) : end;
       await tick(); // warten, bis die Spalten im DOM stehen
       scrollToDay(center, 'instant');
     } catch (e) {
@@ -99,8 +104,9 @@
   }
 
   async function shiftWeek(direction) {
-    const target = addDays(firstVisibleDay(), 7 * direction);
+    let target = addDays(firstVisibleDay(), 7 * direction);
     await ensureLoaded(target);
+    if (target > to) target = to; // am Ende des Planungszeitraums
     scrollToDay(target);
   }
 
@@ -109,7 +115,7 @@
   // Scrollens Spalten einfügen, und die Ansicht landete daneben.
   async function ensureLoaded(date) {
     while (addDays(date, -7) < from) await loadEarlier();
-    while (addDays(date, 13) > to) await loadLater();
+    while (addDays(date, 13) > to && !(limit && to >= limit)) await loadLater();
   }
 
   async function loadEarlier() {
@@ -133,10 +139,11 @@
   }
 
   async function loadLater() {
-    if (loading) return;
+    if (loading || (limit && to >= limit)) return;
     loading = true;
     try {
-      const end = addDays(to, CHUNK);
+      let end = addDays(to, CHUNK);
+      if (limit && end > limit) end = limit;
       await load(addDays(to, 1), end);
       to = end;
       await tick();
@@ -393,6 +400,9 @@
       </div>
     </section>
   {/each}
+  {#if limit && to >= limit}
+    <p class="horizon-end">{t('plan.horizon_end')}</p>
+  {/if}
 </div>
 
 {#if menuEntry}
@@ -532,6 +542,15 @@
     border: 1px solid transparent;
     border-radius: var(--radius);
     scroll-snap-align: start;
+  }
+
+  .horizon-end {
+    align-self: center;
+    margin: 0;
+    padding: 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-align: center;
   }
 
   .day.period {

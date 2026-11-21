@@ -5,6 +5,8 @@
     "title": "Haushalt",
     "family_size": "Familiengröße",
     "family_size_hint": "Standard-Portionen für neue Einträge im Essensplan",
+    "plan_weeks": "Planung im Voraus (Wochen)",
+    "plan_weeks_hint": "So weit lässt sich der Essensplan ab heute planen (1–12 Wochen). Bereits weiter geplante Einträge bleiben erhalten.",
     "shopping_day": "Einkaufstag",
     "shopping_day_hint": "Mit ihm beginnt die eingekaufte Woche",
     "shopping_time": "Uhrzeit des Einkaufs",

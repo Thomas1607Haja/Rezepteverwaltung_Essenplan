@@ -5,6 +5,7 @@
   import { focusPlanOn } from '../lib/planFocus.svelte.js';
   import { addDays, dayLabel, todayString } from '../lib/format.js';
   import PlanPreview from './PlanPreview.svelte';
+  import { MAX_PLAN_WEEKS, planEnd } from '../lib/planHorizon.js';
   import { t, errorText } from '../lib/i18n.svelte.js';
   import { slotChoices } from '../lib/slots.js';
   import { previewEnabled, createWithChoice, replaceWithChoice } from '../lib/planPreview.js';
@@ -13,7 +14,8 @@
   // eingeplant wurde (die Kochansicht aktualisiert dann ihren Hinweis).
   let { recipe, onadded, onclose } = $props();
 
-  const DAYS = 14;
+  // Ältere Server ohne plan_end: zwei Wochen wie früher.
+  const FALLBACK_DAYS = 14;
 
   let slot = $state('dinner');
   let days = $state([]); // [{ date, entries }]
@@ -31,10 +33,11 @@
   async function load() {
     try {
       const today = todayString();
-      const result = await api.mealPlan(today, addDays(today, DAYS - 1));
+      // Den größtmöglichen Zeitraum laden und auf plan_end kürzen.
+      const result = await api.mealPlan(today, planEnd(today, MAX_PLAN_WEEKS + 1));
+      const end = result.plan_end ?? addDays(result.today, FALLBACK_DAYS - 1);
       const list = [];
-      for (let i = 0; i < DAYS; i++) {
-        const date = addDays(result.today, i);
+      for (let date = result.today; date <= end; date = addDays(date, 1)) {
         list.push({ date, entries: result.entries.filter((e) => e.date === date) });
       }
       days = list;

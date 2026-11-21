@@ -46,6 +46,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.thomas1607haja.rezeptplaner.BuildConfig
 import io.github.thomas1607haja.rezeptplaner.R
 import io.github.thomas1607haja.rezeptplaner.ui.CrashReportCard
+import io.github.thomas1607haja.rezeptplaner.ui.common.Texts
+import io.github.thomas1607haja.rezeptplaner.ui.common.app
 import io.github.thomas1607haja.rezeptplaner.ui.common.tr
 import kotlinx.coroutines.launch
 
@@ -91,6 +93,8 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
         }
 
         SyncCard()
+
+        PlanHorizonCard()
 
         LanguageCard()
 
@@ -138,6 +142,19 @@ fun SettingsScreen(viewModel: SettingsViewModel, onReconnect: () -> Unit) {
  * my.home-assistant.io im Browser, das zum eigenen Home Assistant weiterleitet.
  */
 @OptIn(ExperimentalLayoutApi::class)
+/** Planungszeitraum aus den Einstellungen der Weboberfläche (nur Anzeige). */
+@Composable
+private fun PlanHorizonCard() {
+    val snapshot by app().localStore.snapshot.collectAsStateWithLifecycle()
+    Card(Modifier.fillMaxWidth(), border = CardDefaults.outlinedCardBorder()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(tr(R.string.settings_plan_title), style = MaterialTheme.typography.titleMedium)
+            Text(Texts.plural(R.plurals.settings_plan_weeks, snapshot.settings.planWeeks))
+            Text(tr(R.string.settings_plan_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
 @Composable
 private fun HomeAssistantCard() {
     val uriHandler = LocalUriHandler.current

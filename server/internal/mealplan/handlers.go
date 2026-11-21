@@ -42,6 +42,11 @@ type listResponse struct {
 	SlotTimes map[string]string `json:"slot_times"`
 	// Menus: Menüs im Zeitraum (Schritt 9.4); ihre Gänge stehen in Entries.
 	Menus []Menu `json:"menus"`
+	// PlanEnd: bis zu diesem Tag lässt sich planen (Einstellung plan_weeks).
+	PlanEnd string `json:"plan_end"`
+	// LastPlanned: letzter Tag mit Eintrag oder Menü, leer = keiner. Liegt
+	// er hinter PlanEnd, zeigt der Plan bis dahin – nichts verschwindet.
+	LastPlanned string `json:"last_planned"`
 }
 
 // list liefert die Einträge eines Zeitraums: ?from=2026-10-17&to=2026-10-23.
@@ -72,9 +77,17 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteInternalError(w, r, err)
 		return
 	}
+	last, err := h.store.LastPlannedDate(r.Context())
+	if err != nil {
+		httpx.WriteInternalError(w, r, err)
+		return
+	}
+	today := h.store.Today()
 	httpx.WriteJSON(w, http.StatusOK, listResponse{
 		Entries:            entries,
-		Today:              h.store.Today().Format(dateLayout),
+		Today:              today.Format(dateLayout),
+		PlanEnd:            st.PlanEnd(today).Format(dateLayout),
+		LastPlanned:        last,
 		ShoppingPeriod:     period,
 		NextShoppingPeriod: period.Next(),
 		SlotTimes:          map[string]string{SlotLunch: st.LunchTime, SlotCoffee: st.CoffeeTime, SlotDinner: st.DinnerTime},

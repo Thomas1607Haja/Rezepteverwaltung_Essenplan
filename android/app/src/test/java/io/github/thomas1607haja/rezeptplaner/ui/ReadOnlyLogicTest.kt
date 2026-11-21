@@ -1,5 +1,6 @@
 package io.github.thomas1607haja.rezeptplaner.ui
 
+import io.github.thomas1607haja.rezeptplaner.api.HouseholdSettings
 import io.github.thomas1607haja.rezeptplaner.api.Ingredient
 import io.github.thomas1607haja.rezeptplaner.api.MealPlanEntry
 import io.github.thomas1607haja.rezeptplaner.api.PlanInfo
@@ -67,6 +68,23 @@ class ReadOnlyLogicTest {
         assertEquals("2026-10-20", days.first().date)
         assertEquals("2026-11-20", days.last().date)
         assertEquals(1, days.single { it.date == "2026-11-20" }.entries.size)
+    }
+
+    @Test
+    fun planDaysFollowPlanWeeksAndKeepLaterEntries() {
+        val today = LocalDate.parse("2026-10-23")
+        // 8 Wochen: bis heute + 55 Tage, über den letzten Eintrag (20.11.) hinaus.
+        val wide = planDays(snapshot.copy(settings = HouseholdSettings(planWeeks = 8)), today)
+        assertEquals("2026-12-17", wide.last().date)
+        // 1 Woche: Der Eintrag am 20.11. bleibt sichtbar, nichts verschwindet.
+        val narrow = planDays(snapshot.copy(settings = HouseholdSettings(planWeeks = 1)), today)
+        assertEquals("2026-11-20", narrow.last().date)
+        // Ohne späte Einträge endet der Plan genau am Ende des Zeitraums.
+        val empty = planDays(snapshot.copy(entries = emptyList(), settings = HouseholdSettings(planWeeks = 1)), today)
+        assertEquals("2026-10-29", empty.last().date)
+        // Werte außerhalb 1–12 werden begrenzt.
+        assertEquals(84, HouseholdSettings(planWeeks = 99).planDays())
+        assertEquals(7, HouseholdSettings(planWeeks = 0).planDays())
     }
 
     @Test

@@ -59,4 +59,11 @@
     <string name="ha_app_install">Installa l\'app</string>
     <string name="ha_app_share">Condividi link</string>
     <string name="ha_app_repository">Aggiungi repository</string>
+    <string name="settings_plan_title">Piano pasti</string>
+    <plurals name="settings_plan_weeks">
+        <item quantity="one">Pianifica in anticipo: {count} settimana</item>
+        <item quantity="many">Pianifica in anticipo: {count} settimane</item>
+        <item quantity="other">Pianifica in anticipo: {count} settimane</item>
+    </plurals>
+    <string name="settings_plan_hint">Modificabile nell\'interfaccia web in Impostazioni → Pianifica in anticipo. Le voci pianificate più avanti restano visibili.</string>
 </resources>

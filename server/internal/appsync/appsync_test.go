@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/database"
 	"github.com/Thomas1607Haja/Rezepteverwaltung_Essenplan/server/internal/mealplan"
@@ -153,5 +154,38 @@ func TestSyncRejectsBadSince(t *testing.T) {
 	f := newFixture(t)
 	if code, _ := f.get(t, "?since=gestern"); code != http.StatusBadRequest {
 		t.Errorf("status %d, erwartet 400", code)
+	}
+}
+
+// Der Abgleich liefert alle künftigen Einträge, auch hinter plan_end –
+// nach dem Verkleinern von plan_weeks bleiben sie offline sichtbar.
+func TestSyncDeliversEntriesBeyondPlanEnd(t *testing.T) {
+	ctx := context.Background()
+	f := newFixture(t)
+	soup, err := f.recipes.Create(ctx, recipes.Recipe{Title: "Linsensuppe", BaseServings: 4})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ss := settings.NewStore(f.db)
+	st := settings.Defaults
+	st.PlanWeeks = 12
+	if _, err := ss.Update(ctx, st); err != nil {
+		t.Fatal(err)
+	}
+	today := f.plan.Today()
+	far := today.AddDate(0, 0, 80).Format(time.DateOnly)
+	if _, err := f.plan.Create(ctx, mealplan.NewEntry{Date: far, RecipeID: &soup.ID}); err != nil {
+		t.Fatal(err)
+	}
+	st.PlanWeeks = 1
+	if _, err := ss.Update(ctx, st); err != nil {
+		t.Fatal(err)
+	}
+	_, resp := f.get(t, "")
+	if want := today.AddDate(0, 0, 6).Format(time.DateOnly); resp.PlanEnd != want || resp.Settings.PlanWeeks != 1 {
+		t.Errorf("plan_end %s (erwartet %s), plan_weeks %d", resp.PlanEnd, want, resp.Settings.PlanWeeks)
+	}
+	if len(resp.MealPlanEntries) != 1 || resp.MealPlanEntries[0].Date != far {
+		t.Errorf("Eintrag hinter plan_end fehlt: %+v", resp.MealPlanEntries)
 	}
 }

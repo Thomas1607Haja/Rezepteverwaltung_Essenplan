@@ -2,6 +2,7 @@ package mealplan
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -306,5 +307,48 @@ func TestCoffeeSlotOrder(t *testing.T) {
 	}
 	if _, err := s.Create(ctx, NewEntry{Date: "2026-10-25", Slot: "breakfast", RecipeID: ptr(int64(1))}); err == nil {
 		t.Error("unbekannter Slot ohne Fehler")
+	}
+}
+
+// Planung im Voraus: Die Liste nennt plan_end nach der Einstellung und den
+// letzten geplanten Tag. Verkleinern löscht nichts – ein Eintrag hinter
+// plan_end bleibt abrufbar und steht in last_planned.
+func TestListPlanEndAndLastPlanned(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+	mux := http.NewServeMux()
+	NewHandler(s).Register(mux)
+	list := func() listResponse {
+		t.Helper()
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, httptest.NewRequest("GET", "/api/v1/meal-plan?from=2026-10-21&to=2027-01-31", nil))
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status %d: %s", rec.Code, rec.Body)
+		}
+		var resp listResponse
+		if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+			t.Fatal(err)
+		}
+		return resp
+	}
+
+	if got := list(); got.PlanEnd != "2026-11-17" || got.LastPlanned != "" {
+		t.Errorf("Standard 4 Wochen, leer: plan_end %s, last_planned %q", got.PlanEnd, got.LastPlanned)
+	}
+	st := settings.Defaults
+	st.PlanWeeks = 12
+	if _, err := s.settings.Update(ctx, st); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Create(ctx, NewEntry{Date: "2027-01-10", RecipeID: ptr(int64(1))}); err != nil {
+		t.Fatal(err)
+	}
+	st.PlanWeeks = 1
+	if _, err := s.settings.Update(ctx, st); err != nil {
+		t.Fatal(err)
+	}
+	got := list()
+	if got.PlanEnd != "2026-10-27" || got.LastPlanned != "2027-01-10" || len(got.Entries) != 1 {
+		t.Errorf("nach Verkleinern: plan_end %s, last_planned %s, %d Einträge", got.PlanEnd, got.LastPlanned, len(got.Entries))
 	}
 }

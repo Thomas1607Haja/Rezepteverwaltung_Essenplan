@@ -59,4 +59,11 @@
     <string name="ha_app_install">Instalar la app</string>
     <string name="ha_app_share">Compartir enlace</string>
     <string name="ha_app_repository">Añadir repositorio</string>
+    <string name="settings_plan_title">Plan de comidas</string>
+    <plurals name="settings_plan_weeks">
+        <item quantity="one">Planificar con antelación: {count} semana</item>
+        <item quantity="many">Planificar con antelación: {count} semanas</item>
+        <item quantity="other">Planificar con antelación: {count} semanas</item>
+    </plurals>
+    <string name="settings_plan_hint">Se puede cambiar en la interfaz web en Ajustes → Planificar con antelación. Las entradas planificadas más adelante siguen visibles.</string>
 </resources>

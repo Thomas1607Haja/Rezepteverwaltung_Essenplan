@@ -17,6 +17,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -193,7 +194,7 @@ fun AddToPlanSheet(recipeId: Long, recipeTitle: String, snapshot: Snapshot, toda
                 if (busy) CircularProgressIndicator(Modifier.size(24.dp))
             }
             DayChooser(
-                days = upcomingDays(snapshot, today, 14), slot = slot, exclude = null,
+                days = upcomingDays(snapshot, today, snapshot.settings.planDays()), slot = slot, exclude = null,
                 // Ersetzen nur bei einzelnen Gerichten; ein Menü ergänzt man im Menü.
                 action = { if (it is PlanItem.Single) replaceLabel else null },
                 onAppend = { date ->
@@ -513,13 +514,13 @@ fun MoveSheet(subject: PlanItem, snapshot: Snapshot, today: LocalDate, onDismiss
             Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(tr(R.string.plan_move_title, "title" to title), style = MaterialTheme.typography.titleMedium)
                 SlotChooser(slot) { slot = it }
-                // Die Liste zeigt vier Wochen; jedes andere Datum über den Kalender (wie im Web).
+                // Die Liste zeigt den Planungszeitraum; jedes andere Datum darin über den Kalender (wie im Web).
                 TextButton(onClick = { pickDate = true }, enabled = !busy) { Text(tr(R.string.plan_other_date)) }
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 if (busy) CircularProgressIndicator(Modifier.size(24.dp))
             }
             DayChooser(
-                days = upcomingDays(snapshot, today, 28), slot = slot, exclude = subject.key, action = { swapLabel },
+                days = upcomingDays(snapshot, today, snapshot.settings.planDays()), slot = slot, exclude = subject.key, action = { swapLabel },
                 onAppend = { date -> if (!busy) move(date, null, confirm = false) },
                 onItem = { other -> if (!busy) move(itemDate(other), other, confirm = false) },
             )
@@ -554,8 +555,17 @@ fun MoveSheet(subject: PlanItem, snapshot: Snapshot, today: LocalDate, onDismiss
 
     if (pickDate) {
         // Der DatePicker rechnet in UTC-Millisekunden.
+        // Höchstens bis zum Ende des Planungszeitraums – bzw. bis zum
+        // eigenen Tag, falls das Gericht schon weiter in der Zukunft liegt.
+        val maxDate = maxOf(snapshot.settings.planEnd(today), LocalDate.parse(itemDate(subject)))
+        val maxMillis = maxDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val state = rememberDatePickerState(
             initialSelectedDateMillis = LocalDate.parse(itemDate(subject)).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+            yearRange = IntRange(today.year - 1, maxDate.year),
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis <= maxMillis
+                override fun isSelectableYear(year: Int) = year <= maxDate.year
+            },
         )
         DatePickerDialog(
             onDismissRequest = { pickDate = false },

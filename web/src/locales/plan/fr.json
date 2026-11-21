@@ -2,6 +2,7 @@
   "title": "Planning des repas",
   "week_back": "Semaine précédente",
   "week_forward": "Semaine suivante",
+  "horizon_end": "Fin de la période de planification. Pour planifier plus loin : Paramètres → Planifier à l'avance.",
   "shopped": "Courses faites : {range}",
   "next_shopping": "Prochaines courses : {range}",
   "load_failed": "Impossible de charger le planning : {message}",

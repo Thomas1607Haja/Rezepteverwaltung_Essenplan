@@ -59,4 +59,10 @@
     <string name="ha_app_install">Install the app</string>
     <string name="ha_app_share">Share link</string>
     <string name="ha_app_repository">Add repository</string>
+    <string name="settings_plan_title">Meal plan</string>
+    <plurals name="settings_plan_weeks">
+        <item quantity="one">Plan ahead: {count} week</item>
+        <item quantity="other">Plan ahead: {count} weeks</item>
+    </plurals>
+    <string name="settings_plan_hint">You can change this in the web interface under Settings → Plan ahead. Entries planned further ahead stay visible.</string>
 </resources>

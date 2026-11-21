@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { loadPlanEnd } from '../lib/planHorizon.js';
   import { api } from '../lib/api.js';
   import { navigate } from '../lib/router.svelte.js';
   import { dayLabel, menuTitle } from '../lib/format.js';
@@ -26,6 +27,9 @@
   let servings = $state(4);
   let applyServings = $state(true);
   let moveDate = $state('');
+  let planEndDate = $state(''); // Ende des Planungszeitraums
+  loadPlanEnd().then((end) => (planEndDate = end));
+  const maxDate = $derived(planEndDate && menu && menu.date > planEndDate ? menu.date : planEndDate);
   let error = $state('');
   let busy = $state(false);
   let showPreview = $state(false);
@@ -167,8 +171,8 @@
 
       <div class="move">
         <label for="menu-move-date">{t('menu.move_to')}</label>
-        <input id="menu-move-date" type="date" bind:value={moveDate} />
-        <button type="button" disabled={!moveDate || moveDate === menu.date || busy} onclick={() => onmove(menu, moveDate)}>{t('menu.move')}</button>
+        <input id="menu-move-date" type="date" max={maxDate || undefined} bind:value={moveDate} />
+        <button type="button" disabled={!moveDate || moveDate === menu.date || (maxDate && moveDate > maxDate) || busy} onclick={() => onmove(menu, moveDate)}>{t('menu.move')}</button>
       </div>
 
       {#if error}<p class="error">{error}</p>{/if}

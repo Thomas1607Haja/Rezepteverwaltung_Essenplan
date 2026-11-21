@@ -95,6 +95,7 @@
       // App-Zugang gespeichert und bliebe hier sonst auf altem Stand.
       household = await api.updateSettings({
         family_size: Number(household.family_size),
+        plan_weeks: Number(household.plan_weeks),
         shopping_day: household.shopping_day,
         shopping_time: household.shopping_time,
         plan_preview: household.plan_preview,
@@ -128,6 +129,11 @@
         <span>{t('settings.household.family_size')}</span>
         <input type="number" min="1" max="50" bind:value={household.family_size} oninput={() => (message = '')} />
         <small>{t('settings.household.family_size_hint')}</small>
+      </label>
+      <label>
+        <span>{t('settings.household.plan_weeks')}</span>
+        <input type="number" min="1" max="12" bind:value={household.plan_weeks} oninput={() => (message = '')} />
+        <small>{t('settings.household.plan_weeks_hint')}</small>
       </label>
       <label>
         <span>{t('settings.household.shopping_day')}</span>

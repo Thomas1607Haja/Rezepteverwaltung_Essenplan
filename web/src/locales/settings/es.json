@@ -5,6 +5,8 @@
     "title": "Hogar",
     "family_size": "Personas en casa",
     "family_size_hint": "Raciones por defecto para nuevas entradas del plan de comidas",
+    "plan_weeks": "Planificar con antelación (semanas)",
+    "plan_weeks_hint": "Hasta cuándo se puede planificar desde hoy (1–12 semanas). Las entradas ya planificadas más adelante se conservan.",
     "shopping_day": "Día de la compra",
     "shopping_day_hint": "La semana de compra empieza este día",
     "shopping_time": "Hora de la compra",

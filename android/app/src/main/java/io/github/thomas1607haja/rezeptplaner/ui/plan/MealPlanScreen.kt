@@ -67,8 +67,10 @@ import java.time.LocalDateTime
 data class PlanDay(val date: String, val entries: List<MealPlanEntry>, val menus: List<Menu> = emptyList())
 
 /**
- * Tage von plan_from bis mindestens zwei Wochen nach heute bzw. bis zum
- * letzten geplanten Tag – auch leere, damit Lücken im Plan sichtbar sind.
+ * Tage von plan_from bis zum Ende des Planungszeitraums (Einstellung
+ * plan_weeks) bzw. bis zum letzten geplanten Tag, falls der später liegt –
+ * auch leere, damit Lücken im Plan sichtbar sind. Verkleinert man den
+ * Zeitraum, bleiben spätere Einträge so sichtbar.
  */
 fun planDays(snapshot: Snapshot, today: LocalDate): List<PlanDay> {
     if (snapshot.planFrom.isEmpty()) return emptyList()
@@ -76,7 +78,7 @@ fun planDays(snapshot: Snapshot, today: LocalDate): List<PlanDay> {
     val menus = snapshot.menus.groupBy { it.date }
     var day = LocalDate.parse(snapshot.planFrom)
     val lastPlanned = (snapshot.entries.map { it.date } + snapshot.menus.map { it.date }).maxOrNull()?.let(LocalDate::parse) ?: today
-    val end = maxOf(today.plusDays(13), lastPlanned)
+    val end = maxOf(snapshot.settings.planEnd(today), lastPlanned)
     return buildList {
         while (!day.isAfter(end)) {
             val date = day.toString()

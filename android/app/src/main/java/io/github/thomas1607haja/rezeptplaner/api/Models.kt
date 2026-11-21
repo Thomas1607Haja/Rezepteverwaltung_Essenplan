@@ -156,7 +156,18 @@ data class HouseholdSettings(
     @SerialName("plan_preview") val planPreview: Boolean = true,
     /** Slot „Kaffee & Kuchen“ anbieten (Schritt 9.3). */
     @SerialName("coffee_slot") val coffeeSlot: Boolean = true,
-)
+    /**
+     * Planung im Voraus in Wochen (Einstellung der Weboberfläche, ab Server
+     * 0.21.0; ältere Server liefern nichts → Standard 4).
+     */
+    @SerialName("plan_weeks") val planWeeks: Int = 4,
+) {
+    /** Letzter planbarer Tag ab [today]: heute + Wochen × 7 − 1. */
+    fun planEnd(today: java.time.LocalDate): java.time.LocalDate = today.plusDays(planDays() - 1L)
+
+    /** Anzahl planbarer Tage ab heute (einschließlich). */
+    fun planDays(): Int = planWeeks.coerceIn(1, 12) * 7
+}
 
 @Serializable
 data class Deletion(val table: String, val id: Long)

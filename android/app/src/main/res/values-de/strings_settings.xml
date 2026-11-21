@@ -59,4 +59,10 @@
     <string name="ha_app_install">App installieren</string>
     <string name="ha_app_share">Link teilen</string>
     <string name="ha_app_repository">Repository hinzufügen</string>
+    <string name="settings_plan_title">Essensplan</string>
+    <plurals name="settings_plan_weeks">
+        <item quantity="one">Planung im Voraus: {count} Woche</item>
+        <item quantity="other">Planung im Voraus: {count} Wochen</item>
+    </plurals>
+    <string name="settings_plan_hint">Änderbar in der Weboberfläche unter Einstellungen → Planung im Voraus. Weiter geplante Einträge bleiben sichtbar.</string>
 </resources>

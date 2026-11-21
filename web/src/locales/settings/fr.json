@@ -5,6 +5,8 @@
     "title": "Foyer",
     "family_size": "Taille du foyer",
     "family_size_hint": "Portions par défaut des nouvelles entrées du planning",
+    "plan_weeks": "Planifier à l'avance (semaines)",
+    "plan_weeks_hint": "Jusqu'où le planning peut être rempli à partir d'aujourd'hui (1 à 12 semaines). Les entrées déjà prévues plus loin sont conservées.",
     "shopping_day": "Jour des courses",
     "shopping_day_hint": "La semaine de courses commence ce jour-là",
     "shopping_time": "Heure des courses",
@@ -31,14 +33,14 @@
   },
   "home_assistant": {
     "title": "Home Assistant",
-    "text": "Ces liens ouvrent my.home-assistant.io, qui vous redirige vers la bonne page de votre propre Home Assistant. La première fois, l’adresse de votre Home Assistant vous est demandée.",
+    "text": "Ces liens ouvrent my.home-assistant.io, qui vous redirige vers la bonne page de votre propre Home Assistant. La première fois, l'adresse de votre Home Assistant vous est demandée.",
     "integration_title": "Intégration et carte du tableau de bord",
-    "integration_text": "Ajoute un calendrier du planning des repas, un capteur « Aujourd’hui » et la carte « Planning des repas ». Téléchargez-la depuis le Marketplace (HACS avant Home Assistant 2026.11), redémarrez Home Assistant, puis configurez-la.",
+    "integration_text": "Ajoute un calendrier du planning des repas, un capteur « Aujourd'hui » et la carte « Planning des repas ». Téléchargez-la depuis le Marketplace (HACS avant Home Assistant 2026.11), redémarrez Home Assistant, puis configurez-la.",
     "integration_download": "Ouvrir dans le Marketplace",
-    "integration_setup": "Configurer l’intégration",
+    "integration_setup": "Configurer l'intégration",
     "app_title": "Installer Rezeptplaner sur un autre Home Assistant",
-    "app_text": "Envoyez ce lien à toute personne souhaitant installer Rezeptplaner. S’il ne fonctionne pas, ajoutez d’abord le dépôt.",
-    "app_install": "Installer l’application",
+    "app_text": "Envoyez ce lien à toute personne souhaitant installer Rezeptplaner. S'il ne fonctionne pas, ajoutez d'abord le dépôt.",
+    "app_install": "Installer l'application",
     "app_repository": "Ajouter le dépôt"
   },
   "system": {

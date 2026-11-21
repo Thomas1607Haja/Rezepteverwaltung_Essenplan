@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { loadPlanEnd } from '../lib/planHorizon.js';
   import { api } from '../lib/api.js';
   import { navigate } from '../lib/router.svelte.js';
   import { dayLabel } from '../lib/format.js';
@@ -26,6 +27,10 @@
   let isFavorite = $state(entry.recipe?.is_favorite ?? false);
   // svelte-ignore state_referenced_locally
   let moveDate = $state(entry.date);
+  // Verschieben höchstens bis zum Ende des Planungszeitraums (bzw. bis zum
+  // eigenen Tag, falls der Eintrag schon weiter in der Zukunft liegt).
+  let maxDate = $state('');
+  loadPlanEnd().then((end) => (maxDate = end > entry.date ? end : entry.date));
   let error = $state('');
   let busy = $state(false);
   let showPreview = $state(false);
@@ -176,11 +181,11 @@
 
     <div class="move">
       <label for="move-date">{t('plan.entry.move_to')}</label>
-      <input id="move-date" type="date" bind:value={moveDate} />
+      <input id="move-date" type="date" max={maxDate || undefined} bind:value={moveDate} />
       <button
         type="button"
         class="secondary"
-        disabled={!moveDate || moveDate === entry.date || busy}
+        disabled={!moveDate || moveDate === entry.date || (maxDate && moveDate > maxDate) || busy}
         onclick={() => onmove(entry, moveDate)}
       >
         {t('plan.entry.move')}

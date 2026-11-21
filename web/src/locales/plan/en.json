@@ -2,6 +2,7 @@
   "title": "Meal plan",
   "week_back": "Previous week",
   "week_forward": "Next week",
+  "horizon_end": "End of the planning period. To plan further ahead: Settings → Plan ahead.",
   "shopped": "Shopped: {range}",
   "next_shopping": "Next shopping: {range}",
   "load_failed": "Couldn't load the plan: {message}",

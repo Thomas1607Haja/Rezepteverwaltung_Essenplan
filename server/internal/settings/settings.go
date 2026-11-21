@@ -51,12 +51,30 @@ type Settings struct {
 	// "auto" = Systemsprache von Home Assistant (Standard), sonst ein
 	// Sprachcode aus language.Supported. Die App folgt dem Handy.
 	UILanguage string `json:"ui_language"`
+	// PlanWeeks: So viele Wochen ab heute lässt sich der Essensplan im
+	// Voraus planen (Scrollen, Tagesauswahl beim Hinzufügen, Tauschen und
+	// Verschieben). Schon weiter in der Zukunft geplante Einträge bleiben
+	// erhalten und sichtbar. Der Einkaufszeitraum hängt nicht davon ab.
+	PlanWeeks int `json:"plan_weeks"`
+}
+
+// Grenzen von PlanWeeks.
+const (
+	MinPlanWeeks = 1
+	MaxPlanWeeks = 12
+)
+
+// PlanEnd ist der letzte Tag, bis zu dem man ab today planen kann:
+// today + PlanWeeks × 7 − 1 (zwei Wochen = heute und 13 weitere Tage).
+func (s Settings) PlanEnd(today time.Time) time.Time {
+	return today.AddDate(0, 0, s.PlanWeeks*7-1)
 }
 
 // Defaults gelten, solange nichts gespeichert ist.
 var Defaults = Settings{
 	FamilySize: 4, ShoppingDay: "saturday", ShoppingTime: "00:00", PlanPreview: true,
 	CoffeeSlot: true, LunchTime: "12:00", CoffeeTime: "15:30", DinnerTime: "18:30", UILanguage: "auto",
+	PlanWeeks: 4,
 }
 
 // uiLanguages sind die erlaubten Werte von UILanguage (wie language.Supported).
@@ -107,6 +125,9 @@ func (s Settings) validate() error {
 			u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 			return apierr.Field("app_url", "invalid_app_url")
 		}
+	}
+	if s.PlanWeeks < MinPlanWeeks || s.PlanWeeks > MaxPlanWeeks {
+		return apierr.Field("plan_weeks", "out_of_range", "min", MinPlanWeeks, "max", MaxPlanWeeks)
 	}
 	if !slices.Contains(uiLanguages, s.UILanguage) {
 		return apierr.Field("ui_language", "invalid_language")
@@ -176,6 +197,10 @@ func (s *Store) Get(ctx context.Context) (Settings, error) {
 			if slices.Contains(uiLanguages, value) {
 				result.UILanguage = value
 			}
+		case "plan_weeks":
+			if n, err := strconv.Atoi(value); err == nil && n >= MinPlanWeeks && n <= MaxPlanWeeks {
+				result.PlanWeeks = n
+			}
 		case "dinner_time":
 			if shoppingTime.MatchString(value) {
 				result.DinnerTime = value
@@ -205,6 +230,15 @@ func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
 			*t.value = t.def
 		}
 	}
+	// Ältere Oberflächen kennen plan_weeks nicht und schicken 0: dann
+	// bleibt der gespeicherte Wert.
+	if in.PlanWeeks == 0 {
+		current, err := s.Get(ctx)
+		if err != nil {
+			return Settings{}, err
+		}
+		in.PlanWeeks = current.PlanWeeks
+	}
 	if err := in.validate(); err != nil {
 		return Settings{}, err
 	}
@@ -228,6 +262,7 @@ func (s *Store) Update(ctx context.Context, in Settings) (Settings, error) {
 		"coffee_time":   in.CoffeeTime,
 		"dinner_time":   in.DinnerTime,
 		"ui_language":   in.UILanguage,
+		"plan_weeks":    strconv.Itoa(in.PlanWeeks),
 	}
 	for key, value := range values {
 		// "Upsert": neu anlegen oder, falls der Schlüssel schon existiert,

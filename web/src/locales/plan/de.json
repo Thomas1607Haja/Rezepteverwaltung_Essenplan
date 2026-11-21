@@ -2,6 +2,7 @@
   "title": "Essensplan",
   "week_back": "Eine Woche zurück",
   "week_forward": "Eine Woche vor",
+  "horizon_end": "Ende des Planungszeitraums. Weiter im Voraus planen: Einstellungen → Planung im Voraus.",
   "shopped": "Eingekauft: {range}",
   "next_shopping": "Nächster Einkauf: {range}",
   "load_failed": "Der Plan konnte nicht geladen werden: {message}",

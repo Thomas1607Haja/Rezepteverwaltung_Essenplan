@@ -5,6 +5,8 @@
     "title": "Famiglia",
     "family_size": "Persone in casa",
     "family_size_hint": "Porzioni predefinite per le nuove voci del piano pasti",
+    "plan_weeks": "Pianifica in anticipo (settimane)",
+    "plan_weeks_hint": "Fin dove si può pianificare a partire da oggi (1–12 settimane). Le voci già pianificate più avanti restano.",
     "shopping_day": "Giorno della spesa",
     "shopping_day_hint": "La settimana della spesa inizia da questo giorno",
     "shopping_time": "Ora della spesa",

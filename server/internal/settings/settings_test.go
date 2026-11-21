@@ -40,7 +40,7 @@ func TestDefaultsAndUpdate(t *testing.T) {
 	}
 
 	want := Settings{FamilySize: 3, ShoppingDay: "friday", BringEntity: "todo.zuhause", ShoppingTime: "00:00",
-		LunchTime: "12:00", CoffeeTime: "15:30", DinnerTime: "18:30", UILanguage: "fr"}
+		LunchTime: "12:00", CoffeeTime: "15:30", DinnerTime: "18:30", UILanguage: "fr", PlanWeeks: 6}
 	got, err = store.Update(ctx, want)
 	if err != nil {
 		t.Fatal(err)
@@ -159,5 +159,43 @@ func TestShoppingTime(t *testing.T) {
 		if _, err := store.Update(ctx, s); err == nil {
 			t.Errorf("%q angenommen", bad)
 		}
+	}
+}
+
+// Planung im Voraus: Grenzen 1–12, Standard 4, fehlender Wert behält den
+// gespeicherten, PlanEnd rechnet heute mit.
+func TestPlanWeeks(t *testing.T) {
+	ctx := context.Background()
+	store := newTestStore(t)
+	base := Settings{FamilySize: 4, ShoppingDay: "saturday"}
+
+	got, _ := store.Get(ctx)
+	if got.PlanWeeks != 4 {
+		t.Errorf("Standard = %d, erwartet 4", got.PlanWeeks)
+	}
+	for _, weeks := range []int{-1, 13, 52} {
+		in := base
+		in.PlanWeeks = weeks
+		_, err := store.Update(ctx, in)
+		var verr *apierr.Error
+		if !errors.As(err, &verr) || verr.Field != "plan_weeks" {
+			t.Errorf("plan_weeks %d: erwartet Eingabefehler, bekommen %v", weeks, err)
+		}
+	}
+	for _, weeks := range []int{1, 12} {
+		in := base
+		in.PlanWeeks = weeks
+		if got, err := store.Update(ctx, in); err != nil || got.PlanWeeks != weeks {
+			t.Errorf("plan_weeks %d: %+v, %v", weeks, got, err)
+		}
+	}
+	// Ältere Oberfläche ohne plan_weeks: 12 bleibt.
+	if got, err := store.Update(ctx, base); err != nil || got.PlanWeeks != 12 {
+		t.Errorf("ohne plan_weeks: %+v, %v", got, err)
+	}
+
+	today := time.Date(2026, 11, 21, 0, 0, 0, 0, time.UTC)
+	if end := (Settings{PlanWeeks: 2}).PlanEnd(today).Format(time.DateOnly); end != "2026-12-04" {
+		t.Errorf("PlanEnd(2 Wochen) = %s, erwartet 2026-12-04", end)
 	}
 }

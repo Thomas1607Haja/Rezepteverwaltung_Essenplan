@@ -44,8 +44,12 @@ type Response struct {
 	Full bool `json:"full"`
 	// PlanFrom ist der erste Tag des Plans in der App; ältere Einträge
 	// darf sie löschen.
-	PlanFrom       string          `json:"plan_from"`
-	Today          string          `json:"today"`
+	PlanFrom string `json:"plan_from"`
+	Today    string `json:"today"`
+	// PlanEnd: bis zu diesem Tag lässt sich planen (Einstellung plan_weeks).
+	// Der Abgleich liefert trotzdem alle Einträge ab plan_from, auch
+	// spätere – sie sollen offline sichtbar bleiben.
+	PlanEnd        string          `json:"plan_end"`
 	ShoppingPeriod mealplan.Period `json:"shopping_period"`
 	// NextShoppingPeriod: der nächste Einkauf (folgende Woche).
 	NextShoppingPeriod mealplan.Period          `json:"next_shopping_period"`
@@ -121,6 +125,11 @@ func (h *Handler) collect(ctx context.Context, since string) (Response, error) {
 		return Response{}, err
 	}
 	resp.NextShoppingPeriod = resp.ShoppingPeriod.Next()
+	st, err := h.settings.Get(ctx)
+	if err != nil {
+		return Response{}, err
+	}
+	resp.PlanEnd = st.PlanEnd(today).Format(time.DateOnly)
 	if resp.Recipes, err = h.recipes.ChangedSince(ctx, since); err != nil {
 		return Response{}, err
 	}

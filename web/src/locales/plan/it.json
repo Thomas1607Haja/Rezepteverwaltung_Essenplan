@@ -2,6 +2,7 @@
   "title": "Piano pasti",
   "week_back": "Settimana precedente",
   "week_forward": "Settimana successiva",
+  "horizon_end": "Fine del periodo di pianificazione. Per pianificare più avanti: Impostazioni → Pianifica in anticipo.",
   "shopped": "Spesa fatta: {range}",
   "next_shopping": "Prossima spesa: {range}",
   "load_failed": "Impossibile caricare il piano: {message}",

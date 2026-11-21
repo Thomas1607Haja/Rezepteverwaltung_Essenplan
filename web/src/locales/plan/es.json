@@ -2,6 +2,7 @@
   "title": "Plan de comidas",
   "week_back": "Semana anterior",
   "week_forward": "Semana siguiente",
+  "horizon_end": "Fin del periodo de planificación. Para planificar más adelante: Ajustes → Planificar con antelación.",
   "shopped": "Compra hecha: {range}",
   "next_shopping": "Próxima compra: {range}",
   "load_failed": "No se pudo cargar el plan: {message}",

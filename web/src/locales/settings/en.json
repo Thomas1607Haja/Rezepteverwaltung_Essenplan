@@ -5,6 +5,8 @@
     "title": "Household",
     "family_size": "Household size",
     "family_size_hint": "Default servings for new meal plan entries",
+    "plan_weeks": "Plan ahead (weeks)",
+    "plan_weeks_hint": "How far ahead from today you can plan meals (1–12 weeks). Entries already planned further ahead are kept.",
     "shopping_day": "Shopping day",
     "shopping_day_hint": "The shopping week starts on this day",
     "shopping_time": "Shopping time",

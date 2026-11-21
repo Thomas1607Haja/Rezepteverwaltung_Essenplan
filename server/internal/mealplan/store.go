@@ -147,6 +147,20 @@ func (s *Store) List(ctx context.Context, from, to string) ([]Entry, error) {
 	return entries, nil
 }
 
+// LastPlannedDate liefert den spätesten Tag mit Eintrag oder Menü
+// ("2027-01-15"), leer, wenn nichts geplant ist.
+func (s *Store) LastPlannedDate(ctx context.Context) (string, error) {
+	var last sql.NullString
+	err := s.db.QueryRowContext(ctx, `
+		SELECT MAX(date) FROM (
+			SELECT MAX(date) AS date FROM meal_plan_entries
+			UNION ALL SELECT MAX(date) FROM meal_plan_menus)`).Scan(&last)
+	if err != nil {
+		return "", fmt.Errorf("letzten geplanten tag lesen: %w", err)
+	}
+	return last.String, nil
+}
+
 // ChangedSince liefert für den Abgleich mit der App alle Einträge ab dem
 // Tag from (ohne Ende), deren updated_at nicht vor since liegt
 // (Datenbankformat, leer = alle).

@@ -59,4 +59,11 @@
     <string name="ha_app_install">Installer l\'application</string>
     <string name="ha_app_share">Partager le lien</string>
     <string name="ha_app_repository">Ajouter le dépôt</string>
+    <string name="settings_plan_title">Planning des repas</string>
+    <plurals name="settings_plan_weeks">
+        <item quantity="one">Planifier à l\'avance : {count} semaine</item>
+        <item quantity="many">Planifier à l\'avance : {count} semaines</item>
+        <item quantity="other">Planifier à l\'avance : {count} semaines</item>
+    </plurals>
+    <string name="settings_plan_hint">Modifiable dans l\'interface web sous Paramètres → Planifier à l\'avance. Les entrées prévues plus loin restent visibles.</string>
 </resources>
