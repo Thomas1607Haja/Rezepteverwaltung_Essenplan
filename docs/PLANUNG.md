@@ -438,6 +438,7 @@ Schlüssel-Wert-Speicher, u. a.:
 - `bring_entity` (To-do-Entität der Bring-Liste in Home Assistant)
 - `app_url` (Adresse, unter der die Android-App den App-Zugang erreicht, z. B. `https://rezepte.example.org`; steht im QR-Code)
 - `ui_language` (Sprache der Weboberfläche: `auto` = Home Assistant, sonst `en`, `de`, `fr`, `es`, `it`)
+- `plan_weeks` (Planung im Voraus in Wochen, 1–12, Standard 4; Schritt 12.1)
 
 ### Nicht gespeichert (wird berechnet)
 
@@ -451,7 +452,7 @@ Weboberfläche und App haben dieselbe Struktur. Navigation über die vier Hauptb
 
 ### 5.1 Essensplan (Startseite)
 
-- Horizontal endlos scrollbar; 7 Tage nebeneinander auf großen Bildschirmen, 1–3 Tage auf dem Handy.
+- Horizontal scrollbar – zurück unbegrenzt, nach vorne bis zum Ende des Planungszeitraums (Einstellung „Planung im Voraus“, Schritt 12.1) bzw. bis zum letzten schon geplanten Tag, falls der später liegt; 7 Tage nebeneinander auf großen Bildschirmen, 1–3 Tage auf dem Handy.
 - Button „Heute“; aktueller Einkaufszeitraum farbig hinterlegt.
 - Pro Eintrag: Vorschaubild, Titel, Portionen, Herzchen, Status-Symbol.
 - Leere Tage mit Plus (öffnet die Rezeptauswahl), belegte Tage mit kleinem Plus für ein zweites Gericht.
@@ -475,7 +476,7 @@ Eigene Seite mit Suche, Kategorie-Filtern, Favoriten und Statushinweis an jedem 
 - Großes Bild, Titel, Herzchen, Kategorien, Zeiten, Statushinweis.
 - Portionen-Zähler mit sofortiger Umrechnung.
 - Zutaten mit Gruppenüberschriften, nummerierte Schritte.
-- Buttons „Zum Essensplan hinzufügen“ (Dialog mit den nächsten Tagen und deren Belegung; bei belegtem Tag: Ersetzen oder als zweites Gericht) und „Bearbeiten“.
+- Buttons „Zum Essensplan hinzufügen“ (Dialog mit den Tagen des Planungszeitraums und deren Belegung; bei belegtem Tag: Ersetzen oder als zweites Gericht), „Jetzt einkaufen“ (Ablauf I) und „Bearbeiten“.
 - Bildschirm bleibt während der Kochansicht eingeschaltet.
 - Button „Variante speichern“; bei einer Variante „Variante von <Titel>“; direkt unter dem Titel eine Leiste mit Mini-Kacheln (Vorschaubild, Titel, „Ursprungsrezept“/„Variante“) für alle anderen Rezepte der Familie, seitwärts scrollbar, ohne Familie nicht sichtbar.
 - Nur App: Teilen-Symbol oben rechts – Rezept als PDF über das Android-Teilen-Menü (Schritt 10.1).
@@ -493,7 +494,7 @@ Eigene Seite mit Suche, Kategorie-Filtern, Favoriten und Statushinweis an jedem 
 
 ### 5.7 Einstellungen
 
-Familiengröße, Einkaufstag, Bring-Liste, Vorratsliste, Kategorien, API-Schlüssel (mit QR-Code).
+Familiengröße, Planung im Voraus (Wochen), Einkaufstag, Bring-Liste, Vorratsliste, Kategorien, API-Schlüssel (mit QR-Code). Die App zeigt die Planung im Voraus nur an.
 
 ### 5.8 Home-Assistant-Dashboard
 
@@ -571,6 +572,16 @@ Für den Fall „an die falsche Bring-Liste gesendet“ (Server 0.18, App 0.19).
 4. Bestätigen (`POST /api/v1/shopping/reset`, `{"entries": [...], "remove": true, "fallback_list": "todo.…"}`): Status zurück auf `planned`, `transferred_at` leer, Protokollzeilen dieser Gerichte gelöscht. Bleibt in einem Einkaufszeitraum kein übertragenes Gericht übrig, werden auch die nachgesendeten Differenzen (Zeilen ohne Gericht) gelöscht. Abgewählte Zutaten („Zutaten vorhanden“) bleiben.
 5. Danach normal „An Bring senden“ – es geht an die jetzt eingestellte Liste.
 
+### I. Jetzt einkaufen (Schritt 12.2)
+
+Ein einzelnes Rezept spontan einkaufen, ohne es einzuplanen (z. B. „heute backe ich einen Kuchen“). Knopf „Jetzt einkaufen“ in der Rezeptansicht (Web und App, auch bei Varianten).
+
+1. Kurzvorschau wie beim Einplanen: Titel, Portionen bzw. Ergebnis-Einheit (vorbelegt wie beim Planen: Familiengröße, bei Kuchen & Co. die Grundmenge), einkaufsrelevante Zutaten mit Häkchen, Vorrat eingeklappt. Kein „Alles vorhanden“; Senden ist gesperrt, solange nichts ausgewählt oder keine Bring-Liste gewählt ist.
+2. „An Bring senden · <Liste>“ (`GET /api/v1/shopping/list` liefert den Namen) → `POST /api/v1/shopping/recipe` mit `{"recipe_id", "servings", "excluded"}`. Der Server rechnet wie beim normalen Senden um, fasst zusammen, rundet und ergänzt die Mengenangabe offener Artikel gleichen Namens („1 + 3“); Antwort wie `/shopping/send` (`entries` = 0).
+3. Es entsteht **kein Planeintrag und kein Eintrag in `transferred_items`**: Einkaufsliste, Nachsenden und Statistik bleiben unberührt. Folge: Ein solcher Einkauf lässt sich nicht über Ablauf H zurücksetzen.
+4. Bestätigung „6 Artikel an Bring gesendet (<Liste>)“, ggf. mit ergänzten und nicht angekommenen Artikeln, dazu „Auch im Essensplan eintragen“: öffnet die Tagesauswahl und trägt das Rezept mit den gesendeten Portionen und Status `have_ingredients` ein – sonst würde die nächste normale Übertragung dieselben Zutaten noch einmal senden.
+5. App: nur online; ohne Verbindung zeigt die Vorschau den Hinweis und Senden bleibt gesperrt.
+
 ---
 
 ## 7. Android-App: Offline-Verhalten
@@ -625,9 +636,9 @@ Alle Endpunkte unter `/api/v1`. Authentifizierung per API-Schlüssel (App-Zugang
 |---|---|
 | Rezepte | Liste mit Suche/Filtern, Einzelabruf (mit `parent_recipe_id` und `family`), Anlegen, Ändern, Löschen, Favorit setzen, Bild hochladen, Variante anlegen (`POST /recipes/{id}/variants`, der Server kopiert) |
 | Import | URL einlesen (liefert Entwurf, Bildadresse und Dubletten), Zutatenzeilen zerlegen; Bild der Quellseite beim Speichern übernehmen; Datei-Import: `POST /import/file` (eine oder mehrere Dateien, liefert Vorschau, Kennung und `unknown_categories`), `POST /import/file/{kennung}` (ausgewählte Rezepte speichern; `categories` ordnet unbekannte Kategorien zu oder legt sie an) |
-| Essensplan | Einträge eines Zeitraums, Anlegen, Ändern, Löschen, Verschieben/Tauschen mit Warnprüfung (erst prüfen, dann bestätigen) |
+| Essensplan | Einträge eines Zeitraums (mit `plan_end` = Ende des Planungszeitraums und `last_planned` = letzter Tag mit Eintrag oder Menü), Anlegen, Ändern, Löschen, Verschieben/Tauschen mit Warnprüfung (erst prüfen, dann bestätigen). Der Server begrenzt das Anlegen nicht auf den Planungszeitraum – das tun Auswahl und Scrollen der Oberflächen |
 | Menüs | `POST /menus`, `GET/PUT/DELETE /menus/{id}` (`?with_entries=true` löscht die Gänge mit, sonst „auflösen“), `POST /menus/{id}/move` (wie beim Eintrag, auch `swap_with_menu`), `POST /menus/{id}/all-available`, `POST /meal-plan/{id}/to-menu`, `POST /meal-plan/{id}/detach`; Gänge über `POST /meal-plan` mit `menu_id` und `course_tag_id`; `GET /meal-plan` und `/sync` liefern `menus` |
-| Einkauf | Vorschau der Einkaufsliste (aktueller oder folgender Einkaufszeitraum), An Bring senden, Differenz nachsenden |
+| Einkauf | Vorschau der Einkaufsliste (aktueller oder folgender Einkaufszeitraum), An Bring senden, Differenz nachsenden, Übertragung zurücksetzen; `GET /shopping/list` (eingestellte Bring-Liste mit Namen), `POST /shopping/recipe` („Jetzt einkaufen“, Ablauf I) |
 | Stammdaten | Kategorien (`GET /tags`), Vorratsliste (inkl. Prüfung, ob Zutatennamen im Vorrat sind), Einstellungen |
 | Kategorien verwalten | nur über Ingress: `POST /tags/bulk` (`add`/`remove` je `[{recipe_id, tag_id}]`, eine Transaktion; Antwort nennt nur tatsächlich Geändertes – vertauscht zurückgeschickt = rückgängig; Rezeptliste mit `course=none` und `tag_ids` je Rezept), `GET/POST /tag-groups`, `PUT /tag-groups/order`, `PUT/DELETE /tag-groups/{id}` (`?move_to=` oder `?with_tags=true`), `PUT /tag-groups/{id}/tags` (Inhalt und Reihenfolge), `POST /tags`, `PUT/DELETE /tags/{id}`, `POST /tags/{id}/merge` |
 | Statistik | `GET /statistics?period=3m\|12m\|all` (bei Bedarf berechnet); Rezeptliste mit `planned=never` |
@@ -762,6 +773,15 @@ Sprachen Deutsch, Englisch, Französisch, Spanisch, Italienisch; Englisch ist R�
 | 11.7 | Doku: README englisch, README.de.md deutsch |
 
 Entscheidungen (2026-11-08): Inhalte des Nutzers werden nie übersetzt; bestehende Installationen behalten ihre Daten; die Sprachwahl der Weboberfläche gilt für den ganzen Haushalt; ältere Apps zeigen Fehler des neuen Servers englisch.
+
+### Phase 12: Planungszeitraum und spontaner Einkauf (2026-11-21)
+
+| Schritt | Inhalt |
+|---|---|
+| 12.1 | (umgesetzt, Server 0.21.0, App 0.22.0) **Planung im Voraus (Wochen):** Einstellung `plan_weeks` (1–12, Standard 4; vorher fest: 14 Tage beim Hinzufügen und im App-Plan, 28 Tage beim Tauschen in der App, Web-Plan ohne Grenze). Ende = heute + Wochen × 7 − 1. Gilt für das Scrollen im Essensplan (Web und App), die Tagesauswahl bei „Zum Essensplan hinzufügen“, die Tagesliste beim Tauschen und die Datumsauswahl beim Verschieben (Web: `max` am Datumsfeld, App: Kalender). Schon weiter geplante Einträge bleiben erhalten und sichtbar (Plan reicht bis zum letzten Eintrag). Abgleich: liefert weiter alle Einträge ab `plan_from` ohne Obergrenze, dazu `plan_end`. Integration unverändert (Kalender bis 400 Tage, Karte mit eigener Option `days`). Einkaufszeitraum unverändert |
+| 12.2 | (umgesetzt, Server 0.21.0, App 0.22.0) **Jetzt einkaufen**, siehe Ablauf I. Neuer Fehlercode `no_items_selected` |
+
+**Kandidaten für die Übernahme nach Chervil:** beide Schritte – die Einstellung „Planung im Voraus“ (12.1) und „Jetzt einkaufen“ (12.2) samt „Auch im Essensplan eintragen“.
 
 ---
 

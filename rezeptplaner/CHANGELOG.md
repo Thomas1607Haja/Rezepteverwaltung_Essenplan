@@ -2,10 +2,13 @@
 
 From version 0.21.0 on, this changelog is in English only. Older entries are in English and German or German only.
 
-## Unreleased
+## 0.21.0
 
 - **Home Assistant links:** Settings → Home Assistant opens the integration in the Marketplace (HACS before Home Assistant 2026.11), starts its setup, or installs Rezeptplaner on another Home Assistant – via my.home-assistant.io. The Android app has the same links under Settings, plus “Share link”.
 - **Claude skill updates:** if an imported file comes from an older version of the Claude skill, the import preview says so and offers the current skill for download (web interface and Android app). Files from older skills still import as before.
+- **Plan ahead (weeks):** new setting (Settings → Household, 1–12 weeks, default 4). It sets how far ahead the meal plan scrolls and which days “Add to meal plan”, swapping and moving offer – in the web interface and the Android app. Entries already planned further ahead stay visible; nothing is deleted. The shopping period is unchanged.
+- **Shop now:** a new button in the recipe view sends one recipe’s ingredients straight to Bring without planning it – with the same quick preview (servings, untick what you have, pantry items left out). Items already on the list get the amount added, as with the normal transfer. Nothing is added to the meal plan or the shopping list; “Also add to meal plan” plans it as “ingredients available”. In the app, this needs a connection to the server.
+- **App 0.22.0** brings the same features to Android (plan ahead is shown under Settings and comes from the web interface).
 - English documentation: README, app access guide (tunnel or VPN, Cloudflare Access), contributing guide with translation instructions, issue templates.
 
 ## 0.20.0
